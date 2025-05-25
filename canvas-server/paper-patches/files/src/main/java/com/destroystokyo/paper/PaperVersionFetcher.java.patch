@@ -39,33 +39,28 @@
              case DISTANCE_ERROR -> text("* Error obtaining version information", NamedTextColor.RED); // Purpur - Rebrand
              case 0 -> text("* You are running the latest version", NamedTextColor.GREEN); // Purpur - Rebrand
              case DISTANCE_UNKNOWN -> text("* Unknown version", NamedTextColor.YELLOW); // Purpur - Rebrand
-@@ -88,20 +_,23 @@
+@@ -88,6 +_,7 @@
  
      private static int fetchDistanceFromSiteApi(final ServerBuildInfo build, final int jenkinsBuild) {
          try {
-+            // Canvas start
-+            final String jenkinsApiUrl = "https://jenkins.canvasmc.io/job/Canvas/lastSuccessfulBuild/api/json";
-+             
++            /* // Canvas start - Rebrand - use our api
              try (final BufferedReader reader = Resources.asCharSource(
--                URI.create("https://api.purpurmc.org/v2/purpur/" + build.minecraftVersionId()).toURL(), // Purpur - Rebrand
-+                URI.create(jenkinsApiUrl).toURL(),
-                 Charsets.UTF_8
-             ).openBufferedStream()) {
-                 final JsonObject json = new Gson().fromJson(reader, JsonObject.class);
--                //final JsonArray builds = json.getAsJsonArray("builds"); // Purpur - Rebrand
--                final int latest = json.getAsJsonObject("builds").getAsJsonPrimitive("latest").getAsInt(); // Purpur - Rebrand
--                return latest - jenkinsBuild;
-+                final int latestBuild = json.getAsJsonPrimitive("number").getAsInt();
-+                return latestBuild - jenkinsBuild;
+                 URI.create("https://api.purpurmc.org/v2/purpur/" + build.minecraftVersionId()).toURL(), // Purpur - Rebrand
+                 StandardCharsets.UTF_8
+@@ -98,6 +_,16 @@
+                 return latest - jenkinsBuild;
              } catch (final JsonSyntaxException ex) {
--                LOGGER.error("Error parsing json from Purpur's downloads API", ex); // Purpur - Rebrand
-+                LOGGER.error("Error parsing JSON from CanvasMC's Jenkins API", ex);
-+            // Canvas end
+                 LOGGER.error("Error parsing json from Purpur's downloads API", ex); // Purpur - Rebrand
++                return DISTANCE_ERROR;
++            }
++             */
++            final String jenkinsApiUrl = "https://jenkins.canvasmc.io/job/Canvas/lastSuccessfulBuild/api/json";
++            try (final BufferedReader reader = Resources.asCharSource(URI.create(jenkinsApiUrl).toURL(), StandardCharsets.UTF_8).openBufferedStream()) {
++                final JsonObject jsonObject = new Gson().fromJson(reader, JsonObject.class);
++                final int latestBuild = jsonObject.getAsJsonPrimitive("number").getAsInt();
++                return latestBuild - jenkinsBuild;
++            } catch (JsonSyntaxException throwable) {
++                LOGGER.error("Error parsing version information from CanvasMC's Jenkins API", throwable);
                  return DISTANCE_ERROR;
              }
          } catch (final IOException e) {
--            LOGGER.error("Error while parsing version", e);
-+            LOGGER.error("Error while parsing version from Jenkins API", e); // Canvas
-             return DISTANCE_ERROR;
-         }
-     }

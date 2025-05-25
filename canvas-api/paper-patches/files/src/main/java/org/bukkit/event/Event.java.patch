@@ -1,0 +1,14 @@
+--- a/src/main/java/org/bukkit/event/Event.java
++++ b/src/main/java/org/bukkit/event/Event.java
+@@ -43,6 +_,11 @@
+      * @return {@code false} if event was cancelled, if cancellable. otherwise {@code true}.
+      */
+     public boolean callEvent() {
++        // Canvas start - don't call if the event has no registered listeners
++        if (!getHandlers().hasRegisteredListeners()) {
++            return true;
++        }
++        // Canvas end
+         Bukkit.getPluginManager().callEvent(this);
+         if (this instanceof Cancellable) {
+             return !((Cancellable) this).isCancelled();

@@ -1,6 +1,6 @@
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -13,6 +_,12 @@
+@@ -12,6 +_,12 @@
  import com.mojang.brigadier.exceptions.CommandSyntaxException;
  import com.mojang.serialization.Dynamic;
  import com.mojang.serialization.Lifecycle;
@@ -10,10 +10,10 @@
 +import io.canvasmc.canvas.scheduler.TickScheduler;
 +import io.canvasmc.canvas.server.MultiWatchdogThread;
 +import io.canvasmc.canvas.server.ThreadedServer;
+ import io.papermc.paper.configuration.PaperServerConfiguration;
+ import io.papermc.paper.configuration.ServerConfiguration;
  import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
- import java.awt.image.BufferedImage;
- import java.io.ByteArrayOutputStream;
-@@ -35,6 +_,7 @@
+@@ -37,6 +_,7 @@
  import java.util.Optional;
  import java.util.Set;
  import java.util.UUID;
@@ -21,17 +21,17 @@
  import java.util.function.Consumer;
  import java.util.logging.Level;
  import java.util.logging.Logger;
-@@ -285,7 +_,7 @@
+@@ -286,7 +_,7 @@
      private final StructureManager structureManager;
-     protected final DedicatedServer console;
-     protected final DedicatedPlayerList playerList;
--    private final Map<String, World> worlds = new LinkedHashMap<String, World>();
+     final DedicatedServer console;
+     private final DedicatedPlayerList playerList;
+-    private final Map<String, World> worlds = new LinkedHashMap<>();
 +    private final Map<String, World> worlds = new ConcurrentHashMap<>(); // Canvas - concurrent
-     // private final Map<Class<?>, Registry<?>> registries = new HashMap<>(); // Paper - replace with RegistryAccess
      private YamlConfiguration configuration;
      private YamlConfiguration commandsConfiguration;
-@@ -317,7 +_,7 @@
-     public final io.papermc.paper.SparksFly spark; // Paper - spark
+     private final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
+@@ -318,7 +_,7 @@
+     private final ServerConfiguration serverConfig = new PaperServerConfiguration();
  
      // Paper start - Folia region threading API
 -    private final io.papermc.paper.threadedregions.scheduler.FallbackRegionScheduler regionizedScheduler = new io.papermc.paper.threadedregions.scheduler.FallbackRegionScheduler();
@@ -39,7 +39,7 @@
      private final io.papermc.paper.threadedregions.scheduler.FoliaAsyncScheduler asyncScheduler = new io.papermc.paper.threadedregions.scheduler.FoliaAsyncScheduler();
      private final io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler globalRegionScheduler = new io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler();
  
-@@ -1068,7 +_,7 @@
+@@ -1053,7 +_,7 @@
              throw new IllegalStateException(org.bukkit.command.defaults.ReloadCommand.RELOADING_DISABLED_MESSAGE);
          }
          // Paper end - lifecycle events
@@ -48,10 +48,10 @@
          this.reloadCount++;
          this.configuration = YamlConfiguration.loadConfiguration(this.getConfigFile());
          this.commandsConfiguration = YamlConfiguration.loadConfiguration(this.getCommandsConfigFile());
-@@ -1174,7 +_,7 @@
+@@ -1159,7 +_,7 @@
          this.syncCommands(); // Refresh commands after event
          // Paper end - brigadier command API
-         this.getPluginManager().callEvent(new ServerLoadEvent(ServerLoadEvent.LoadType.RELOAD));
+         new ServerLoadEvent(ServerLoadEvent.LoadType.RELOAD).callEvent();
 -        org.spigotmc.WatchdogThread.hasStarted = true; // Paper - Disable watchdog early timeout on reload
 +        MultiWatchdogThread.hasStarted = true; // Paper - Disable watchdog early timeout on reload // Canvas - rewrite watchdog
      }

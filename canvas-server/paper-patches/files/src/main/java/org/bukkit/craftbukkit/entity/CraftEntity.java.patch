@@ -1,6 +1,6 @@
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -743,7 +_,7 @@
+@@ -754,7 +_,7 @@
          ImmutableSet.Builder<Player> players = ImmutableSet.builder();
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -9,7 +9,7 @@
  
          if (entityTracker != null) {
              for (ServerPlayerConnection connection : entityTracker.seenBy) {
-@@ -1047,7 +_,7 @@
+@@ -1067,7 +_,7 @@
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -18,7 +18,7 @@
  
          if (entityTracker == null) {
              return;
-@@ -1066,7 +_,7 @@
+@@ -1084,7 +_,7 @@
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -27,7 +27,7 @@
  
          if (entityTracker == null) {
              return;
-@@ -1236,7 +_,7 @@
+@@ -1214,7 +_,7 @@
      @Override
      public Set<org.bukkit.entity.Player> getTrackedPlayers() {
          ServerLevel world = (net.minecraft.server.level.ServerLevel)this.entity.level();

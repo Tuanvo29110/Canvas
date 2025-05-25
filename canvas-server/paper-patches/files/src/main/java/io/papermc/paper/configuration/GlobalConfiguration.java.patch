@@ -17,7 +17,7 @@
  
  @SuppressWarnings({"CanBeFinal", "FieldCanBeLocal", "FieldMayBeFinal", "NotNullFieldNotInitialized", "InnerClassMayBeStatic"})
  public class GlobalConfiguration extends ConfigurationPart {
-@@ -229,7 +_,7 @@
+@@ -227,7 +_,7 @@
  
          @PostProcess
          private void postProcess() {
@@ -26,7 +26,7 @@
              String newChunkSystemGenParallelism = this.genParallelism;
              if (newChunkSystemGenParallelism.equalsIgnoreCase("default")) {
                  newChunkSystemGenParallelism = "true";
-@@ -339,9 +_,13 @@
+@@ -337,9 +_,13 @@
                      _chatExecutorMaxSize = _chatExecutorCoreSize;
                  }
  

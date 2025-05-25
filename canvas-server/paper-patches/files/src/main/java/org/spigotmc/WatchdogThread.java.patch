@@ -6,5 +6,5 @@
      public void run() {
 +        if (true) return; // Canvas - rewrite watchdog
          while (!this.stopping) {
-             // Paper start
              Logger logger = Bukkit.getServer().getLogger();
+             long currentTime = WatchdogThread.monotonicMillis();

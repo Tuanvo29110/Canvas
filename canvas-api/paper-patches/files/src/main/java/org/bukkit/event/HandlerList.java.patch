@@ -1,6 +1,6 @@
 --- a/src/main/java/org/bukkit/event/HandlerList.java
 +++ b/src/main/java/org/bukkit/event/HandlerList.java
-@@ -247,4 +_,12 @@
+@@ -244,4 +_,12 @@
              return (ArrayList<HandlerList>) allLists.clone();
          }
      }

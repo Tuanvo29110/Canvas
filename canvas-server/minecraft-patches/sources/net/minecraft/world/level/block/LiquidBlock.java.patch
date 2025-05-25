@@ -8,7 +8,7 @@
  import net.minecraft.world.level.material.FlowingFluid;
  import net.minecraft.world.level.material.Fluid;
  import net.minecraft.world.level.material.FluidState;
-@@ -189,17 +_,22 @@
+@@ -189,7 +_,11 @@
  
              for (Direction direction : POSSIBLE_FLOW_DIRECTIONS) {
                  BlockPos blockPos = pos.relative(direction.getOpposite());
@@ -21,10 +21,7 @@
                      Block block = level.getFluidState(pos).isSource() ? Blocks.OBSIDIAN : Blocks.COBBLESTONE;
                      // CraftBukkit start
                      if (org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockFormEvent(level, pos, block.defaultBlockState(), 3)) {
-+                        level.setBlock(pos, block.defaultBlockState(), 3); // Canvas - place block
-                         this.fizz(level, pos);
-                     }
-                     // CraftBukkit end
+@@ -199,7 +_,7 @@
                      return false;
                  }
  

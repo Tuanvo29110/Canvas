@@ -1,6 +1,6 @@
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
-@@ -67,7 +_,7 @@
+@@ -69,7 +_,7 @@
   * Represents the Bukkit core, for version and Server singleton handling
   */
  public final class Bukkit {
