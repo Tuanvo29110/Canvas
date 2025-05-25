@@ -73,11 +73,11 @@ public final class GeneralUtils {
     }
 
     public static int getIntMicroOptimised(@NotNull CompoundTag tag, String key) {
-        return tag.get(key) instanceof NumericTag numericTag ? numericTag.getAsInt() : 0;
+        return tag.get(key) instanceof NumericTag numericTag ? numericTag.asInt().orElse(0) : 0;
     }
 
     public static @NotNull String getStringMicroOptimised(@NotNull CompoundTag tag, String key) {
-        return tag.get(key) instanceof StringTag stringTag ? stringTag.getAsString() : "";
+        return tag.get(key) instanceof StringTag stringTag ? stringTag.asString().orElse("") : "";
     }
 
     public static <T> void copyAll(@NotNull List<T> src, List<T> dest) {

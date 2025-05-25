@@ -215,7 +215,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
             .append(ThreadedServerHealthDump.NEW_LINE);
         basic.append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
             .append(Component.text("Ticking Chunks: ", ThreadedServerHealthDump.PRIMARY))
-            .append(Component.text(this.level().getChunkSource().lastTickingChunksCount, ThreadedServerHealthDump.INFORMATION))
+            .append(Component.text(this.level().getChunkSource().chunkMap.lastTickingChunksCount, ThreadedServerHealthDump.INFORMATION))
             .append(ThreadedServerHealthDump.NEW_LINE)
             .append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
             .append(Component.text("Regions: ", ThreadedServerHealthDump.PRIMARY))

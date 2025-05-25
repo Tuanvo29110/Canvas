@@ -159,7 +159,6 @@ public class MultiWatchdogThread extends TickThread {
 
                     if (isLongTimeout) {
                         if (!server.hasStopped()) {
-                            AsyncCatcher.enabled = false;
                             server.forceTicks = true;
                             if (this.restart) {
                                 RestartCommand.addShutdownHook(SpigotConfig.restartScript);

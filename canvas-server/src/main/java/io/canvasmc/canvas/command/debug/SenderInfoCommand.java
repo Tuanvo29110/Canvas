@@ -29,13 +29,13 @@ public class SenderInfoCommand implements CommandInstance {
                         player.sendSystemMessage(Component.literal("== Debug Information, for development purposes only, can change at any time =="));
                         player.sendSystemMessage(Component.literal("Owned by NearbyPlayers of level " + player.npr.get().world));
                         player.sendSystemMessage(Component.literal("tick count " + player.tickCount));
-                        ChunkHolder holder = player.serverLevel().getChunk(player.chunkPosition().x, player.chunkPosition().z).chunkAndHolder.holder();
+                        ChunkHolder holder = player.serverLevel().getChunk(player.chunkPosition().x, player.chunkPosition().z).chunkAndHolder.vanillaChunkHolder;
                         for (final ShortSet shorts : holder.changedBlocksPerSection) {
                             player.sendSystemMessage(Component.literal("In chunk found changed shorts: " + shorts));
                         }
                         player.sendSystemMessage(Component.literal("Last chunk broadcast: " + TimeUnit.SECONDS.convert(Util.getNanos() - holder.lastTickNanos, TimeUnit.NANOSECONDS) + "s ago"));
                         player.sendSystemMessage(Component.literal("attempting broadcast..."));
-                        holder.broadcastChanges(player.serverLevel().getChunk(player.chunkPosition().x, player.chunkPosition().z).chunkAndHolder.chunk());
+                        holder.broadcastChanges(player.serverLevel().getChunk(player.chunkPosition().x, player.chunkPosition().z));
                         player.sendSystemMessage(Component.literal("Current chunk status: " + holder.newChunkHolder.getChunkStatus()));
                         int queuedTasks = 0;
                         for (final TickScheduler.FullTick<?> fullTick : TickScheduler.FullTick.ALL_REGISTERED) {

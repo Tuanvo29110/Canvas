@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import ca.spottedleaf.concurrentutil.util.Validate;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
-import org.apache.commons.lang.Validate;
 import org.jetbrains.annotations.NotNull;
 
 public class NodeEvaluatorCache {

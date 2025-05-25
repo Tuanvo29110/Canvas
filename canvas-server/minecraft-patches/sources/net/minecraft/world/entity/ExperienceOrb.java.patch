@@ -72,7 +72,7 @@
  
      private boolean canMerge(ExperienceOrb orb) {
 -        return orb != this && canMerge(orb, this.getId(), this.getValue());
-+        return Config.INSTANCE.entities.clumpOrbs ? orb.isAlive() && !this.is(orb) : orb != this && ExperienceOrb.canMerge(orb, this.getId(), this.value); // Canvas - optimize orbs
++        return Config.INSTANCE.entities.clumpOrbs ? orb.isAlive() && !this.is(orb) : orb != this && ExperienceOrb.canMerge(orb, this.getId(), this.getValue()); // Canvas - optimize orbs
      }
  
      private static boolean canMerge(ExperienceOrb orb, int amount, int other) {

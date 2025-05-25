@@ -131,14 +131,6 @@ public class ThreadedServer implements ThreadedBukkitServer {
                 LOGGER.info("*************************************************************************************");
             }
 
-            if (org.purpurmc.purpur.configuration.transformation.VoidDamageHeightMigration.HAS_BEEN_REGISTERED) {
-                try {
-                    org.purpurmc.purpur.PurpurConfig.config.save((File) this.server.options.valueOf("purpur-settings"));
-                } catch (IOException ex) {
-                    Bukkit.getLogger().log(java.util.logging.Level.SEVERE, "Could not save " + this.server.options.valueOf("purpur-settings"), ex);
-                }
-            }
-
             if (!Boolean.getBoolean("Purpur.IReallyDontWantStartupCommands") && !org.purpurmc.purpur.PurpurConfig.startupCommands.isEmpty()) {
                 LOGGER.info("Purpur: Running startup commands specified in purpur.yml.");
                 for (final String startupCommand : org.purpurmc.purpur.PurpurConfig.startupCommands) {
