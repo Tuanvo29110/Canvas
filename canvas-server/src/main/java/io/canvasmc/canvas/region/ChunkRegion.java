@@ -7,8 +7,10 @@ import io.canvasmc.canvas.server.MultiWatchdogThread;
 import io.canvasmc.canvas.server.ThreadedServer;
 import io.canvasmc.canvas.util.IdGenerator;
 import io.papermc.paper.threadedregions.ThreadedRegionizer;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -23,16 +25,16 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> {
-    private static final IdGenerator ID_GENERATOR = new IdGenerator();
-    public static final Supplier<ResourceLocation> IDENTIFIER_GENERATOR = () -> {
-        int id = ID_GENERATOR.poll();
-        return ResourceLocation.fromNamespaceAndPath("canvas", "region_" + id);
+    private static final Map<ResourceLocation, IdGenerator> LEVEL_TO_ID_GENERATOR = new ConcurrentHashMap<>();
+    public static final Function<ServerLevel, ResourceLocation> IDENTIFIER_GENERATOR = (level) -> {
+        int id = LEVEL_TO_ID_GENERATOR.computeIfAbsent(level.dimension().location(), (_) -> new IdGenerator()).poll();
+        return ResourceLocation.fromNamespaceAndPath("canvas", level.dimension().location().getPath() + "_region_" + id);
     };
     public final ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region;
     public final ServerLevel world;
 
     public ChunkRegion(final ThreadedRegionizer.@NotNull ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region, final DedicatedServer server) {
-        super(server, IDENTIFIER_GENERATOR.get(), new TickHandle(region));
+        super(server, IDENTIFIER_GENERATOR.apply(region.regioniser.world), new TickHandle(region));
         this.region = region;
         this.world = region.regioniser.world;
     }
@@ -58,7 +60,7 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
 
     @Override
     public void retire() {
-        ID_GENERATOR.pop(Integer.parseInt(this.identifier.toString().split("_")[1])); // we split the identifier because the format is 'canvas:region_#'
+        LEVEL_TO_ID_GENERATOR.computeIfAbsent(this.world.dimension().location(), (_) -> new IdGenerator()).pop(Integer.parseInt(this.identifier.toString().split("region_")[1])); // we split the identifier because the format is 'canvas:region_#'
         super.retire();
     }
 

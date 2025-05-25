@@ -312,17 +312,14 @@
      }
  
      public void addTicket(Ticket ticket, ChunkPos chunkPos) {
-@@ -698,6 +_,16 @@
+@@ -698,6 +_,13 @@
          return this.ticketStorage.updateChunkForced(chunkPos, add);
      }
  
 +    // Canvas start - Threaded Regions
-+    public void updateRegionTicket(ChunkPos pos, boolean add, TicketType ticketType) {
-+        if (add) {
-+            this.distanceManager.moonrise$getChunkHolderManager().addTicketAtLevel(ticketType, pos, ChunkMap.FORCED_TICKET_LEVEL, pos);
-+        } else {
-+            this.distanceManager.moonrise$getChunkHolderManager().removeTicketAtLevel(ticketType, pos, ChunkMap.FORCED_TICKET_LEVEL, pos);
-+        }
++    public boolean updateRegionTicket(ChunkPos pos, boolean add, TicketType ticketType) {
++        Ticket ticket = new Ticket(ticketType, ChunkMap.FORCED_TICKET_LEVEL);
++        return add ? this.ticketStorage.addTicket(pos.longKey, ticket) : this.ticketStorage.removeTicket(pos.longKey, ticket);
 +    }
 +
 +    // Canvas end

@@ -12,9 +12,9 @@
      public static final TicketType FUTURE_AWAIT = register("future_await", TicketType.NO_TIMEOUT, false, TicketType.TicketUse.LOADING_AND_SIMULATION); // Paper
      public static final TicketType CHUNK_LOAD = register("chunk_load", TicketType.NO_TIMEOUT, false, TicketType.TicketUse.LOADING); // Paper - moonrise
 +    // Canvas start - Threaded Regions
-+    public static final TicketType LOGIN = register("login", 20L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
-+    public static final TicketType TELEPORT = ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType.create("teleport", Long::compareTo);
-+    public static final TicketType REGION_SCHEDULER_API_HOLD = register("region_scheduler_api_hold", 0L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
++    public static final TicketType LOGIN = register("canvas:login", 20L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
++    public static final TicketType TELEPORT = register("canvas:teleport", 20L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
++    public static final TicketType REGION_SCHEDULER_API_HOLD = register("canvas:region_scheduler_api_hold", 0L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
 +    // Canvas end
  
      public static TicketType register(String name, long timeout, boolean persist, TicketType.TicketUse use) {
