@@ -8,7 +8,7 @@
  import java.util.Objects;
  import javax.annotation.Nullable;
  import net.minecraft.advancements.CriteriaTriggers;
-@@ -370,7 +_,7 @@
+@@ -367,7 +_,7 @@
              } else {
                  // CraftBukkit start
                  org.bukkit.block.BlockState state = bblock.getState();
@@ -17,7 +17,7 @@
                  // CraftBukkit end
                  BlockState blockState1 = block.playerWillDestroy(this.level, pos, blockState, this.player);
                  boolean flag = this.level.removeBlock(pos, false);
-@@ -396,8 +_,8 @@
+@@ -393,8 +_,8 @@
                      // return true; // CraftBukkit
                  }
                  // CraftBukkit start

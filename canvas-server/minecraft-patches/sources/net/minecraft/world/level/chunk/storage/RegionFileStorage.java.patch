@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
 +++ b/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
-@@ -244,7 +_,7 @@
+@@ -269,7 +_,7 @@
  
      protected RegionFileStorage(RegionStorageInfo info, Path folder, boolean sync) { // Paper - protected
          this.folder = folder;

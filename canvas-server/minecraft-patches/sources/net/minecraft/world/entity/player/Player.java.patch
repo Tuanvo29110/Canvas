@@ -9,7 +9,7 @@
  import net.minecraft.Util;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
-@@ -282,6 +_,14 @@
+@@ -297,6 +_,14 @@
          builder.define(DATA_SHOULDER_LEFT, new CompoundTag());
          builder.define(DATA_SHOULDER_RIGHT, new CompoundTag());
      }
@@ -24,7 +24,7 @@
  
      @Override
      public void tick() {
-@@ -300,25 +_,28 @@
+@@ -315,25 +_,28 @@
              this.takeXpDelay--;
          }
  
@@ -45,7 +45,7 @@
                  this.sleepCounter = 100;
              }
  
-             if (!this.level().isClientSide && this.level().isDay()) {
+             if (!this.level().isClientSide && this.level().isBrightOutside()) {
                  this.stopSleepInBed(false, true);
              }
 -        } else if (this.sleepCounter > 0) {

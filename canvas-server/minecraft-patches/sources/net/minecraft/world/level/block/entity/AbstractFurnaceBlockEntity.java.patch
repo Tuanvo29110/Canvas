@@ -1,13 +1,5 @@
 --- a/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
-@@ -1,6 +_,7 @@
- package net.minecraft.world.level.block.entity;
- 
- import com.google.common.collect.Lists;
-+import io.canvasmc.canvas.entity.SleepingBlockEntity;
- import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
- import it.unimi.dsi.fastutil.objects.Reference2IntMap.Entry;
- import java.util.List;
 @@ -37,9 +_,10 @@
  import net.minecraft.world.level.block.AbstractFurnaceBlock;
  import net.minecraft.world.level.block.Blocks;
@@ -20,7 +12,7 @@
      protected static final int SLOT_INPUT = 0;
      protected static final int SLOT_FUEL = 1;
      protected static final int SLOT_RESULT = 2;
-@@ -101,6 +_,38 @@
+@@ -106,6 +_,38 @@
      private final RecipeManager.CachedCheck<SingleRecipeInput, ? extends AbstractCookingRecipe> quickCheck;
      public final RecipeType<? extends AbstractCookingRecipe> recipeType; // Paper - cook speed multiplier API
      public double cookSpeedMultiplier = 1.0; // Paper - cook speed multiplier API
@@ -59,11 +51,11 @@
  
      protected AbstractFurnaceBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState, RecipeType<? extends AbstractCookingRecipe> recipeType) {
          super(type, pos, blockState);
-@@ -167,6 +_,11 @@
-             this.cookSpeedMultiplier = tag.getDouble("Paper.CookSpeedMultiplier");
-         }
-         // Paper end - cook speed multiplier API
-+        // Canvas start
+@@ -164,6 +_,11 @@
+         this.recipesUsed.clear();
+         this.recipesUsed.putAll(tag.read("RecipesUsed", RECIPES_USED_CODEC).orElse(Map.of()));
+         this.cookSpeedMultiplier = tag.getDoubleOr("Paper.CookSpeedMultiplier", 1); // Paper - cook speed multiplier API
++        // Canvas start - block entity sleeping
 +        if (this.isSleeping() && this.level != null && !this.level.isClientSide) {
 +            this.wakeUpNow();
 +        }
@@ -71,7 +63,7 @@
      }
  
      @Override
-@@ -184,6 +_,7 @@
+@@ -179,6 +_,7 @@
      }
  
      public static void serverTick(ServerLevel level, BlockPos pos, BlockState state, AbstractFurnaceBlockEntity furnace) {
@@ -79,7 +71,7 @@
          boolean isLit = furnace.isLit();
          boolean flag = false;
          if (furnace.isLit()) {
-@@ -291,7 +_,16 @@
+@@ -286,7 +_,16 @@
          }
  
          if (usedLavaFromUnderneath) furnace.items.set(1, ItemStack.EMPTY); // Purpur - Furnace uses lava from underneath

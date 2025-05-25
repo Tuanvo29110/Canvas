@@ -1,33 +1,24 @@
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -1,5 +_,6 @@
+@@ -1,5 +_,9 @@
  package net.minecraft.server.level;
  
 +import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
- import com.google.common.net.InetAddresses;
- import com.mojang.authlib.GameProfile;
- import com.mojang.datafixers.util.Either;
-@@ -13,8 +_,11 @@
- import java.util.OptionalInt;
- import java.util.Set;
- import java.util.UUID;
 +import java.util.concurrent.atomic.AtomicReference;
- import java.util.stream.Collectors;
- import javax.annotation.Nullable;
 +import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.region.ServerRegions;
- import net.minecraft.ChatFormatting;
- import net.minecraft.CrashReport;
- import net.minecraft.CrashReportCategory;
-@@ -249,6 +_,7 @@
+ import com.google.common.cache.CacheBuilder;
+ import com.google.common.cache.CacheLoader;
+ import com.google.common.cache.LoadingCache;
+@@ -257,6 +_,7 @@
      private Vec3 lastKnownClientMovement = Vec3.ZERO;
      private Input lastClientInput = Input.EMPTY;
      private final Set<ThrownEnderpearl> enderPearls = new HashSet<>();
 +    public final AtomicReference<NearbyPlayers> npr = new AtomicReference<>(); // Canvas - Threaded Regions
      public final ContainerSynchronizer containerSynchronizer = new ContainerSynchronizer() {
-         @Override
-         public void sendInitialData(AbstractContainerMenu container, NonNullList<ItemStack> items, ItemStack carriedItem, int[] initialData) {
-@@ -889,7 +_,7 @@
+         private final LoadingCache<TypedDataComponent<?>, Integer> cache = CacheBuilder.newBuilder()
+             .maximumSize(256L)
+@@ -826,7 +_,7 @@
      public void doTick() {
          try {
              if (valid && !this.isSpectator() || !this.touchingUnloadedChunk()) { // Paper - don't tick dead players that are not in the world currently (pending respawn)
@@ -36,7 +27,7 @@
              }
  
              for (int i = 0; i < this.getInventory().getContainerSize(); i++) {
-@@ -968,6 +_,7 @@
+@@ -905,6 +_,7 @@
              }
              // CraftBukkit end
          } catch (Throwable var4) {
@@ -44,18 +35,15 @@
              CrashReport crashReport = CrashReport.forThrowable(var4, "Ticking player");
              CrashReportCategory crashReportCategory = crashReport.addCategory("Player being ticked");
              this.fillCrashReportCategory(crashReportCategory);
-@@ -1083,8 +_,10 @@
-     }
-     // Paper end - PlayerDeathEvent#getItemsToKeep
- 
-+    public boolean processingDeath = false; // Canvas
+@@ -1030,6 +_,7 @@
+     // Paper end - Expand PlayerDeathEvent API
      @Override
      public void die(DamageSource cause) {
-+        processingDeath = true; // Canvas
++        processingDeath = true; // Canvas - item entity spread
          // this.gameEvent(GameEvent.ENTITY_DIE); // Paper - move below event cancellation check
          boolean _boolean = this.serverLevel().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES); final boolean showDeathMessage = _boolean; // Paper - OBFHELPER
          // CraftBukkit start - fire PlayerDeathEvent
-@@ -1201,6 +_,7 @@
+@@ -1146,6 +_,7 @@
          this.getCombatTracker().recheckStatus();
          this.setLastDeathLocation(Optional.of(GlobalPos.of(this.level().dimension(), this.blockPosition())));
          this.setClientLoaded(false);
@@ -63,22 +51,3 @@
      }
  
      private void tellNeutralMobsThatIDied() {
-@@ -2827,6 +_,18 @@
-                 );
-             }
- 
-+            // Canvas start - item entity spread
-+            if (processingDeath) {
-+                float halfedRandom = this.random.nextFloat() * 0.5F;
-+                float piRandom = this.random.nextFloat() * (float) (Math.PI * 2);
-+                double factor = Config.INSTANCE.entities.itemEntitySpreadFactor;
-+                itemEntity.setDeltaMovement(
-+                    (-Mth.sin(piRandom) * halfedRandom) * factor,
-+                    0.2F * factor,
-+                    (Mth.cos(piRandom) * halfedRandom) * factor
-+                );
-+            }
-+            // Canvas end
-             return itemEntity;
-         }
-     }

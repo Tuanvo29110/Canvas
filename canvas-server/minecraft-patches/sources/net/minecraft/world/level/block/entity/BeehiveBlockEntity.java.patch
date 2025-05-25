@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/entity/BeehiveBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/BeehiveBlockEntity.java
-@@ -5,9 +_,13 @@
+@@ -4,9 +_,13 @@
  import com.mojang.serialization.Codec;
  import com.mojang.serialization.codecs.RecordCodecBuilder;
  import io.netty.buffer.ByteBuf;
@@ -14,7 +14,7 @@
  import javax.annotation.Nullable;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
-@@ -80,7 +_,7 @@
+@@ -76,7 +_,7 @@
      private static final int MIN_TICKS_BEFORE_REENTERING_HIVE = 400;
      private static final int MIN_OCCUPATION_TICKS_NECTAR = 2400;
      public static final int MIN_OCCUPATION_TICKS_NECTARLESS = 600;
@@ -23,7 +23,7 @@
      @Nullable
      public BlockPos savedFlowerPos;
      public int maxBees = MAX_OCCUPANTS; // CraftBukkit - allow setting max amount of bees a hive can hold
-@@ -177,7 +_,7 @@
+@@ -170,7 +_,7 @@
  
      // Purpur start - Stored Bee API
      public List<BeeData> getStored() {
@@ -32,7 +32,7 @@
      }
      // Purpur end - Stored Bee API
  
-@@ -338,7 +_,7 @@
+@@ -331,7 +_,7 @@
          return this.savedFlowerPos != null;
      }
  
@@ -41,21 +41,21 @@
          boolean flag = false;
          Iterator<BeehiveBlockEntity.BeeData> iterator = data.iterator();
  
-@@ -380,7 +_,7 @@
+@@ -373,7 +_,7 @@
      @Override
      protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
          super.loadAdditional(tag, registries);
 -        this.stored = Lists.newArrayList(); // CraftBukkit - SPIGOT-7790: create new copy (may be modified in physics event triggered by honey change)
-+        this.stored = new ConcurrentLinkedQueue<>(); // CraftBukkit - SPIGOT-7790: create new copy (may be modified in physics event triggered by honey change) // Canvas
-         if (tag.contains("bees")) {
-             BeehiveBlockEntity.Occupant.LIST_CODEC
-                 .parse(NbtOps.INSTANCE, tag.get("bees"))
-@@ -409,7 +_,7 @@
++        this.stored = new ConcurrentLinkedQueue<>(); // CraftBukkit - SPIGOT-7790: create new copy (may be modified in physics event triggered by honey change) // Canvas - concurrent
+         tag.read("bees", BeehiveBlockEntity.Occupant.LIST_CODEC).orElse(List.of()).forEach(this::storeBee);
+         this.savedFlowerPos = tag.read("flower_pos", BlockPos.CODEC).orElse(null);
+         this.maxBees = tag.getIntOr("Bukkit.MaxEntities", MAX_OCCUPANTS); // Paper - persist max bukkit occupants
+@@ -390,7 +_,7 @@
      @Override
-     protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
-         super.applyImplicitComponents(componentInput);
+     protected void applyImplicitComponents(DataComponentGetter componentGetter) {
+         super.applyImplicitComponents(componentGetter);
 -        this.stored = Lists.newArrayList(); // CraftBukkit - SPIGOT-7790: create new copy (may be modified in physics event triggered by honey change)
-+        this.stored = new ConcurrentLinkedQueue<>(); // CraftBukkit - SPIGOT-7790: create new copy (may be modified in physics event triggered by honey change) // Canvas
-         List<BeehiveBlockEntity.Occupant> list = componentInput.getOrDefault(DataComponents.BEES, List.of());
++        this.stored = new ConcurrentLinkedQueue<>(); // CraftBukkit - SPIGOT-7790: create new copy (may be modified in physics event triggered by honey change) // Canvas - concurrent
+         List<BeehiveBlockEntity.Occupant> list = componentGetter.getOrDefault(DataComponents.BEES, Bees.EMPTY).bees();
          list.forEach(this::storeBee);
      }

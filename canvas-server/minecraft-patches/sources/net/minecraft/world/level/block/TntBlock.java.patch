@@ -8,9 +8,9 @@
 +import io.canvasmc.canvas.entity.tnt.TNTMergeManager;
 +import io.canvasmc.canvas.region.ServerRegions;
  import net.minecraft.core.BlockPos;
+ import net.minecraft.network.chat.Component;
  import net.minecraft.server.level.ServerLevel;
- import net.minecraft.sounds.SoundEvents;
-@@ -10,6 +_,7 @@
+@@ -11,6 +_,7 @@
  import net.minecraft.world.InteractionHand;
  import net.minecraft.world.InteractionResult;
  import net.minecraft.world.entity.Entity;
@@ -18,7 +18,7 @@
  import net.minecraft.world.entity.LivingEntity;
  import net.minecraft.world.entity.item.PrimedTnt;
  import net.minecraft.world.entity.player.Player;
-@@ -26,7 +_,11 @@
+@@ -28,7 +_,11 @@
  import net.minecraft.world.level.block.state.properties.BooleanProperty;
  import net.minecraft.world.level.gameevent.GameEvent;
  import net.minecraft.world.level.redstone.Orientation;
@@ -30,7 +30,7 @@
  
  public class TntBlock extends Block {
      public static final MapCodec<TntBlock> CODEC = simpleCodec(TntBlock::new);
-@@ -83,6 +_,16 @@
+@@ -71,6 +_,17 @@
  
      @Override
      public void wasExploded(ServerLevel level, BlockPos pos, Explosion explosion) {
@@ -44,15 +44,15 @@
 +                return;
 +            }
 +        }
-         // Paper start - TNTPrimeEvent
-         org.bukkit.block.Block tntBlock = org.bukkit.craftbukkit.block.CraftBlock.at(level, pos);
-         org.bukkit.entity.Entity source = explosion.getDirectSourceEntity() != null ? explosion.getDirectSourceEntity().getBukkitEntity() : null;
-@@ -95,6 +_,26 @@
-         primedTnt.setFuse((short)(level.random.nextInt(fuse / 4) + fuse / 8));
-         level.addFreshEntity(primedTnt);
++        // Canvas end
+         if (level.getGameRules().getBoolean(GameRules.RULE_TNT_EXPLODES)) {
+             PrimedTnt primedTnt = new PrimedTnt(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, explosion.getIndirectSourceEntity());
+             int fuse = primedTnt.getFuse();
+@@ -79,6 +_,26 @@
+         }
      }
+ 
 +    // Canvas start - merge tnt logic
-+
 +    public @org.jetbrains.annotations.Nullable PrimedTnt getNearestTNTEntity(ServerLevel world, Vec3 position, double radius) {
 +        AABB searchBox = new AABB(position.subtract(radius, radius, radius), position.add(radius, radius, radius));
 +        List<PrimedTnt> tntEntities = world.getEntities(EntityType.TNT, searchBox, entity -> entity.getBlockState().getBlock() == Blocks.TNT);
@@ -70,7 +70,8 @@
 +
 +        return nearestTNT;
 +    }
++
 +    // Canvas end
- 
-     public static void explode(Level level, BlockPos pos) {
-         explode(level, pos, null);
+     public static boolean prime(Level level, BlockPos pos) {
+     // Paper start
+         return prime(level, pos, null, () -> true);

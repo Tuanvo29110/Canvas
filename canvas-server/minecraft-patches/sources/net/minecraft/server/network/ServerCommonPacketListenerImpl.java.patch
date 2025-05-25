@@ -34,7 +34,7 @@
              this.disconnectAsync(TIMEOUT_DISCONNECTION_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT); // Paper - add proper async disconnect
          }
      }
-@@ -220,7 +_,7 @@
+@@ -219,7 +_,7 @@
  
      @Override
      public void handleResourcePackResponse(ServerboundResourcePackPacket packet) {
@@ -43,7 +43,7 @@
          if (packet.action() == ServerboundResourcePackPacket.Action.DECLINED && this.server.isResourcePackRequired()) {
              LOGGER.info("Disconnecting {} due to resource pack {} rejection", this.playerProfile().getName(), packet.id());
              this.disconnect(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"), org.bukkit.event.player.PlayerKickEvent.Cause.RESOURCE_PACK_REJECTION); // Paper - kick event cause
-@@ -247,7 +_,7 @@
+@@ -246,7 +_,7 @@
      @Override
      public void handleCookieResponse(ServerboundCookieResponsePacket packet) {
          // CraftBukkit start
@@ -52,7 +52,7 @@
          if (this.player.getBukkitEntity().handleCookieResponse(packet)) {
              return;
          }
-@@ -266,6 +_,7 @@
+@@ -265,6 +_,7 @@
          if (org.purpurmc.purpur.PurpurConfig.useAlternateKeepAlive) {
              if (elapsedTime >= 1000L) { // 1 second
                  if (this.keepAlivePending && !this.processedDisconnect && keepAlives.size() * 1000L >= KEEPALIVE_LIMIT) {
@@ -60,7 +60,7 @@
                      this.disconnect(ServerCommonPacketListenerImpl.TIMEOUT_DISCONNECTION_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT);
                  } else if (this.checkIfClosed(millis)) {
                      this.keepAlivePending = true;
-@@ -280,6 +_,7 @@
+@@ -279,6 +_,7 @@
          if (!this.isSingleplayerOwner() && elapsedTime >= 15000L) { // use vanilla's 15000L between keep alive packets
              if (this.keepAlivePending) {
                  if (!this.processedDisconnect && elapsedTime >= KEEPALIVE_LIMIT) { // check keepalive limit, don't fire if already disconnected
@@ -68,7 +68,7 @@
                      this.disconnect(TIMEOUT_DISCONNECTION_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT); // Paper - kick event cause
                  }
                  // Paper end - give clients a longer time to respond to pings as per pre 1.12.2 timings
-@@ -297,6 +_,7 @@
+@@ -296,6 +_,7 @@
      private boolean checkIfClosed(long time) {
          if (this.closed) {
              if (time - this.closedListenerTime >= 15000L) {
@@ -76,7 +76,7 @@
                  this.disconnect(TIMEOUT_DISCONNECTION_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT); // Paper - kick event cause
              }
  
-@@ -316,10 +_,64 @@
+@@ -315,10 +_,64 @@
      }
  
      public void send(Packet<?> packet) {
@@ -141,7 +141,7 @@
          // CraftBukkit start
          if (packet == null || this.processedDisconnect) { // Spigot
              return;
-@@ -331,7 +_,7 @@
+@@ -330,7 +_,7 @@
              this.close();
          }
  

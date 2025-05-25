@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/phys/shapes/VoxelShape.java
 +++ b/net/minecraft/world/phys/shapes/VoxelShape.java
-@@ -485,6 +_,44 @@
+@@ -486,6 +_,44 @@
          }
          // Paper end - optimise collisions
      }

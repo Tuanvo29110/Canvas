@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/item/ItemStack.java
 +++ b/net/minecraft/world/item/ItemStack.java
-@@ -388,29 +_,29 @@
+@@ -387,29 +_,29 @@
              ServerLevel serverLevel = (ServerLevel) context.getLevel();
  
              if (!(item instanceof BucketItem/* || item instanceof SolidBucketItem*/)) { // if not bucket // Paper - Fix cancelled powdered snow bucket placement
@@ -37,12 +37,12 @@
                  org.bukkit.event.world.StructureGrowEvent structureEvent = null;
                  if (treeType != null) {
                      boolean isBonemeal = this.getItem() == Items.BONE_MEAL;
-@@ -436,15 +_,15 @@
+@@ -435,15 +_,15 @@
                      player.awardStat(Stats.ITEM_USED.get(item)); // SPIGOT-7236 - award stat
                  }
  
 -                SignItem.openSign = null; // SPIGOT-6758 - Reset on early return
-+                SignItem.openSign.remove(); // SPIGOT-6758 - Reset on early return // Canvas - thread local
++                SignItem.openSign.remove(); // SPIGOT-6758 - Reset on early return // Canvas - threadlocal
                  return interactionResult;
              }
 -            serverLevel.captureTreeGeneration = false;
@@ -55,34 +55,26 @@
 +                List<org.bukkit.block.BlockState> blocks = new java.util.ArrayList<>(serverLevel.capturedBlockStates.get().values()); // Canvas - threadlocal
 +                serverLevel.capturedBlockStates.get().clear(); // Canvas - threadlocal
                  if (blocks.size() > 1) {
-                     placeEvent = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockMultiPlaceEvent(serverLevel, player, hand, blocks, clickedPos.getX(), clickedPos.getY(), clickedPos.getZ());
+                     placeEvent = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockMultiPlaceEvent(serverLevel, player, hand, blocks, clickedPos);
                  } else if (blocks.size() == 1 && item != Items.POWDER_SNOW_BUCKET) { // Paper - Fix cancelled powdered snow bucket placement
-@@ -455,18 +_,18 @@
+@@ -454,14 +_,14 @@
                      interactionResult = InteractionResult.FAIL; // cancel placement
                      // PAIL: Remove this when MC-99075 fixed
-                     placeEvent.getPlayer().updateInventory();
+                     player.containerMenu.sendAllDataToRemote();
 -                    serverLevel.capturedTileEntities.clear(); // Paper - Allow chests to be placed with NBT data; clear out block entities as chests and such will pop loot
 +                    serverLevel.capturedTileEntities.get().clear(); // Paper - Allow chests to be placed with NBT data; clear out block entities as chests and such will pop loot // Canvas - threadlocal
                      // revert back all captured blocks
--                    serverLevel.preventPoiUpdated = true; // CraftBukkit - SPIGOT-5710
--                    serverLevel.isBlockPlaceCancelled = true; // Paper - prevent calling cleanup logic when undoing a block place upon a cancelled BlockPlaceEvent
-+                    serverLevel.preventPoiUpdated.set(true); // CraftBukkit - SPIGOT-5710 // Canvas - threadlocal
-+                    serverLevel.isBlockPlaceCancelled.set(true); // Paper - prevent calling cleanup logic when undoing a block place upon a cancelled BlockPlaceEvent // Canvas - threadlocal
                      for (org.bukkit.block.BlockState blockstate : blocks) {
-                         blockstate.update(true, false);
+                         ((org.bukkit.craftbukkit.block.CraftBlockState) blockstate).revertPlace();
                          ((org.bukkit.craftbukkit.block.CraftBlock) blockstate.getBlock()).getNMS().getBlock().forgetPlacer(); // Purpur - Store placer on Block when placed
                      }
--                    serverLevel.isBlockPlaceCancelled = false; // Paper - prevent calling cleanup logic when undoing a block place upon a cancelled BlockPlaceEvent
--                    serverLevel.preventPoiUpdated = false;
-+                    serverLevel.isBlockPlaceCancelled.set(false); // Paper - prevent calling cleanup logic when undoing a block place upon a cancelled BlockPlaceEvent // Canvas - threadlocal
-+                    serverLevel.preventPoiUpdated.set(false); // Canvas - threadlocal
  
 -                    SignItem.openSign = null; // SPIGOT-6758 - Reset on early return
-+                    SignItem.openSign.remove(); // SPIGOT-6758 - Reset on early return // Canvas - thread local
++                    SignItem.openSign.remove(); // SPIGOT-6758 - Reset on early return // Canvas - threadlocal
                  } else {
                      // Change the stack to its new contents if it hasn't been tampered with.
                      if (this.getCount() == oldCount && Objects.equals(this.components.asPatch(), previousPatch)) {
-@@ -474,7 +_,7 @@
+@@ -469,7 +_,7 @@
                          this.setCount(newCount);
                      }
  
@@ -91,7 +83,7 @@
                          serverLevel.setBlockEntity(e.getValue());
                      }
  
-@@ -510,15 +_,15 @@
+@@ -505,15 +_,15 @@
                      }
  
                      // SPIGOT-4678
@@ -111,7 +103,7 @@
                          }
                      }
  
-@@ -546,8 +_,8 @@
+@@ -540,8 +_,8 @@
                      player.awardStat(Stats.ITEM_USED.get(item));
                  }
              }

@@ -1,23 +1,23 @@
 --- a/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
 +++ b/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
-@@ -2,6 +_,7 @@
- 
- import ca.spottedleaf.concurrentutil.util.Priority;
- import com.mojang.logging.LogUtils;
+@@ -6,6 +_,7 @@
+ import ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader;
+ import ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache;
+ import ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel;
 +import io.canvasmc.canvas.region.ServerRegions;
  import net.minecraft.server.level.ChunkHolder;
- import net.minecraft.server.level.ChunkResult;
  import net.minecraft.server.level.FullChunkStatus;
-@@ -30,7 +_,7 @@
+ import net.minecraft.server.level.ServerLevel;
+@@ -26,7 +_,7 @@
  
      @Override
      public void scheduleChunkTask(final ServerLevel level, final int chunkX, final int chunkZ, final Runnable run, final Priority priority) {
--        ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkTask(chunkX, chunkZ, run, priority);
-+        ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkTaskEventually(chunkX, chunkZ, run, priority);
+-        ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkTask(chunkX, chunkZ, run, priority);
++        ((ChunkSystemServerLevel)level).moonrise$getChunkTaskScheduler().scheduleChunkTaskEventually(chunkX, chunkZ, run, priority); // Canvas - Threaded Regions
      }
  
      @Override
-@@ -80,7 +_,7 @@
+@@ -76,7 +_,7 @@
  
      @Override
      public void onChunkHolderCreate(final ServerLevel level, final ChunkHolder holder) {
@@ -26,7 +26,7 @@
      }
  
      @Override
-@@ -92,6 +_,7 @@
+@@ -88,6 +_,7 @@
                  progressListener.onStatusChange(holder.getPos(), null);
              });
          }
@@ -34,62 +34,50 @@
      }
  
      @Override
-@@ -102,17 +_,13 @@
+@@ -98,13 +_,13 @@
  
      @Override
      public void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
--        ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().add(
--            ((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
--        );
-+        ServerRegions.getTickData(chunk.level).addChunk(chunk.moonrise$getChunkAndHolder()); // Canvas - Threaded Regions
+-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().add(chunk);
++        ServerRegions.getTickData(chunk.level).addChunk(chunk); // Canvas - Threaded Regions
          chunk.loadCallback();
      }
  
      @Override
      public void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
--        ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().remove(
--            ((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
--        );
-+        ServerRegions.getTickData(chunk.level).removeChunk(chunk.moonrise$getChunkAndHolder()); // Canvas - Threaded Regions
+-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getLoadedChunks().remove(chunk);
++        ServerRegions.getTickData(chunk.level).removeChunk(chunk); // Canvas - Threaded Regions
          chunk.unloadCallback();
      }
  
-@@ -124,9 +_,7 @@
+@@ -116,7 +_,7 @@
  
      @Override
      public void onChunkTicking(final LevelChunk chunk, final ChunkHolder holder) {
--        ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().add(
--            ((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
--        );
-+        ServerRegions.getTickData(chunk.level).addTickingChunk(chunk.moonrise$getChunkAndHolder()); // Canvas - Threaded Regions
-         if (!((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk)chunk).moonrise$isPostProcessingDone()) {
+-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().add(chunk);
++        ServerRegions.getTickData(chunk.level).addTickingChunk(chunk); // Canvas - Threaded Regions
+         if (!((ChunkSystemLevelChunk)chunk).moonrise$isPostProcessingDone()) {
              chunk.postProcessGeneration((ServerLevel)chunk.getLevel());
          }
-@@ -137,24 +_,18 @@
+@@ -126,18 +_,18 @@
  
      @Override
      public void onChunkNotTicking(final LevelChunk chunk, final ChunkHolder holder) {
--        ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().remove(
--            ((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
--        );
-+        ServerRegions.getTickData(chunk.level).removeTickingChunk(chunk.moonrise$getChunkAndHolder()); // Canvas - Threaded Regions
-         ((ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$removeChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
+-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().remove(chunk);
++        ServerRegions.getTickData(chunk.level).removeTickingChunk(chunk); // Canvas - Threaded Regions
      }
  
      @Override
      public void onChunkEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
--        ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().add(
--            ((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
--        );
-+        ServerRegions.getTickData(chunk.level).addEntityTickingChunk(chunk.moonrise$getChunkAndHolder()); // Canvas - Threaded Regions
+-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().add(chunk);
++        ServerRegions.getTickData(chunk.level).addEntityTickingChunk(chunk); // Canvas - Threaded Regions
+         ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$markChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
      }
  
      @Override
      public void onChunkNotEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
--        ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().remove(
--            ((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk)chunk).moonrise$getChunkAndHolder()
--        );
-+        ServerRegions.getTickData(chunk.level).removeEntityTickingChunk(chunk.moonrise$getChunkAndHolder()); // Canvas - Threaded Regions
+-        ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getEntityTickingChunks().remove(chunk);
++        ServerRegions.getTickData(chunk.level).removeEntityTickingChunk(chunk); // Canvas - Threaded Regions
+         ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$removeChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
      }
  
-     @Override

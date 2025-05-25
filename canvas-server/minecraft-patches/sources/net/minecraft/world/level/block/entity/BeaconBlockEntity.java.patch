@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/entity/BeaconBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/BeaconBlockEntity.java
-@@ -37,6 +_,7 @@
+@@ -40,6 +_,7 @@
  import net.minecraft.world.inventory.BeaconMenu;
  import net.minecraft.world.inventory.ContainerData;
  import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -8,7 +8,7 @@
  import net.minecraft.world.level.Level;
  import net.minecraft.world.level.block.BeaconBeamBlock;
  import net.minecraft.world.level.block.Blocks;
-@@ -223,7 +_,7 @@
+@@ -226,7 +_,7 @@
          }
  
          int i = blockEntity.levels; final int originalLevels = i; // Paper - OBFHELPER
@@ -17,7 +17,7 @@
              if (!blockEntity.beamSections.isEmpty()) {
                  blockEntity.levels = updateBase(level, x, y, z);
              }
-@@ -357,7 +_,7 @@
+@@ -361,7 +_,7 @@
              list = level.getEntitiesOfClass(Player.class, aabb); // Diff from applyEffect
          } else {
              list = new java.util.ArrayList<>();

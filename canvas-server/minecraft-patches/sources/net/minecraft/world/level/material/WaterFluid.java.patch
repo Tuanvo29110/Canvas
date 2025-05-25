@@ -9,7 +9,7 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
  import net.minecraft.core.particles.ParticleOptions;
-@@ -115,8 +_,18 @@
+@@ -126,8 +_,18 @@
  
      @Override
      public int getTickDelay(LevelReader level) {

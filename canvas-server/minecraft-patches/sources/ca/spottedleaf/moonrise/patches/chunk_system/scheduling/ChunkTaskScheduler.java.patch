@@ -1,6 +1,6 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
-@@ -26,6 +_,8 @@
+@@ -27,6 +_,8 @@
  import com.google.gson.JsonArray;
  import com.google.gson.JsonObject;
  import com.mojang.logging.LogUtils;
@@ -9,7 +9,7 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportedException;
-@@ -66,11 +_,7 @@
+@@ -67,11 +_,7 @@
      private static final Logger LOGGER = LogUtils.getClassLogger();
  
      public static void init(final boolean useParallelGen) {
@@ -18,11 +18,11 @@
 -        }
 -
 -        LOGGER.info("Chunk system is using population gen parallelism: " + useParallelGen);
-+        // Canvas - not anymore :)
++        // Canvas - rewrite chunk system
      }
  
-     public static final TicketType<Long> CHUNK_LOAD = TicketType.create("chunk_system:chunk_load", Long::compareTo);
-@@ -115,14 +_,16 @@
+     public static final TicketType CHUNK_LOAD = ChunkSystemTicketType.create("chunk_system:chunk_load", Long::compareTo);
+@@ -116,14 +_,16 @@
  
      public final ServerLevel world;
      public final RadiusAwarePrioritisedExecutor radiusAwareScheduler;
@@ -45,7 +45,7 @@
  
      public final ChunkHolderManager chunkHolderManager;
  
-@@ -198,7 +_,7 @@
+@@ -199,7 +_,7 @@
                  // FULL is executed on main.
          );
  
@@ -54,7 +54,7 @@
              ((ChunkSystemChunkStatus)status).moonrise$setParallelCapable(true);
          }
      }
-@@ -291,14 +_,16 @@
+@@ -292,14 +_,16 @@
          this.lockShift = Math.max(((ChunkSystemServerLevel)world).moonrise$getRegionChunkShift(), ThreadedTicketLevelPropagator.SECTION_SHIFT);
          this.schedulingLockArea = new ReentrantAreaLock(this.getChunkSystemLockShift());
  
@@ -77,7 +77,7 @@
          this.chunkHolderManager = new ChunkHolderManager(world, this);
      }
  
-@@ -372,7 +_,12 @@
+@@ -373,7 +_,12 @@
          }
          final int accessRadius = getAccessRadius(toStatus);
          if (this.chunkHolderManager.ticketLockArea.isHeldByCurrentThread(chunkX, chunkZ, accessRadius)) {
@@ -91,7 +91,7 @@
          }
          if (this.schedulingLockArea.isHeldByCurrentThread(chunkX, chunkZ, accessRadius)) {
              throw new IllegalStateException("Cannot schedule chunk loading recursively");
-@@ -576,7 +_,12 @@
+@@ -577,7 +_,12 @@
          }
          final int accessRadius = getAccessRadius(toStatus);
          if (this.chunkHolderManager.ticketLockArea.isHeldByCurrentThread(chunkX, chunkZ, accessRadius)) {
@@ -105,7 +105,7 @@
          }
          if (this.schedulingLockArea.isHeldByCurrentThread(chunkX, chunkZ, accessRadius)) {
              throw new IllegalStateException("Cannot schedule chunk loading recursively");
-@@ -789,7 +_,7 @@
+@@ -790,7 +_,7 @@
          final NewChunkHolder chunkHolder = this.chunkHolderManager.getChunkHolder(chunkX, chunkZ);
  
          if (chunkHolder == null) {
@@ -114,7 +114,7 @@
          }
  
          final ChunkStatus holderStatus = chunkHolder.getCurrentGenStatus();
-@@ -829,7 +_,7 @@
+@@ -830,7 +_,7 @@
       */
      @Deprecated
      public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final Runnable run, final Priority priority) {
@@ -123,7 +123,7 @@
      }
  
      public PrioritisedExecutor.PrioritisedTask createChunkTask(final int chunkX, final int chunkZ, final Runnable run) {
-@@ -838,7 +_,13 @@
+@@ -839,7 +_,13 @@
  
      public PrioritisedExecutor.PrioritisedTask createChunkTask(final int chunkX, final int chunkZ, final Runnable run,
                                                                 final Priority priority) {
@@ -138,7 +138,7 @@
      }
  
      public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final int chunkX, final int chunkZ, final Runnable run) {
-@@ -847,8 +_,30 @@
+@@ -848,8 +_,30 @@
  
      public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final int chunkX, final int chunkZ, final Runnable run,
                                                                   final Priority priority) {

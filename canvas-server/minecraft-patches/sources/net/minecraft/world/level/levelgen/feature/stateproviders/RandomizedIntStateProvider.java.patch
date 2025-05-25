@@ -23,8 +23,8 @@
 +            this.property = intProperty;
          }
  
--        return state.setValue(this.property, Integer.valueOf(this.values.sample(random)));
-+        return (BlockState)blockState.setValue(propertyLocal, this.values.sample(random));
+-        return state.setValue(this.property, this.values.sample(random));
++        return blockState.setValue(propertyLocal, this.values.sample(random));
 +        // Canvas end
      }
  

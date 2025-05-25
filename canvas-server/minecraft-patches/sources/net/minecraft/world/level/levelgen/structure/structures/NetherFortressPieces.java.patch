@@ -11,7 +11,7 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
  import net.minecraft.nbt.CompoundTag;
-@@ -733,7 +_,7 @@
+@@ -643,7 +_,7 @@
          private static final int WIDTH = 5;
          private static final int HEIGHT = 7;
          private static final int DEPTH = 5;
@@ -20,7 +20,7 @@
  
          public CastleSmallCorridorLeftTurnPiece(int genDepth, RandomSource random, BoundingBox box, Direction orientation) {
              super(StructurePieceType.NETHER_FORTRESS_CASTLE_SMALL_CORRIDOR_LEFT_TURN, genDepth, box);
-@@ -872,7 +_,7 @@
+@@ -773,7 +_,7 @@
          private static final int WIDTH = 5;
          private static final int HEIGHT = 7;
          private static final int DEPTH = 5;
@@ -29,7 +29,7 @@
  
          public CastleSmallCorridorRightTurnPiece(int genDepth, RandomSource random, BoundingBox box, Direction orientation) {
              super(StructurePieceType.NETHER_FORTRESS_CASTLE_SMALL_CORRIDOR_RIGHT_TURN, genDepth, box);
-@@ -1151,7 +_,7 @@
+@@ -1008,7 +_,7 @@
          private static final int WIDTH = 7;
          private static final int HEIGHT = 8;
          private static final int DEPTH = 9;
@@ -38,7 +38,7 @@
  
          public MonsterThrone(int genDepth, BoundingBox box, Direction orientation) {
              super(StructurePieceType.NETHER_FORTRESS_MONSTER_THRONE, genDepth, box);
-@@ -1283,7 +_,7 @@
+@@ -1094,7 +_,7 @@
          }
      }
  
@@ -47,7 +47,7 @@
          protected NetherBridgePiece(StructurePieceType type, int genDepth, BoundingBox boundingBox) {
              super(type, genDepth, boundingBox);
          }
-@@ -1301,7 +_,7 @@
+@@ -1112,7 +_,7 @@
              int i = 0;
  
              for (NetherFortressPieces.PieceWeight pieceWeight : weights) {
@@ -56,7 +56,7 @@
                      flag = true;
                  }
  
-@@ -1341,7 +_,7 @@
+@@ -1152,7 +_,7 @@
                              pieceWeight, pieces, random, x, y, z, orientation, genDepth
                          );
                          if (netherBridgePiece != null) {
@@ -65,7 +65,7 @@
                              startPiece.previousPiece = pieceWeight;
                              if (!pieceWeight.isValid()) {
                                  weights.remove(pieceWeight);
-@@ -1576,7 +_,7 @@
+@@ -1387,7 +_,7 @@
      static class PieceWeight {
          public final Class<? extends NetherFortressPieces.NetherBridgePiece> pieceClass;
          public final int weight;
@@ -74,7 +74,7 @@
          public final int maxPlaceCount;
          public final boolean allowInRow;
  
-@@ -1592,11 +_,11 @@
+@@ -1403,11 +_,11 @@
          }
  
          public boolean doPlace(int genDepth) {
@@ -88,7 +88,7 @@
          }
      }
  
-@@ -1746,24 +_,24 @@
+@@ -1545,24 +_,24 @@
      }
  
      public static class StartPiece extends NetherFortressPieces.BridgeCrossing {

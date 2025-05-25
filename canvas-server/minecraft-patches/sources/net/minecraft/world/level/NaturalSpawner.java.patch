@@ -8,16 +8,16 @@
  import net.minecraft.tags.BiomeTags;
  import net.minecraft.tags.BlockTags;
  import net.minecraft.util.Mth;
-@@ -137,7 +_,7 @@
+@@ -131,7 +_,7 @@
              int limit = mobCategory.getMaxInstancesPerChunk();
-             SpawnCategory spawnCategory = CraftSpawnCategory.toBukkit(mobCategory);
-             if (CraftSpawnCategory.isValidForLimits(spawnCategory)) {
+             org.bukkit.entity.SpawnCategory spawnCategory = org.bukkit.craftbukkit.util.CraftSpawnCategory.toBukkit(mobCategory);
+             if (org.bukkit.craftbukkit.util.CraftSpawnCategory.isValidForLimits(spawnCategory)) {
 -                spawnThisTick = level.ticksPerSpawnCategory.getLong(spawnCategory) != 0 && worlddata.getGameTime() % level.ticksPerSpawnCategory.getLong(spawnCategory) == 0;
 +                spawnThisTick = level.ticksPerSpawnCategory.getLong(spawnCategory) != 0 && level.getRedstoneGameTime() % level.ticksPerSpawnCategory.getLong(spawnCategory) == 0; // Canvas - Threaded Regions
                  limit = level.getWorld().getSpawnLimit(spawnCategory);
              }
  
-@@ -179,8 +_,12 @@
+@@ -173,8 +_,12 @@
                      level.moonrise$getNearbyPlayers().getPlayers(chunk.getPos(), ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.TICK_VIEW_DISTANCE);
                  if (inRange != null) {
                      final net.minecraft.server.level.ServerPlayer[] backingSet = inRange.getRawDataUnchecked();

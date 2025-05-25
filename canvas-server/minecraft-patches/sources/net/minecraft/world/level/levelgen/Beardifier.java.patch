@@ -26,7 +26,7 @@
  
      public static Beardifier forStructuresInChunk(StructureManager structureManager, ChunkPos chunkPos) {
          int minBlockX = chunkPos.getMinBlockX();
-@@ -78,47 +_,41 @@
+@@ -77,47 +_,41 @@
  
      @Override
      public double compute(DensityFunction.FunctionContext context) {
@@ -99,7 +99,7 @@
      }
  
      @Override
-@@ -132,8 +_,14 @@
+@@ -131,8 +_,14 @@
      }
  
      private static double getBuryContribution(double x, double y, double z) {

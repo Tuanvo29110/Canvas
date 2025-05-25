@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/FireBlock.java
 +++ b/net/minecraft/world/level/block/FireBlock.java
-@@ -341,7 +_,11 @@
+@@ -320,7 +_,11 @@
      }
  
      private int getIgniteOdds(LevelReader level, BlockPos pos) {

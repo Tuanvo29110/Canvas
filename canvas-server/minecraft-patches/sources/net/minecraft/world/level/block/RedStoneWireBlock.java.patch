@@ -1,20 +1,21 @@
 --- a/net/minecraft/world/level/block/RedStoneWireBlock.java
 +++ b/net/minecraft/world/level/block/RedStoneWireBlock.java
-@@ -5,10 +_,12 @@
- import com.mojang.serialization.MapCodec;
- import java.util.Map;
+@@ -7,11 +_,13 @@
+ import java.util.Map.Entry;
+ import java.util.function.Function;
  import javax.annotation.Nullable;
 +import io.canvasmc.canvas.region.ServerRegions;
  import net.minecraft.Util;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
  import net.minecraft.core.particles.DustParticleOptions;
+ import net.minecraft.server.level.ServerLevel;
 +import net.minecraft.server.level.ServerLevel;
  import net.minecraft.util.ARGB;
  import net.minecraft.util.Mth;
  import net.minecraft.util.RandomSource;
-@@ -91,7 +_,7 @@
-     private static final float PARTICLE_DENSITY = 0.2F;
+@@ -65,7 +_,7 @@
+     private final Function<BlockState, VoxelShape> shapes;
      private final BlockState crossState;
      private final RedstoneWireEvaluator evaluator = new DefaultRedstoneWireEvaluator(this);
 -    public boolean shouldSignal = true;
@@ -22,7 +23,7 @@
  
      @Override
      public MapCodec<RedStoneWireBlock> codec() {
-@@ -293,6 +_,11 @@
+@@ -268,6 +_,11 @@
      // Paper start - Optimize redstone (Eigencraft)
      // The bulk of the new functionality is found in RedstoneWireTurbo.java
      io.papermc.paper.redstone.RedstoneWireTurbo turbo = new io.papermc.paper.redstone.RedstoneWireTurbo(this);
@@ -34,7 +35,7 @@
  
      /*
       * Modified version of pre-existing updateSurroundingRedstone, which is called from
-@@ -308,7 +_,7 @@
+@@ -283,7 +_,7 @@
              if (orientation != null) {
                  source = pos.relative(orientation.getFront().getOpposite());
              }
@@ -43,7 +44,7 @@
              return;
          }
          updatePowerStrength(worldIn, pos, state, orientation, blockAdded);
-@@ -336,7 +_,7 @@
+@@ -311,7 +_,7 @@
                  // [Space Walker] suppress shape updates and emit those manually to
                  // bypass the new neighbor update stack.
                  if (level.setBlock(pos, state, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS)) {
@@ -52,7 +53,7 @@
                  }
              }
          }
-@@ -353,9 +_,9 @@
+@@ -328,9 +_,9 @@
      }
  
      public int getBlockSignal(Level level, BlockPos pos) {
@@ -64,7 +65,7 @@
          return bestNeighborSignal;
      }
  
-@@ -450,12 +_,12 @@
+@@ -422,12 +_,12 @@
  
      @Override
      protected int getDirectSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
@@ -79,7 +80,7 @@
              int powerValue = blockState.getValue(POWER);
              if (powerValue == 0) {
                  return 0;
-@@ -487,7 +_,7 @@
+@@ -459,7 +_,7 @@
  
      @Override
      protected boolean isSignalSource(BlockState state) {

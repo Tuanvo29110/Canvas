@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/LivingEntity.java
 +++ b/net/minecraft/world/entity/LivingEntity.java
-@@ -11,6 +_,8 @@
+@@ -10,6 +_,8 @@
  import com.mojang.logging.LogUtils;
  import com.mojang.serialization.DataResult;
  import com.mojang.serialization.Dynamic;
@@ -9,41 +9,33 @@
  import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
  import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
  import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-@@ -23,6 +_,7 @@
- import java.util.Optional;
- import java.util.Set;
- import java.util.Map.Entry;
-+import java.util.concurrent.CopyOnWriteArrayList;
- import java.util.function.BiConsumer;
- import java.util.function.Function;
- import java.util.function.Predicate;
-@@ -213,7 +_,7 @@
+@@ -198,7 +_,7 @@
      };
      private final AttributeMap attributes;
      public CombatTracker combatTracker = new CombatTracker(this);
 -    public final Map<Holder<MobEffect>, MobEffectInstance> activeEffects = Maps.newHashMap();
 +    public final Map<Holder<MobEffect>, MobEffectInstance> activeEffects = Maps.newConcurrentMap(); // Canvas - concurrent
-     private final NonNullList<ItemStack> lastHandItemStacks = NonNullList.withSize(2, ItemStack.EMPTY);
-     private final NonNullList<ItemStack> lastArmorItemStacks = NonNullList.withSize(4, ItemStack.EMPTY);
-     private ItemStack lastBodyItemStack = ItemStack.EMPTY;
-@@ -293,7 +_,7 @@
-     protected float appliedScale = 1.0F;
+     private final Map<EquipmentSlot, ItemStack> lastEquipmentItems = Util.makeEnumMap(EquipmentSlot.class, slot -> ItemStack.EMPTY);
+     public boolean swinging;
+     private boolean discardFriction = false;
+@@ -264,7 +_,7 @@
+     protected final EntityEquipment equipment;
      // CraftBukkit start
      public int expToDrop;
--    public ArrayList<DefaultDrop> drops = new ArrayList<>(); // Paper - Restore vanilla drops behavior
-+    public List<DefaultDrop> drops = new CopyOnWriteArrayList<>(); // Paper - Restore vanilla drops behavior // Canvas - concurrent
+-    public List<DefaultDrop> drops = new java.util.ArrayList<>(); // Paper - Restore vanilla drops behavior
++    public List<DefaultDrop> drops = new java.util.concurrent.CopyOnWriteArrayList<>(); // Paper - Restore vanilla drops behavior // Canvas - concurrent
      public final org.bukkit.craftbukkit.attribute.CraftAttributeMap craftAttributes;
      public boolean collides = true;
-     public Set<UUID> collidableExemptions = new HashSet<>();
-@@ -559,6 +_,7 @@
+     public Set<UUID> collidableExemptions = new java.util.HashSet<>();
+@@ -507,6 +_,7 @@
              }
          }
  
 +        lagCompensation(); // Canvas
          this.tickEffects();
-         this.animStepO = this.animStep;
+         this.yHeadRotO = this.yHeadRot;
          this.yBodyRotO = this.yBodyRot;
-@@ -567,6 +_,17 @@
+@@ -514,6 +_,17 @@
          this.xRotO = this.getXRot();
          profilerFiller.pop();
      }
@@ -72,7 +64,7 @@
 -            .map(MobEffectInstance::getParticleOptions)
 -            .toList();
 +        // Canvas start - replace stream
-+        List<ParticleOptions> list = new ArrayList<>();
++        List<ParticleOptions> list = new java.util.ArrayList<>();
 +        for (MobEffectInstance mobEffectInstance : this.activeEffects
 +            .values()) {
 +            if (mobEffectInstance.isVisible()) {
@@ -84,7 +76,7 @@
          this.entityData.set(DATA_EFFECT_PARTICLES, list);
          this.entityData.set(DATA_EFFECT_AMBIENCE_ID, areAllEffectsAmbient(this.activeEffects.values()));
      }
-@@ -1557,7 +_,7 @@
+@@ -1555,7 +_,7 @@
              boolean flag2 = !flag; // CraftBukkit - Ensure to return false if damage is blocked
              if (flag2) {
                  this.lastDamageSource = damageSource;
@@ -93,7 +85,7 @@
  
                  for (MobEffectInstance mobEffectInstance : this.getActiveEffects()) {
                      mobEffectInstance.onMobHurt(level, this, damageSource, amount);
-@@ -1696,7 +_,7 @@
+@@ -1797,7 +_,7 @@
  
      @Nullable
      public DamageSource getLastDamageSource() {
@@ -102,7 +94,25 @@
              this.lastDamageSource = null;
          }
  
-@@ -2578,7 +_,7 @@
+@@ -1835,7 +_,9 @@
+         }
+     }
+ 
++    public boolean processingDeath = false; // Canvas - item entity spread
+     public void die(DamageSource damageSource) {
++        processingDeath = true; // Canvas - item entity spread
+         if (!this.isRemoved() && !this.dead) {
+             Entity entity = damageSource.getEntity();
+             LivingEntity killCredit = this.getKillCredit();
+@@ -1901,6 +_,7 @@
+             }
+             // Paper end
+         }
++        processingDeath = false; // Canvas
+     }
+ 
+     protected void createWitherRose(@Nullable LivingEntity entitySource) {
+@@ -2623,7 +_,7 @@
          }
  
          this.lastDamageSource = damageSource;
@@ -111,7 +121,7 @@
      }
  
      @Override
-@@ -2980,7 +_,7 @@
+@@ -3024,7 +_,7 @@
                  f2 *= 0.5F;
              }
  
@@ -120,15 +130,15 @@
                  f += (0.54600006F - f) * f2;
                  f1 += (this.getSpeed() - f1) * f2;
              }
-@@ -3694,6 +_,7 @@
-         if (!(this.level() instanceof ServerLevel serverLevel)) {
-             this.level().getEntities(EntityTypeTest.forClass(Player.class), this.getBoundingBox(), EntitySelector.pushableBy(this)).forEach(this::doPush);
-         } else {
-+            if (Config.INSTANCE.entities.onlyPlayersPushEntities && !(this instanceof ServerPlayer)) return; // Canvas - only players push entities
-             // Paper start - don't run getEntities if we're not going to use its result
-             if (!this.isPushable()) {
-                 return;
-@@ -3780,6 +_,11 @@
+@@ -3709,6 +_,7 @@
+     }
+ 
+     protected void pushEntities() {
++        if (Config.INSTANCE.entities.onlyPlayersPushEntities && !(this instanceof ServerPlayer)) return; // Canvas - only players push entities config
+         // Paper start - don't run getEntities if we're not going to use its result
+         if (!this.isPushable()) {
+             return;
+@@ -3796,6 +_,11 @@
      public void stopRiding() {
          // Paper start - Force entity dismount during teleportation
          this.stopRiding(false);
@@ -140,3 +150,22 @@
      }
  
      @Override
+@@ -4009,6 +_,18 @@
+                 );
+             }
+ 
++            // Canvas start - item entity spread
++            if (processingDeath) {
++                float halfedRandom = this.random.nextFloat() * 0.5F;
++                float piRandom = this.random.nextFloat() * (float) (Math.PI * 2);
++                double factor = Config.INSTANCE.entities.itemEntitySpreadFactor;
++                itemEntity.setDeltaMovement(
++                    (-Mth.sin(piRandom) * halfedRandom) * factor,
++                    0.2F * factor,
++                    (Mth.cos(piRandom) * halfedRandom) * factor
++                );
++            }
++            // Canvas end
+             return itemEntity;
+         }
+     }

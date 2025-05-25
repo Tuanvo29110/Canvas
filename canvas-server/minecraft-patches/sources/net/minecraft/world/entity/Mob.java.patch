@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/Mob.java
 +++ b/net/minecraft/world/entity/Mob.java
-@@ -145,6 +_,35 @@
+@@ -136,6 +_,35 @@
      private BlockPos restrictCenter = BlockPos.ZERO;
      private float restrictRadius = -1.0F;
      public boolean aware = true; // CraftBukkit
@@ -36,7 +36,7 @@
      public int ticksSinceLastInteraction; // Purpur - Entity lifespan
  
      protected Mob(EntityType<? extends Mob> entityType, Level level) {
-@@ -841,7 +_,7 @@
+@@ -707,7 +_,7 @@
          if (this.level().getDifficulty() == Difficulty.PEACEFUL && this.shouldDespawnInPeaceful()) {
              this.discard(EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
          } else if (!this.isPersistenceRequired() && !this.requiresCustomPersistence()) {
@@ -45,7 +45,7 @@
              if (nearestPlayer != null) {
                  // Paper start - Configurable despawn distances
                  final io.papermc.paper.configuration.WorldConfiguration.Entities.Spawning.DespawnRangePair despawnRangePair = this.level().paperConfig().entities.spawning.despawnRanges.get(this.getType().getCategory());
-@@ -869,6 +_,19 @@
+@@ -735,6 +_,19 @@
              this.noActionTime = 0;
          }
      }
@@ -65,7 +65,7 @@
  
      @Override
      protected final void serverAiStep() {
-@@ -1555,6 +_,7 @@
+@@ -1424,6 +_,7 @@
              // Paper end - Expand EntityUnleashEvent
          }
  

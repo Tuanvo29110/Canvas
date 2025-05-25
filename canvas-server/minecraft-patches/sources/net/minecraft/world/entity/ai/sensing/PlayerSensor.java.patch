@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/ai/sensing/PlayerSensor.java
 +++ b/net/minecraft/world/entity/ai/sensing/PlayerSensor.java
-@@ -22,7 +_,7 @@
+@@ -26,7 +_,7 @@
  
      @Override
      protected void doTick(ServerLevel level, LivingEntity entity) {

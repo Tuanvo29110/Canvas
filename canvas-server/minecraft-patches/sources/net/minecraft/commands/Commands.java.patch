@@ -17,15 +17,15 @@
  import net.minecraft.ChatFormatting;
  import net.minecraft.SharedConstants;
  import net.minecraft.Util;
-@@ -221,7 +_,7 @@
+@@ -222,7 +_,7 @@
              JfrCommand.register(this.dispatcher);
          }
  
 -        if (org.purpurmc.purpur.PurpurConfig.registerMinecraftDebugCommands || SharedConstants.IS_RUNNING_IN_IDE) { // Purpur - register minecraft debug commands
-+        if (org.purpurmc.purpur.PurpurConfig.registerMinecraftDebugCommands || SharedConstants.IS_RUNNING_IN_IDE && false) { // Purpur - register minecraft debug commands // Canvas - moved
-             if (!org.purpurmc.purpur.PurpurConfig.registerMinecraftDebugCommands) TestCommand.register(this.dispatcher); // Purpur - register minecraft debug commands
++        if ((org.purpurmc.purpur.PurpurConfig.registerMinecraftDebugCommands || SharedConstants.IS_RUNNING_IN_IDE) && false) { // Purpur - register minecraft debug commands // Canvas - moved
              RaidCommand.register(this.dispatcher, context);
              DebugPathCommand.register(this.dispatcher);
+             DebugMobSpawningCommand.register(this.dispatcher);
 @@ -299,6 +_,7 @@
          }
          // Paper end - Brigadier Command API
@@ -34,16 +34,16 @@
      }
  
      public static <S> ParseResults<S> mapSource(ParseResults<S> parseResults, UnaryOperator<S> mapper) {
-@@ -390,7 +_,7 @@
-                 Component.translatable("command.failed")
-                     .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, mutableComponent)))
+@@ -389,7 +_,7 @@
+             commandSourceStack.sendFailure(
+                 Component.translatable("command.failed").withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(mutableComponent)))
              );
 -            if (SharedConstants.IS_RUNNING_IN_IDE) {
 +            if (SharedConstants.IS_RUNNING_IN_IDE || CanvasBootstrap.RUNNING_IN_IDE) { // Canvas - ide
                  commandSourceStack.sendFailure(Component.literal(Util.describeError(var12)));
                  LOGGER.error("'/{}' threw an exception", command, var12);
              }
-@@ -480,7 +_,7 @@
+@@ -479,7 +_,7 @@
      }
  
      // Fixed pool, but with discard policy

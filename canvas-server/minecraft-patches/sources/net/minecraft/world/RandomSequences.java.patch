@@ -1,15 +1,15 @@
 --- a/net/minecraft/world/RandomSequences.java
 +++ b/net/minecraft/world/RandomSequences.java
-@@ -21,7 +_,7 @@
+@@ -24,7 +_,7 @@
      private int salt;
      private boolean includeWorldSeed = true;
      private boolean includeSequenceId = true;
 -    private final Map<ResourceLocation, RandomSequence> sequences = new Object2ObjectOpenHashMap<>();
-+    private final Map<ResourceLocation, RandomSequence> sequences = new java.util.concurrent.ConcurrentHashMap<>(); // Canvas - concurrent
++    private final Map<ResourceLocation, RandomSequence> sequences = it.unimi.dsi.fastutil.objects.Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>()); // Canvas - synchronized
  
-     public static SavedData.Factory<RandomSequences> factory(long seed) {
-         return new SavedData.Factory<>(
-@@ -120,61 +_,61 @@
+     public RandomSequences(long seed) {
+         this.worldSeed = seed;
+@@ -101,61 +_,61 @@
          @Override
          public RandomSource fork() {
              RandomSequences.this.setDirty();

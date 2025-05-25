@@ -9,9 +9,9 @@
 +import io.canvasmc.canvas.region.ServerRegions;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
- import net.minecraft.core.HolderGetter;
-@@ -43,6 +_,58 @@
-     private float progressO;
+ import net.minecraft.core.HolderLookup;
+@@ -47,6 +_,58 @@
+     private float progressO = 0.0F;
      private long lastTicked;
      private int deathTicks;
 +    // Canvas start
@@ -69,7 +69,7 @@
  
      public PistonMovingBlockEntity(BlockPos pos, BlockState blockState) {
          super(BlockEntityType.PISTON, pos, blockState);
-@@ -55,6 +_,16 @@
+@@ -59,6 +_,16 @@
          this.extending = extending;
          this.isSourcePiston = isSourcePiston;
      }
@@ -86,7 +86,7 @@
  
      @Override
      public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-@@ -150,8 +_,8 @@
+@@ -154,8 +_,8 @@
  
                                  entity.setDeltaMovement(d1, d2, d3);
                                  // Paper - EAR items stuck in slime pushed by a piston
@@ -97,7 +97,7 @@
                                  // Paper end
                                  break;
                              }
-@@ -292,7 +_,7 @@
+@@ -303,7 +_,7 @@
      }
  
      public static void tick(Level level, BlockPos pos, BlockState state, PistonMovingBlockEntity blockEntity) {
@@ -106,7 +106,7 @@
          blockEntity.progressO = blockEntity.progress;
          if (blockEntity.progressO >= 1.0F) {
              if (level.isClientSide && blockEntity.deathTicks < 5) {
-@@ -373,10 +_,34 @@
+@@ -385,10 +_,34 @@
              }
  
              float extendedProgress = this.getExtendedProgress(this.progress);

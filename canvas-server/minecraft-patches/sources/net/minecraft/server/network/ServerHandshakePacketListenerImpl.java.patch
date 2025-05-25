@@ -7,12 +7,12 @@
  import net.minecraft.SharedConstants;
  import net.minecraft.network.Connection;
  import net.minecraft.network.DisconnectionDetails;
-@@ -84,7 +_,7 @@
-                 InetAddress address = ((java.net.InetSocketAddress) this.connection.getRemoteAddress()).getAddress();
+@@ -80,7 +_,7 @@
+                 java.net.InetAddress address = socketAddress.getAddress();
  
                  synchronized (ServerHandshakePacketListenerImpl.throttleTracker) {
--                    if (ServerHandshakePacketListenerImpl.throttleTracker.containsKey(address) && !"127.0.0.1".equals(address.getHostAddress()) && currentTime - ServerHandshakePacketListenerImpl.throttleTracker.get(address) < connectionThrottle) {
-+                    if (!Config.INSTANCE.networking.disableConnectionThrottle && ServerHandshakePacketListenerImpl.throttleTracker.containsKey(address) && !"127.0.0.1".equals(address.getHostAddress()) && currentTime - ServerHandshakePacketListenerImpl.throttleTracker.get(address) < connectionThrottle) { // Canvas - allow disabling connection throttle
+-                    if (ServerHandshakePacketListenerImpl.throttleTracker.containsKey(address) && currentTime - ServerHandshakePacketListenerImpl.throttleTracker.get(address) < connectionThrottle) {
++                    if (!Config.INSTANCE.networking.disableConnectionThrottle && ServerHandshakePacketListenerImpl.throttleTracker.containsKey(address) && currentTime - ServerHandshakePacketListenerImpl.throttleTracker.get(address) < connectionThrottle) { // Canvas - allow disabling connection throttle
                          ServerHandshakePacketListenerImpl.throttleTracker.put(address, currentTime);
-                         Component chatmessage = io.papermc.paper.adventure.PaperAdventure.asVanilla(io.papermc.paper.configuration.GlobalConfiguration.get().messages.kick.connectionThrottle); // Paper - Configurable connection throttle kick message
+                         Component chatmessage = io.papermc.paper.adventure.PaperAdventure.asVanilla(io.papermc.paper.configuration.GlobalConfiguration.get().messages.kick.connectionThrottle);
                          this.connection.send(new ClientboundLoginDisconnectPacket(chatmessage));

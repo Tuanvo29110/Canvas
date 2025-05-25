@@ -1,9 +1,9 @@
 --- a/com/mojang/math/OctahedralGroup.java
 +++ b/com/mojang/math/OctahedralGroup.java
-@@ -112,6 +_,7 @@
-         this.transformation = new Matrix3f().scaling(invertX ? -1.0F : 1.0F, invertY ? -1.0F : 1.0F, invertZ ? -1.0F : 1.0F);
-         this.transformation.mul(permutation.transformation());
-         this.initializeRotationDirections(); // Paper - Avoid Lazy Initialization for Enum Fields
+@@ -138,6 +_,7 @@
+         Matrix3f matrix3f = new Matrix3f().scaling(invertX ? -1.0F : 1.0F, invertY ? -1.0F : 1.0F, invertZ ? -1.0F : 1.0F);
+         matrix3f.mul(permutation.transformation());
+         this.transformation = matrix3f;
 +        this.rotate(Direction.UP); // Canvas
      }
  

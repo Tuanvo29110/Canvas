@@ -17,7 +17,7 @@
  import java.util.function.BiFunction;
  import java.util.function.Consumer;
  import java.util.stream.Collectors;
-@@ -130,6 +_,7 @@
+@@ -139,6 +_,7 @@
  import net.minecraft.resources.ResourceKey;
  import net.minecraft.resources.ResourceLocation;
  import net.minecraft.server.MinecraftServer;
@@ -25,8 +25,8 @@
  import net.minecraft.server.level.ServerLevel;
  import net.minecraft.server.level.ServerPlayer;
  import net.minecraft.util.FutureChain;
-@@ -185,6 +_,8 @@
- import net.minecraft.world.level.block.entity.StructureBlockEntity;
+@@ -196,6 +_,8 @@
+ import net.minecraft.world.level.block.entity.TestInstanceBlockEntity;
  import net.minecraft.world.level.block.state.BlockBehaviour;
  import net.minecraft.world.level.block.state.BlockState;
 +import net.minecraft.world.level.chunk.ChunkAccess;
@@ -34,7 +34,7 @@
  import net.minecraft.world.phys.AABB;
  import net.minecraft.world.phys.BlockHitResult;
  import net.minecraft.world.phys.Vec3;
-@@ -294,8 +_,8 @@
+@@ -286,8 +_,8 @@
      // CraftBukkit start - add fields
      private int lastTick = MinecraftServer.currentTick;
      private int allowedPlayerTicks = 1;
@@ -45,7 +45,7 @@
      private int dropCount = 0;
  
      private boolean hasMoved = false;
-@@ -341,6 +_,7 @@
+@@ -334,6 +_,7 @@
              }
          );
      // Purpur end - AFK API
@@ -53,7 +53,7 @@
  
      @Override
      public void tick() {
-@@ -369,15 +_,18 @@
+@@ -362,15 +_,18 @@
          }
  
          this.lastVehicle = this.player.getRootVehicle();
@@ -78,10 +78,10 @@
 +            if (this.clientVehicleIsFloating && lastVehicle.getControllingPassenger() == this.player) {
 +                if (++this.aboveGroundVehicleTickCount > this.getMaximumFlyingTicks(lastVehicle)) {
 +        // Canvas end
-                     LOGGER.warn("{} was kicked for floating a vehicle too long!", this.player.getName().getString());
+                     // LOGGER.warn("{} was kicked for floating a vehicle too long!", this.player.getName().getString()); // Paper - Logging moved to net.minecraft.server.network.ServerCommonPacketListenerImpl.disconnect()
                      this.disconnect(io.papermc.paper.configuration.GlobalConfiguration.get().messages.kick.flyingVehicle, org.bukkit.event.player.PlayerKickEvent.Cause.FLYING_VEHICLE); // Paper - use configurable kick message & kick event cause
                      return;
-@@ -570,6 +_,12 @@
+@@ -562,6 +_,12 @@
                      !serverLevel.areChunksLoadedForMove(this.player.getBoundingBox().expandTowards(new Vec3(toX, toY, toZ).subtract(this.player.position()))) ||
                          !serverLevel.areChunksLoadedForMove(rootVehicle.getBoundingBox().expandTowards(new Vec3(toX, toY, toZ).subtract(rootVehicle.position())))
                  )) {
@@ -94,7 +94,7 @@
                      this.connection.send(ClientboundMoveVehiclePacket.fromEntity(rootVehicle));
                      return;
                  }
-@@ -733,8 +_,14 @@
+@@ -725,8 +_,14 @@
          PacketUtils.ensureRunningOnSameThread(packet, this, this.player.serverLevel());
          if (packet.getId() == this.awaitingTeleport) {
              if (this.awaitingPositionFromClient == null) {
@@ -109,7 +109,7 @@
                  return;
              }
  
-@@ -802,7 +_,12 @@
+@@ -795,7 +_,12 @@
      }
  
      // Paper start - AsyncTabCompleteEvent
@@ -123,7 +123,7 @@
          new com.google.common.util.concurrent.ThreadFactoryBuilder().setDaemon(true).setNameFormat("Async Tab Complete Thread - #%d").setUncaughtExceptionHandler(new net.minecraft.DefaultUncaughtExceptionHandlerWithName(MinecraftServer.LOGGER)).build());
      // Paper end - AsyncTabCompleteEvent
  
-@@ -810,7 +_,7 @@
+@@ -803,7 +_,7 @@
      public void handleCustomCommandSuggestions(ServerboundCommandSuggestionPacket packet) {
          // PacketUtils.ensureRunningOnSameThread(packet, this, this.player.serverLevel()); // Paper - AsyncTabCompleteEvent; run this async
          // CraftBukkit start
@@ -132,7 +132,7 @@
              this.disconnectAsync(Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM); // Paper - Kick event cause // Paper - add proper async disconnect
              return;
          }
-@@ -822,7 +_,7 @@
+@@ -815,7 +_,7 @@
          // Paper end - Don't suggest if tab-complete is disabled
          // Paper start
          final int index;
@@ -141,7 +141,7 @@
              this.disconnectAsync(Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM); // Paper - add proper async disconnect
              return;
          }
-@@ -882,6 +_,7 @@
+@@ -875,6 +_,7 @@
          ParseResults<CommandSourceStack> parseResults = this.server.getCommands().getDispatcher().parse(stringReader, this.player.createCommandSourceStack());
          // Paper start - Handle non-recoverable exceptions
          if (!parseResults.getExceptions().isEmpty()
@@ -149,7 +149,7 @@
              && parseResults.getExceptions().values().stream().anyMatch(e -> e instanceof io.papermc.paper.brigadier.TagParseCommandSyntaxException)) {
              this.disconnect(Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM);
              return;
-@@ -1238,11 +_,12 @@
+@@ -1292,11 +_,12 @@
          }
          // Paper end - Book size limits
          // CraftBukkit start
@@ -164,20 +164,20 @@
          // CraftBukkit end
          int slot = packet.slot();
          if (Inventory.isHotbarSlot(slot) || slot == 40) {
-@@ -1436,6 +_,12 @@
-                                     // Paper start - Add fail move event
-                                     io.papermc.paper.event.player.PlayerFailMoveEvent event = fireFailMove(io.papermc.paper.event.player.PlayerFailMoveEvent.FailReason.MOVED_INTO_UNLOADED_CHUNK,
-                                         toX, toY, toZ, toYaw, toPitch, false);
-+                                    // Canvas start - schedule for load if we fail
-+                                    this.player.serverLevel().moonrise$getChunkTaskScheduler().scheduleChunkLoad(
-+                                        this.player.chunkPosition().x, this.player.chunkPosition().z, ChunkStatus.FULL, true, ca.spottedleaf.concurrentutil.util.Priority.BLOCKING,
-+                                        null
-+                                    );
-+                                    // Canvas end
-                                     if (!event.isAllowed()) {
-                                         this.internalTeleport(PositionMoveRotation.of(this.player), Collections.emptySet());
-                                         return;
-@@ -1890,9 +_,10 @@
+@@ -1495,6 +_,12 @@
+                                         // Paper start - Add fail move event
+                                         io.papermc.paper.event.player.PlayerFailMoveEvent event = fireFailMove(io.papermc.paper.event.player.PlayerFailMoveEvent.FailReason.MOVED_INTO_UNLOADED_CHUNK,
+                                                 toX, toY, toZ, toYaw, toPitch, false);
++                                        // Canvas start - schedule for load if we fail
++                                        this.player.serverLevel().moonrise$getChunkTaskScheduler().scheduleChunkLoad(
++                                            this.player.chunkPosition().x, this.player.chunkPosition().z, ChunkStatus.FULL, true, ca.spottedleaf.concurrentutil.util.Priority.BLOCKING,
++                                            null
++                                        );
++                                        // Canvas end
+                                         if (!event.isAllowed()) {
+                                             this.internalTeleport(PositionMoveRotation.of(this.player), Collections.emptySet());
+                                             return;
+@@ -1952,9 +_,10 @@
                      if (!this.player.isSpectator()) {
                          // limit how quickly items can be dropped
                          // If the ticks aren't the same then the count starts from 0 and we update the lastDropTick.
@@ -190,7 +190,7 @@
                          } else {
                              // Else we increment the drop count and check the amount.
                              this.dropCount++;
-@@ -2422,7 +_,7 @@
+@@ -2479,7 +_,7 @@
              this.player.resetLastActionTime();
              // CraftBukkit start
              if (sync) {
@@ -199,7 +199,7 @@
              } else {
                  handler.run();
              }
-@@ -2600,6 +_,7 @@
+@@ -2585,6 +_,7 @@
          // this.chatSpamThrottler.increment();
          if (!this.chatSpamThrottler.isIncrementAndUnderThreshold()
              // CraftBukkit end
@@ -207,7 +207,7 @@
              && !this.server.getPlayerList().isOp(this.player.getGameProfile())
              && !this.server.isSingleplayerOwner(this.player.getGameProfile())) {
              this.disconnectAsync(Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM); // Paper - kick event cause & add proper async disconnect
-@@ -3378,7 +_,7 @@
+@@ -3364,7 +_,7 @@
      public void handlePlaceRecipe(ServerboundPlaceRecipePacket packet) {
          // Paper start - auto recipe limit
          if (!org.bukkit.Bukkit.isPrimaryThread()) {

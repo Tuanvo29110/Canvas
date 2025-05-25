@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/HoneyBlock.java
 +++ b/net/minecraft/world/level/block/HoneyBlock.java
-@@ -94,7 +_,7 @@
+@@ -95,7 +_,7 @@
      }
  
      private void maybeDoSlideAchievement(Entity entity, BlockPos pos) {

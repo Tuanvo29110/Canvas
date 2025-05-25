@@ -25,16 +25,18 @@
          return jigsaws;
      }
  
-@@ -191,4 +_,12 @@
-     public String toString() {
+@@ -192,6 +_,14 @@
          return "Single[" + this.template + "]";
      }
+ 
 +    // Canvas start - StructureLayoutOptimizer
-+
 +    private void structureLayoutOptimizer$fasterJigsawListShuffling1(List<StructureTemplate.JigsawBlockInfo> list, RandomSource randomSource) {
 +        GeneralUtils.shuffleAndPrioritize(list, randomSource);
 +    }
 +
 +    private void structureLayoutOptimizer$fasterJigsawListShuffling2(List<StructureTemplate.JigsawBlockInfo> structureBlockInfos) {}
++
 +    // Canvas end
- }
+     @VisibleForTesting
+     public ResourceLocation getTemplateLocation() {
+         return this.template.orThrow();

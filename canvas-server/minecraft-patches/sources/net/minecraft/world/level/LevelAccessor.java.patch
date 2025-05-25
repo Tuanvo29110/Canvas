@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/LevelAccessor.java
 +++ b/net/minecraft/world/level/LevelAccessor.java
-@@ -30,17 +_,27 @@
+@@ -29,17 +_,27 @@
      default long dayTime() {
          return this.getLevelData().getDayTime();
      }

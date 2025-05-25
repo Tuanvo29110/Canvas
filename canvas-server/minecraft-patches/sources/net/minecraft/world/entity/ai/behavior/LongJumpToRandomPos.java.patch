@@ -15,10 +15,10 @@
  import net.minecraft.sounds.SoundSource;
  import net.minecraft.util.Mth;
 +import net.minecraft.util.RandomSource;
- import net.minecraft.util.random.WeightedEntry;
  import net.minecraft.util.random.WeightedRandom;
  import net.minecraft.util.valueproviders.UniformInt;
-@@ -120,6 +_,12 @@
+ import net.minecraft.world.entity.Mob;
+@@ -119,6 +_,12 @@
          int x = blockPos.getX();
          int y = blockPos.getY();
          int z = blockPos.getZ();
@@ -31,30 +31,29 @@
          this.jumpCandidates = BlockPos.betweenClosedStream(
                  x - this.maxLongJumpWidth,
                  y - this.maxLongJumpHeight,
-@@ -175,11 +_,27 @@
-         }
+@@ -175,12 +_,26 @@
      }
  
-+    // Canvas start - optimize impl
      protected Optional<LongJumpToRandomPos.PossibleJump> getJumpCandidate(ServerLevel level) {
--        Optional<LongJumpToRandomPos.PossibleJump> randomItem = WeightedRandom.getRandomItem(level.random, this.jumpCandidates);
+-        Optional<LongJumpToRandomPos.PossibleJump> randomItem = WeightedRandom.getRandomItem(
+-            level.random, this.jumpCandidates, LongJumpToRandomPos.PossibleJump::weight
+-        );
 -        randomItem.ifPresent(this.jumpCandidates::remove);
--        return randomItem;
--    }
-+        Optional<LongJumpToRandomPos.PossibleJump> optional = getRandomFast(level.random, this.jumpCandidates);
-+        skipRemoveIfAlreadyRemoved(optional, this.jumpCandidates::remove);
-+        return optional;
-+    }
++    // Canvas start - optimize impl
++        Optional<LongJumpToRandomPos.PossibleJump> randomItem = getRandomFast(level.random, this.jumpCandidates, LongJumpToRandomPos.PossibleJump::weight);
++        skipRemoveIfAlreadyRemoved(randomItem, this.jumpCandidates::remove);
+         return randomItem;
+     }
 +
-+    private Optional<LongJumpToRandomPos.PossibleJump> getRandomFast(RandomSource random, List<LongJumpToRandomPos.PossibleJump> pool) {
++    private Optional<LongJumpToRandomPos.PossibleJump> getRandomFast(RandomSource random, List<LongJumpToRandomPos.PossibleJump> pool, java.util.function.ToIntFunction<LongJumpToRandomPos.PossibleJump> toIntFunction) {
 +        if (pool instanceof LongJumpChoiceList longJumpChoiceList) {
 +            return Optional.ofNullable(longJumpChoiceList.removeRandomWeightedByDistanceSq(random));
 +        } else {
-+            return WeightedRandom.getRandomItem(random, pool);
++            return WeightedRandom.getRandomItem(random, pool, toIntFunction);
 +        }
 +    }
 +
-+    private void skipRemoveIfAlreadyRemoved(Optional<LongJumpToRandomPos.PossibleJump> result, Consumer<? super PossibleJump> removeAction) {
++    private void skipRemoveIfAlreadyRemoved(Optional<LongJumpToRandomPos.PossibleJump> result, Consumer<? super LongJumpToRandomPos.PossibleJump> removeAction) {
 +        if (!(this.jumpCandidates instanceof LongJumpChoiceList)) {
 +            result.ifPresent(removeAction);
 +        }

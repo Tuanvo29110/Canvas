@@ -21,7 +21,7 @@
              BlockPos target = path.getTarget();
              if (target != null) {
                  double d = this.distanceToSqr(target.getX(), target.getY(), target.getZ());
-@@ -401,6 +_,7 @@
+@@ -404,6 +_,7 @@
              this.drowned.setSearchingForLand(false);
              this.drowned.navigation = this.drowned.groundNavigation;
              super.start();

@@ -188,7 +188,7 @@
          }
      }
  
-@@ -374,11 +_,13 @@
+@@ -383,11 +_,13 @@
                  .computeIfAbsent(activity, activity1 -> Sets.newLinkedHashSet())
                  .add((BehaviorControl<? super E>)pair.getSecond());
          }
@@ -202,7 +202,7 @@
      }
  
      public boolean isActive(Activity activity) {
-@@ -395,6 +_,7 @@
+@@ -404,6 +_,7 @@
              }
          }
  
@@ -210,7 +210,7 @@
          return brain;
      }
  
-@@ -429,22 +_,24 @@
+@@ -438,22 +_,24 @@
  
          for (BehaviorControl<? super E> behaviorControl : this.getRunningBehaviors()) {
              behaviorControl.doStop(level, owner, gameTime);
@@ -246,7 +246,7 @@
              }
          }
      }
-@@ -454,6 +_,11 @@
+@@ -463,6 +_,11 @@
  
          for (BehaviorControl<? super E> behaviorControl : this.getRunningBehaviors()) {
              behaviorControl.tickOrStop(level, entity, gameTime);

@@ -12,14 +12,14 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
  import net.minecraft.nbt.CompoundTag;
-@@ -23,29 +_,45 @@
+@@ -23,29 +_,44 @@
  public class DesertPyramidPiece extends ScatteredFeaturePiece {
      public static final int WIDTH = 21;
      public static final int DEPTH = 21;
 -    private final boolean[] hasPlacedChest = new boolean[4];
 -    private final List<BlockPos> potentialSuspiciousSandWorldPositions = new ArrayList<>();
-+    private final AtomicReferenceArray<Boolean> hasPlacedChestAtomic = new AtomicReferenceArray<>(new Boolean[4]); // Canvas
-+    private final Set<BlockPos> potentialSuspiciousSandWorldPositions = Sets.newConcurrentHashSet(); // Canvas
++    private final AtomicReferenceArray<Boolean> hasPlacedChestAtomic = new AtomicReferenceArray<>(new Boolean[4]); // Canvas - atomic
++    private final Set<BlockPos> potentialSuspiciousSandWorldPositions = Sets.newConcurrentHashSet(); // Canvas - concurrent
      private BlockPos randomCollapsedRoofPos = BlockPos.ZERO;
 +    // Canvas start
 +    private void onInit() {
@@ -28,7 +28,6 @@
 +                this.hasPlacedChestAtomic.set(i, false);
 +            }
 +        }
-+
 +    }
 +    // Canvas end
  
@@ -39,15 +38,15 @@
  
      public DesertPyramidPiece(CompoundTag tag) {
          super(StructurePieceType.DESERT_PYRAMID_PIECE, tag);
--        this.hasPlacedChest[0] = tag.getBoolean("hasPlacedChest0");
--        this.hasPlacedChest[1] = tag.getBoolean("hasPlacedChest1");
--        this.hasPlacedChest[2] = tag.getBoolean("hasPlacedChest2");
--        this.hasPlacedChest[3] = tag.getBoolean("hasPlacedChest3");
+-        this.hasPlacedChest[0] = tag.getBooleanOr("hasPlacedChest0", false);
+-        this.hasPlacedChest[1] = tag.getBooleanOr("hasPlacedChest1", false);
+-        this.hasPlacedChest[2] = tag.getBooleanOr("hasPlacedChest2", false);
+-        this.hasPlacedChest[3] = tag.getBooleanOr("hasPlacedChest3", false);
 +        // Canvas start
-+        this.hasPlacedChestAtomic.set(0, tag.getBoolean("hasPlacedChest0"));
-+        this.hasPlacedChestAtomic.set(1, tag.getBoolean("hasPlacedChest1"));
-+        this.hasPlacedChestAtomic.set(2, tag.getBoolean("hasPlacedChest2"));
-+        this.hasPlacedChestAtomic.set(3, tag.getBoolean("hasPlacedChest3"));
++        this.hasPlacedChestAtomic.set(0, tag.getBooleanOr("hasPlacedChest0", false));
++        this.hasPlacedChestAtomic.set(1, tag.getBooleanOr("hasPlacedChest1", false));
++        this.hasPlacedChestAtomic.set(2, tag.getBooleanOr("hasPlacedChest2", false));
++        this.hasPlacedChestAtomic.set(3, tag.getBooleanOr("hasPlacedChest3", false));
 +        onInit();
 +        // Canvas end
      }

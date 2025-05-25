@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/GameRules.java
 +++ b/net/minecraft/world/level/GameRules.java
-@@ -19,6 +_,9 @@
+@@ -21,6 +_,9 @@
  import java.util.function.Supplier;
  import java.util.stream.Stream;
  import javax.annotation.Nullable;
@@ -10,7 +10,7 @@
  import net.minecraft.commands.CommandSourceStack;
  import net.minecraft.commands.Commands;
  import net.minecraft.nbt.CompoundTag;
-@@ -320,8 +_,32 @@
+@@ -355,8 +_,32 @@
      }
  
      public int getInt(GameRules.Key<GameRules.IntegerValue> key) {

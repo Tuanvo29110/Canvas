@@ -7,7 +7,7 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.nbt.CompoundTag;
  import net.minecraft.world.entity.EntitySelector;
-@@ -145,7 +_,7 @@
+@@ -146,7 +_,7 @@
  
      // Paper start
      public void immunize() {

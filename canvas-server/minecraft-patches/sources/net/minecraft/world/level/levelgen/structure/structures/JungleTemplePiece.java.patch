@@ -26,15 +26,15 @@
  
      public JungleTemplePiece(CompoundTag tag) {
          super(StructurePieceType.JUNGLE_PYRAMID_PIECE, tag);
--        this.placedMainChest = tag.getBoolean("placedMainChest");
--        this.placedHiddenChest = tag.getBoolean("placedHiddenChest");
--        this.placedTrap1 = tag.getBoolean("placedTrap1");
--        this.placedTrap2 = tag.getBoolean("placedTrap2");
+-        this.placedMainChest = tag.getBooleanOr("placedMainChest", false);
+-        this.placedHiddenChest = tag.getBooleanOr("placedHiddenChest", false);
+-        this.placedTrap1 = tag.getBooleanOr("placedTrap1", false);
+-        this.placedTrap2 = tag.getBooleanOr("placedTrap2", false);
 +        // Canvas start
-+        this.placedMainChest.set(tag.getBoolean("placedMainChest"));
-+        this.placedHiddenChest.set(tag.getBoolean("placedHiddenChest"));
-+        this.placedTrap1.set(tag.getBoolean("placedTrap1"));
-+        this.placedTrap2.set(tag.getBoolean("placedTrap2"));
++        this.placedMainChest.set(tag.getBooleanOr("placedMainChest", false));
++        this.placedHiddenChest.set(tag.getBooleanOr("placedHiddenChest", false));
++        this.placedTrap1.set(tag.getBooleanOr("placedTrap1", false));
++        this.placedTrap2.set(tag.getBooleanOr("placedTrap2", false));
 +        // Canvas end
      }
  
@@ -54,7 +54,7 @@
      }
  
      @Override
-@@ -242,8 +_,10 @@
+@@ -236,8 +_,10 @@
                  box
              );
              this.placeBlock(level, Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 3, -3, 1, box);
@@ -66,8 +66,8 @@
 +            // Canvas end
              }
  
-             this.placeBlock(level, Blocks.VINE.defaultBlockState().setValue(VineBlock.SOUTH, Boolean.valueOf(true)), 3, -2, 2, box);
-@@ -340,14 +_,18 @@
+             this.placeBlock(level, Blocks.VINE.defaultBlockState().setValue(VineBlock.SOUTH, true), 3, -2, 2, box);
+@@ -328,14 +_,18 @@
              );
              this.placeBlock(level, Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 9, -3, 4, box);
              this.placeBlock(level, blockState4, 9, -2, 4, box);
@@ -79,8 +79,8 @@
 +            // Canvas end
              }
  
-             this.placeBlock(level, Blocks.VINE.defaultBlockState().setValue(VineBlock.EAST, Boolean.valueOf(true)), 8, -1, 3, box);
-             this.placeBlock(level, Blocks.VINE.defaultBlockState().setValue(VineBlock.EAST, Boolean.valueOf(true)), 8, -2, 3, box);
+             this.placeBlock(level, Blocks.VINE.defaultBlockState().setValue(VineBlock.EAST, true), 8, -1, 3, box);
+             this.placeBlock(level, Blocks.VINE.defaultBlockState().setValue(VineBlock.EAST, true), 8, -2, 3, box);
 -            if (!this.placedMainChest) {
 -                this.placedMainChest = this.createChest(level, box, random, 8, -3, 3, BuiltInLootTables.JUNGLE_TEMPLE);
 +            // Canvas start
@@ -90,7 +90,7 @@
              }
  
              this.placeBlock(level, Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 9, -3, 2, box);
-@@ -390,8 +_,10 @@
+@@ -378,8 +_,10 @@
              this.placeBlock(level, Blocks.STICKY_PISTON.defaultBlockState().setValue(PistonBaseBlock.FACING, Direction.WEST), 10, -2, 8, box);
              this.placeBlock(level, Blocks.STICKY_PISTON.defaultBlockState().setValue(PistonBaseBlock.FACING, Direction.WEST), 10, -1, 8, box);
              this.placeBlock(level, Blocks.REPEATER.defaultBlockState().setValue(RepeaterBlock.FACING, Direction.NORTH), 10, -2, 10, box);

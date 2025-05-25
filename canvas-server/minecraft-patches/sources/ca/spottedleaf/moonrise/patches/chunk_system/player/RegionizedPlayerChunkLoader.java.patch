@@ -1,21 +1,17 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/player/RegionizedPlayerChunkLoader.java
-@@ -16,6 +_,14 @@
- import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler;
+@@ -17,6 +_,10 @@
+ import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
  import ca.spottedleaf.moonrise.patches.chunk_system.util.ParallelSearchRadiusIteration;
  import com.google.gson.JsonObject;
 +import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.region.ServerRegions;
-+import io.canvasmc.canvas.scheduler.TickScheduler;
 +import io.canvasmc.canvas.server.level.distance.command.DistanceUtils;
-+import io.canvasmc.canvas.util.fastutil.Long2ByteConcurrentHashMap;
 +import io.netty.util.internal.ConcurrentSet;
-+import it.unimi.dsi.fastutil.longs.Long2ByteMap;
-+import it.unimi.dsi.fastutil.longs.Long2ByteMaps;
  import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
  import it.unimi.dsi.fastutil.longs.LongArrayList;
  import it.unimi.dsi.fastutil.longs.LongComparator;
-@@ -39,6 +_,7 @@
+@@ -40,6 +_,7 @@
  import net.minecraft.world.level.levelgen.BelowZeroRetrogen;
  import java.lang.invoke.VarHandle;
  import java.util.ArrayDeque;
@@ -23,7 +19,7 @@
  import java.util.concurrent.TimeUnit;
  import java.util.concurrent.atomic.AtomicLong;
  import java.util.function.Function;
-@@ -189,13 +_,25 @@
+@@ -187,13 +_,25 @@
          }
  
          if (((ChunkSystemServerPlayer)player).moonrise$getChunkLoader() != null) {
@@ -51,7 +47,7 @@
      }
  
      public void updatePlayer(final ServerPlayer player) {
-@@ -203,7 +_,7 @@
+@@ -201,7 +_,7 @@
          if (loader != null) {
              loader.update();
              // update view distances for nearby players
@@ -60,7 +56,7 @@
          }
      }
  
-@@ -304,9 +_,9 @@
+@@ -302,9 +_,9 @@
      public void tick() {
          TickThread.ensureTickThread("Cannot tick player chunk loader async");
          long currTime = System.nanoTime();
@@ -72,7 +68,7 @@
                  // not our problem anymore
                  continue;
              }
-@@ -325,6 +_,7 @@
+@@ -323,6 +_,7 @@
  
          private final ServerPlayer player;
          private final ServerLevel world;
@@ -80,7 +76,7 @@
  
          private int lastChunkX = Integer.MIN_VALUE;
          private int lastChunkZ = Integer.MIN_VALUE;
-@@ -341,8 +_,8 @@
+@@ -339,8 +_,8 @@
  
          private boolean canGenerateChunks = true;
  
@@ -91,7 +87,7 @@
  
          private static final byte CHUNK_TICKET_STAGE_NONE           = 0;
          private static final byte CHUNK_TICKET_STAGE_LOADING        = 1;
-@@ -380,17 +_,28 @@
+@@ -378,17 +_,28 @@
              final int centerX = PlayerChunkLoaderData.this.lastChunkX;
              final int centerZ = PlayerChunkLoaderData.this.lastChunkZ;
  
@@ -126,7 +122,7 @@
  
          private volatile boolean removed;
  
-@@ -411,7 +_,7 @@
+@@ -409,7 +_,7 @@
              this.delayedTicketOps.addLast(op);
          }
  
@@ -135,7 +131,7 @@
              if (this.sentChunks.add(CoordinateUtils.getChunkKey(chunkX, chunkZ))) {
                  ((ChunkSystemChunkHolder)((ChunkSystemServerLevel)this.world).moonrise$getChunkTaskScheduler().chunkHolderManager
                          .getChunkHolder(chunkX, chunkZ).vanillaChunkHolder).moonrise$addReceivedChunk(this.player);
-@@ -425,7 +_,7 @@
+@@ -423,7 +_,7 @@
              throw new IllegalStateException();
          }
  
@@ -144,7 +140,7 @@
              if (!this.sentChunks.remove(CoordinateUtils.getChunkKey(chunkX, chunkZ))) {
                  return;
              }
-@@ -540,12 +_,12 @@
+@@ -538,12 +_,12 @@
              );
          }
  
@@ -159,7 +155,7 @@
              this.lastSentSimulationDistance = distance;
              return new ClientboundSetSimulationDistancePacket(distance);
          }
-@@ -679,7 +_,7 @@
+@@ -677,7 +_,7 @@
  
              // try to push more chunk loads
              final long maxLoads = Math.max(0L, Math.min(MAX_RATE, Math.min(this.loadQueue.size(), this.getMaxChunkLoads())));
@@ -168,7 +164,7 @@
              if (maxLoadsThisTick > 0) {
                  final LongArrayList chunks = new LongArrayList(maxLoadsThisTick);
                  for (int i = 0; i < maxLoadsThisTick; ++i) {
-@@ -756,7 +_,7 @@
+@@ -753,7 +_,7 @@
              // try to push more chunk generations
              final long maxGens = Math.max(0L, Math.min(MAX_RATE, Math.min(this.genQueue.size(), this.getMaxChunkGenerates())));
              // preview the allocations, as we may not actually utilise all of them
@@ -177,7 +173,7 @@
              long ratedGensThisTick = 0L;
              while (!this.genQueue.isEmpty()) {
                  final long chunkKey = this.genQueue.firstLong();
-@@ -818,7 +_,7 @@
+@@ -815,7 +_,7 @@
  
              // try to pull sending chunks
              final long maxSends = Math.max(0L, Math.min(MAX_RATE, Integer.MAX_VALUE)); // note: no logic to track concurrent sends
@@ -186,7 +182,7 @@
              // we do not return sends that we took from the allocation back because we want to limit the max send rate, not target it
              for (int i = 0; i < maxSendsThisTick; ++i) {
                  final long pendingSend = this.sendQueue.firstLong();
-@@ -852,6 +_,7 @@
+@@ -849,6 +_,7 @@
          }
  
          void add() {
@@ -194,7 +190,7 @@
              TickThread.ensureTickThread(this.player, "Cannot add player asynchronously");
              if (this.removed) {
                  throw new IllegalStateException("Adding removed player chunk loader");
-@@ -891,6 +_,7 @@
+@@ -888,6 +_,7 @@
  
              // now we can update
              this.update();
@@ -202,7 +198,7 @@
          }
  
          private boolean isLoadedChunkGeneratable(final int chunkX, final int chunkZ) {
-@@ -1059,6 +_,7 @@
+@@ -1056,6 +_,7 @@
          }
  
          void remove() {
@@ -210,7 +206,7 @@
              TickThread.ensureTickThread(this.player, "Cannot add player asynchronously");
              if (this.removed) {
                  throw new IllegalStateException("Removing removed player chunk loader");
-@@ -1086,7 +_,7 @@
+@@ -1083,7 +_,7 @@
          }
  
          public LongOpenHashSet getSentChunksRaw() {

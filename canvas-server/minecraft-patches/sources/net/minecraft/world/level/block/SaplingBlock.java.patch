@@ -1,7 +1,7 @@
 --- a/net/minecraft/world/level/block/SaplingBlock.java
 +++ b/net/minecraft/world/level/block/SaplingBlock.java
-@@ -56,18 +_,18 @@
-             level.setBlock(pos, state.cycle(STAGE), 4);
+@@ -55,18 +_,18 @@
+             level.setBlock(pos, state.cycle(STAGE), 260);
          } else {
              // CraftBukkit start
 -            if (level.captureTreeGeneration) {

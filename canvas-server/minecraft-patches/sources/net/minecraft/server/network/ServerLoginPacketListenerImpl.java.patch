@@ -13,7 +13,7 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.DefaultUncaughtExceptionHandler;
-@@ -55,7 +_,12 @@
+@@ -54,7 +_,12 @@
      // CraftBukkit end
      private static final AtomicInteger UNIQUE_THREAD_ID = new AtomicInteger(0);
      static final Logger LOGGER = LogUtils.getLogger();
@@ -27,12 +27,12 @@
      private static final int MAX_TICKS_BEFORE_LOGIN = 600;
      private final byte[] challenge;
      final MinecraftServer server;
-@@ -460,7 +_,7 @@
+@@ -459,7 +_,7 @@
      @Override
      public void handleCookieResponse(ServerboundCookieResponsePacket packet) {
          // CraftBukkit start
--        PacketUtils.ensureRunningOnSameThread(packet, this, this.server);
-+        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.serverLevel()); // Canvas
+-        net.minecraft.network.protocol.PacketUtils.ensureRunningOnSameThread(packet, this, this.server);
++        net.minecraft.network.protocol.PacketUtils.ensureRunningOnSameThread(packet, this, this.player.serverLevel()); // Canvas
          if (this.player != null && this.player.getBukkitEntity().handleCookieResponse(packet)) {
              return;
          }

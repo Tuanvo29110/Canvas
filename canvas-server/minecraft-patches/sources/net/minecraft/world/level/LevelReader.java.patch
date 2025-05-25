@@ -25,7 +25,7 @@
  import net.minecraft.world.level.chunk.status.ChunkStatus;
  import net.minecraft.world.level.dimension.DimensionType;
  import net.minecraft.world.level.levelgen.Heightmap;
-@@ -70,10 +_,26 @@
+@@ -74,10 +_,26 @@
  
      @Override
      default Holder<Biome> getNoiseBiome(int x, int y, int z) {

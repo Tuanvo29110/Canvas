@@ -8,7 +8,7 @@
  import net.minecraft.SharedConstants;
  import net.minecraft.SuppressForbidden;
  import net.minecraft.commands.Commands;
-@@ -187,7 +_,7 @@
+@@ -192,7 +_,7 @@
  
      public static void validate() {
          checkBootstrapCalled(() -> "validate");

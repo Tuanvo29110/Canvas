@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/ai/attributes/AttributeMap.java
 +++ b/net/minecraft/world/entity/ai/attributes/AttributeMap.java
-@@ -7,8 +_,10 @@
+@@ -6,17 +_,19 @@
  import java.util.Collection;
  import java.util.Map;
  import java.util.Set;
@@ -8,13 +8,12 @@
  import java.util.stream.Collectors;
  import javax.annotation.Nullable;
 +import it.unimi.dsi.fastutil.objects.ObjectSets;
- import net.minecraft.Util;
  import net.minecraft.core.Holder;
- import net.minecraft.core.registries.BuiltInRegistries;
-@@ -19,9 +_,9 @@
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.nbt.ListTag;
+ import net.minecraft.resources.ResourceLocation;
  
  public class AttributeMap {
-     private static final Logger LOGGER = LogUtils.getLogger();
 -    private final Map<Holder<Attribute>, AttributeInstance> attributes = new Object2ObjectOpenHashMap<>();
 -    private final Set<AttributeInstance> attributesToSync = new ObjectOpenHashSet<>();
 -    private final Set<AttributeInstance> attributesToUpdate = new ObjectOpenHashSet<>();

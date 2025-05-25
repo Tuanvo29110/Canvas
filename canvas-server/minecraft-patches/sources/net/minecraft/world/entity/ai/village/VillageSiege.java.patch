@@ -8,7 +8,7 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.server.level.ServerLevel;
  import net.minecraft.tags.BiomeTags;
-@@ -18,68 +_,78 @@
+@@ -18,62 +_,72 @@
  
  public class VillageSiege implements CustomSpawner {
      private static final Logger LOGGER = LogUtils.getLogger();
@@ -23,7 +23,7 @@
 +    private int spawnZ; */ // Canvas - Threaded Regions
  
      @Override
-     public int tick(ServerLevel level, boolean spawnHostiles, boolean spawnPassives) {
+     public void tick(ServerLevel level, boolean spawnEnemies, boolean spawnFriendlies) {
 +        ServerRegions.WorldTickData worldData = ServerRegions.getTickData(level); // Canvas - Threaded Regions
 +        // Canvas start - Threaded Regions
 +        // check if the spawn pos is no longer owned by this region
@@ -33,21 +33,19 @@
 +            worldData.villageSiegeState = new ServerRegions.WorldTickData.VillageSiegeState();
 +        }
 +        // Canvas end
-         if (!level.isDay() && spawnHostiles) {
+         if (!level.isBrightOutside() && spawnEnemies) {
              float timeOfDay = level.getTimeOfDay(0.0F);
              if (timeOfDay == 0.5) {
 -                this.siegeState = level.random.nextInt(10) == 0 ? VillageSiege.State.SIEGE_TONIGHT : VillageSiege.State.SIEGE_DONE;
 +                worldData.villageSiegeState.siegeState = level.random.nextInt(10) == 0 ? VillageSiege.State.SIEGE_TONIGHT : VillageSiege.State.SIEGE_DONE; // Canvas - Threaded Regions
              }
  
--            if (this.siegeState == VillageSiege.State.SIEGE_DONE) {
-+            if (worldData.villageSiegeState.siegeState == VillageSiege.State.SIEGE_DONE) { // Canvas - Threaded Regions
-                 return 0;
-             } else {
+-            if (this.siegeState != VillageSiege.State.SIEGE_DONE) {
 -                if (!this.hasSetupSiege) {
++            if (worldData.villageSiegeState.siegeState != VillageSiege.State.SIEGE_DONE) { // Canvas - Threaded Regions
 +                if (!worldData.villageSiegeState.hasSetupSiege) { // Canvas - Threaded Regions
                      if (!this.tryToSetupSiege(level)) {
-                         return 0;
+                         return;
                      }
  
 -                    this.hasSetupSiege = true;
@@ -58,7 +56,6 @@
 -                    this.nextSpawnTime--;
 +                if (worldData.villageSiegeState.nextSpawnTime > 0) { // Canvas - Threaded Regions
 +                    worldData.villageSiegeState.nextSpawnTime--; // Canvas - Threaded Regions
-                     return 0;
                  } else {
 -                    this.nextSpawnTime = 2;
 -                    if (this.zombiesToSpawn > 0) {
@@ -71,8 +68,6 @@
 -                        this.siegeState = VillageSiege.State.SIEGE_DONE;
 +                        worldData.villageSiegeState.siegeState = VillageSiege.State.SIEGE_DONE; // Canvas - Threaded Regions
                      }
- 
-                     return 1;
                  }
              }
          } else {
@@ -80,7 +75,6 @@
 -            this.hasSetupSiege = false;
 +            worldData.villageSiegeState.siegeState = VillageSiege.State.SIEGE_DONE; // Canvas - Threaded Regions
 +            worldData.villageSiegeState.hasSetupSiege = false; // Canvas - Threaded Regions
-             return 0;
          }
      }
  
@@ -108,7 +102,7 @@
                              break;
                          }
                      }
-@@ -93,11 +_,13 @@
+@@ -87,11 +_,13 @@
      }
  
      private void trySpawn(ServerLevel level) {
@@ -119,20 +113,20 @@
              Zombie zombie;
              try {
                  zombie = new Zombie(level);
-+                zombie.moveTo(vec3.x, vec3.y, vec3.z, level.random.nextFloat() * 360.0F, 0.0F); // Canvas - from bellow
++                zombie.snapTo(vec3.x, vec3.y, vec3.z, level.random.nextFloat() * 360.0F, 0.0F); // Canvas - from bellow
                  zombie.finalizeSpawn(level, level.getCurrentDifficultyAt(zombie.blockPosition()), EntitySpawnReason.EVENT, null);
              } catch (Exception var5) {
                  LOGGER.warn("Failed to create zombie for village siege at {}", vec3, var5);
-@@ -105,7 +_,7 @@
+@@ -99,7 +_,7 @@
                  return;
              }
  
--            zombie.moveTo(vec3.x, vec3.y, vec3.z, level.random.nextFloat() * 360.0F, 0.0F);
-+            // zombie.moveTo(vec3.x, vec3.y, vec3.z, level.random.nextFloat() * 360.0F, 0.0F); // Canvas - move up
+-            zombie.snapTo(vec3.x, vec3.y, vec3.z, level.random.nextFloat() * 360.0F, 0.0F);
++            // zombie.snapTo(vec3.x, vec3.y, vec3.z, level.random.nextFloat() * 360.0F, 0.0F); // Canvas - move up
              level.addFreshEntityWithPassengers(zombie, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.VILLAGE_INVASION); // CraftBukkit
          }
      }
-@@ -125,7 +_,7 @@
+@@ -119,7 +_,7 @@
          return null;
      }
  

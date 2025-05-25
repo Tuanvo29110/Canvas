@@ -21,7 +21,7 @@
  import net.minecraft.tags.FluidTags;
  import net.minecraft.tags.TagKey;
  import net.minecraft.util.Mth;
-@@ -83,6 +_,7 @@
+@@ -84,6 +_,7 @@
  import net.minecraft.world.phys.shapes.CollisionContext;
  import net.minecraft.world.phys.shapes.Shapes;
  import net.minecraft.world.phys.shapes.VoxelShape;
@@ -29,7 +29,7 @@
  
  public abstract class BlockBehaviour implements FeatureElement {
      protected static final Direction[] UPDATE_SHAPE_ORDER = new Direction[]{
-@@ -346,13 +_,21 @@
+@@ -347,13 +_,21 @@
      protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
      }
  
@@ -53,7 +53,7 @@
          }
      }
  
-@@ -928,7 +_,16 @@
+@@ -925,7 +_,16 @@
              BlockState neighborState,
              RandomSource random
          ) {

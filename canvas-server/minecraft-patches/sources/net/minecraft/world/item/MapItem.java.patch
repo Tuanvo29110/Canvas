@@ -1,18 +1,34 @@
 --- a/net/minecraft/world/item/MapItem.java
 +++ b/net/minecraft/world/item/MapItem.java
-@@ -274,6 +_,7 @@
-         if (!level.isClientSide) {
-             MapItemSavedData savedData = getSavedData(stack, level);
-             if (savedData != null) {
-+                synchronized (savedData) { // Canvas
-                 if (entity instanceof Player player) {
-                     savedData.tickCarriedBy(player, stack);
+@@ -194,6 +_,7 @@
+     public static void renderBiomePreviewMap(ServerLevel serverLevel, ItemStack stack) {
+         MapItemSavedData savedData = getSavedData(stack, serverLevel);
+         if (savedData != null) {
++            synchronized (savedData) { // Canvas - threadsafe
+             savedData.isExplorerMap = true; // Purpur - Explorer Map API
+             if (serverLevel.dimension() == savedData.dimension) {
+                 int i = 1 << savedData.scale;
+@@ -264,6 +_,7 @@
+                     }
                  }
-@@ -281,6 +_,7 @@
-                 if (!savedData.locked && (isSelected || entity instanceof Player && ((Player)entity).getOffhandItem() == stack)) {
-                     this.update(level, entity, savedData);
-                 }
-+                } // Canvas
              }
++            } // Canvas - threadsafe
          }
      }
+ 
+@@ -271,6 +_,7 @@
+     public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @Nullable EquipmentSlot slot) {
+         MapItemSavedData savedData = getSavedData(stack, level);
+         if (savedData != null) {
++            synchronized (savedData) { // Canvas - threadsafe
+             if (entity instanceof Player player) {
+                 savedData.tickCarriedBy(player, stack);
+             }
+@@ -278,6 +_,7 @@
+             if (!savedData.locked && slot != null && slot.getType() == EquipmentSlot.Type.HAND) {
+                 this.update(level, entity, savedData);
+             }
++            } // Canvas - threadsafe
+         }
+     }
+ 

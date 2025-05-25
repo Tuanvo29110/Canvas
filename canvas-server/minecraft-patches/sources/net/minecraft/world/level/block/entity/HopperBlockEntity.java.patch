@@ -21,7 +21,7 @@
      public static final int MOVE_ITEM_SPEED = 8;
      public static final int HOPPER_CONTAINER_SIZE = 5;
      private static final int[][] CACHED_SLOTS = new int[54][];
-@@ -36,6 +_,50 @@
+@@ -37,6 +_,50 @@
      public int cooldownTime = -1;
      private long tickedGameTime;
      private Direction facing;
@@ -72,7 +72,7 @@
  
      // CraftBukkit start - add fields and methods
      public List<org.bukkit.entity.HumanEntity> transaction = new java.util.ArrayList<>();
-@@ -65,6 +_,16 @@
+@@ -70,6 +_,16 @@
      public void setMaxStackSize(int size) {
          this.maxStack = size;
      }
@@ -88,8 +88,8 @@
 +    // Canvas end
      // CraftBukkit end
  
- 
-@@ -124,8 +_,9 @@
+     public HopperBlockEntity(BlockPos pos, BlockState blockState) {
+@@ -128,8 +_,9 @@
      }
  
      public static void pushItemsTick(Level level, BlockPos pos, BlockState state, HopperBlockEntity blockEntity) {
@@ -100,7 +100,7 @@
          if (!blockEntity.isOnCooldown()) {
              blockEntity.setCooldown(0);
              // Spigot start
-@@ -139,56 +_,18 @@
+@@ -143,56 +_,18 @@
          }
      }
  
@@ -160,7 +160,7 @@
                  }
  
                  if (flag) {
-@@ -198,6 +_,13 @@
+@@ -202,6 +_,13 @@
                  }
              }
  
@@ -174,7 +174,7 @@
              return false;
          }
      }
-@@ -212,206 +_,6 @@
+@@ -216,206 +_,6 @@
          return true;
      }
  
@@ -381,7 +381,7 @@
      private static boolean ejectItems(Level level, BlockPos pos, HopperBlockEntity blockEntity) {
          Container attachedContainer = getAttachedContainer(level, pos, blockEntity);
          if (attachedContainer == null) {
-@@ -421,60 +_,57 @@
+@@ -425,60 +_,57 @@
              if (isFullContainer(attachedContainer, opposite)) {
                  return false;
              } else {
@@ -493,7 +493,7 @@
              }
          }
      }
-@@ -529,7 +_,6 @@
+@@ -533,7 +_,6 @@
          Container sourceContainer = getSourceContainer(level, hopper, blockPos, blockState);
          if (sourceContainer != null) {
              Direction direction = Direction.DOWN;
@@ -501,7 +501,7 @@
  
              for (int i : getSlots(sourceContainer, direction)) {
                  if (tryTakeInItemFromSlot(hopper, sourceContainer, i, direction, level)) { // Spigot
-@@ -555,58 +_,55 @@
+@@ -559,58 +_,55 @@
      private static boolean tryTakeInItemFromSlot(Hopper hopper, Container container, int slot, Direction direction, Level level) { // Spigot
          ItemStack item = container.getItem(slot);
          if (!item.isEmpty() && canTakeItemFromContainer(hopper, container, item, slot, direction)) {
@@ -609,7 +609,7 @@
          }
  
          return false;
-@@ -615,15 +_,13 @@
+@@ -619,15 +_,13 @@
      public static boolean addItem(Container container, ItemEntity item) {
          boolean flag = false;
          // CraftBukkit start
@@ -626,7 +626,7 @@
          ItemStack itemStack = item.getItem().copy();
          ItemStack itemStack1 = addItem(null, container, itemStack, null);
          if (itemStack1.isEmpty()) {
-@@ -678,9 +_,7 @@
+@@ -682,9 +_,7 @@
                      stack = stack.split(destination.getMaxStackSize());
                  }
                  // Spigot end
@@ -636,7 +636,7 @@
                  stack = leftover; // Paper - Make hoppers respect inventory max stack size
                  flag = true;
              } else if (canMergeItems(item, stack)) {
-@@ -768,19 +_,13 @@
+@@ -772,19 +_,13 @@
  
      @Nullable
      public static Container getContainerAt(Level level, BlockPos pos) {
@@ -658,7 +658,7 @@
              blockContainer = getEntityContainer(level, x, y, z);
          }
  
-@@ -806,14 +_,14 @@
+@@ -810,14 +_,14 @@
  
      @Nullable
      private static Container getEntityContainer(Level level, double x, double y, double z) {
@@ -676,7 +676,7 @@
      }
  
      @Override
-@@ -837,6 +_,17 @@
+@@ -841,6 +_,17 @@
      }
  
      public void setCooldown(int cooldownTime) {

@@ -13,7 +13,7 @@
  import java.util.Comparator;
  import java.util.Iterator;
  import java.util.List;
-@@ -71,8 +_,8 @@
+@@ -69,8 +_,8 @@
      public static final String ENTITY_TAG_BLOCKPOS = "blockPos";
      public static final String ENTITY_TAG_NBT = "nbt";
      public static final String SIZE_TAG = "size";
@@ -24,7 +24,7 @@
      private Vec3i size = Vec3i.ZERO;
      private String author = "?";
      // CraftBukkit start - data containers
-@@ -248,6 +_,12 @@
+@@ -246,6 +_,12 @@
      public static BlockPos calculateRelativePosition(StructurePlaceSettings decorator, BlockPos pos) {
          return transform(pos, decorator.getMirror(), decorator.getRotation(), decorator.getRotationPivot());
      }
@@ -37,7 +37,7 @@
  
      public boolean placeInWorld(ServerLevelAccessor serverLevel, BlockPos offset, BlockPos pos, StructurePlaceSettings settings, RandomSource random, int flags) {
          if (this.palettes.isEmpty()) {
-@@ -266,7 +_,7 @@
+@@ -264,7 +_,7 @@
                  }
              }
              // CraftBukkit end
@@ -46,7 +46,7 @@
              if ((!list.isEmpty() || !settings.isIgnoreEntities() && !this.entityInfoList.isEmpty())
                  && this.size.getX() >= 1
                  && this.size.getY() >= 1
-@@ -890,7 +_,7 @@
+@@ -871,7 +_,7 @@
          private List<StructureTemplate.JigsawBlockInfo> cachedJigsaws;
  
          Palette(List<StructureTemplate.StructureBlockInfo> blocks) {

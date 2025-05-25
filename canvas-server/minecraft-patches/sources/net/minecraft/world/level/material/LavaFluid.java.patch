@@ -9,7 +9,7 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
  import net.minecraft.core.particles.ParticleOptions;
-@@ -177,8 +_,19 @@
+@@ -189,8 +_,19 @@
  
      @Override
      public int getTickDelay(LevelReader level) {
@@ -31,7 +31,7 @@
  
      @Override
      public int getSpreadDelay(Level level, BlockPos pos, FluidState currentState, FluidState newState) {
-@@ -224,6 +_,7 @@
+@@ -236,6 +_,7 @@
                      // CraftBukkit end
                  }
  

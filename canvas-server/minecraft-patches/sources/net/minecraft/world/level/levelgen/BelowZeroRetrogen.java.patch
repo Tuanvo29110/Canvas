@@ -1,14 +1,14 @@
 --- a/net/minecraft/world/level/levelgen/BelowZeroRetrogen.java
 +++ b/net/minecraft/world/level/levelgen/BelowZeroRetrogen.java
-@@ -10,6 +_,7 @@
- import java.util.function.Predicate;
- import java.util.stream.LongStream;
- import javax.annotation.Nullable;
+@@ -21,6 +_,7 @@
+ import net.minecraft.world.level.chunk.ChunkAccess;
+ import net.minecraft.world.level.chunk.ProtoChunk;
+ import net.minecraft.world.level.chunk.status.ChunkStatus;
 +import io.canvasmc.canvas.Config;
- import net.minecraft.core.BlockPos;
- import net.minecraft.core.Holder;
- import net.minecraft.core.registries.BuiltInRegistries;
-@@ -82,6 +_,11 @@
+ 
+ public final class BelowZeroRetrogen {
+     private static final BitSet EMPTY = new BitSet(0);
+@@ -74,6 +_,11 @@
      }
  
      public void applyBedrockMask(ProtoChunk chunk) {

@@ -16,16 +16,16 @@
  import net.minecraft.world.entity.item.ItemEntity;
  import net.minecraft.world.entity.item.PrimedTnt;
  import net.minecraft.world.entity.player.Player;
-@@ -42,6 +_,8 @@
- import org.bukkit.event.entity.EntityExplodeEvent;
+@@ -39,6 +_,8 @@
+ import org.bukkit.craftbukkit.event.CraftEventFactory;
+ import org.bukkit.craftbukkit.util.CraftLocation;
  import org.bukkit.Location;
- import org.bukkit.event.block.BlockExplodeEvent;
 +import org.bukkit.event.entity.EntityRemoveEvent;
 +import org.bukkit.event.entity.ExplosionPrimeEvent;
  // CraftBukkit end
  
  public class ServerExplosion implements Explosion {
-@@ -53,9 +_,9 @@
+@@ -50,9 +_,9 @@
      private final ServerLevel level;
      private final Vec3 center;
      @Nullable
@@ -37,8 +37,8 @@
      private final ExplosionDamageCalculator damageCalculator;
      private final Map<Player, Vec3> hitPlayers = new HashMap<>();
      // CraftBukkit - add field
-@@ -521,6 +_,19 @@
-                                         dragonPart.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, entity, f1));
+@@ -518,6 +_,19 @@
+                                         dragonPart.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, dragonPart, f1));
                                      }
                                  }
 +                            // Canvas start
@@ -57,7 +57,7 @@
                              } else {
                                  entity.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, entity, f1));
                              }
-@@ -567,6 +_,11 @@
+@@ -561,6 +_,11 @@
      }
  
      private void interactWithBlocks(List<BlockPos> blocks) {
@@ -69,7 +69,7 @@
          List<ServerExplosion.StackCollector> list = new ArrayList<>();
          Util.shuffle(blocks, this.level.random);
  
-@@ -791,16 +_,16 @@
+@@ -779,16 +_,16 @@
              return this.getSeenFraction(vec3d, entity, this.directMappedBlockCache, this.mutablePos); // Paper - collision optimisations
          }
          CacheKey key = new CacheKey(this, entity.getBoundingBox());

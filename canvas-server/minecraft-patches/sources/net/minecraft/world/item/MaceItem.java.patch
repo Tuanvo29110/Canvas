@@ -1,20 +1,12 @@
 --- a/net/minecraft/world/item/MaceItem.java
 +++ b/net/minecraft/world/item/MaceItem.java
-@@ -3,6 +_,7 @@
- import java.util.List;
- import java.util.function.Predicate;
- import javax.annotation.Nullable;
-+import io.canvasmc.canvas.Config;
- import net.minecraft.core.BlockPos;
- import net.minecraft.core.Direction;
- import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
-@@ -113,6 +_,13 @@
+@@ -101,6 +_,13 @@
  
      @Override
      public float getAttackDamageBonus(Entity target, float damage, DamageSource damageSource) {
 +    // Canvas start - max mace damage bonus
 +        float vanilla = getVanillaDamageBonus(target, damage, damageSource);
-+        return (Config.INSTANCE.maxMaceDamageBonus < 0 || vanilla <= Config.INSTANCE.maxMaceDamageBonus) ? vanilla : Config.INSTANCE.maxMaceDamageBonus;
++        return (io.canvasmc.canvas.Config.INSTANCE.maxMaceDamageBonus < 0 || vanilla <= io.canvasmc.canvas.Config.INSTANCE.maxMaceDamageBonus) ? vanilla : io.canvasmc.canvas.Config.INSTANCE.maxMaceDamageBonus;
 +    }
 +
 +    public float getVanillaDamageBonus(Entity target, float damage, DamageSource damageSource) {

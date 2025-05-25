@@ -9,7 +9,7 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Holder;
  import net.minecraft.core.registries.Registries;
-@@ -98,6 +_,13 @@
+@@ -101,6 +_,13 @@
          this.getNavigation().setCanFloat(true);
          this.setPathfindingMalus(PathType.POWDER_SNOW, -1.0F);
          this.setPathfindingMalus(PathType.DANGER_POWDER_SNOW, -1.0F);

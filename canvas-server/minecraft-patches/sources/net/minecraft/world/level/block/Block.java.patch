@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/Block.java
 +++ b/net/minecraft/world/level/block/Block.java
-@@ -385,8 +_,8 @@
+@@ -431,8 +_,8 @@
              ItemEntity itemEntity = itemEntitySupplier.get();
              itemEntity.setDefaultPickUpDelay();
              // CraftBukkit start

@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/monster/Strider.java
 +++ b/net/minecraft/world/entity/monster/Strider.java
-@@ -579,9 +_,25 @@
+@@ -560,9 +_,25 @@
              super(strider, level);
          }
  

@@ -23,9 +23,9 @@
  import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 +import it.unimi.dsi.fastutil.longs.Long2IntMaps;
  import it.unimi.dsi.fastutil.longs.LongSet;
- import it.unimi.dsi.fastutil.longs.LongSets;
  import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-@@ -19,14 +_,21 @@
+ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+@@ -18,13 +_,20 @@
  import java.nio.file.Files;
  import java.nio.file.Path;
  import java.util.ArrayList;
@@ -41,13 +41,12 @@
  import java.util.Optional;
 +import java.util.Queue;
  import java.util.Set;
- import java.util.UUID;
 +import java.util.concurrent.ConcurrentLinkedQueue;
 +import java.util.concurrent.CopyOnWriteArrayList;
  import java.util.concurrent.Executor;
  import java.util.function.BooleanSupplier;
  import java.util.function.Function;
-@@ -38,26 +_,33 @@
+@@ -36,26 +_,33 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportType;
@@ -82,7 +81,7 @@
  import net.minecraft.network.protocol.game.ClientboundSoundEntityPacket;
  import net.minecraft.network.protocol.game.ClientboundSoundPacket;
  import net.minecraft.network.protocol.game.DebugPackets;
-@@ -105,6 +_,7 @@
+@@ -102,6 +_,7 @@
  import net.minecraft.world.entity.raid.Raid;
  import net.minecraft.world.entity.raid.Raids;
  import net.minecraft.world.flag.FeatureFlagSet;
@@ -90,7 +89,7 @@
  import net.minecraft.world.item.alchemy.PotionBrewing;
  import net.minecraft.world.item.crafting.RecipeManager;
  import net.minecraft.world.level.BlockEventData;
-@@ -123,6 +_,7 @@
+@@ -119,6 +_,7 @@
  import net.minecraft.world.level.block.Block;
  import net.minecraft.world.level.block.Blocks;
  import net.minecraft.world.level.block.SnowLayerBlock;
@@ -98,7 +97,7 @@
  import net.minecraft.world.level.block.entity.FuelValues;
  import net.minecraft.world.level.block.entity.TickingBlockEntity;
  import net.minecraft.world.level.block.state.BlockState;
-@@ -168,6 +_,7 @@
+@@ -164,6 +_,7 @@
  import net.minecraft.world.phys.shapes.Shapes;
  import net.minecraft.world.phys.shapes.VoxelShape;
  import net.minecraft.world.ticks.LevelTicks;
@@ -106,7 +105,7 @@
  import org.slf4j.Logger;
  
  public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLevel, ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel, ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevelReader, ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel { // Paper - rewrite chunk system // Paper - chunk tick iteration
-@@ -179,31 +_,57 @@
+@@ -175,31 +_,57 @@
      private static final Logger LOGGER = LogUtils.getLogger();
      private static final int EMPTY_TIME_NO_TICK = 300;
      private static final int MAX_SCHEDULED_TICKS_PER_TICK = 65536;
@@ -176,7 +175,7 @@
      private final StructureManager structureManager;
      private final StructureCheck structureCheck;
      private final boolean tickTime;
-@@ -292,6 +_,7 @@
+@@ -289,6 +_,7 @@
      }
      // Paper end - optimise getPlayerByUUID
      // Paper start - rewrite chunk system
@@ -184,67 +183,67 @@
      private final ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.ViewDistanceHolder viewDistanceHolder = new ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.ViewDistanceHolder();
      private final ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader chunkLoader = new ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader((ServerLevel)(Object)this);
      private final ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.EntityDataController entityDataController;
-@@ -300,11 +_,11 @@
+@@ -297,11 +_,11 @@
      private final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler chunkTaskScheduler;
      private long lastMidTickFailure;
      private long tickedBlocksOrFluids;
 -    private final ca.spottedleaf.moonrise.common.misc.NearbyPlayers nearbyPlayers = new ca.spottedleaf.moonrise.common.misc.NearbyPlayers((ServerLevel)(Object)this);
--    private static final ServerChunkCache.ChunkAndHolder[] EMPTY_CHUNK_AND_HOLDERS = new ServerChunkCache.ChunkAndHolder[0];
--    private final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> loadedChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
--    private final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> tickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
--    private final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> entityTickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS);
 +    // private final ca.spottedleaf.moonrise.common.misc.NearbyPlayers nearbyPlayers = new ca.spottedleaf.moonrise.common.misc.NearbyPlayers((ServerLevel)(Object)this); // Canvas - Threaded Regions
-+    // private static final ServerChunkCache.ChunkAndHolder[] EMPTY_CHUNK_AND_HOLDERS = new ServerChunkCache.ChunkAndHolder[0]; // Canvas - Threaded Regions
-+    // private final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> loadedChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS); // Canvas - Threaded Regions
-+    // private final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> tickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS); // Canvas - Threaded Regions
-+    // private final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> entityTickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_CHUNK_AND_HOLDERS); // Canvas - Threaded Regions
+     private static final LevelChunk[] EMPTY_LEVEL_CHUNKS = new LevelChunk[0];
+-    private final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> loadedChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_LEVEL_CHUNKS);
+-    private final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> tickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_LEVEL_CHUNKS);
+-    private final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> entityTickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_LEVEL_CHUNKS);
++    // private final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> loadedChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_LEVEL_CHUNKS); // Canvas - Threaded Regions
++    // private final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> tickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_LEVEL_CHUNKS); // Canvas - Threaded Regions
++    // private final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> entityTickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_LEVEL_CHUNKS); // Canvas - Threaded Regions
  
      @Override
      public final LevelChunk moonrise$getFullChunkIfLoaded(final int chunkX, final int chunkZ) {
-@@ -463,22 +_,28 @@
+@@ -460,22 +_,28 @@
  
      @Override
      public final ca.spottedleaf.moonrise.common.misc.NearbyPlayers moonrise$getNearbyPlayers() {
 -        return this.nearbyPlayers;
 -    }
+-
 +        return ServerRegions.getTickData(this).getNearbyPlayers(); // Canvas - Threaded Regions
 +    }
-+    // Canvas start - Threaded Regions
 +
++    // Canvas start - Threaded Regions
 +    public final ca.spottedleaf.moonrise.common.misc.NearbyPlayers moonrise$getNearbyPlayers(ChunkPos position) {
 +        return ServerRegions.getTickData(this).getNearbyPlayers(position);
 +    }
++
 +    // Canvas end
- 
      @Override
-     public final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> moonrise$getLoadedChunks() {
+     public final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> moonrise$getLoadedChunks() {
 -        return this.loadedChunks;
 +        return ServerRegions.getTickData(this).getChunks(); // Canvas - Threaded Regions
      }
  
      @Override
-     public final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> moonrise$getTickingChunks() {
+     public final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> moonrise$getTickingChunks() {
 -        return this.tickingChunks;
 +        return ServerRegions.getTickData(this).getTickingChunks(); // Canvas - Threaded Regions
      }
  
      @Override
-     public final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> moonrise$getEntityTickingChunks() {
+     public final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> moonrise$getEntityTickingChunks() {
 -        return this.entityTickingChunks;
 +        return ServerRegions.getTickData(this).getEntityTickingChunks(); // Canvas - Threaded Regions
      }
  
      @Override
-@@ -499,7 +_,7 @@
+@@ -495,7 +_,7 @@
+     // Paper end - rewrite chunk system
      // Paper start - chunk tick iteration
-     private static final ServerChunkCache.ChunkAndHolder[] EMPTY_PLAYER_CHUNK_HOLDERS = new ServerChunkCache.ChunkAndHolder[0];
-     private final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> playerTickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_PLAYER_CHUNK_HOLDERS);
+     private final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> playerTickingChunks = new ca.spottedleaf.moonrise.common.list.ReferenceList<>(EMPTY_LEVEL_CHUNKS);
 -    private final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap playerTickingRequests = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
 +    private final it.unimi.dsi.fastutil.longs.Long2IntMap playerTickingRequests = Long2IntMaps.synchronize(new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap()); // Canvas - synchronized
  
      @Override
-     public final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> moonrise$getPlayerTickingChunks() {
-@@ -527,7 +_,7 @@
+     public final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> moonrise$getPlayerTickingChunks() {
+@@ -523,7 +_,7 @@
  
          final long chunkKey = ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkX, chunkZ);
  
@@ -253,7 +252,7 @@
              // already added
              return;
          }
-@@ -549,7 +_,10 @@
+@@ -543,7 +_,10 @@
          ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread((ServerLevel)(Object)this, chunkX, chunkZ, "Cannot remove ticking request async");
  
          final long chunkKey = ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkX, chunkZ);
@@ -265,8 +264,8 @@
  
          if (val <= 0) {
              throw new IllegalStateException("Negative counter");
-@@ -597,7 +_,7 @@
-         this.uuid = org.bukkit.craftbukkit.util.WorldUUID.getUUID(levelStorageAccess.levelDirectory.path().toFile());
+@@ -589,7 +_,7 @@
+         this.uuid = org.bukkit.craftbukkit.util.WorldUUID.getOrCreate(levelStorageAccess.levelDirectory.path().toFile());
          // CraftBukkit end
          this.tickTime = tickTime;
 -        this.server = server;
@@ -274,7 +273,7 @@
          // Purpur start - Allow toggling special MobSpawners per world
          this.customSpawners = new ArrayList<>();
          if (purpurConfig.phantomSpawning) {
-@@ -702,6 +_,19 @@
+@@ -692,6 +_,19 @@
          // Paper end - rewrite chunk system
          this.getCraftServer().addWorld(this.getWorld()); // CraftBukkit
          this.preciseTime = this.serverLevelData.getDayTime(); // Purpur - Configurable daylight cycle
@@ -294,7 +293,7 @@
      }
  
      // Paper start
-@@ -733,10 +_,138 @@
+@@ -723,10 +_,138 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -436,7 +435,7 @@
          TickRateManager tickRateManager = this.tickRateManager();
          boolean runsNormally = tickRateManager.runsNormally();
          if (runsNormally) {
-@@ -777,36 +_,74 @@
+@@ -767,36 +_,74 @@
          if (runsNormally) {
              this.tickTime();
          }
@@ -451,19 +450,19 @@
          profilerFiller.push("tickPending");
          if (!this.isDebug() && runsNormally) {
 -            long l = this.getGameTime();
-+            long l = tickData.getRedstoneGameTime(); // Canvas - Threaded Regions
-+            // Canvas start
-+            if (tickData.getBlockLevelTicks().ticksSinceLastBlockTickCall++ > Config.INSTANCE.ticksBetweenBlockTicking) { // Canvas - Threaded Regions
++            // Canvas start - ticks_since config - Threaded Regions
++            long l = tickData.getRedstoneGameTime();
++            if (tickData.getBlockLevelTicks().ticksSinceLastBlockTickCall++ > Config.INSTANCE.ticksBetweenBlockTicking) {
              profilerFiller.push("blockTicks");
 -            this.blockTicks.tick(l, paperConfig().environment.maxBlockTicks, this::tickBlock); // Paper - configurable max block ticks
-+            tickData.getBlockLevelTicks().tick(l, paperConfig().environment.maxBlockTicks, this::tickBlock); // Paper - configurable max block ticks // Canvas - Threaded Regions
-+                tickData.getBlockLevelTicks().ticksSinceLastBlockTickCall = 0; // Canvas - Threaded Regions
++            tickData.getBlockLevelTicks().tick(l, paperConfig().environment.maxBlockTicks, this::tickBlock); // Paper - configurable max block ticks
++            tickData.getBlockLevelTicks().ticksSinceLastBlockTickCall = 0;
 +            }
-+            if (tickData.getFluidLevelTicks().ticksSinceLastFluidTickCall++ > Config.INSTANCE.ticksBetweenFluidTicking) { // Canvas - Threaded Regions
++            if (tickData.getFluidLevelTicks().ticksSinceLastFluidTickCall++ > Config.INSTANCE.ticksBetweenFluidTicking) {
              profilerFiller.popPush("fluidTicks");
 -            this.fluidTicks.tick(l, paperConfig().environment.maxFluidTicks, this::tickFluid); // Paper - configurable max fluid ticks
-+            tickData.getFluidLevelTicks().tick(l, paperConfig().environment.maxFluidTicks, this::tickFluid); // Paper - configurable max fluid ticks // Canvas - Threaded Regions
-+                tickData.getFluidLevelTicks().ticksSinceLastFluidTickCall = 0; // Canvas - Threaded Regions
++            tickData.getFluidLevelTicks().tick(l, paperConfig().environment.maxFluidTicks, this::tickFluid); // Paper - configurable max fluid ticks
++            tickData.getFluidLevelTicks().ticksSinceLastFluidTickCall = 0;
 +            }
 +            // Canvas end
              profilerFiller.pop();
@@ -478,8 +477,8 @@
          if (runsNormally) {
 +            // Canvas start
 +            if (this.ticksSinceLastRaidTickCall++ > Config.INSTANCE.ticksBetweenRaidTicking) {
-             this.raids.tick();
-+                this.ticksSinceLastRaidTickCall = 0;
+             this.raids.tick(this);
++            this.ticksSinceLastRaidTickCall = 0;
 +            }
 +            // Canvas end
          }
@@ -493,7 +492,7 @@
 +            // Canvas start
 +            if (this.ticksSinceLastBlockEventsTickCall++ > Config.INSTANCE.ticksBetweenBlockEvents) {
              this.runBlockEvents();
-+                this.ticksSinceLastBlockEventsTickCall = 0;
++            this.ticksSinceLastBlockEventsTickCall = 0;
 +            }
 +            // Canvas end
          }
@@ -501,8 +500,8 @@
 -        this.handlingTick = false;
 +        tickData.setHandlingTick(false); // Canvas - Threaded Regions
          profilerFiller.pop();
--        boolean flag = !paperConfig().unsupportedSettings.disableWorldTickingWhenEmpty || !this.players.isEmpty() || !this.getForcedChunks().isEmpty(); // CraftBukkit - this prevents entity cleanup, other issues on servers with no players // Paper - restore this
-+        boolean flag = true || !this.players.isEmpty() || !this.getForcedChunks().isEmpty(); // CraftBukkit - this prevents entity cleanup, other issues on servers with no players // Paper - restore this // Canvas - unrestore this
+-        boolean flag = !paperConfig().unsupportedSettings.disableWorldTickingWhenEmpty || !this.players.isEmpty() || !this.getForceLoadedChunks().isEmpty(); // CraftBukkit - this prevents entity cleanup, other issues on servers with no players // Paper - restore this
++        boolean flag = true || !this.players.isEmpty() || !this.getForceLoadedChunks().isEmpty(); // CraftBukkit - this prevents entity cleanup, other issues on servers with no players // Paper - restore this // Canvas - unrestore this
          if (flag) {
              this.resetEmptyTime();
          }
@@ -518,7 +517,7 @@
          if (flag || this.emptyTime++ < 300) {
              profilerFiller.push("entities");
              if (this.dragonFight != null && runsNormally) {
-@@ -816,8 +_,7 @@
+@@ -806,8 +_,7 @@
              }
  
              io.papermc.paper.entity.activation.ActivationRange.activateEntities(this); // Paper - EAR
@@ -528,16 +527,18 @@
                      entity -> {
                          if (!entity.isRemoved()) {
                              if (!tickRateManager.isEntityFrozen(entity)) {
-@@ -843,30 +_,56 @@
+@@ -833,30 +_,58 @@
                      }
                  );
              profilerFiller.pop();
 -            this.tickBlockEntities();
-+            this.tickBlockEntities(profilerFiller);
++            this.tickBlockEntities(profilerFiller); // Canvas
          }
  
++    // Canvas start - Threaded Regions
 +    }
 +    public void worldtick3(ProfilerFiller profilerFiller, ServerRegions.WorldTickData tickData) {
++    // Canvas end
          profilerFiller.push("entityManagement");
          // Paper - rewrite chunk system
          profilerFiller.pop();
@@ -568,7 +569,7 @@
  
      protected void tickTime() {
          if (this.tickTime) {
-+            ServerRegions.WorldTickData tickData = ServerRegions.getTickData(this);
++            ServerRegions.WorldTickData tickData = ServerRegions.getTickData(this); // Canvas - Threaded Regions
 +            tickData.incrementRedstoneTime(); // Canvas - Threaded Regions
              long l = this.levelData.getGameTime() + 1L;
              this.serverLevelData.setGameTime(l);
@@ -579,18 +580,18 @@
 -            if (this.serverLevelData.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
 +            // Canvas start - Threaded Regions
 +            boolean canTickDaylight = false;
-+            if (Config.INSTANCE.ticking.enableThreadedRegionizing && tickData == this.levelTickData/*regionizing enabled, and we are ticking on a world*/) {
++            if (Config.INSTANCE.ticking.enableThreadedRegionizing && tickData == this.levelTickData/*regions enabled, and we are ticking on a world*/) {
 +                canTickDaylight = true;
 +            } else if (!Config.INSTANCE.ticking.enableThreadedRegionizing) {
-+                // regionizing disabled, we are def ticking on world
++                // regions disabled, we are without a doubt ticking on world
 +                canTickDaylight = true;
 +            }
 +            if (canTickDaylight && this.serverLevelData.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
 +            // Canvas end
                  // Purpur start - Configurable daylight cycle
-                 int incrementTicks = isDay() ? this.purpurConfig.daytimeTicks : this.purpurConfig.nighttimeTicks;
+                 int incrementTicks = isBrightOutside() ? this.purpurConfig.daytimeTicks : this.purpurConfig.nighttimeTicks;
                  if (incrementTicks != 12000) {
-@@ -874,10 +_,18 @@
+@@ -864,10 +_,18 @@
                      this.setDayTime(this.preciseTime);
                  } else
                  // Purpur end - Configurable daylight cycle
@@ -610,7 +611,7 @@
  
      public void setDayTime(long time) {
          this.serverLevelData.setDayTime(time);
-@@ -898,23 +_,29 @@
+@@ -888,23 +_,29 @@
      // Purpur end - Configurable daylight cycle
  
      public void tickCustomSpawners(boolean spawnEnemies, boolean spawnFriendlies) {
@@ -642,41 +643,33 @@
          final boolean doubleTickFluids = !ca.spottedleaf.moonrise.common.PlatformHooks.get().configFixMC224294();
  
          final ChunkPos cpos = chunk.getPos();
-@@ -961,7 +_,7 @@
+@@ -951,14 +_,14 @@
      // Paper end - optimise random ticking
  
      public void tickChunk(LevelChunk chunk, int randomTickSpeed) {
 -        final ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom simpleRandom = this.simpleRandom; // Paper - optimise random ticking
-+        final SimpleThreadLocalRandomSource simpleRandom = this.simpleRandom; // Paper - optimise random ticking // Canvas
++        final SimpleThreadLocalRandomSource simpleRandom = this.simpleRandom; // Paper - optimise random ticking // Canvas - Threaded Regions
          ChunkPos pos = chunk.getPos();
-         boolean isRaining = this.isRaining();
          int minBlockX = pos.getMinBlockX();
-@@ -1005,15 +_,23 @@
-         profilerFiller.popPush("iceandsnow");
+         int minBlockZ = pos.getMinBlockZ();
+         ProfilerFiller profilerFiller = Profiler.get();
+         profilerFiller.push("iceandsnow");
  
-         if (!this.paperConfig().environment.disableIceAndSnow) { // Paper - Option to disable ice and snow
-+            // Canvas start - precipitation intervals
-+            if (chunk.ticksSinceLastPrecipitationCall++ > Config.INSTANCE.ticksBetweenPrecipitationUpdates) {
-+                chunk.ticksSinceLastPrecipitationCall = 0;
-+            // Canvas end
+-        if (!this.paperConfig().environment.disableIceAndSnow) { // Paper - Option to disable ice and snow
++        if (!this.paperConfig().environment.disableIceAndSnow && chunk.ticksSinceLastPrecipitationCall++ > Config.INSTANCE.ticksBetweenPrecipitationUpdates) { chunk.ticksSinceLastPrecipitationCall = 0; // Paper - Option to disable ice and snow // Canvas - precipitation intervals
          for (int i = 0; i < randomTickSpeed; i++) {
              if (simpleRandom.nextInt(48) == 0) {  // Paper - optimise random ticking
                  this.tickPrecipitation(this.getBlockRandomPos(minBlockX, 0, minBlockZ, 15));
-             }
-         }
-+            } // Canvas
+@@ -967,7 +_,7 @@
          } // Paper - Option to disable ice and snow
  
          profilerFiller.popPush("tickBlocks");
 -        if (randomTickSpeed > 0) {
-+        // Canvas start - random tick intervals
-+        if (chunk.ticksSinceLastRandomTickCall++ > Config.INSTANCE.ticksBetweenRandomTickUpdates && randomTickSpeed > 0) {
-+            chunk.ticksSinceLastRandomTickCall = 0;
-+        // Canvas end
++        if (randomTickSpeed > 0 && (chunk.ticksSinceLastRandomTickCall++ > Config.INSTANCE.ticksBetweenRandomTickUpdates && randomTickSpeed > 0)) { chunk.ticksSinceLastRandomTickCall = 0; // Canvas - random tick intervals
              this.optimiseRandomTick(chunk, randomTickSpeed); // Paper - optimise random ticking
          }
  
-@@ -1120,7 +_,7 @@
+@@ -1119,7 +_,7 @@
      }
  
      public boolean isHandlingTick() {
@@ -685,7 +678,7 @@
      }
  
      public boolean canSleepThroughNights() {
-@@ -1309,7 +_,15 @@
+@@ -1308,7 +_,15 @@
      }
  
      private void tickFluid(BlockPos pos, Fluid fluid) {
@@ -702,7 +695,7 @@
          FluidState fluidState = blockState.getFluidState();
          if (fluidState.is(fluid)) {
              fluidState.tick(this, pos, blockState);
-@@ -1337,24 +_,25 @@
+@@ -1336,24 +_,25 @@
  
      // Paper start - log detailed entity tick information
      // TODO replace with varhandle
@@ -732,7 +725,7 @@
          entity.setOldPosAndRot();
          ProfilerFiller profilerFiller = Profiler.get();
          entity.tickCount++;
-@@ -1372,18 +_,18 @@
+@@ -1371,18 +_,18 @@
              this.tickPassenger(entity, entity1, isActive); // Paper - EAR 2
          }
          // Paper start - log detailed entity tick information
@@ -754,7 +747,7 @@
              passengerEntity.setOldPosAndRot();
              passengerEntity.tickCount++;
              passengerEntity.totalEntityAge++; // Paper - age-like counter for all entities
-@@ -1535,6 +_,19 @@
+@@ -1534,6 +_,19 @@
          return list;
      }
  
@@ -774,7 +767,7 @@
      @Nullable
      public ServerPlayer getRandomPlayer() {
          List<ServerPlayer> players = this.getPlayers(LivingEntity::isAlive);
-@@ -1616,8 +_,8 @@
+@@ -1615,8 +_,8 @@
          } else {
              if (entity instanceof net.minecraft.world.entity.item.ItemEntity itemEntity && itemEntity.getItem().isEmpty()) return false; // Paper - Prevent empty items from being added
              // Paper start - capture all item additions to the world
@@ -785,7 +778,7 @@
                  return true;
              }
              // Paper end - capture all item additions to the world
-@@ -1636,7 +_,7 @@
+@@ -1635,7 +_,7 @@
          return this.tryAddFreshEntityWithPassengers(entity, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DEFAULT);
      }
  
@@ -794,7 +787,7 @@
          // CraftBukkit end
          if (entity.getSelfAndPassengers().map(Entity::getUUID).anyMatch(this.moonrise$getEntityLookup()::hasEntity)) { // Paper - rewrite chunk system
              return false;
-@@ -1789,16 +_,43 @@
+@@ -1804,16 +_,43 @@
          // Paper end - Prevent GameEvents being fired from unloaded chunks
          this.gameEventDispatcher.post(gameEvent, pos, context);
      }
@@ -840,7 +833,7 @@
          if (this.paperConfig().misc.updatePathfindingOnBlockUpdate) { // Paper - option to disable pathfinding updates
          VoxelShape collisionShape = oldState.getCollisionShape(this, pos);
          VoxelShape collisionShape1 = newState.getCollisionShape(this, pos);
-@@ -1806,7 +_,13 @@
+@@ -1821,7 +_,13 @@
              List<PathNavigation> list = new ObjectArrayList<>();
  
              try { // Paper - catch CME see below why
@@ -855,7 +848,7 @@
                  PathNavigation navigation = mob.getNavigation();
                  if (navigation.shouldRecomputePath(pos)) {
                      list.add(navigation);
-@@ -1823,13 +_,13 @@
+@@ -1838,13 +_,13 @@
              // Paper end - catch CME see below why
  
              try {
@@ -871,10 +864,15 @@
              }
          }
          } // Paper - option to disable pathfinding updates
-@@ -1837,29 +_,29 @@
- 
+@@ -1853,33 +_,33 @@
      @Override
      public void updateNeighborsAt(BlockPos pos, Block block) {
+         // CraftBukkit start
+-        if (this.populating) {
++        if (this.populating.get()) { // Canvas - threadlocal
+             return;
+         }
+         // CraftBukkit end
 -        if (captureBlockStates) { return; } // Paper - Cancel all physics during placement
 +        if (captureBlockStates.get()) { return; } // Paper - Cancel all physics during placement // Canvas - threadlocal
          this.updateNeighborsAt(pos, block, ExperimentalRedstoneUtils.initialOrientation(this, null, null));
@@ -907,7 +905,7 @@
      }
  
      @Override
-@@ -1949,7 +_,7 @@
+@@ -1969,7 +_,7 @@
          // CraftBukkit end
          ParticleOptions particleOptions = serverExplosion.isSmall() ? smallExplosionParticles : largeExplosionParticles;
  
@@ -916,7 +914,7 @@
              if (serverPlayer.distanceToSqr(vec3) < 4096.0) {
                  Optional<Vec3> optional = Optional.ofNullable(serverExplosion.getHitPlayers().get(serverPlayer));
                  serverPlayer.connection.send(new ClientboundExplodePacket(vec3, optional, particleOptions, explosionSound));
-@@ -1965,14 +_,17 @@
+@@ -1985,14 +_,17 @@
  
      @Override
      public void blockEvent(BlockPos pos, Block block, int eventID, int eventParam) {
@@ -939,7 +937,7 @@
              if (this.shouldTickBlocksAt(blockEventData.pos())) {
                  if (this.doBlockEvent(blockEventData)) {
                      this.server
-@@ -1988,11 +_,11 @@
+@@ -2008,11 +_,11 @@
                          );
                  }
              } else {
@@ -953,7 +951,7 @@
      }
  
      private boolean doBlockEvent(BlockEventData event) {
-@@ -2002,12 +_,12 @@
+@@ -2022,12 +_,12 @@
  
      @Override
      public LevelTicks<Block> getBlockTicks() {
@@ -968,7 +966,7 @@
      }
  
      @Nonnull
-@@ -2060,7 +_,7 @@
+@@ -2080,7 +_,7 @@
          double zOffset,
          double speed
      ) {
@@ -977,7 +975,7 @@
      }
      public <T extends ParticleOptions> int sendParticlesSource(
          List<ServerPlayer> receivers,
-@@ -2183,10 +_,10 @@
+@@ -2198,10 +_,10 @@
          return this.server.getRecipeManager();
      }
  
@@ -990,7 +988,7 @@
  
      @Override
      public boolean noSave() {
-@@ -2445,21 +_,21 @@
+@@ -2443,14 +_,14 @@
          CsvOutput csvOutput = CsvOutput.builder().addColumn("x").addColumn("y").addColumn("z").addColumn("type").build(output);
  
          for (TickingBlockEntity tickingBlockEntity : this.blockEntityTickers) {
@@ -1007,15 +1005,7 @@
      }
  
      @Override
-     public void blockUpdated(BlockPos pos, Block block) {
-         if (!this.isDebug()) {
-             // CraftBukkit start
--            if (this.populating) {
-+            if (this.populating.get()) { // Canvas - threadlocal
-                 return;
-             }
-             // CraftBukkit end
-@@ -2475,6 +_,42 @@
+@@ -2461,6 +_,42 @@
      public Iterable<Entity> getAllEntities() {
          return this.getEntities().getAll();
      }
@@ -1041,15 +1031,15 @@
 +        Set<BlockEntity> blockEntities = new ObjectHashSet<>();
 +        if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
 +            this.regioniser.computeForAllRegionsUnsynchronised((region) -> {
-+                for (final ServerChunkCache.ChunkAndHolder chunkAndHolder : region.getData().tickData.getTickingChunks().getRawDataUnchecked()) {
-+                    if (chunkAndHolder == null) continue;
-+                    blockEntities.addAll(chunkAndHolder.chunk().blockEntities.values());
++                for (final LevelChunk chunk : region.getData().tickData.getTickingChunks().getRawDataUnchecked()) {
++                    if (chunk == null) continue;
++                    blockEntities.addAll(chunk.blockEntities.values());
 +                }
 +            });
 +        } else {
-+            for (final ServerChunkCache.ChunkAndHolder chunkAndHolder : ServerRegions.getTickData(this).getTickingChunks().getRawDataUnchecked()) {
-+                if (chunkAndHolder == null) continue;
-+                blockEntities.addAll(chunkAndHolder.chunk().blockEntities.values());
++            for (final LevelChunk chunk : ServerRegions.getTickData(this).getTickingChunks().getRawDataUnchecked()) {
++                if (chunk == null) continue;
++                blockEntities.addAll(chunk.blockEntities.values());
 +            }
 +        }
 +        return blockEntities;
@@ -1058,7 +1048,7 @@
  
      @Override
      public String toString() {
-@@ -2499,6 +_,16 @@
+@@ -2485,6 +_,16 @@
      public ServerLevel getLevel() {
          return this;
      }
@@ -1075,7 +1065,7 @@
  
      @VisibleForTesting
      public String getWatchdogStats() {
-@@ -2561,19 +_,19 @@
+@@ -2547,19 +_,19 @@
      }
  
      public void startTickingChunk(LevelChunk chunk) {
@@ -1099,12 +1089,9 @@
          super.close();
          // Paper - rewrite chunk system
      }
-@@ -2587,32 +_,27 @@
-         return this.moonrise$getAnyChunkIfLoaded(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkX(chunkPos), ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkZ(chunkPos)) != null; // Paper - rewrite chunk system
-     }
+@@ -2575,23 +_,19 @@
  
--    private boolean isPositionTickingWithEntitiesLoaded(long chunkPos) {
-+    public boolean isPositionTickingWithEntitiesLoaded(long chunkPos) { // Canvas - private -> public
+     public boolean isPositionTickingWithEntitiesLoaded(long chunkPos) {
          // Paper start - rewrite chunk system
 -        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(chunkPos);
 -        // isTicking implies the chunk is loaded, and the chunk is loaded now implies the entities are loaded
@@ -1121,15 +1108,7 @@
          // Paper end - rewrite chunk system
      }
  
-     public boolean isNaturalSpawningAllowed(BlockPos pos) {
-         // Paper start - rewrite chunk system
--        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(pos));
--        return chunkHolder != null && chunkHolder.isEntityTickingReady();
-+        return this.moonrise$getChunkTaskScheduler().chunkHolderManager.entityTickingChunkHolders.contains(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(pos)); // Canvas - faster impl
-         // Paper end - rewrite chunk system
-     }
- 
-     public boolean isNaturalSpawningAllowed(ChunkPos chunkPos) {
+     public boolean areEntitiesActuallyLoadedAndTicking(ChunkPos chunkPos) {
          // Paper start - rewrite chunk system
 -        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkPos));
 -        return chunkHolder != null && chunkHolder.isEntityTickingReady();
@@ -1137,7 +1116,17 @@
          // Paper end - rewrite chunk system
      }
  
-@@ -2679,11 +_,40 @@
+@@ -2605,8 +_,7 @@
+ 
+     public boolean canSpawnEntitiesInChunk(ChunkPos chunkPos) {
+         // Paper start - rewrite chunk system
+-        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkPos));
+-        return chunkHolder != null && chunkHolder.isEntityTickingReady() && this.getWorldBorder().isWithinBounds(chunkPos);
++        return areEntitiesActuallyLoadedAndTicking(chunkPos) && this.getWorldBorder().isWithinBounds(chunkPos); // Canvas - faster impl
+         // Paper end - rewrite chunk system
+     }
+ 
+@@ -2674,11 +_,40 @@
      // Paper start - optimize redstone (Alternate Current)
      @Override
      public alternate.current.wire.WireHandler getWireHandler() {
@@ -1179,7 +1168,7 @@
          @Override
          public void onCreated(Entity entity) {
              entity.setOldPosAndRot(); // Paper - update old pos / rot for new entities as it will default to Vec3.ZERO
-@@ -2697,12 +_,12 @@
+@@ -2692,12 +_,12 @@
          @Override
          public void onTickingStart(Entity entity) {
              if (entity instanceof net.minecraft.world.entity.Marker && !paperConfig().entities.markers.tick) return; // Paper - Configurable marker ticking
@@ -1194,7 +1183,7 @@
              // Paper start - Reset pearls when they stop being ticked
              if (ServerLevel.this.paperConfig().fixes.disableUnloadedChunkEnderpearlExploit && ServerLevel.this.paperConfig().misc.legacyEnderPearlBehavior && entity instanceof net.minecraft.world.entity.projectile.ThrownEnderpearl pearl) {
                  pearl.cachedOwner = null;
-@@ -2713,7 +_,10 @@
+@@ -2708,7 +_,10 @@
  
          @Override
          public void onTrackingStart(Entity entity) {
@@ -1205,7 +1194,7 @@
              // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
              if (entity instanceof ServerPlayer serverPlayer) {
                  ServerLevel.this.players.add(serverPlayer);
-@@ -2721,14 +_,14 @@
+@@ -2716,14 +_,14 @@
              }
  
              if (entity instanceof Mob mob) {
@@ -1222,7 +1211,7 @@
              }
  
              if (entity instanceof EnderDragon enderDragon) {
-@@ -2751,12 +_,16 @@
+@@ -2746,12 +_,16 @@
              }
              // Paper end - Entity origin API
              new com.destroystokyo.paper.event.entity.EntityAddToWorldEvent(entity.getBukkitEntity(), ServerLevel.this.getWorld()).callEvent(); // Paper - fire while valid
@@ -1239,7 +1228,7 @@
              if (entity instanceof Player player) {
                  for (final ServerLevel level : ServerLevel.this.getServer().getAllLevels()) {
                      for (final Optional<net.minecraft.world.level.saveddata.SavedData> savedData : level.getDataStorage().cache.values()) {
-@@ -2791,14 +_,14 @@
+@@ -2786,14 +_,14 @@
              }
  
              if (entity instanceof Mob mob) {
@@ -1256,7 +1245,7 @@
              }
  
              if (entity instanceof EnderDragon enderDragon) {
-@@ -2817,6 +_,7 @@
+@@ -2812,6 +_,7 @@
              }
              // CraftBukkit end
              new com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent(entity.getBukkitEntity(), ServerLevel.this.getWorld()).callEvent(); // Paper - fire while valid
@@ -1264,7 +1253,7 @@
          }
  
          @Override
-@@ -2834,14 +_,14 @@
+@@ -2829,14 +_,14 @@
      // Paper end - check global player list where appropriate
  
      // Paper start - lag compensation

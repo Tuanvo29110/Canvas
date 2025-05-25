@@ -27,7 +27,7 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportedException;
-@@ -58,6 +_,13 @@
+@@ -59,6 +_,13 @@
          @Override
          public void tick() {
          }
@@ -41,7 +41,7 @@
  
          @Override
          public boolean isRemoved() {
-@@ -74,7 +_,7 @@
+@@ -75,7 +_,7 @@
              return "<null>";
          }
      };
@@ -50,17 +50,17 @@
      public boolean loaded;
      public final ServerLevel level; // CraftBukkit - type
      @Nullable
-@@ -95,7 +_,8 @@
+@@ -96,7 +_,8 @@
      // Paper end
      // Paper start - rewrite chunk system
      private boolean postProcessingDone;
--    private net.minecraft.server.level.ServerChunkCache.ChunkAndHolder chunkAndHolder;
-+    public net.minecraft.server.level.ServerChunkCache.ChunkAndHolder chunkAndHolder; // Canvas - private -> public
+-    private ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkAndHolder;
++    public ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkAndHolder; // Canvas - private -> public
 +    public volatile boolean heightMapPrimed = false; // Canvas
  
      @Override
      public final boolean moonrise$isPostProcessingDone() {
-@@ -120,6 +_,8 @@
+@@ -121,6 +_,8 @@
      private final int maxSection;
      private final boolean debug;
      private final BlockState defaultBlockState;
@@ -69,7 +69,7 @@
  
      @Override
      public final BlockState moonrise$getBlock(final int x, final int y, final int z) {
-@@ -144,7 +_,7 @@
+@@ -145,7 +_,7 @@
      ) {
          super(pos, data, level, net.minecraft.server.MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.BIOME), inhabitedTime, sections, blendingData); // Paper - Anti-Xray - The world isn't ready yet, use server singleton for registry
          this.level = (ServerLevel) level; // CraftBukkit - type
@@ -78,7 +78,7 @@
  
          for (Heightmap.Types types : Heightmap.Types.values()) {
              if (ChunkStatus.FULL.heightmapsAfter().contains(types)) {
-@@ -188,7 +_,7 @@
+@@ -189,7 +_,7 @@
          this.pendingBlockEntities.putAll(chunk.getBlockEntityNbts());
  
          for (int i = 0; i < chunk.getPostProcessing().length; i++) {
@@ -87,7 +87,7 @@
          }
  
          this.setAllStarts(chunk.getAllStarts());
-@@ -267,11 +_,18 @@
+@@ -270,11 +_,18 @@
      public BlockState getBlockStateFinal(final int x, final int y, final int z) {
          // Copied and modified from below
          final int sectionIndex = this.getSectionIndex(y);
@@ -109,27 +109,18 @@
 +        return section.states.get((y & 15) << 8 | (z & 15) << 4 | (x & 15));
 +        // Canvas end
      }
-     @Override
-     public BlockState getBlockState(BlockPos pos) {
-@@ -395,7 +_,7 @@
-                 }
  
-                 boolean hasBlockEntity = blockState.hasBlockEntity();
--                if (!this.level.isClientSide && !this.level.isBlockPlaceCancelled) { // Paper - prevent calling cleanup logic when undoing a block place upon a cancelled BlockPlaceEvent
-+                if (!this.level.isClientSide && !this.level.isBlockPlaceCancelled.get()) { // Paper - prevent calling cleanup logic when undoing a block place upon a cancelled BlockPlaceEvent // Canvas - threadlocal
-                     blockState.onRemove(this.level, pos, state, isMoving);
-                 } else if (!blockState.is(block) && hasBlockEntity) {
-                     this.removeBlockEntity(pos);
-@@ -404,7 +_,7 @@
+     @Override
+@@ -412,7 +_,7 @@
                  if (!section.getBlockState(i, i1, i2).is(block)) {
                      return null;
                  } else {
--                    if (!this.level.isClientSide && doPlace && (!this.level.captureBlockStates || block instanceof net.minecraft.world.level.block.BaseEntityBlock)) { // CraftBukkit - Don't place while processing the BlockPlaceEvent, unless it's a BlockContainer. Prevents blocks such as TNT from activating when cancelled.
-+                    if (!this.level.isClientSide && doPlace && (!this.level.captureBlockStates.get() || block instanceof net.minecraft.world.level.block.BaseEntityBlock)) { // CraftBukkit - Don't place while processing the BlockPlaceEvent, unless it's a BlockContainer. Prevents blocks such as TNT from activating when cancelled. // Canvas - threadlocal
-                         state.onPlace(this.level, pos, blockState, isMoving);
+-                    if (!this.level.isClientSide && (flags & 512) == 0 && (!this.level.captureBlockStates || block instanceof net.minecraft.world.level.block.BaseEntityBlock)) { // CraftBukkit - Don't place while processing the BlockPlaceEvent, unless it's a BlockContainer. Prevents blocks such as TNT from activating when cancelled.
++                    if (!this.level.isClientSide && (flags & 512) == 0 && (!this.level.captureBlockStates.get() || block instanceof net.minecraft.world.level.block.BaseEntityBlock)) { // CraftBukkit - Don't place while processing the BlockPlaceEvent, unless it's a BlockContainer. Prevents blocks such as TNT from activating when cancelled. // Canvas - threadlocal
+                         state.onPlace(this.level, pos, blockState, flag1);
                      }
  
-@@ -459,7 +_,7 @@
+@@ -467,7 +_,7 @@
      @Nullable
      public BlockEntity getBlockEntity(BlockPos pos, LevelChunk.EntityCreationType creationType) {
          // CraftBukkit start
@@ -138,7 +129,7 @@
          if (blockEntity == null) {
              blockEntity = this.blockEntities.get(pos);
          }
-@@ -534,6 +_,7 @@
+@@ -542,6 +_,7 @@
  
                  if (blockState.getBlock() != blockState1.getBlock()) {
                      LOGGER.warn("Block state mismatch on block entity {} in position {}, {} != {}, updating", blockEntity, blockPos, blockState, blockState1);
@@ -146,7 +137,7 @@
                  }
  
                  blockEntity.setBlockState(blockState);
-@@ -620,7 +_,7 @@
+@@ -628,7 +_,7 @@
  
      // CraftBukkit start
      public void loadCallback() {
@@ -155,7 +146,7 @@
          // Paper start
          this.loadedTicketLevel = true;
          // Paper end
-@@ -646,13 +_,13 @@
+@@ -654,13 +_,13 @@
  
                  org.bukkit.World world = this.level.getWorld();
                  if (world != null) {
@@ -171,7 +162,7 @@
                      }
                  }
                  server.getPluginManager().callEvent(new org.bukkit.event.world.ChunkPopulateEvent(bukkitChunk));
-@@ -661,7 +_,7 @@
+@@ -669,7 +_,7 @@
      }
  
      public void unloadCallback() {
@@ -180,7 +171,7 @@
          org.bukkit.Server server = this.level.getCraftServer();
          org.bukkit.craftbukkit.event.CraftEventFactory.callEntitiesUnloadEvent(this.level, this.chunkPos, ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(this.locX, this.locZ).getEntityChunk().getAllEntities()); // Paper - rewrite chunk system
          org.bukkit.Chunk bukkitChunk = new org.bukkit.craftbukkit.CraftChunk(this);
-@@ -678,7 +_,7 @@
+@@ -686,7 +_,7 @@
      @Override
      public boolean isUnsaved() {
          // Paper start - rewrite chunk system
@@ -189,7 +180,7 @@
          if (((ca.spottedleaf.moonrise.patches.chunk_system.ticks.ChunkSystemLevelChunkTicks)this.blockTicks).moonrise$isDirty(gameTime)
              || ((ca.spottedleaf.moonrise.patches.chunk_system.ticks.ChunkSystemLevelChunkTicks)this.fluidTicks).moonrise$isDirty(gameTime)) {
              return true;
-@@ -758,7 +_,7 @@
+@@ -762,7 +_,7 @@
                      BlockPos blockPos = ProtoChunk.unpackOffsetCoordinates(_short, this.getSectionYFromSectionIndex(i), pos);
                      BlockState blockState = this.getBlockState(blockPos);
                      FluidState fluidState = blockState.getFluidState();
@@ -198,7 +189,7 @@
                          fluidState.tick(level, blockPos, blockState);
                      }
  
-@@ -792,7 +_,8 @@
+@@ -796,7 +_,8 @@
                  blockEntity = ((EntityBlock)blockState.getBlock()).newBlockEntity(pos, blockState);
              } else {
                  blockEntity = null;
@@ -208,7 +199,7 @@
              }
          } else {
              blockEntity = BlockEntity.loadStatic(pos, blockState, tag, this.level.registryAccess());
-@@ -809,6 +_,13 @@
+@@ -813,6 +_,13 @@
      }
  
      public void unpackTicks(long pos) {
@@ -222,7 +213,7 @@
          this.blockTicks.unpack(pos);
          this.fluidTicks.unpack(pos);
      }
-@@ -875,12 +_,22 @@
+@@ -879,12 +_,22 @@
                      (pos, ticker1) -> {
                          TickingBlockEntity tickingBlockEntity = this.createTicker(blockEntity, ticker);
                          if (ticker1 != null) {
@@ -245,7 +236,7 @@
                              this.level.addBlockEntityTicker(rebindableTickingBlockEntityWrapper);
                              return rebindableTickingBlockEntityWrapper;
                          } else {
-@@ -904,6 +_,19 @@
+@@ -908,6 +_,19 @@
              this.blockEntity = blockEntity;
              this.ticker = ticker;
          }
@@ -265,7 +256,7 @@
  
          @Override
          public void tick() {
-@@ -915,7 +_,11 @@
+@@ -919,7 +_,11 @@
                          profilerFiller.push(this::getType);
                          BlockState blockState = LevelChunk.this.getBlockState(blockPos);
                          if (this.blockEntity.getType().isValid(blockState)) {
@@ -278,7 +269,7 @@
                              this.loggedInvalidBlockState = false;
                          // Paper start - Remove the Block Entity if it's invalid
                          } else {
-@@ -959,6 +_,13 @@
+@@ -963,6 +_,13 @@
          public String toString() {
              return "Level ticker for " + this.getType() + "@" + this.getPos();
          }
@@ -292,7 +283,7 @@
      }
  
      public static enum EntityCreationType {
-@@ -972,14 +_,14 @@
+@@ -976,14 +_,14 @@
          void run(LevelChunk chunk);
      }
  
@@ -310,7 +301,7 @@
              this.ticker = ticker;
          }
  
-@@ -1007,6 +_,13 @@
+@@ -1011,6 +_,13 @@
          public String toString() {
              return this.ticker + " <wrapped>";
          }

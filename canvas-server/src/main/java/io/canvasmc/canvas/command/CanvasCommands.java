@@ -24,6 +24,7 @@ import net.minecraft.server.commands.ServerPackCommand;
 import net.minecraft.server.commands.SpawnArmorTrimsCommand;
 import net.minecraft.server.commands.WardenSpawnTrackerCommand;
 import org.jetbrains.annotations.NotNull;
+import org.purpurmc.purpur.PurpurConfig;
 
 public final class CanvasCommands {
     private static final Set<LiteralCommandNode<CommandSourceStack>> ALL = Sets.newHashSet();
@@ -46,14 +47,20 @@ public final class CanvasCommands {
             register(LevelTicksCommand::new);
             register(RandomTeleportCommand::new);
 
-            CanvasBootstrap.LOGGER.info("Registering Minecraft debug commands");
-            RaidCommand.register(dispatcher, context);
-            DebugPathCommand.register(dispatcher);
-            DebugMobSpawningCommand.register(dispatcher);
-            WardenSpawnTrackerCommand.register(dispatcher);
-            SpawnArmorTrimsCommand.register(dispatcher);
-            ServerPackCommand.register(dispatcher);
+            registerMinecraftDebugCommands(dispatcher, context);
+        } else if (PurpurConfig.registerMinecraftDebugCommands) {
+            registerMinecraftDebugCommands(dispatcher, context);
         }
+    }
+
+    private static void registerMinecraftDebugCommands(@NotNull CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        CanvasBootstrap.LOGGER.info("Registering Minecraft debug commands");
+        RaidCommand.register(dispatcher, context);
+        DebugPathCommand.register(dispatcher);
+        DebugMobSpawningCommand.register(dispatcher);
+        WardenSpawnTrackerCommand.register(dispatcher);
+        SpawnArmorTrimsCommand.register(dispatcher);
+        ServerPackCommand.register(dispatcher);
     }
 
     private static void register(@NotNull Supplier<? extends CommandInstance> instance) {

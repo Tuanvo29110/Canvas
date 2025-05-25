@@ -91,11 +91,12 @@
      protected FluidState getNewLiquid(ServerLevel level, BlockPos pos, BlockState state) {
          int i = 0;
          int i1 = 0;
-@@ -341,32 +_,46 @@
-     protected void beforeDestroyingBlock(LevelAccessor level, BlockPos pos, BlockState state, BlockPos source) { beforeDestroyingBlock(level, pos, state); } // Paper - Add BlockBreakBlockEvent
+@@ -342,32 +_,44 @@
+ 
      protected abstract void beforeDestroyingBlock(LevelAccessor level, BlockPos pos, BlockState state);
  
 +    // Canvas start
++    private record Node(BlockPos pos, int depth, Direction direction) {}
      protected int getSlopeDistance(LevelReader level, BlockPos pos, int depth, Direction direction, BlockState state, FlowingFluid.SpreadContext spreadContext) {
 -        int i = 1000;
 -
@@ -125,7 +126,7 @@
 +
 +                BlockPos neighborPos = currentPos.relative(dir);
 +                BlockState neighborState = spreadContext.getBlockStateIfLoaded(neighborPos);
-+                if (neighborState == null) continue; // Prevent chunk loading
++                if (neighborState == null) continue; // prevent chunk loading
 +
 +                FluidState fluidState = neighborState.getFluidState();
 +                if (this.canPassThrough(level, this.getFlowing(), currentPos, state, dir, neighborPos, neighborState, fluidState)) {
@@ -146,12 +147,8 @@
          }
  
 -        return i;
--    }
 +        return minDistance;
-+    }
-+
-+    private record Node(BlockPos pos, int depth, Direction direction) {
-+    }
+     }
 +    // Canvas end
  
      boolean isWaterHole(BlockGetter level, BlockPos pos, BlockState state, BlockPos belowPos, BlockState belowState) {

@@ -28,7 +28,7 @@
  import net.minecraft.ChatFormatting;
  import net.minecraft.FileUtil;
  import net.minecraft.commands.CommandSourceStack;
-@@ -273,7 +_,7 @@
+@@ -275,7 +_,7 @@
                  !_boolean,
                  _boolean2,
                  player.createCommonSpawnInfo(serverLevel),
@@ -37,7 +37,7 @@
              )
          );
          player.getBukkitEntity().sendSupportedChannels(); // CraftBukkit
-@@ -341,7 +_,7 @@
+@@ -345,7 +_,7 @@
          // CraftBukkit start - sendAll above replaced with this loop
          ClientboundPlayerInfoUpdatePacket packet = ClientboundPlayerInfoUpdatePacket.createPlayerInitializing(List.of(player)); // Paper - Add Listing API for Player
  
@@ -46,7 +46,7 @@
          for (int i = 0; i < this.players.size(); ++i) {
              ServerPlayer entityplayer1 = (ServerPlayer) this.players.get(i);
  
-@@ -481,7 +_,7 @@
+@@ -485,7 +_,7 @@
          return optional;
      }
  
@@ -55,7 +55,7 @@
          if (!player.getBukkitEntity().isPersistent()) return; // CraftBukkit
          player.lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
          this.playerIo.save(player);
-@@ -884,6 +_,7 @@
+@@ -898,6 +_,7 @@
      }
  
      public void tick() {
@@ -63,10 +63,10 @@
          if (++this.sendAllPlayerInfoIn > 600) {
              // CraftBukkit start
              for (int i = 0; i < this.players.size(); ++i) {
-@@ -1324,6 +_,11 @@
+@@ -1339,6 +_,11 @@
      }
  
-     public boolean verifyChatTrusted(PlayerChatMessage message) { // Paper - private -> public
+     public boolean verifyChatTrusted(PlayerChatMessage message) {
 +        // Canvas start - no chat reports
 +        if (Config.INSTANCE.networking.noChatReports.enable) {
 +            return true;
@@ -75,7 +75,7 @@
          return message.hasSignature() && !message.hasExpiredServer(Instant.now());
      }
  
-@@ -1369,25 +_,29 @@
+@@ -1384,25 +_,29 @@
      }
  
      public void setViewDistance(int viewDistance) {

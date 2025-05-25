@@ -7,7 +7,7 @@
  import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
  import java.util.List;
  import java.util.OptionalInt;
-@@ -364,4 +_,14 @@
+@@ -354,4 +_,14 @@
          double d1 = entity.position().z - this.position().z;
          return DoubleDoubleImmutablePair.of(d, d1);
      }

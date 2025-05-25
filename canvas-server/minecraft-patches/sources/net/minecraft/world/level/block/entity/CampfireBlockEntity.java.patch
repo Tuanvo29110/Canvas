@@ -1,14 +1,14 @@
 --- a/net/minecraft/world/level/block/entity/CampfireBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/CampfireBlockEntity.java
-@@ -2,6 +_,7 @@
- 
+@@ -3,6 +_,7 @@
+ import java.util.Arrays;
  import java.util.Optional;
  import javax.annotation.Nullable;
 +import io.canvasmc.canvas.entity.SleepingBlockEntity;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
  import net.minecraft.core.HolderLookup;
-@@ -28,15 +_,53 @@
+@@ -30,15 +_,53 @@
  import net.minecraft.world.level.Level;
  import net.minecraft.world.level.block.CampfireBlock;
  import net.minecraft.world.level.block.state.BlockState;
@@ -63,7 +63,7 @@
  
      public CampfireBlockEntity(BlockPos pos, BlockState blockState) {
          super(BlockEntityType.CAMPFIRE, pos, blockState);
-@@ -49,6 +_,7 @@
+@@ -51,6 +_,7 @@
          CampfireBlockEntity campfire,
          RecipeManager.CachedCheck<SingleRecipeInput, CampfireCookingRecipe> check
      ) {
@@ -71,7 +71,7 @@
          boolean flag = false;
  
          for (int i = 0; i < campfire.items.size(); i++) {
-@@ -62,8 +_,14 @@
+@@ -64,8 +_,14 @@
                      SingleRecipeInput singleRecipeInput = new SingleRecipeInput(itemStack);
                      // Paper start - add recipe to cook events
                      final var optionalCookingRecipe = check.getRecipeFor(singleRecipeInput, level);
@@ -87,7 +87,7 @@
                          .orElse(itemStack);
                      // Paper end - add recipe to cook events
                      if (itemStack1.isItemEnabled(level.enabledFeatures())) {
-@@ -79,6 +_,7 @@
+@@ -81,6 +_,7 @@
                          );
  
                          if (!blockCookEvent.callEvent()) {
@@ -95,7 +95,7 @@
                              return;
                          }
  
-@@ -104,6 +_,7 @@
+@@ -106,6 +_,7 @@
          if (flag) {
              setChanged(level, pos, state);
          }
@@ -103,7 +103,7 @@
      }
  
      public static void cooldownTick(Level level, BlockPos pos, BlockState state, CampfireBlockEntity blockEntity) {
-@@ -119,6 +_,7 @@
+@@ -121,6 +_,7 @@
          if (flag) {
              setChanged(level, pos, state);
          }
@@ -111,15 +111,15 @@
      }
  
      public static void particleTick(Level level, BlockPos pos, BlockState state, CampfireBlockEntity blockEntity) {
-@@ -175,6 +_,7 @@
-             System.arraycopy(cookingState, 0, this.stopCooking, 0, Math.min(this.stopCooking.length, abyte.length));
-         }
+@@ -176,6 +_,7 @@
+             System.arraycopy(cookingState, 0, this.stopCooking, 0, Math.min(this.stopCooking.length, bytes.length));
+         });
          // Paper end - Add more Campfire API
-+        this.wakeUpNow(); // Canvas
++        this.wakeUpNow(); // Canvas - block entity sleeping
      }
  
      @Override
-@@ -224,6 +_,7 @@
+@@ -225,6 +_,7 @@
                  this.cookingTime[i] = event.getTotalCookTime(); // i -> event.getTotalCookTime()
                  // CraftBukkit end
                  this.cookingProgress[i] = 0;

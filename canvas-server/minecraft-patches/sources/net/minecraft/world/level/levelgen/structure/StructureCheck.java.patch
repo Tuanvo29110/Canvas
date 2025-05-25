@@ -1,14 +1,6 @@
 --- a/net/minecraft/world/level/levelgen/structure/StructureCheck.java
 +++ b/net/minecraft/world/level/levelgen/structure/StructureCheck.java
-@@ -10,6 +_,7 @@
- import it.unimi.dsi.fastutil.objects.Object2IntMaps;
- import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
- import java.util.HashMap;
-+import java.util.Iterator;
- import java.util.Map;
- import javax.annotation.Nullable;
- import net.minecraft.core.Registry;
-@@ -46,6 +_,7 @@
+@@ -47,6 +_,7 @@
      private final LevelHeightAccessor heightAccessor;
      private final BiomeSource biomeSource;
      private final long seed;
@@ -16,7 +8,7 @@
      private final DataFixer fixerUpper;
      // Paper start - rewrite chunk system
      // make sure to purge entries from the maps to prevent memory leaks
-@@ -235,15 +_,12 @@
+@@ -229,15 +_,12 @@
      }
  
      private void storeFullResults(long chunkPos, Object2IntMap<Structure> structureChunks) {

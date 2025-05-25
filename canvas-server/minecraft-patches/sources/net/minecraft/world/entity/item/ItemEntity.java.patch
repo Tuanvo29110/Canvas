@@ -7,9 +7,9 @@
 +import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.region.ServerRegions;
  import net.minecraft.core.BlockPos;
+ import net.minecraft.core.UUIDUtil;
  import net.minecraft.nbt.CompoundTag;
- import net.minecraft.network.chat.Component;
-@@ -153,8 +_,26 @@
+@@ -160,8 +_,26 @@
      }
      // Paper end - EAR 2
  
@@ -36,7 +36,7 @@
          if (this.getItem().isEmpty()) {
              this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
          } else {
-@@ -209,7 +_,8 @@
+@@ -216,7 +_,8 @@
                  || Mth.floor(this.yo) != Mth.floor(this.getY())
                  || Mth.floor(this.zo) != Mth.floor(this.getZ());
              int i = flag ? 2 : 40;
@@ -46,7 +46,7 @@
                  this.mergeWithNeighbours();
              }
  
-@@ -540,7 +_,8 @@
+@@ -529,7 +_,8 @@
      @Override
      public Entity teleport(TeleportTransition teleportTransition) {
          Entity entity = super.teleport(teleportTransition);

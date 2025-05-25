@@ -21,7 +21,7 @@
  
  public abstract class AgeableMob extends PathfinderMob {
      private static final EntityDataAccessor<Boolean> DATA_BABY_ID = SynchedEntityData.defineId(AgeableMob.class, EntityDataSerializers.BOOLEAN);
-@@ -121,6 +_,16 @@
+@@ -124,6 +_,16 @@
      public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
          if (DATA_BABY_ID.equals(key)) {
              this.refreshDimensions();

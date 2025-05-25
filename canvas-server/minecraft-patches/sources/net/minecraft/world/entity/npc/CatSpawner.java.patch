@@ -8,7 +8,7 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.server.level.ServerLevel;
  import net.minecraft.tags.StructureTags;
-@@ -18,17 +_,18 @@
+@@ -18,15 +_,16 @@
  
  public class CatSpawner implements CustomSpawner {
      private static final int TICK_DELAY = 1200;
@@ -16,19 +16,17 @@
 +    // private int nextTick; // Canvas - Threaded Regions
  
      @Override
-     public int tick(ServerLevel level, boolean spawnHostiles, boolean spawnPassives) {
-         if (spawnPassives && level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) {
+     public void tick(ServerLevel level, boolean spawnEnemies, boolean spawnFriendlies) {
+         if (spawnFriendlies && level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) {
 -            this.nextTick--;
--            if (this.nextTick > 0) {
-+            ServerRegions.WorldTickData tickData = ServerRegions.getTickData(level); // Canvas - Threaded Regions
-+            tickData.catSpawnerNextTick--; // Canvas - Threaded Regions
-+            if (tickData.catSpawnerNextTick > 0) { // Canvas - Threaded Regions
-                 return 0;
-             } else {
+-            if (this.nextTick <= 0) {
 -                this.nextTick = level.purpurConfig.catSpawnDelay; // Purpur - Cat spawning options
 -                Player randomPlayer = level.getRandomPlayer();
++            ServerRegions.WorldTickData tickData = ServerRegions.getTickData(level); // Canvas - Threaded Regions
++            tickData.catSpawnerNextTick--; // Canvas - Threaded Regions
++            if (tickData.catSpawnerNextTick <= 0) { // Canvas - Threaded Regions
 +                tickData.catSpawnerNextTick = level.purpurConfig.catSpawnDelay; // Purpur - Cat spawning options // Canvas - Threaded Regions
 +                Player randomPlayer = level.getRandomLocalPlayer(); // Canvas - Threaded Regions
-                 if (randomPlayer == null) {
-                     return 0;
-                 } else {
+                 if (randomPlayer != null) {
+                     RandomSource randomSource = level.random;
+                     int i = (8 + randomSource.nextInt(24)) * (randomSource.nextBoolean() ? -1 : 1);

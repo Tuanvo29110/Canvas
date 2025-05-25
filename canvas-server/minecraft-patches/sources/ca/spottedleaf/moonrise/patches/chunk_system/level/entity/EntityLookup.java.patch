@@ -9,7 +9,7 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.server.level.FullChunkStatus;
  import net.minecraft.util.AbortableIterationConsumer;
-@@ -231,6 +_,7 @@
+@@ -235,6 +_,7 @@
                                     final boolean created, final boolean destroyed) {
          this.checkThread(entity, "Entity status change must only happen on the main thread");
  
@@ -17,7 +17,7 @@
          if (((ChunkSystemEntity)entity).moonrise$isUpdatingSectionStatus()) {
              // recursive status update
              LOGGER.error("Cannot recursively update entity chunk status for entity " + entity, new Throwable());
-@@ -324,6 +_,7 @@
+@@ -328,6 +_,7 @@
                  slices.stopPreventingStatusUpdates(false);
              }
          }
@@ -25,7 +25,7 @@
      }
  
      public void chunkStatusChange(final int x, final int z, final FullChunkStatus newStatus) {
-@@ -986,6 +_,7 @@
+@@ -990,6 +_,7 @@
              EntityLookup.this.removeEntityCallback(entity);
  
              this.entity.setLevelCallback(NoOpCallback.INSTANCE);

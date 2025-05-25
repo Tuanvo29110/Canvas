@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/LightningRodBlock.java
 +++ b/net/minecraft/world/level/block/LightningRodBlock.java
-@@ -116,7 +_,7 @@
+@@ -114,7 +_,7 @@
      @Override
      public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
          if (level.isThundering()

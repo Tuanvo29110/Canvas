@@ -247,25 +247,25 @@ public class ServerRegions {
                 regionizedWorldData.redstoneTime = from.redstoneTime;
             }
             // ticking chunks
-            for (final Iterator<ServerChunkCache.ChunkAndHolder> iterator = from.entityTickingChunks.iterator(); iterator.hasNext();) {
-                final ServerChunkCache.ChunkAndHolder holder = iterator.next();
-                final ChunkPos pos = holder.chunk().getPos();
+            for (final Iterator<LevelChunk> iterator = from.entityTickingChunks.iterator(); iterator.hasNext();) {
+                final LevelChunk holder = iterator.next();
+                final ChunkPos pos = holder.getPos();
 
                 final WorldTickData data = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
                 if (data == null) continue;
                 data.entityTickingChunks.add(holder);
             }
-            for (final Iterator<ServerChunkCache.ChunkAndHolder> iterator = from.tickingChunks.iterator(); iterator.hasNext();) {
-                final ServerChunkCache.ChunkAndHolder holder = iterator.next();
-                final ChunkPos pos = holder.chunk().getPos();
+            for (final Iterator<LevelChunk> iterator = from.tickingChunks.iterator(); iterator.hasNext();) {
+                final LevelChunk holder = iterator.next();
+                final ChunkPos pos = holder.getPos();
 
                 final WorldTickData data = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
                 if (data == null) continue;
                 data.tickingChunks.add(holder);
             }
-            for (final Iterator<ServerChunkCache.ChunkAndHolder> iterator = from.chunks.iterator(); iterator.hasNext();) {
-                final ServerChunkCache.ChunkAndHolder holder = iterator.next();
-                final ChunkPos pos = holder.chunk().getPos();
+            for (final Iterator<LevelChunk> iterator = from.chunks.iterator(); iterator.hasNext();) {
+                final LevelChunk holder = iterator.next();
+                final ChunkPos pos = holder.getPos();
 
                 final WorldTickData data = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
                 if (data == null) continue;
@@ -366,13 +366,13 @@ public class ServerRegions {
                 }
             }
             // ticking chunks
-            for (final Iterator<ServerChunkCache.ChunkAndHolder> iterator = from.entityTickingChunks.iterator(); iterator.hasNext();) {
+            for (final Iterator<LevelChunk> iterator = from.entityTickingChunks.iterator(); iterator.hasNext();) {
                 into.entityTickingChunks.add(iterator.next());
             }
-            for (final Iterator<ServerChunkCache.ChunkAndHolder> iterator = from.tickingChunks.iterator(); iterator.hasNext();) {
+            for (final Iterator<LevelChunk> iterator = from.tickingChunks.iterator(); iterator.hasNext();) {
                 into.tickingChunks.add(iterator.next());
             }
-            for (final Iterator<ServerChunkCache.ChunkAndHolder> iterator = from.chunks.iterator(); iterator.hasNext();) {
+            for (final Iterator<LevelChunk> iterator = from.chunks.iterator(); iterator.hasNext();) {
                 into.chunks.add(iterator.next());
             }
             // redstone torches
@@ -531,10 +531,10 @@ public class ServerRegions {
         }
 
         // ticking chunks
-        private static final ServerChunkCache.ChunkAndHolder[] EMPTY_CHUNK_AND_HOLDER_ARRAY = new ServerChunkCache.ChunkAndHolder[0];
-        private final ReferenceList<ServerChunkCache.ChunkAndHolder> entityTickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
-        private final ReferenceList<ServerChunkCache.ChunkAndHolder> tickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
-        private final ReferenceList<ServerChunkCache.ChunkAndHolder> chunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
+        private static final LevelChunk[] EMPTY_CHUNK_AND_HOLDER_ARRAY = new LevelChunk[0];
+        private final ReferenceList<LevelChunk> entityTickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
+        private final ReferenceList<LevelChunk> tickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
+        private final ReferenceList<LevelChunk> chunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
 
         // neighbor updater is threadlocal, don't need to isolate
         // captureDrops is threadlocal, don't need to isolate
@@ -902,39 +902,39 @@ public class ServerRegions {
         }
 
         // ticking chunks
-        public void addEntityTickingChunk(final ServerChunkCache.ChunkAndHolder holder) {
+        public void addEntityTickingChunk(final LevelChunk holder) {
             this.entityTickingChunks.add(holder);
         }
 
-        public void removeEntityTickingChunk(final ServerChunkCache.ChunkAndHolder holder) {
+        public void removeEntityTickingChunk(final LevelChunk holder) {
             this.entityTickingChunks.remove(holder);
         }
 
-        public ReferenceList<ServerChunkCache.ChunkAndHolder> getEntityTickingChunks() {
+        public ReferenceList<LevelChunk> getEntityTickingChunks() {
             return this.entityTickingChunks;
         }
 
-        public void addTickingChunk(final ServerChunkCache.ChunkAndHolder holder) {
+        public void addTickingChunk(final LevelChunk holder) {
             this.tickingChunks.add(holder);
         }
 
-        public void removeTickingChunk(final ServerChunkCache.ChunkAndHolder holder) {
+        public void removeTickingChunk(final LevelChunk holder) {
             this.tickingChunks.remove(holder);
         }
 
-        public ReferenceList<ServerChunkCache.ChunkAndHolder> getTickingChunks() {
+        public ReferenceList<LevelChunk> getTickingChunks() {
             return this.tickingChunks;
         }
 
-        public void addChunk(final ServerChunkCache.ChunkAndHolder holder) {
+        public void addChunk(final LevelChunk holder) {
             this.chunks.add(holder);
         }
 
-        public void removeChunk(final ServerChunkCache.ChunkAndHolder holder) {
+        public void removeChunk(final LevelChunk holder) {
             this.chunks.remove(holder);
         }
 
-        public ReferenceList<ServerChunkCache.ChunkAndHolder> getChunks() {
+        public ReferenceList<LevelChunk> getChunks() {
             return this.chunks;
         }
     }

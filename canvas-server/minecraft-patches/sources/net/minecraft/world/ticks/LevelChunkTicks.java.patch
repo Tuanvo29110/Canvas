@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/ticks/LevelChunkTicks.java
 +++ b/net/minecraft/world/ticks/LevelChunkTicks.java
-@@ -48,6 +_,22 @@
+@@ -44,6 +_,22 @@
          this.dirty = false;
      }
      // Paper end - rewrite chunk system

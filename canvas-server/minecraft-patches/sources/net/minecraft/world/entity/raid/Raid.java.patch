@@ -1,13 +1,13 @@
 --- a/net/minecraft/world/entity/raid/Raid.java
 +++ b/net/minecraft/world/entity/raid/Raid.java
-@@ -261,8 +_,16 @@
+@@ -276,8 +_,16 @@
          this.raidEvent.removeAllPlayers();
          this.status = Raid.RaidStatus.STOPPED;
      }
 +    // Canvas start
 +    private boolean isBarDirty;
  
-     public void tick() {
+     public void tick(ServerLevel level) {
 +        if (this.isBarDirty) {
 +            this.raidEvent.setProgress(Mth.clamp(this.getHealthOfLivingRaiders() / this.totalHealth, 0.0F, 1.0F));
 +
@@ -17,16 +17,16 @@
          if (!this.isStopped()) {
              if (this.status == Raid.RaidStatus.ONGOING) {
                  boolean flag = this.active;
-@@ -496,7 +_,7 @@
+@@ -503,7 +_,7 @@
          Collection<ServerPlayer> players = this.raidEvent.getPlayers();
          long randomLong = this.random.nextLong();
  
--        for (ServerPlayer serverPlayer : this.level.players()) {
-+        for (ServerPlayer serverPlayer : this.level.getLocalPlayers()) { // Canvas - Threaded Regions
+-        for (ServerPlayer serverPlayer : level.players()) {
++        for (ServerPlayer serverPlayer : level.getLocalPlayers()) { // Canvas - Threaded Regions
              Vec3 vec3 = serverPlayer.position();
              Vec3 vec31 = Vec3.atCenterOf(pos);
              double squareRoot = Math.sqrt((vec31.x - vec3.x) * (vec31.x - vec3.x) + (vec31.z - vec3.z) * (vec31.z - vec3.z));
-@@ -581,7 +_,7 @@
+@@ -588,7 +_,7 @@
      }
  
      public void updateBossbar() {

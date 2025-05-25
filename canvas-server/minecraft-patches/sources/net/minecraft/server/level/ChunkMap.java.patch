@@ -27,7 +27,7 @@
  import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
  import it.unimi.dsi.fastutil.longs.Long2LongMap;
  import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-@@ -35,7 +_,12 @@
+@@ -36,7 +_,12 @@
  import java.util.concurrent.CompletionException;
  import java.util.concurrent.CompletionStage;
  import java.util.concurrent.Executor;
@@ -40,7 +40,7 @@
  import java.util.function.BooleanSupplier;
  import java.util.function.Consumer;
  import java.util.function.IntConsumer;
-@@ -55,6 +_,7 @@
+@@ -56,6 +_,7 @@
  import net.minecraft.network.protocol.Packet;
  import net.minecraft.network.protocol.game.ClientboundChunksBiomesPacket;
  import net.minecraft.network.protocol.game.ClientboundSetChunkCacheCenterPacket;
@@ -48,7 +48,7 @@
  import net.minecraft.server.level.progress.ChunkProgressListener;
  import net.minecraft.server.network.ServerPlayerConnection;
  import net.minecraft.util.CsvOutput;
-@@ -128,9 +_,11 @@
+@@ -133,9 +_,11 @@
      public final ChunkMap.DistanceManager distanceManager;
      public final AtomicInteger tickingGenerated = new AtomicInteger();  // Paper - public
      private final String storageName;
@@ -63,15 +63,15 @@
      // Paper - rewrite chunk system
      public int serverViewDistance;
      public final WorldGenContext worldGenContext; // Paper - public
-@@ -230,6 +_,7 @@
+@@ -237,6 +_,7 @@
          );
-         this.setServerViewDistance(viewDistance);
+         this.setServerViewDistance(serverViewDistance);
          this.worldGenContext = new WorldGenContext(level, generator, structureManager, this.lightEngine, null, this::setChunkUnsaved); // Paper - rewrite chunk system
 +        this.entityMap = new ConcurrentRegionizedEntityMap(level); // Canvas - Threaded Regions
      }
  
      private void setChunkUnsaved(ChunkPos chunkPos) {
-@@ -244,14 +_,18 @@
+@@ -251,14 +_,18 @@
  
          final int index = entity.getType().getCategory().ordinal();
          final ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> inRange =
@@ -92,7 +92,7 @@
          }
      }
  
-@@ -262,13 +_,17 @@
+@@ -269,13 +_,17 @@
          }
          int idx = mobCategory.ordinal();
          final ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> inRange =
@@ -112,7 +112,7 @@
          }
      }
      // Paper end - per player mob count backoff
-@@ -310,7 +_,7 @@
+@@ -309,7 +_,7 @@
      }
  
      @Nullable
@@ -121,7 +121,7 @@
          // Paper start - rewrite chunk system
          final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder holder = ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(chunkPos);
          return holder == null ? null : holder.vanillaChunkHolder;
-@@ -409,7 +_,7 @@
+@@ -408,7 +_,7 @@
          // Paper end - rewrite chunk system
      }
  
@@ -130,7 +130,100 @@
          ProfilerFiller profilerFiller = Profiler.get();
          profilerFiller.push("poi");
          this.poiManager.tick(hasMoreTime);
-@@ -720,40 +_,19 @@
+@@ -689,58 +_,45 @@
+ 
+     // Paper start - optimise chunk tick iteration
+     private boolean isChunkNearPlayer(final ChunkMap chunkMap, final ChunkPos chunkPos, final LevelChunk levelChunk) {
+-        final ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData chunkData = ((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk)levelChunk).moonrise$getChunkHolder().holderData;
+-        final ca.spottedleaf.moonrise.common.misc.NearbyPlayers.TrackedChunk nearbyPlayers = chunkData.nearbyPlayers;
+-        if (nearbyPlayers == null) {
+-            return false;
+-        }
+-
+-        // Note: cannot use narrow on Paper due to custom spawn range
+-
+-        final ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> players = nearbyPlayers.getPlayers(ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.SPAWN_RANGE);
+-
+-        if (players == null) {
+-            return false;
+-        }
+-
+-        final ServerPlayer[] raw = players.getRawDataUnchecked();
+-        final int len = players.size();
+-
+-        Objects.checkFromIndexSize(0, len, raw.length);
+-        for (int i = 0; i < len; ++i) {
+-            // Paper start - PlayerNaturallySpawnCreaturesEvent
+-            com.destroystokyo.paper.event.entity.PlayerNaturallySpawnCreaturesEvent event = raw[i].playerNaturallySpawnedEvent;
+-            if (event == null || event.isCancelled()) {
+-                continue;
+-            }
+-            double blockRange = (double) ((event.getSpawnRadius() << 4) * (event.getSpawnRadius() << 4));
+-            if (chunkMap.playerIsCloseEnoughForSpawning(raw[i], chunkPos, blockRange)) {
+-                // Paper end - PlayerNaturallySpawnCreaturesEvent
+-                return true;
+-            }
+-        }
+-
+-        return false;
++        // Canvas start
++        ca.spottedleaf.moonrise.common.misc.NearbyPlayers.TrackedChunk nearbyPlayers =
++            (levelChunk).chunkAndHolder.holderData.nearbyPlayers;
++        if (nearbyPlayers == null) return false;
++        ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> list = nearbyPlayers.getPlayers(ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.SPAWN_RANGE);
++        return list != null &&
++            !list.isEmpty();
++        // Canvas end
+     }
+     // Paper end - optimise chunk tick iteration
+ 
+-    void collectSpawningChunks(List<LevelChunk> output) {
+-        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> tickingChunks = ((ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel)this.level).moonrise$getPlayerTickingChunks();
+-
+-        final LevelChunk[] raw = tickingChunks.getRawDataUnchecked();
+-        final int size = tickingChunks.size();
+-
+-        Objects.checkFromToIndex(0, size, raw.length);
+-        for (int i = 0; i < size; ++i) {
+-            final LevelChunk levelChunk = raw[i];
+-
+-            if (!this.isChunkNearPlayer((ChunkMap)(Object)this, levelChunk.getPos(), levelChunk)) {
+-                continue;
+-            }
+-
+-            output.add(levelChunk);
++    public volatile int lastTickingChunksCount = 0; // Canvas - last ticking chunks count
++    // Canvas start - optimize chunk collect
++    // Note: return value can have null entries.
++    LevelChunk[] collectSpawningChunks(ServerRegions.WorldTickData tickData) {
++        final ca.spottedleaf.moonrise.common.misc.NearbyPlayers nearbyPlayers = tickData.getNearbyPlayers();
++        final LevelChunk[] raw = tickData.getEntityTickingChunks().getRawDataUnchecked();
++
++        LevelChunk[] collected = new LevelChunk[raw.length];
++        int count = 0;
++        for (int i = 0, len = raw.length; i < len; ++i) {
++            final LevelChunk chunk = raw[i];
++            if (chunk == null) continue;
++
++            final ca.spottedleaf.moonrise.common.misc.NearbyPlayers.TrackedChunk trackedChunk =
++                nearbyPlayers.getChunk(chunk.getPos());
++            if (trackedChunk == null) continue;
++
++            final ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> players =
++                trackedChunk.getPlayers(ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.SPAWN_RANGE);
++            if (players == null || players.isEmpty()) continue;
++
++            collected[count++] = chunk;
+         }
++
++        this.lastTickingChunksCount = count;
++        return collected;
+     }
++    // Canvas end
+ 
+     void forEachBlockTickingChunk(Consumer<LevelChunk> action) {
+         this.distanceManager.forEachEntityTickingChunk(chunkPos -> {
+@@ -774,40 +_,20 @@
          double blockRange; // Paper - use from event
          // Spigot end
          // Paper start - chunk tick iteration optimisation
@@ -141,7 +234,7 @@
          if (players == null) {
              return false;
          }
--
+ 
 -        final ServerPlayer[] raw = players.getRawDataUnchecked();
 -        final int len = players.size();
 -
@@ -156,8 +249,8 @@
 -                if (event == null || event.isCancelled()) continue;
 -                blockRange = (double) ((event.getSpawnRadius() << 4) * (event.getSpawnRadius() << 4));
 -            }
--            // Paper end - PlayerNaturallySpawnCreaturesEvent
 -            if (this.playerIsCloseEnoughForSpawning(serverPlayer, chunkPos, blockRange)) {
+-                // Paper end - PlayerNaturallySpawnCreaturesEvent
 -                return true;
 -            }
 -        }
@@ -174,7 +267,7 @@
              chunkPos, ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.SPAWN_RANGE
          );
          if (players == null) {
-@@ -765,10 +_,11 @@
+@@ -819,10 +_,11 @@
          final ServerPlayer[] raw = players.getRawDataUnchecked();
          final int len = players.size();
  
@@ -189,7 +282,7 @@
                  if (ret == null) {
                      ret = new ArrayList<>(len - i);
                      ret.add(player);
-@@ -797,12 +_,12 @@
+@@ -859,12 +_,12 @@
  
      void updatePlayerStatus(ServerPlayer player, boolean track) {
          boolean flag = this.skipPlayer(player);
@@ -205,7 +298,7 @@
                  ((ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickDistanceManager)this.distanceManager).moonrise$addPlayer(player, SectionPos.of(player)); // Paper - chunk tick iteration optimisation
              }
  
-@@ -810,9 +_,9 @@
+@@ -872,9 +_,9 @@
              ca.spottedleaf.moonrise.common.PlatformHooks.get().addPlayerToDistanceMaps(this.level, player); // Paper - rewrite chunk system
          } else {
              SectionPos lastSectionPos = player.getLastSectionPos();
@@ -218,7 +311,7 @@
                  ((ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickDistanceManager)this.distanceManager).moonrise$removePlayer(player, SectionPos.of(player)); // Paper - chunk tick iteration optimisation
              }
  
-@@ -830,27 +_,13 @@
+@@ -892,27 +_,13 @@
  
          SectionPos lastSectionPos = player.getLastSectionPos();
          SectionPos sectionPos = SectionPos.of(player);
@@ -251,7 +344,7 @@
  
              // Paper - rewrite chunk system
          }
-@@ -880,9 +_,9 @@
+@@ -942,9 +_,9 @@
      public void addEntity(Entity entity) {
          org.spigotmc.AsyncCatcher.catchOp("entity track"); // Spigot
          // Paper start - ignore and warn about illegal addEntity calls instead of crashing server
@@ -263,7 +356,7 @@
              return;
          }
          // Paper end - ignore and warn about illegal addEntity calls instead of crashing server
-@@ -893,22 +_,28 @@
+@@ -955,22 +_,28 @@
              i = org.spigotmc.TrackingRange.getEntityTrackingRange(entity, i); // Spigot
              if (i != 0) {
                  int updateInterval = type.updateInterval();
@@ -296,7 +389,7 @@
                              if (trackedEntity1.entity != serverPlayer) {
                                  trackedEntity1.updatePlayer(serverPlayer);
                              }
-@@ -924,12 +_,18 @@
+@@ -986,12 +_,18 @@
          if (entity instanceof ServerPlayer serverPlayer) {
              this.updatePlayerStatus(serverPlayer, false);
  
@@ -317,7 +410,7 @@
          if (trackedEntity1 != null) {
              trackedEntity1.broadcastRemoved();
          }
-@@ -938,33 +_,39 @@
+@@ -1000,33 +_,39 @@
  
      // Paper start - optimise entity tracker
      private void newTrackerTick() {
@@ -362,7 +455,7 @@
  
          List<ServerPlayer> list = Lists.newArrayList();
          List<ServerPlayer> list1 = this.level.players();
-@@ -992,18 +_,18 @@
+@@ -1054,18 +_,18 @@
              for (ChunkMap.TrackedEntity trackedEntity : this.entityMap.values()) {
                  trackedEntity.updatePlayers(list);
              }
@@ -384,7 +477,7 @@
          if (trackedEntity != null) {
              trackedEntity.broadcastAndSend(packet);
          }
-@@ -1077,10 +_,10 @@
+@@ -1139,10 +_,10 @@
  
      public class TrackedEntity implements ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerTrackedEntity { // Paper - optimise entity tracker
          public final ServerEntity serverEntity;
@@ -397,7 +490,7 @@
  
          // Paper start - optimise entity tracker
          private long lastChunkUpdate = -1L;
-@@ -1110,6 +_,7 @@
+@@ -1172,6 +_,7 @@
  
              for (int i = 0, len = players.size(); i < len; ++i) {
                  final ServerPlayer player = playersRaw[i];

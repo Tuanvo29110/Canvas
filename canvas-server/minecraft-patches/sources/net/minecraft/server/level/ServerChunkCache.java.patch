@@ -1,57 +1,22 @@
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
-@@ -1,22 +_,45 @@
+@@ -1,11 +_,15 @@
  package net.minecraft.server.level;
  
-+import ca.spottedleaf.moonrise.common.list.ReferenceList;
-+import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
-+import ca.spottedleaf.moonrise.common.util.TickThread;
 +import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
  import com.google.common.annotations.VisibleForTesting;
-+import com.google.common.collect.Sets;
  import com.mojang.datafixers.DataFixer;
  import com.mojang.logging.LogUtils;
 +import io.canvasmc.canvas.region.ServerRegions;
-+import io.canvasmc.canvas.scheduler.TickScheduler;
+ import it.unimi.dsi.fastutil.longs.LongSet;
+ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 +import io.canvasmc.canvas.Config;
-+import io.canvasmc.canvas.util.NamedAgnosticThreadFactory;
 +import io.netty.util.internal.ConcurrentSet;
  import java.io.IOException;
  import java.nio.file.Path;
-+import java.util.ArrayDeque;
- import java.util.ArrayList;
  import java.util.Arrays;
-+import java.util.Collection;
-+import java.util.HashSet;
-+import java.util.IdentityHashMap;
- import java.util.List;
-+import java.util.Objects;
- import java.util.Set;
- import java.util.concurrent.CompletableFuture;
- import java.util.concurrent.CompletionStage;
-+import java.util.concurrent.CountDownLatch;
- import java.util.concurrent.Executor;
-+import java.util.concurrent.atomic.AtomicBoolean;
-+import java.util.concurrent.Executors;
-+import java.util.concurrent.ForkJoinPool;
-+import java.util.concurrent.locks.LockSupport;
- import java.util.function.BooleanSupplier;
- import java.util.function.Consumer;
- import java.util.function.Supplier;
- import javax.annotation.Nullable;
-+import io.papermc.paper.threadedregions.ThreadedRegionizer;
-+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
- import net.minecraft.FileUtil;
- import net.minecraft.Util;
- import net.minecraft.core.BlockPos;
-@@ -50,35 +_,37 @@
- import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
- import net.minecraft.world.level.storage.DimensionDataStorage;
- import net.minecraft.world.level.storage.LevelStorageSource;
-+import org.agrona.collections.Long2ObjectHashMap;
- import org.slf4j.Logger;
+@@ -57,9 +_,9 @@
  
  public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache { // Paper - rewrite chunk system
      private static final Logger LOGGER = LogUtils.getLogger();
@@ -63,21 +28,14 @@
      final ThreadedLevelLightEngine lightEngine;
      public final ServerChunkCache.MainThreadExecutor mainThreadProcessor;
      public final ChunkMap chunkMap;
-     private final DimensionDataStorage dataStorage;
--    private long lastInhabitedUpdate;
-+    public long lastInhabitedUpdate; // Canvas - private -> public
-     public boolean spawnEnemies = true;
-     public boolean spawnFriendlies = true;
-     private static final int CACHE_SIZE = 4;
+@@ -72,17 +_,18 @@
      private final long[] lastChunkPos = new long[4];
      private final ChunkStatus[] lastChunkStatus = new ChunkStatus[4];
      private final ChunkAccess[] lastChunk = new ChunkAccess[4];
--    private final List<LevelChunk> tickingChunks = new ArrayList<>();
--    private final Set<ChunkHolder> chunkHoldersToBroadcast = new ReferenceOpenHashSet<>();
--    @Nullable
-+    // private final List<LevelChunk> tickingChunks = new ObjectArrayList<>(); // Canvas - fastutil - Threaded Regions
-+    // private final Set<ChunkHolder> chunkHoldersToBroadcast = new ConcurrentSet<>(); // Canvas - concurrent - Threaded Regions
-+    /* @Nullable // Canvas - Threaded Regions
+-    private final List<LevelChunk> spawningChunks = new ObjectArrayList<>();
++    /* private final List<LevelChunk> spawningChunks = new ObjectArrayList<>(); // Canvas - Threaded Regions
+     private final Set<ChunkHolder> chunkHoldersToBroadcast = new ReferenceOpenHashSet<>();
+     @Nullable
      @VisibleForDebug
 -    private NaturalSpawner.SpawnState lastSpawnState;
 +    private NaturalSpawner.SpawnState lastSpawnState; */ // Canvas - Threaded Regions
@@ -91,7 +49,7 @@
      // Paper end
      // Paper start - rewrite chunk system
  
-@@ -134,6 +_,14 @@
+@@ -138,6 +_,14 @@
          final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder currentChunk = chunkHolderManager.getChunkHolder(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkX, chunkZ));
  
          final ChunkAccess ifPresent = currentChunk == null ? null : currentChunk.getChunkIfPresent(toStatus);
@@ -106,52 +64,16 @@
  
          if (ifPresent != null && (toStatus != ChunkStatus.FULL || currentChunk.isFullChunkReady())) {
              return ifPresent;
-@@ -153,35 +_,19 @@
-     // Paper end - rewrite chunk system
-     // Paper start - chunk tick iteration optimisations
-     private final ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom shuffleRandom = new ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom(0L);
-+    // Canvas start - optimize - reduce overhead
-     private boolean isChunkNearPlayer(final ChunkMap chunkMap, final ChunkPos chunkPos, final LevelChunk levelChunk) {
--        final ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkData chunkData = ((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemChunkHolder)((ca.spottedleaf.moonrise.patches.chunk_system.level.chunk.ChunkSystemLevelChunk)levelChunk).moonrise$getChunkAndHolder().holder())
--            .moonrise$getRealChunkHolder().holderData;
--        final ca.spottedleaf.moonrise.common.misc.NearbyPlayers.TrackedChunk nearbyPlayers = chunkData.nearbyPlayers;
--        if (nearbyPlayers == null) {
--            return false;
--        }
--
--        final ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> players = nearbyPlayers.getPlayers(ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.SPAWN_RANGE);
--
--        if (players == null) {
--            return false;
--        }
--
--        final ServerPlayer[] raw = players.getRawDataUnchecked();
--        final int len = players.size();
--
--        java.util.Objects.checkFromIndexSize(0, len, raw.length);
--        for (int i = 0; i < len; ++i) {
--            if (chunkMap.playerIsCloseEnoughForSpawning(raw[i], chunkPos, 16384.0D)) { // Spigot (reducedRange = false)
--                return true;
--            }
--        }
--
--        return false;
-+        ca.spottedleaf.moonrise.common.misc.NearbyPlayers.TrackedChunk nearbyPlayers =
-+            (levelChunk).chunkAndHolder.holder.newChunkHolder.holderData.nearbyPlayers;
-+
-+        if (nearbyPlayers == null) return false;
-+        ReferenceList<ServerPlayer> list = nearbyPlayers.getPlayers(ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.SPAWN_RANGE);
-+        return list != null &&
-+            !list.isEmpty();
-     }
-+    // Canvas end
-     // Paper end - chunk tick iteration optimisations
+@@ -177,7 +_,7 @@
  
--
-     public ServerChunkCache(
-         ServerLevel level,
-         LevelStorageSource.LevelStorageAccess levelStorageAccess,
-@@ -279,6 +_,12 @@
+             // call mid-tick tasks for chunk system
+             if ((i & 7) == 0) {
+-                ((ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer)this.level.getServer()).moonrise$executeMidTickTasks();
++                this.pollTask(); // ((ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer)this.level.getServer()).moonrise$executeMidTickTasks(); // Canvas - we change how the chunk system tasks are polled, so this realistically does nothing. this fixes it
+                 continue;
+             }
+         }
+@@ -284,6 +_,12 @@
      public LevelChunk getChunkAtIfLoadedImmediately(int x, int z) {
          return this.fullChunks.get(ChunkPos.asLong(x, z));
      }
@@ -164,7 +86,7 @@
      // Paper end
  
      @Override
-@@ -325,6 +_,13 @@
+@@ -330,6 +_,13 @@
          // Paper end - rewrite chunk system
      }
  
@@ -178,7 +100,7 @@
      @Nullable
      @Override
      public LevelChunk getChunkNow(int chunkX, int chunkZ) {
-@@ -441,8 +_,7 @@
+@@ -446,8 +_,7 @@
  
      public boolean isPositionTicking(long chunkPos) {
          // Paper start - rewrite chunk system
@@ -188,20 +110,20 @@
          // Paper end - rewrite chunk system
      }
  
-@@ -484,7 +_,12 @@
+@@ -489,7 +_,12 @@
          ProfilerFiller profilerFiller = Profiler.get();
          profilerFiller.push("purge");
          if (this.level.tickRateManager().runsNormally() || !tickChunks || this.level.spigotConfig.unloadFrozenChunks) { // Spigot
 +            // Canvas start
 +            if (this.ticksSinceLastPurgeStaleTicketsCall++ > Config.INSTANCE.ticksBetweenPurgeStaleTickets) {
-             this.distanceManager.purgeStaleTickets();
-+                this.ticksSinceLastPurgeStaleTicketsCall = 0;
+             this.ticketStorage.purgeStaleTickets();
++            this.ticksSinceLastPurgeStaleTicketsCall = 0;
 +            }
 +            // Canvas end
          }
  
          this.runDistanceManagerUpdates();
-@@ -503,79 +_,116 @@
+@@ -508,7 +_,8 @@
  
      private void tickChunks() {
          long gameTime = this.level.getGameTime();
@@ -211,29 +133,7 @@
          this.lastInhabitedUpdate = gameTime;
          if (!this.level.isDebug()) {
              ProfilerFiller profilerFiller = Profiler.get();
-             profilerFiller.push("pollingChunks");
-             if (this.level.tickRateManager().runsNormally()) {
--                List<LevelChunk> list = this.tickingChunks;
-+                // List<LevelChunk> list = tickData.temporaryChunkTickList; // Canvas - Threaded Regions - optimize chunk collect
- 
-                 try {
-                     profilerFiller.push("filteringTickingChunks");
--                    this.collectTickingChunks(list);
-+                    LevelChunk[] chunks = this.collectTickingChunks(tickData); // Canvas - optimize chunk collect
-                     profilerFiller.popPush("shuffleChunks");
-                     // Paper start - chunk tick iteration optimisation
-                     this.shuffleRandom.setSeed(this.level.random.nextLong());
--                    if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled
-+                    // if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled // Canvas - optimize chunk collect
-                     // Paper end - chunk tick iteration optimisation
--                    this.tickChunks(profilerFiller, l, list);
-+                    this.tickChunks(profilerFiller, l, chunks);
-                     profilerFiller.pop();
-                 } finally {
--                    list.clear();
-+                    // list.clear(); // Canvas - optimize chunk collect
-                 }
-             }
+@@ -521,31 +_,60 @@
  
              this.broadcastChangedChunks(profilerFiller);
              profilerFiller.pop();
@@ -250,7 +150,7 @@
 +                        player.mobBackoffCounts[ii] = newBackoff;
 +                    }
 +                    // Paper end - per player mob spawning backoff
-+                }
++               }
 +                if (tickData.firstRunSpawnCounts) {
 +                    tickData.firstRunSpawnCounts = false;
 +                    tickData.spawnCountsReady.set(true);
@@ -282,64 +182,13 @@
 +        ServerRegions.getTickData(this.level).getChunkHoldersToBroadcast().clear(); // Canvas - Threaded Regions
          profiler.pop();
      }
--
--    private void collectTickingChunks(List<LevelChunk> output) {
--        // Paper start - chunk tick iteration optimisation
--        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> tickingChunks =
--            ((ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel)this.level).moonrise$getPlayerTickingChunks();
--
--        final ServerChunkCache.ChunkAndHolder[] raw = tickingChunks.getRawDataUnchecked();
--        final int size = tickingChunks.size();
--
--        final ChunkMap chunkMap = this.chunkMap;
--
--        for (int i = 0; i < size; ++i) {
-+    public volatile int lastTickingChunksCount = 0; // Canvas - last ticking chunks count
-+
-+    // Canvas start - optimize chunk collect
-+    // Note: return value can have null entries.
-+    private LevelChunk[] collectTickingChunks(ServerRegions.WorldTickData tickData) {
-+        final NearbyPlayers nearbyPlayers = tickData.getNearbyPlayers();
-+        final ServerChunkCache.ChunkAndHolder[] raw = tickData.getEntityTickingChunks().getRawDataUnchecked();
-+
-+        LevelChunk[] collected = new LevelChunk[raw.length];
-+        int count = 0;
-+
-+        for (int i = 0, len = raw.length; i < len; ++i) {
-             final ServerChunkCache.ChunkAndHolder chunkAndHolder = raw[i];
--            final LevelChunk levelChunk = chunkAndHolder.chunk();
--
--            if (!this.isChunkNearPlayer(chunkMap, levelChunk.getPos(), levelChunk)) {
--                continue;
--            }
--
--            output.add(levelChunk);
-+            if (chunkAndHolder == null) continue;
-+
-+            final LevelChunk chunk = chunkAndHolder.chunk();
-+            final NearbyPlayers.TrackedChunk trackedChunk = nearbyPlayers.getChunk(chunk.getPos());
-+
-+            if (trackedChunk == null) continue;
-+
-+            final ReferenceList<ServerPlayer> players = trackedChunk.getPlayers(NearbyPlayers.NearbyMapType.SPAWN_RANGE);
-+            if (players == null || players.isEmpty()) continue;
-+
-+            collected[count++] = chunk;
-         }
--        // Paper end - chunk tick iteration optimisation
-+
-+        this.lastTickingChunksCount = count;
-+        return collected;
-     }
-+    // Canvas end
  
--    private void tickChunks(ProfilerFiller profiler, long timeInhabited, List<LevelChunk> chunks) {
-+    private void tickChunks(ProfilerFiller profiler, long timeInhabited, LevelChunk[] chunks) { // Canvas - optimize chunk collect
+     private void tickChunks(ProfilerFiller profiler, long timeInhabited) {
++        ServerRegions.WorldTickData tickData = ServerRegions.getTickData(this.level); // Canvas - Threaded Regions
          profiler.popPush("naturalSpawnCount");
          int naturalSpawnChunkCount = this.distanceManager.getNaturalSpawnChunkCount();
          // Paper start - Optional per player mob spawns
          NaturalSpawner.SpawnState spawnState;
-+        final ServerRegions.WorldTickData tickData = ServerRegions.getTickData(this.level); // Canvas - Threaded Regions
          if ((this.spawnFriendlies || this.spawnEnemies) && this.level.paperConfig().entities.spawning.perPlayerMobSpawns) { // don't count mobs when animals and monsters are disabled
 +            if (!Config.INSTANCE.entities.enableAsyncSpawning) { // Canvas - async mob spawning
              // re-set mob counts
@@ -348,7 +197,7 @@
                  // Paper start - per player mob spawning backoff
                  for (int ii = 0; ii < ServerPlayer.MOBCATEGORY_TOTAL_ENUMS; ii++) {
                      player.mobCounts[ii] = 0;
-@@ -588,36 +_,40 @@
+@@ -558,48 +_,51 @@
                  }
                  // Paper end - per player mob spawning backoff
              }
@@ -362,7 +211,7 @@
          }
          // Paper end - Optional per player mob spawns
 -        this.lastSpawnState = spawnState;
-+        // this.lastSpawnState = spawnercreature_d; // Canvas - async mob spawning
++        // this.lastSpawnState = spawnState; // Canvas - async mob spawning
          profiler.popPush("spawnAndTick");
 -        boolean _boolean = this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && !this.level.players().isEmpty(); // CraftBukkit
 +        boolean _boolean = this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && !this.level.getLocalPlayers().isEmpty(); // CraftBukkit // Canvas - Threaded Regions
@@ -386,19 +235,52 @@
              filteredSpawningCategories = List.of();
          }
  
-         for (LevelChunk levelChunk : chunks) {
-+            if (levelChunk == null) continue; // Canvas - optimize chunk collect
-             ChunkPos pos = levelChunk.getPos();
-             levelChunk.incrementInhabitedTime(timeInhabited);
--            if (!filteredSpawningCategories.isEmpty() && this.level.getWorldBorder().isWithinBounds(pos) && this.chunkMap.anyPlayerCloseEnoughForSpawning(pos, true)) { // Spigot
--                NaturalSpawner.spawnForChunk(this.level, levelChunk, spawnState, filteredSpawningCategories);
-+
-+            if (!filteredSpawningCategories.isEmpty() && this.level.getWorldBorder().isWithinBounds(pos) && (!Config.INSTANCE.entities.enableAsyncSpawning || tickData.spawnCountsReady.get()) && this.chunkMap.anyPlayerCloseEnoughForSpawning(pos, true)) { // Spigot // Canvas - async mob spawning
-+                NaturalSpawner.spawnForChunk(this.level, levelChunk, tickData.getLastSpawnState(), filteredSpawningCategories); // Canvas - Threaded Regions
-             }
+-        List<LevelChunk> list = this.spawningChunks;
++        // List<LevelChunk> list = this.spawningChunks; // Canvas - optimize chunk collect
  
-             if (true) { // Paper - rewrite chunk system
-@@ -672,19 +_,26 @@
+         try {
+             profiler.push("filteringSpawningChunks");
+-            this.chunkMap.collectSpawningChunks(list);
++            LevelChunk[] chunks = this.chunkMap.collectSpawningChunks(tickData);
+             profiler.popPush("shuffleSpawningChunks");
+             // Paper start - chunk tick iteration optimisation
+             this.shuffleRandom.setSeed(this.level.random.nextLong());
+-            if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled
++            // if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled // Canvas - optimize chunk collect
+             // Paper end - chunk tick iteration optimisation
+             profiler.popPush("tickSpawningChunks");
+ 
+-            for (LevelChunk levelChunk : list) {
+-                this.tickSpawningChunk(levelChunk, timeInhabited, filteredSpawningCategories, spawnState);
++            for (LevelChunk levelChunk : chunks) { // Canvas - optimize chunk collect
++                if (levelChunk == null) continue; // Canvas - optimize chunk collect
++                this.tickSpawningChunk(levelChunk, timeInhabited, filteredSpawningCategories, tickData.getLastSpawnState(), tickData); // Canvas - Threaded Regions
+             }
+         } finally {
+-            list.clear();
++            // list.clear(); // Canvas - optimize chunk collect
+         }
+ 
+         profiler.popPush("tickTickingChunks");
+@@ -611,7 +_,7 @@
+         }
+     }
+ 
+-    private void tickSpawningChunk(LevelChunk chunk, long timeInhabited, List<MobCategory> spawnCategories, NaturalSpawner.SpawnState spawnState) {
++    private void tickSpawningChunk(LevelChunk chunk, long timeInhabited, List<MobCategory> spawnCategories, NaturalSpawner.SpawnState spawnState, ServerRegions.WorldTickData tickData) { // Canvas - Threaded Regions
+         ChunkPos pos = chunk.getPos();
+         chunk.incrementInhabitedTime(timeInhabited);
+         if (true) { // Paper - rewrite chunk system
+@@ -619,7 +_,7 @@
+         }
+ 
+         if (!spawnCategories.isEmpty()) {
+-            if (this.level.getWorldBorder().isWithinBounds(pos)) { // Paper - rewrite chunk system
++            if (this.level.getWorldBorder().isWithinBounds(pos) && (!Config.INSTANCE.entities.enableAsyncSpawning || tickData.spawnCountsReady.get())) { // Paper - rewrite chunk system // Canvas - Threaded Regions
+                 NaturalSpawner.spawnForChunk(this.level, chunk, spawnState, spawnCategories);
+             }
+         }
+@@ -666,19 +_,26 @@
          int sectionPosX = SectionPos.blockToSectionCoord(pos.getX());
          int sectionPosZ = SectionPos.blockToSectionCoord(pos.getZ());
          ChunkHolder visibleChunkIfPresent = this.getVisibleChunkIfPresent(ChunkPos.asLong(sectionPosX, sectionPosZ));
@@ -416,7 +298,7 @@
              ChunkHolder visibleChunkIfPresent = this.getVisibleChunkIfPresent(pos.chunk().toLong());
              if (visibleChunkIfPresent != null && visibleChunkIfPresent.sectionLightChanged(type, pos.y())) {
 -                this.chunkHoldersToBroadcast.add(visibleChunkIfPresent);
-+                ServerRegions.getTickData(this.level).getChunkHoldersToBroadcast().add(visibleChunkIfPresent); // Canvas - Threaded Regions
++                ServerRegions.getTickData(this.level).getChunkHoldersToBroadcast().add(visibleChunkIfPresent);
              }
 -        });
 +        // Canvas start - Threaded Regions
@@ -429,13 +311,13 @@
 +        // Canvas end
      }
  
-     public <T> void addRegionTicket(TicketType<T> type, ChunkPos pos, int distance, T value) {
-@@ -700,6 +_,16 @@
-         this.distanceManager.updateChunkForced(pos, add);
+     public void addTicket(Ticket ticket, ChunkPos chunkPos) {
+@@ -698,6 +_,16 @@
+         return this.ticketStorage.updateChunkForced(chunkPos, add);
      }
  
 +    // Canvas start - Threaded Regions
-+    public void updateRegionTicket(ChunkPos pos, boolean add, TicketType<ChunkPos> ticketType) {
++    public void updateRegionTicket(ChunkPos pos, boolean add, TicketType ticketType) {
 +        if (add) {
 +            this.distanceManager.moonrise$getChunkHolderManager().addTicketAtLevel(ticketType, pos, ChunkMap.FORCED_TICKET_LEVEL, pos);
 +        } else {
@@ -444,10 +326,10 @@
 +    }
 +
 +    // Canvas end
-     public void move(ServerPlayer player) {
-         if (!player.isRemoved()) {
-             this.chunkMap.move(player);
-@@ -766,7 +_,10 @@
+     @Override
+     public LongSet getForceLoadedChunks() {
+         return this.ticketStorage.getForceLoadedChunks();
+@@ -769,7 +_,10 @@
      @Nullable
      @VisibleForDebug
      public NaturalSpawner.SpawnState getLastSpawnState() {
@@ -458,8 +340,8 @@
 +        // Canvas end
      }
  
-     public void removeTicketsOnClosing() {
-@@ -775,7 +_,7 @@
+     public void deactivateTicketsOnClosing() {
+@@ -778,7 +_,7 @@
  
      public void onChunkReadyToSend(ChunkHolder chunkHolder) {
          if (chunkHolder.hasChangesToBroadcast()) {

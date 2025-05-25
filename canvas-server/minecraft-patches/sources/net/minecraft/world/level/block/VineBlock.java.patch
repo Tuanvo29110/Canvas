@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/VineBlock.java
 +++ b/net/minecraft/world/level/block/VineBlock.java
-@@ -20,6 +_,7 @@
+@@ -19,6 +_,7 @@
  import net.minecraft.world.level.block.state.BlockState;
  import net.minecraft.world.level.block.state.StateDefinition;
  import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -8,7 +8,7 @@
  import net.minecraft.world.phys.shapes.CollisionContext;
  import net.minecraft.world.phys.shapes.Shapes;
  import net.minecraft.world.phys.shapes.VoxelShape;
-@@ -293,7 +_,18 @@
+@@ -268,7 +_,18 @@
          int i1 = 5;
  
          for (BlockPos blockPos : iterable) {

@@ -1,15 +1,16 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java
-@@ -20,15 +_,20 @@
+@@ -21,6 +_,9 @@
  import com.google.gson.JsonArray;
  import com.google.gson.JsonObject;
  import com.mojang.logging.LogUtils;
 +import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.region.ServerRegions;
 +import io.papermc.paper.threadedregions.ThreadedRegionizer;
+ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
  import it.unimi.dsi.fastutil.longs.Long2ByteLinkedOpenHashMap;
  import it.unimi.dsi.fastutil.longs.Long2ByteMap;
- import it.unimi.dsi.fastutil.longs.Long2IntMap;
+@@ -28,9 +_,11 @@
  import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
  import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
  import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -21,7 +22,7 @@
  import net.minecraft.nbt.CompoundTag;
  import net.minecraft.server.level.ChunkHolder;
  import net.minecraft.server.level.ChunkLevel;
-@@ -40,16 +_,27 @@
+@@ -42,16 +_,27 @@
  import net.minecraft.util.Unit;
  import net.minecraft.world.level.ChunkPos;
  import net.minecraft.world.level.chunk.LevelChunk;
@@ -49,13 +50,13 @@
  import java.util.concurrent.TimeUnit;
  import java.util.concurrent.atomic.AtomicBoolean;
  import java.util.concurrent.atomic.AtomicReference;
-@@ -71,36 +_,79 @@
-     private static final long PROBE_MARKER = Long.MIN_VALUE + 1;
+@@ -72,36 +_,80 @@
+     private static final long NO_TIMEOUT_MARKER = Long.MIN_VALUE;
      public final ReentrantAreaLock ticketLockArea;
  
--    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket<?>>> tickets = new ConcurrentLong2ReferenceChainedHashTable<>();
+-    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket>> tickets = new ConcurrentLong2ReferenceChainedHashTable<>();
 -    private final ConcurrentLong2ReferenceChainedHashTable<Long2IntOpenHashMap> sectionToChunkToExpireCount = new ConcurrentLong2ReferenceChainedHashTable<>();
-+    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket<?>>> tickets = ConcurrentLong2ReferenceChainedHashTable.createWithCapacity(20, 0.9F); // Canvas - improve
++    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket>> tickets = ConcurrentLong2ReferenceChainedHashTable.createWithCapacity(20, 0.9F); // Canvas - improve
 +    private final ConcurrentLong2ReferenceChainedHashTable<Long2IntOpenHashMap> sectionToChunkToExpireCount = ConcurrentLong2ReferenceChainedHashTable.createWithCapacity(20, 0.9F); // Canvas - improve
      final ChunkUnloadQueue unloadQueue;
  
@@ -64,7 +65,7 @@
      private final ServerLevel world;
      private final ChunkTaskScheduler taskScheduler;
      private long currentTick;
--
+ 
 -    private final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = new ArrayDeque<>();
 -    private final ObjectRBTreeSet<NewChunkHolder> autoSaveQueue = new ObjectRBTreeSet<>((final NewChunkHolder c1, final NewChunkHolder c2) -> {
 -        if (c1 == c2) {
@@ -152,9 +153,9 @@
 +    }
 +    // Canvas end
  
-     public ChunkHolderManager(final ServerLevel world, final ChunkTaskScheduler taskScheduler) {
-         this.world = world;
-@@ -223,25 +_,27 @@
+     private final ConcurrentLong2ReferenceChainedHashTable<Long2IntOpenHashMap> ticketCounters = new ConcurrentLong2ReferenceChainedHashTable<>();
+ 
+@@ -225,25 +_,27 @@
      }
  
      void ensureInAutosave(final NewChunkHolder holder) {
@@ -189,7 +190,7 @@
  
              holder.lastAutoSave = currentTick;
              if (holder.save(false) != null) {
-@@ -255,7 +_,7 @@
+@@ -257,7 +_,7 @@
  
          for (final NewChunkHolder holder : reschedule) {
              if (holder.getChunkStatus().isOrAfter(FullChunkStatus.FULL)) {
@@ -198,7 +199,7 @@
              }
          }
      }
-@@ -317,7 +_,7 @@
+@@ -319,7 +_,7 @@
              }
              if (logProgress) {
                  final long currTime = System.nanoTime();
@@ -207,7 +208,7 @@
                      lastLog = currTime;
                      LOGGER.info(
                              "Saved " + savedChunk + " block chunks, " + savedEntity + " entity chunks, " + savedPoi
-@@ -523,7 +_,7 @@
+@@ -557,7 +_,7 @@
              chunkZ >> sectionShift
          );
  
@@ -216,16 +217,16 @@
              return new Long2IntOpenHashMap();
          }).addTo(chunkKey, 1);
      }
-@@ -567,7 +_,7 @@
+@@ -601,7 +_,7 @@
  
          final ReentrantAreaLock.Node ticketLock = lock ? this.ticketLockArea.lock(chunkX, chunkZ) : null;
          try {
--            final SortedArraySet<Ticket<?>> ticketsAtChunk = this.tickets.computeIfAbsent(chunk, (final long keyInMap) -> {
-+            final SortedArraySet<Ticket<?>> ticketsAtChunk = this.tickets.computeIfAbsent(chunk, (keyInMap) -> { // Canvas
-                 return SortedArraySet.create(4);
+-            final SortedArraySet<Ticket> ticketsAtChunk = this.tickets.computeIfAbsent(chunk, (final long keyInMap) -> {
++            final SortedArraySet<Ticket> ticketsAtChunk = this.tickets.computeIfAbsent(chunk, (keyInMap) -> { // Canvas
+                 return (SortedArraySet)SortedArraySet.create(4);
              });
  
-@@ -1031,17 +_,22 @@
+@@ -1116,17 +_,22 @@
          if (changedFullStatus.isEmpty()) {
              return;
          }
@@ -257,7 +258,7 @@
              for (int i = 0, len = changedFullStatus.size(); i < len; ++i) {
                  pendingFullLoadUpdate.add(changedFullStatus.get(i));
              }
-@@ -1050,7 +_,7 @@
+@@ -1135,7 +_,7 @@
  
      private void removeChunkHolder(final NewChunkHolder holder) {
          holder.onUnload();
@@ -266,7 +267,7 @@
          PlatformHooks.get().onChunkHolderDelete(this.world, holder.vanillaChunkHolder);
          this.chunkHolders.remove(CoordinateUtils.getChunkKey(holder.chunkX, holder.chunkZ));
      }
-@@ -1063,7 +_,7 @@
+@@ -1148,7 +_,7 @@
              throw new IllegalStateException("Cannot unload chunks recursively");
          }
          final int sectionShift = this.unloadQueue.coordinateShift; // sectionShift <= lock shift
@@ -275,7 +276,7 @@
          int unloadCountTentative = 0;
          for (final ChunkUnloadQueue.SectionToUnload sectionRef : unloadSectionsForRegion) {
              final ChunkUnloadQueue.UnloadSection section
-@@ -1143,10 +_,7 @@
+@@ -1228,10 +_,7 @@
                      for (int i = 0, len = stage1.size(); i < len; ++i) {
                          final NewChunkHolder chunkHolder = stage1.get(i);
                          chunkHolder.removeFromUnloadQueue();
@@ -287,7 +288,7 @@
                          final NewChunkHolder.UnloadState state = chunkHolder.unloadStage1();
                          if (state == null) {
                              // can unload immediately
-@@ -1207,6 +_,33 @@
+@@ -1292,6 +_,33 @@
              }
          }
      }
@@ -321,7 +322,7 @@
  
      public enum TicketOperationType {
          ADD, REMOVE, ADD_IF_REMOVED, ADD_AND_REMOVE
-@@ -1372,7 +_,7 @@
+@@ -1457,7 +_,7 @@
              }
          }
  
@@ -330,7 +331,7 @@
              ret |= this.processPendingFullUpdate();
          }
  
-@@ -1381,14 +_,47 @@
+@@ -1466,14 +_,47 @@
  
      // only call on tick thread
      private boolean processPendingFullUpdate() {
@@ -379,7 +380,7 @@
              ret |= holder.handleFullStatusChange(changedFullStatus);
  
              if (!changedFullStatus.isEmpty()) {
-@@ -1398,6 +_,7 @@
+@@ -1483,6 +_,7 @@
                  changedFullStatus.clear();
              }
          }
