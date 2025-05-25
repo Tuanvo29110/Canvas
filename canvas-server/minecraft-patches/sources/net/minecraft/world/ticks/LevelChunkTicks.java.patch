@@ -1,26 +1,5 @@
 --- a/net/minecraft/world/ticks/LevelChunkTicks.java
 +++ b/net/minecraft/world/ticks/LevelChunkTicks.java
-@@ -1,5 +_,7 @@
- package net.minecraft.world.ticks;
- 
-+import it.unimi.dsi.fastutil.objects.ObjectSets;
-+import com.google.common.collect.Queues;
- import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
- import java.util.ArrayList;
- import java.util.Iterator;
-@@ -14,10 +_,10 @@
- import net.minecraft.core.BlockPos;
- 
- public class LevelChunkTicks<T> implements SerializableTickContainer<T>, TickContainerAccess<T>, ca.spottedleaf.moonrise.patches.chunk_system.ticks.ChunkSystemLevelChunkTicks { // Paper - rewrite chunk system
--    private final Queue<ScheduledTick<T>> tickQueue = new PriorityQueue<>(ScheduledTick.DRAIN_ORDER);
-+    private final Queue<ScheduledTick<T>> tickQueue = Queues.synchronizedQueue(new PriorityQueue<>(ScheduledTick.DRAIN_ORDER)); // Canvas - synchronized
-     @Nullable
-     private List<SavedTick<T>> pendingTicks;
--    private final Set<ScheduledTick<?>> ticksPerPosition = new ObjectOpenCustomHashSet<>(ScheduledTick.UNIQUE_TICK_HASH);
-+    private final Set<ScheduledTick<?>> ticksPerPosition = ObjectSets.synchronize(new ObjectOpenCustomHashSet<>(ScheduledTick.UNIQUE_TICK_HASH)); // Canvas - synchronized
-     @Nullable
-     private BiConsumer<LevelChunkTicks<T>, ScheduledTick<T>> onTickAdded;
- 
 @@ -44,6 +_,22 @@
          this.dirty = false;
      }
