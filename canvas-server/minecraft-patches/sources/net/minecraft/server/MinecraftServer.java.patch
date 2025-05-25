@@ -182,7 +182,7 @@
          if (Runtime.getRuntime().availableProcessors() > 4) {
              thread.setPriority(8);
          }
-@@ -329,14 +_,15 @@
+@@ -329,9 +_,9 @@
          this.chunkSystemCrash = throwable;
      }
  
@@ -193,43 +193,16 @@
 +    public static final long MAX_CHUNK_EXEC_TIME = 1000L; // 1us // Canvas - private -> public
 +    public static final long TASK_EXECUTION_FAILURE_BACKOFF = 5L * 1000L; // 5us // Canvas - private -> public
  
--    private long lastMidTickExecute;
--    private long lastMidTickExecuteFailure;
-+    private final ThreadLocal<Long> lastMidTickExecute = ThreadLocal.withInitial(() -> 0L); // Canvas - threadlocal
-+    private final ThreadLocal<Long> lastMidTickExecuteFailure = ThreadLocal.withInitial(() -> 0L); // Canvas - threadlocal
+     private long lastMidTickExecute;
+     private long lastMidTickExecuteFailure;
+@@ -358,6 +_,7 @@
  
-     private boolean tickMidTickTasks() {
-+        if (true) return false; // Canvas - we cannot poll chunk tasks on main
-         // give all worlds a fair chance at by targeting them all.
-         // if we execute too many tasks, that's fine - we have logic to correctly handle overuse of allocated time.
-         boolean executed = false;
-@@ -359,7 +_,7 @@
      @Override
      public final void moonrise$executeMidTickTasks() {
++        if (true) return;
          final long startTime = System.nanoTime();
--        if ((startTime - this.lastMidTickExecute) <= CHUNK_TASK_QUEUE_BACKOFF_MIN_TIME || (startTime - this.lastMidTickExecuteFailure) <= TASK_EXECUTION_FAILURE_BACKOFF) {
-+        if ((startTime - this.lastMidTickExecute.get()) <= CHUNK_TASK_QUEUE_BACKOFF_MIN_TIME || (startTime - this.lastMidTickExecuteFailure.get()) <= TASK_EXECUTION_FAILURE_BACKOFF) { // Canvas - threadlocal
+         if ((startTime - this.lastMidTickExecute) <= CHUNK_TASK_QUEUE_BACKOFF_MIN_TIME || (startTime - this.lastMidTickExecuteFailure) <= TASK_EXECUTION_FAILURE_BACKOFF) {
              // it's shown to be bad to constantly hit the queue (chunk loads slow to a crawl), even if no tasks are executed.
-             // so, backoff to prevent this
-             return;
-@@ -372,7 +_,7 @@
- 
-             if (!moreTasks || diff >= MAX_CHUNK_EXEC_TIME) {
-                 if (!moreTasks) {
--                    this.lastMidTickExecuteFailure = currTime;
-+                    this.lastMidTickExecuteFailure.set(currTime); // Canvas - threadlocal
-                 }
- 
-                 // note: negative values reduce the time
-@@ -385,7 +_,7 @@
-                 final double overuseCount = (double)overuse/(double)MAX_CHUNK_EXEC_TIME;
-                 final long extraSleep = (long)Math.round(overuseCount*CHUNK_TASK_QUEUE_BACKOFF_MIN_TIME);
- 
--                this.lastMidTickExecute = currTime + extraSleep;
-+                this.lastMidTickExecute.set(currTime + extraSleep); // Canvas - threadlocal
-                 return;
-             }
-         }
 @@ -472,13 +_,20 @@
          Runtime.getRuntime().addShutdownHook(new org.bukkit.craftbukkit.util.ServerShutdownThread(this));
          // CraftBukkit end

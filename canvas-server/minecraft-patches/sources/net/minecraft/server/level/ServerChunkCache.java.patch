@@ -74,7 +74,7 @@
              // call mid-tick tasks for chunk system
              if ((i & 7) == 0) {
 -                ((ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer)this.level.getServer()).moonrise$executeMidTickTasks();
-+                this.pollTask(); // ((ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer)this.level.getServer()).moonrise$executeMidTickTasks(); // Canvas - we change how the chunk system tasks are polled, so this realistically does nothing. this fixes it
++                this.pollTask(); // Canvas - poll task, as executeMidTickTasks does nothing now
                  continue;
              }
          }
