@@ -4,7 +4,6 @@ import io.canvasmc.canvas.Config;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

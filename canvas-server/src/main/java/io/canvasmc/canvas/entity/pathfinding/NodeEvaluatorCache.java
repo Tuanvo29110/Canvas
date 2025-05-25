@@ -1,10 +1,10 @@
 package io.canvasmc.canvas.entity.pathfinding;
 
+import ca.spottedleaf.concurrentutil.util.Validate;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import ca.spottedleaf.concurrentutil.util.Validate;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import org.jetbrains.annotations.NotNull;
 

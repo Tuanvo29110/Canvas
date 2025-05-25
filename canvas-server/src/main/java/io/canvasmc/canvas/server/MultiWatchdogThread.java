@@ -24,7 +24,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.CraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spigotmc.AsyncCatcher;
 import org.spigotmc.RestartCommand;
 import org.spigotmc.SpigotConfig;
 
