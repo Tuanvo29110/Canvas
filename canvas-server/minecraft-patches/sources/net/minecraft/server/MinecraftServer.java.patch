@@ -251,7 +251,7 @@
      private boolean hasLoggedStop = false; // Paper - Debugging
      private final Object stopLock = new Object();
      public final boolean hasStopped() {
-@@ -982,19 +_,69 @@
+@@ -982,20 +_,70 @@
  
      public void stopServer() {
          // CraftBukkit start - prevent double stopping on multiple threads
@@ -320,15 +320,18 @@
          }
  
 -        LOGGER.info("Stopping server");
-         Commands.COMMAND_SENDING_POOL.shutdownNow(); // Paper - Perf: Async command map building; Shutdown and don't bother finishing
+-        Commands.COMMAND_SENDING_POOL.shutdownNow(); // Paper - Perf: Async command map building; Shutdown and don't bother finishing
++        // Commands.COMMAND_SENDING_POOL.shutdownNow(); // Paper - Perf: Async command map building; Shutdown and don't bother finishing // Canvas - move later in the shutdown process
          // Purpur start - UPnP Port Forwarding
          if (upnp) {
-@@ -1076,12 +_,15 @@
+             if (dev.omega24.upnp4j.UPnP4J.close(this.getPort(), dev.omega24.upnp4j.util.Protocol.TCP)) {
+@@ -1076,12 +_,16 @@
          }
          // Paper end - rewrite chunk system
          // Paper start - Improved watchdog support - move final shutdown items here
 +        LOGGER.info("Shutting down executors"); // Canvas - better shutdown logging
          Util.shutdownExecutors();
++        Commands.COMMAND_SENDING_POOL.shutdownNow(); // Paper - Perf: Async command map building; Shutdown and don't bother finishing // Canvas - from up
 +        this.mobSpawnExecutor.shutdown(); // Canvas - async mob spawning
          try {
              net.minecrell.terminalconsole.TerminalConsoleAppender.close(); // Paper - Use TerminalConsoleAppender
