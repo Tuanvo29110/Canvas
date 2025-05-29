@@ -308,7 +308,7 @@
 -        });
 +        // Canvas start - Threaded Regions
 +        };
-+        if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++        if (this.level.server.isRegionized()) {
 +            MinecraftServer.getThreadedServer().taskQueue.queueChunkTask(
 +                this.level, pos.getX(), pos.getZ(), run
 +            );
@@ -400,7 +400,7 @@
 -                return super.pollTask() | ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask();
 +                try {
 +                    entityOverride.add(current);
-+                    if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++                    if (serverLevel.server.isRegionized()) {
 +                        // poll our own tasks.
 +                        ServerRegions.WorldTickData thisData = ServerRegions.getTickData(serverLevel);
 +                        if (thisData.region != null) {

@@ -1,6 +1,7 @@
 package io.canvasmc.canvas.region;
 
 import io.canvasmc.canvas.Config;
+import io.canvasmc.canvas.command.ThreadedServerHealthDump;
 import io.canvasmc.canvas.scheduler.TickScheduler;
 import io.canvasmc.canvas.scheduler.WrappedTickLoop;
 import io.canvasmc.canvas.server.MultiWatchdogThread;
@@ -11,6 +12,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -41,7 +45,48 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
 
     @Override
     public String toString() {
-        return "Region at " + this.world.getDebugLocation() + " surrounding chunk " + this.region.getCenterChunk() + " " + super.toString();
+        return "Region at " + this.world.getDebugLocation() + " surrounding chunk " + this.region.getCenterChunk();
+    }
+
+    @Override
+    public @NotNull Component debugInfo() {
+        int pendingBlock = this.region.getData().tickData.getBlockLevelTicks().count();
+        int pendingFluid = this.region.getData().tickData.getFluidLevelTicks().count();
+        int localPlayers = this.region.getData().tickData.getLocalPlayers().size();
+        int localEntities = this.region.getData().tickData.getLocalEntitiesCopy().length;
+        TextComponent.Builder basic = Component.text()
+            .append(Component.text("Basic Information", ThreadedServerHealthDump.HEADER, TextDecoration.BOLD))
+            .append(ThreadedServerHealthDump.NEW_LINE);
+        basic
+            .append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
+            .append(Component.text("Pending Block Ticks: ", ThreadedServerHealthDump.PRIMARY))
+            .append(Component.text(pendingBlock, ThreadedServerHealthDump.INFORMATION))
+            .append(ThreadedServerHealthDump.NEW_LINE)
+            .append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
+            .append(Component.text("Pending Fluid Ticks: ", ThreadedServerHealthDump.PRIMARY))
+            .append(Component.text(pendingFluid, ThreadedServerHealthDump.INFORMATION))
+            .append(ThreadedServerHealthDump.NEW_LINE)
+            .append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
+            .append(Component.text("Local Players: ", ThreadedServerHealthDump.PRIMARY))
+            .append(Component.text(localPlayers, ThreadedServerHealthDump.INFORMATION))
+            .append(ThreadedServerHealthDump.NEW_LINE)
+            .append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
+            .append(Component.text("Local Entities: ", ThreadedServerHealthDump.PRIMARY))
+            .append(Component.text(localEntities, ThreadedServerHealthDump.INFORMATION))
+            .append(ThreadedServerHealthDump.NEW_LINE);
+        basic.append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
+            .append(Component.text("Ticking Chunks: ", ThreadedServerHealthDump.PRIMARY))
+            .append(Component.text(ServerRegions.getTickData(this.world).lastTickingChunksCount, ThreadedServerHealthDump.INFORMATION))
+            .append(ThreadedServerHealthDump.NEW_LINE);
+        basic.append(Component.text("Tile Entities", ThreadedServerHealthDump.HEADER, TextDecoration.BOLD))
+            .append(ThreadedServerHealthDump.NEW_LINE)
+            .append(this.world.doTileEntityInfo(this.region))
+            .append(ThreadedServerHealthDump.NEW_LINE);
+        basic.append(Component.text("Entities", ThreadedServerHealthDump.HEADER, TextDecoration.BOLD))
+            .append(ThreadedServerHealthDump.NEW_LINE)
+            .append(this.world.doEntityInfo(this.region))
+            .append(ThreadedServerHealthDump.NEW_LINE);
+        return basic.build();
     }
 
     @Override
@@ -92,7 +137,7 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
 
     @Override
     public boolean shouldSleep() {
-        return false; // TODO - implement
+        return false; // this is managed inside the tick handle
     }
 
     public static class TickHandle implements WrappedTick {

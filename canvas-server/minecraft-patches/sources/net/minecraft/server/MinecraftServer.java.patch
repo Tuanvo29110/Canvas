@@ -140,7 +140,7 @@
      @Deprecated(forRemoval = true) // Paper
      public final double[] recentTps = new double[4]; // Purpur - Add 5 second tps average in /tps
      // Spigot end
-@@ -301,16 +_,38 @@
+@@ -301,23 +_,44 @@
      public volatile Thread shutdownThread; // Paper - Improved watchdog support
      public final io.papermc.paper.configuration.PaperConfigurations paperConfigurations; // Paper - add paper configuration files
      public boolean isIteratingOverLevels = false; // Paper - Throw exception on world create while being ticked
@@ -152,6 +152,7 @@
      protected boolean upnp = false; // Purpur - UPnP Port Forwarding
  
 +    // Canvas start - Threaded Server
++    public final Config canvasConfig = Config.INSTANCE;
 +    private volatile boolean isTicking = false;
 +    public final TPSCalculator tpsCalculator = new TPSCalculator(); // lag compensation
 +    public final ConnectionPool connectionPool = new ConnectionPool(this); // threaded dimensions/regions
@@ -167,21 +168,34 @@
 +    public ThreadedServer threadedServer() {
 +        return THREADED_SERVER;
 +    }
++
++    // threaded regions
++    public final boolean isRegionized() {
++        return this.canvasConfig.ticking.enableThreadedRegionizing;
++    }
++
 +    // Canvas end
      public static <S extends MinecraftServer> S spin(Function<Thread, S> threadFunction) {
-         AtomicReference<S> atomicReference = new AtomicReference<>();
+-        AtomicReference<S> atomicReference = new AtomicReference<>();
 -        Thread thread = new ca.spottedleaf.moonrise.common.util.TickThread(() -> atomicReference.get().runServer(), "Server thread");
-+        // Canvas start - Threaded Server
-+        Thread thread = new ca.spottedleaf.moonrise.common.util.TickThread(() -> {
-+            THREADED_SERVER.spin();
-+            }, "Server thread");
-+        // Canvas end
-         thread.setUncaughtExceptionHandler((thread1, exception) -> LOGGER.error("Uncaught exception in server thread", exception));
+-        thread.setUncaughtExceptionHandler((thread1, exception) -> LOGGER.error("Uncaught exception in server thread", exception));
 -        thread.setPriority(Thread.NORM_PRIORITY+2); // Paper - Perf: Boost priority
+-        if (Runtime.getRuntime().availableProcessors() > 4) {
+-            thread.setPriority(8);
+-        }
+-
+-        S minecraftServer = (S)threadFunction.apply(thread);
+-        atomicReference.set(minecraftServer);
++        // Canvas start - Threaded Server - rewrite spin
++        Thread thread = new ca.spottedleaf.moonrise.common.util.TickThread(() -> THREADED_SERVER.spin(), "Server thread");
++        thread.setUncaughtExceptionHandler((_, exception) -> LOGGER.error("Uncaught exception in server thread", exception));
 +        thread.setPriority(Thread.NORM_PRIORITY); // Paper - Perf: Boost priority // Canvas - don't boost priority, this thread is not important anymore.
-         if (Runtime.getRuntime().availableProcessors() > 4) {
-             thread.setPriority(8);
-         }
++        S minecraftServer = threadFunction.apply(thread);
+         thread.start();
++        // Canvas end
+         return minecraftServer;
+     }
+ 
 @@ -329,9 +_,9 @@
          this.chunkSystemCrash = throwable;
      }

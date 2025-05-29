@@ -9,3 +9,16 @@
  
      /**
       * Static class cannot be initialized.
+@@ -85,6 +_,12 @@
+     public static Server getServer() {
+         return server;
+     }
++    // Canvas start - Threaded Server
++
++    public static io.canvasmc.canvas.ThreadedBukkitServer getThreadedServer() {
++        return getServer().getThreadedServer();
++    }
++    // Canvas end
+ 
+     /**
+      * Returns the de facto plugins directory, generally used for storing plugin jars to be loaded,

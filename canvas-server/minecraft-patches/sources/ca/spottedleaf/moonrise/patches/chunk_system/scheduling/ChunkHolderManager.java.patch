@@ -1,10 +1,9 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java
-@@ -21,6 +_,9 @@
+@@ -21,6 +_,8 @@
  import com.google.gson.JsonArray;
  import com.google.gson.JsonObject;
  import com.mojang.logging.LogUtils;
-+import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.region.ServerRegions;
 +import io.papermc.paper.threadedregions.ThreadedRegionizer;
  import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -22,12 +21,10 @@
  import net.minecraft.nbt.CompoundTag;
  import net.minecraft.server.level.ChunkHolder;
  import net.minecraft.server.level.ChunkLevel;
-@@ -42,16 +_,27 @@
+@@ -42,16 +_,22 @@
  import net.minecraft.util.Unit;
  import net.minecraft.world.level.ChunkPos;
  import net.minecraft.world.level.chunk.LevelChunk;
-+import org.agrona.collections.Long2ObjectHashMap;
-+import org.agrona.collections.Object2ObjectHashMap;
 +import org.agrona.collections.ObjectHashSet;
 +import org.jetbrains.annotations.NotNull;
  import org.slf4j.Logger;
@@ -40,12 +37,9 @@
 +import java.util.Deque;
  import java.util.Iterator;
  import java.util.List;
-+import java.util.Map;
  import java.util.Objects;
  import java.util.PrimitiveIterator;
 +import java.util.Set;
-+import java.util.concurrent.ConcurrentHashMap;
-+import java.util.concurrent.ConcurrentLinkedDeque;
 +import java.util.concurrent.ConcurrentSkipListSet;
  import java.util.concurrent.TimeUnit;
  import java.util.concurrent.atomic.AtomicBoolean;
@@ -246,7 +240,7 @@
 +                int chunkZ = fullStatus.chunkZ;
 +                this.taskScheduler.scheduleChunkTask(chunkX, chunkZ, () -> {
 +                    ServerRegions.WorldTickData data = ServerRegions.getTickData(this.world);
-+                    if (data.region == null && Config.INSTANCE.ticking.enableThreadedRegionizing) throw new RuntimeException("cannot attempt to add pending full update off-region");
++                    if (data.region == null && this.world.server.isRegionized()) throw new RuntimeException("cannot attempt to add pending full update off-region");
 +                    ChunkHolderManager thisManager = ChunkHolderManager.this;
 +                    thisManager.getCurrentRegionData().pendingFullLoadUpdate.add(fullStatus);
 +                    thisManager.processPendingFullUpdate();
@@ -331,7 +325,7 @@
              ret |= this.processPendingFullUpdate();
          }
  
-@@ -1466,14 +_,47 @@
+@@ -1466,14 +_,48 @@
  
      // only call on tick thread
      private boolean processPendingFullUpdate() {
@@ -356,9 +350,10 @@
          while ((holder = pendingFullLoadUpdate.poll()) != null) {
 +            int chunkX = holder.chunkX;
 +            int chunkZ = holder.chunkZ;
++            final boolean isRegionized = this.world.server.isRegionized();
 +            if (
-+                (Config.INSTANCE.ticking.enableThreadedRegionizing && tickData.region == null) // on a non-region thread while regionized
-+                || (Config.INSTANCE.ticking.enableThreadedRegionizing && this.world.regioniser.getRegionAtUnsynchronised(chunkX, chunkZ) != tickData.region) // regionized but wrong region
++                (isRegionized && tickData.region == null) // on a non-region thread while regionized
++                || (isRegionized && this.world.regioniser.getRegionAtUnsynchronised(chunkX, chunkZ) != tickData.region) // regionized but wrong region
 +            ) {
 +                // on world or wrong region, fix
 +                // this holder shouldn't be here, so we re-regionize
@@ -371,7 +366,7 @@
 +                continue;
 +            } else if (
 +                (Thread.currentThread().equals(this.world.server.serverThread)) // on main thread
-+                || (!Config.INSTANCE.ticking.enableThreadedRegionizing && !Thread.currentThread().equals(this.world.owner)) // not regionized and not on world thread
++                || (!isRegionized && !Thread.currentThread().equals(this.world.owner)) // not regionized and not on world thread
 +            ) {
 +                addBack.add(holder);
 +                continue;

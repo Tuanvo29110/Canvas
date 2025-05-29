@@ -1,10 +1,11 @@
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -12,6 +_,12 @@
+@@ -12,6 +_,13 @@
  import com.mojang.brigadier.exceptions.CommandSyntaxException;
  import com.mojang.serialization.Dynamic;
  import com.mojang.serialization.Lifecycle;
 +import io.canvasmc.canvas.Config;
++import io.canvasmc.canvas.ThreadedBukkitServer;
 +import io.canvasmc.canvas.scheduler.CanvasPerWorldScheduler;
 +import io.canvasmc.canvas.scheduler.CanvasRegionScheduler;
 +import io.canvasmc.canvas.scheduler.TickScheduler;
@@ -39,6 +40,26 @@
      private final io.papermc.paper.threadedregions.scheduler.FoliaAsyncScheduler asyncScheduler = new io.papermc.paper.threadedregions.scheduler.FoliaAsyncScheduler();
      private final io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler globalRegionScheduler = new io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler();
  
+@@ -858,6 +_,19 @@
+     public ServerTickManager getServerTickManager() {
+         return this.serverTickManager;
+     }
++    // Canvas start - Threaded Server
++
++    @Override
++    public @NotNull ThreadedBukkitServer getThreadedServer() {
++        return this.console.threadedServer();
++    }
++
++    // threaded regions
++    @Override
++    public boolean isRegionized() {
++        return this.console.isRegionized();
++    }
++    // Canvas end
+ 
+     @Override
+     public ResourcePack getServerResourcePack() {
 @@ -1053,7 +_,7 @@
              throw new IllegalStateException(org.bukkit.command.defaults.ReloadCommand.RELOADING_DISABLED_MESSAGE);
          }

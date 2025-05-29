@@ -204,7 +204,7 @@
  
      public void unpackTicks(long pos) {
 +        // Canvas start - Threaded Regions
-+        if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++        if (this.level.server.isRegionized()) {
 +            // ensure we have the right time
 +            ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> owner = this.level.regioniser.getRegionAtUnsynchronised(this.locX, this.locZ);
 +            pos = Objects.requireNonNull(owner, "cannot unpack ticks on a chunk with no region").getData().tickData.getRedstoneGameTime();

@@ -22,7 +22,7 @@
      @Override
      public void onChunkHolderCreate(final ServerLevel level, final ChunkHolder holder) {
 -
-+        if (io.canvasmc.canvas.Config.INSTANCE.ticking.enableThreadedRegionizing) level.regioniser.addChunk(holder.getPos().x, holder.getPos().z); // Canvas - Threaded Regions
++        if (level.server.isRegionized()) level.regioniser.addChunk(holder.getPos().x, holder.getPos().z); // Canvas - Threaded Regions
      }
  
      @Override
@@ -30,7 +30,7 @@
                  progressListener.onStatusChange(holder.getPos(), null);
              });
          }
-+        if (io.canvasmc.canvas.Config.INSTANCE.ticking.enableThreadedRegionizing) level.regioniser.removeChunk(holder.getPos().x, holder.getPos().z); // Canvas - Threaded Regions
++        if (level.server.isRegionized()) level.regioniser.removeChunk(holder.getPos().x, holder.getPos().z); // Canvas - Threaded Regions
      }
  
      @Override

@@ -8,7 +8,6 @@ import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import com.google.common.collect.Sets;
-import io.canvasmc.canvas.Config;
 import io.canvasmc.canvas.event.region.RegionCreateEvent;
 import io.canvasmc.canvas.event.region.RegionDestroyEvent;
 import io.canvasmc.canvas.event.region.RegionMergeEvent;
@@ -308,9 +307,7 @@ public class ServerRegions {
             // region scheduler
             CanvasRegionScheduler.Scheduler.split(from.regionScheduler, chunkToRegionShift, regionToData, dataSet);
             // event
-            for (final WorldTickData data : dataSet) {
-                new RegionSplitEvent(from.region.getData(), data.region.getData());
-            }
+            new RegionSplitEvent(from.getApiData(), dataSet.stream().map(WorldTickData::getApiData).toList()).callEvent();
         }
 
         @Override
@@ -485,14 +482,13 @@ public class ServerRegions {
         public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY) {
             @Override
             public boolean add(final Entity entity) {
-                if (WorldTickData.this.region == null && Config.INSTANCE.ticking.enableThreadedRegionizing) throw new RuntimeException("adding entity to tracker on non-region");
                 return super.add(entity);
             }
         };
 
         public ReferenceList<Entity> getTrackerEntities(ChunkPos chunkPos) {
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing && chunkPos != null) {
+            if (this.world.server.isRegionized() && chunkPos != null) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtSynchronised(chunkPos.x, chunkPos.z);
                 if (theRegion == null) return trackerEntities;
                 if (theRegion.getData().tickData != this) {
@@ -534,6 +530,7 @@ public class ServerRegions {
         private final ReferenceList<LevelChunk> entityTickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
         private final ReferenceList<LevelChunk> tickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
         private final ReferenceList<LevelChunk> chunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
+        public int lastTickingChunksCount = 0;
 
         // neighbor updater is threadlocal, don't need to isolate
         // captureDrops is threadlocal, don't need to isolate
@@ -556,11 +553,9 @@ public class ServerRegions {
         @VisibleForDebug
         private NaturalSpawner.SpawnState lastSpawnState;
         public @Nullable NaturalSpawner.SpawnState getLastSpawnState() {
-            if (this.region == null && Config.INSTANCE.ticking.enableThreadedRegionizing) throw new RuntimeException("attempting to access spawn state from level when regionized");
             return this.lastSpawnState;
         }
         public void setLastSpawnState(NaturalSpawner.SpawnState spawnState) {
-            if (this.region == null && Config.INSTANCE.ticking.enableThreadedRegionizing) throw new RuntimeException("attempting to access spawn state from level when regionized");
             this.lastSpawnState = spawnState;
         }
         // shouldSignal is threadlocal, don't need to isolate
@@ -614,19 +609,23 @@ public class ServerRegions {
             this.taskQueueData = new RegionizedTaskQueue.RegionTaskQueueData(this.world.taskQueueRegionData);
         }
 
+        public Region getApiData() {
+            if (this.region == null) throw new IllegalStateException("Cannot ask for region tick data on a non-region world data");
+            return this.region.getData();
+        }
+
         public ServerLevel getWorld() {
             return world;
         }
 
         // entities hooks
         public NearbyPlayers getNearbyPlayers() {
-            if (this.region == null && Config.INSTANCE.ticking.enableThreadedRegionizing) throw new RuntimeException("accessing nearby players from global");
             return this.nearbyPlayers;
         }
 
         public NearbyPlayers getNearbyPlayers(ChunkPos position) {
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
+            if (this.world.server.isRegionized()) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(position.x, position.z);
                 if (theRegion == null) {
                     return this.getNearbyPlayers();
@@ -640,7 +639,7 @@ public class ServerRegions {
 
         public Collection<Entity> getLocalEntities(ChunkPos pos) {
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
+            if (this.world.server.isRegionized()) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(pos.x, pos.z);
                 if (theRegion.getData().tickData != this) {
                     return theRegion.getData().tickData.allEntities;
@@ -659,7 +658,7 @@ public class ServerRegions {
 
         public List<ServerPlayer> getLocalPlayers(ChunkPos pos) {
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
+            if (this.world.server.isRegionized()) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(pos.x, pos.z);
                 if (theRegion == null) return this.localPlayers;
                 if (theRegion.getData().tickData != this) {
@@ -671,7 +670,7 @@ public class ServerRegions {
 
         public void addLoadedEntity(final Entity entity) {
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
+            if (this.world.server.isRegionized()) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(entity.chunkPosition().x, entity.chunkPosition().z);
                 // the chunk has to exist for the entity to be added, so we are ok to assume non-null
                 if (theRegion.getData().tickData != this) {
@@ -684,7 +683,7 @@ public class ServerRegions {
 
         public void removeLoadedEntity(final Entity entity) {
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
+            if (this.world.server.isRegionized()) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(entity.chunkPosition().x, entity.chunkPosition().z);
                 // the chunk has to exist for the entity to be added, so we are ok to assume non-null
                 if (theRegion.getData().tickData != this) {
@@ -700,11 +699,8 @@ public class ServerRegions {
         }
 
         public void addEntityTickingEntity(final Entity entity) {
-            if (!TickThread.isTickThreadFor(entity)) {
-                throw new IllegalArgumentException("Entity " + entity + " is not under this region's control");
-            }
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
+            if (this.world.server.isRegionized()) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(entity.chunkPosition().x, entity.chunkPosition().z);
                 // the chunk has to exist for the entity to be added, so we are ok to assume non-null
                 if (theRegion.getData().tickData != this) {
@@ -720,11 +716,8 @@ public class ServerRegions {
         }
 
         public void removeEntityTickingEntity(final Entity entity) {
-            if (!TickThread.isTickThreadFor(entity)) {
-                throw new IllegalArgumentException("Entity " + entity + " is not under this region's control");
-            }
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
+            if (this.world.server.isRegionized()) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(entity.chunkPosition().x, entity.chunkPosition().z);
                 // the chunk has to exist for the entity to be added, so we are ok to assume non-null
                 if (theRegion == null) {
@@ -751,11 +744,8 @@ public class ServerRegions {
         }
 
         public void addEntity(final @NotNull Entity entity, boolean check) {
-            if (!TickThread.isTickThreadFor(this.world, entity.chunkPosition())) {
-                throw new IllegalArgumentException("Entity " + entity + " is not under this region's control");
-            }
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing && check) {
+            if (this.world.server.isRegionized() && check) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(entity.chunkPosition().x, entity.chunkPosition().z);
                 // the chunk has to exist for the entity to be added, so we are ok to assume non-null
                 if (theRegion == null) {
@@ -782,11 +772,8 @@ public class ServerRegions {
         }
 
         public void removeEntity(final Entity entity, boolean check) {
-            if (!TickThread.isTickThreadFor(entity)) {
-                throw new IllegalArgumentException("Entity " + entity + " is not under this region's control");
-            }
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing && check) {
+            if (this.world.server.isRegionized() && check) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(entity.chunkPosition().x, entity.chunkPosition().z);
                 // the chunk has to exist for the entity to be added, so we are ok to assume non-null
                 if (theRegion.getData().tickData != this) {
@@ -808,7 +795,7 @@ public class ServerRegions {
         public void pushBlockEvent(final @NotNull BlockEventData blockEventData) {
             TickThread.ensureTickThread(this.world, blockEventData.pos(), "Cannot queue block even data async");
             // let's ensure we actually run this on the appropriate region
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
+            if (this.world.server.isRegionized()) {
                 ChunkPos pos = new ChunkPos(blockEventData.pos());
                 this.world.getChunk(pos.x, pos.z, ChunkStatus.FULL, true);
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(pos.x, pos.z);
@@ -822,14 +809,12 @@ public class ServerRegions {
         }
 
         public void pushBlockEvents(final @NotNull Collection<? extends BlockEventData> blockEvents) {
-            if (this.region == null && Config.INSTANCE.ticking.enableThreadedRegionizing) throw new RuntimeException("cannot push block event to non-region");
             for (final BlockEventData blockEventData : blockEvents) {
                 this.pushBlockEvent(blockEventData);
             }
         }
 
         public void removeIfBlockEvents(final Predicate<? super BlockEventData> predicate) {
-            if (this.region == null && Config.INSTANCE.ticking.enableThreadedRegionizing) throw new RuntimeException("cannot remove block event from non-region");
             for (final Iterator<BlockEventData> iterator = this.blockEvents.iterator(); iterator.hasNext();) {
                 final BlockEventData blockEventData = iterator.next();
                 if (predicate.test(blockEventData)) {
@@ -839,7 +824,6 @@ public class ServerRegions {
         }
 
         public BlockEventData removeFirstBlockEvent() {
-            if (this.region == null && Config.INSTANCE.ticking.enableThreadedRegionizing) throw new RuntimeException("cannot remove first block event from non-region");
             BlockEventData ret;
             while (!this.blockEvents.isEmpty()) {
                 ret = this.blockEvents.removeFirst();
@@ -869,7 +853,7 @@ public class ServerRegions {
                 position = ticker.getTileEntity().worldPosition;
             }
             if (position == null) throw new RuntimeException("Unable to add block entity ticker, cannot pull position");
-            if (this.region == null && Config.INSTANCE.ticking.enableThreadedRegionizing) {
+            if (this.region == null && this.world.server.isRegionized()) {
                 // we are on level... translate to region
                 // to add tickers, the chunk cannot be null.
                 int x = SectionPos.blockToSectionCoord(position.getX());
@@ -942,7 +926,7 @@ public class ServerRegions {
         if (level.levelTickData == null) {
             level.levelTickData = new WorldTickData(level, null);
         }
-        if (!Config.INSTANCE.ticking.enableThreadedRegionizing) {
+        if (!level.server.isRegionized()) {
             return level.levelTickData;
         }
         WorldTickData possible = pullRegionData();

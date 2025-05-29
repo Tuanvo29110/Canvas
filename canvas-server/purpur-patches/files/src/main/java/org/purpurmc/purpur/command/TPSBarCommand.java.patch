@@ -13,7 +13,7 @@
      private static int execute(CommandSourceStack sender, Collection<ServerPlayer> targets) {
          for (ServerPlayer player : targets) {
 -            boolean result = TPSBarTask.instance().togglePlayer(player.getBukkitEntity());
-+            boolean result = TPSBarTask.instance().togglePlayer(player.getBukkitEntity()) && (!Config.INSTANCE.ticking.enableThreadedRegionizing || TPSBarTask.RegionBarTask.instance().togglePlayer(player.getBukkitEntity())); // Canvas - Threaded Regions
++            boolean result = TPSBarTask.instance().togglePlayer(player.getBukkitEntity()) && (!sender.getServer().isRegionized() || TPSBarTask.RegionBarTask.instance().togglePlayer(player.getBukkitEntity())); // Canvas - Threaded Regions
              player.tpsBar(result);
  
              Component output = MiniMessage.miniMessage().deserialize(PurpurConfig.tpsbarCommandOutput,

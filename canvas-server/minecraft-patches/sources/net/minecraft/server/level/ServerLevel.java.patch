@@ -323,7 +323,7 @@
 +        // to the region tick data or not
 +        // in MOST instances, this is very intentional for connections
 +        // to be passed through here to get to the region
-+        if (Config.INSTANCE.ticking.enableThreadedRegionizing && (data.region == null)) { // if the region in the data is null, we are running a world region, cannot do this with regionizing
++        if (this.server.isRegionized() && (data.region == null)) { // if the region in the data is null, we are running a world region, cannot do this with regionizing
 +            return;
 +        }
 +        // Canvas end
@@ -388,7 +388,7 @@
 +    }
 +
 +    public void regionTick1(ServerRegions.WorldTickData tickData) {
-+        if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++        if (this.server.isRegionized()) {
 +            ((CanvasRegionScheduler) this.server.server.getRegionScheduler()).tick(tickData);
 +        } else {
 +            ((CanvasPerWorldScheduler) this.server.server.getRegionScheduler()).tick(this);
@@ -425,7 +425,7 @@
 +            }
 +        }
 +        chunkSource.tick(() -> true, false); */
-+        if (!Config.INSTANCE.ticking.enableThreadedRegionizing) regionTick1(tickData); // Canvas - Threaded Regions
++        if (!this.server.isRegionized()) regionTick1(tickData); // Canvas - Threaded Regions
 +
 +        hasPhysicsEvent = org.bukkit.event.block.BlockPhysicsEvent.getHandlerList().getRegisteredListeners().length > 0;
 +        hasEntityMoveEvent = io.papermc.paper.event.entity.EntityMoveEvent.getHandlerList().getRegisteredListeners().length > 0;
@@ -449,7 +449,7 @@
              this.tickTime();
          }
 +    // Canvas start - Threaded Regions
-+        if (!Config.INSTANCE.ticking.enableThreadedRegionizing) this.regionTick2(profilerFiller, runsNormally, tickData);
++        if (!this.server.isRegionized()) this.regionTick2(profilerFiller, runsNormally, tickData);
 +        this.worldtick2(profilerFiller, runsNormally, hasTimeLeft, copyOf, tickData);
 +    }
 +
@@ -494,10 +494,10 @@
  
          profilerFiller.popPush("chunkSource");
 -        this.getChunkSource().tick(hasTimeLeft, true);
-+        if (!Config.INSTANCE.ticking.enableThreadedRegionizing) this.getChunkSource().tick(hasTimeLeft, true); // Canvas - Threaded Regions
++        if (!this.server.isRegionized()) this.getChunkSource().tick(hasTimeLeft, true); // Canvas - Threaded Regions
          profilerFiller.popPush("blockEvents");
 -        if (runsNormally) {
-+        if (runsNormally && !Config.INSTANCE.ticking.enableThreadedRegionizing) { // Canvas - Threaded Regions
++        if (runsNormally && !this.server.isRegionized()) { // Canvas - Threaded Regions
 +            // Canvas start
 +            if (this.ticksSinceLastBlockEventsTickCall++ > Config.INSTANCE.ticksBetweenBlockEvents) {
              this.runBlockEvents();
@@ -516,7 +516,7 @@
          }
  
 +    // Canvas start - Threaded Regions
-+        if (!Config.INSTANCE.ticking.enableThreadedRegionizing) this.regiontick3(profilerFiller, flag, runsNormally, tickData);
++        if (!this.server.isRegionized()) this.regiontick3(profilerFiller, flag, runsNormally, tickData);
 +        worldtick3(profilerFiller, tickData);
 +    }
 +
@@ -584,14 +584,14 @@
              this.serverLevelData.setGameTime(l);
              Profiler.get().push("scheduledFunctions");
 -            this.serverLevelData.getScheduledEvents().tick(this.server, l);
-+            if (!Config.INSTANCE.ticking.enableThreadedRegionizing) this.serverLevelData.getScheduledEvents().tick(this.server, l); // Canvas - Threaded Regions
++            if (!this.server.isRegionized()) this.serverLevelData.getScheduledEvents().tick(this.server, l); // Canvas - Threaded Regions
              Profiler.get().pop();
 -            if (this.serverLevelData.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
 +            // Canvas start - Threaded Regions
 +            boolean canTickDaylight = false;
-+            if (Config.INSTANCE.ticking.enableThreadedRegionizing && tickData == this.levelTickData/*regions enabled, and we are ticking on a world*/) {
++            if (this.server.isRegionized() && tickData == this.levelTickData/*regions enabled, and we are ticking on a world*/) {
 +                canTickDaylight = true;
-+            } else if (!Config.INSTANCE.ticking.enableThreadedRegionizing) {
++            } else if (!this.server.isRegionized()) {
 +                // regions disabled, we are without a doubt ticking on world
 +                canTickDaylight = true;
 +            }
@@ -606,7 +606,7 @@
                  // Purpur end - Configurable daylight cycle
 -                this.setDayTime(this.levelData.getDayTime() + 1L);
 +                this.setDayTime(lagCompensation(this.levelData.getDayTime(), tickData) + 1L); // Canvas - lag compensation - Threaded Regions
-+                if (!Config.INSTANCE.ticking.enableThreadedRegionizing && this.tickCount % 20 == 0) this.syncTimeToPlayers(); // Canvas - resync every 20 ticks - Threaded Regions
++                if (!this.server.isRegionized() && this.tickCount % 20 == 0) this.syncTimeToPlayers(); // Canvas - resync every 20 ticks - Threaded Regions
              }
          }
      }
@@ -1039,7 +1039,7 @@
 +
 +    public Iterable<Entity> getAllRegionizedEntities() {
 +        Set<Entity> entities = new ObjectHashSet<>();
-+        if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++        if (this.server.isRegionized()) {
 +            this.regioniser.computeForAllRegionsUnsynchronised((region) -> {
 +                for (final Entity loadedEntity : region.getData().tickData.getLoadedEntities()) {
 +                    entities.add(loadedEntity);
@@ -1055,7 +1055,7 @@
 +
 +    public Iterable<BlockEntity> getAllBlockEntities() {
 +        Set<BlockEntity> blockEntities = new ObjectHashSet<>();
-+        if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++        if (this.server.isRegionized()) {
 +            this.regioniser.computeForAllRegionsUnsynchronised((region) -> {
 +                for (final LevelChunk chunk : region.getData().tickData.getTickingChunks().getRawDataUnchecked()) {
 +                    if (chunk == null) continue;

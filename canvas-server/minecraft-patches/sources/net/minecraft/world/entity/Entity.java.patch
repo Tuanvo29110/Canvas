@@ -292,7 +292,7 @@
 +        try {
 +            ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> newRegion = null;
 +            ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> oldRegion = null;
-+            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++            if (this.getServer().isRegionized()) {
 +                newRegion = world.level().regioniser.getRegionAtUnsynchronised(position.x, position.z);
 +                oldRegion = world.level().regioniser.getRegionAtUnsynchronised(chunkPosition.x, chunkPosition.z);
 +            }
@@ -377,7 +377,7 @@
 +                        regionData.loadedEntities.add(this);
 +                    }
 +                });
-+                if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++                if (this.getServer().isRegionized()) {
 +                    MinecraftServer.getThreadedServer().taskQueue.queueTickTaskQueue(world.level(), this.chunkPosition.x, this.chunkPosition.z, run, Priority.BLOCKING);
 +                } else world.scheduleForPreNextTick(run);
 +            }

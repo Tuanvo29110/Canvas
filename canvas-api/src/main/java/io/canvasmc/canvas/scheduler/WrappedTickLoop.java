@@ -44,7 +44,7 @@ public interface WrappedTickLoop {
      * Some tick-loops, like the join thread, do not
      * sleep <b>ever</b>.
      * <br><br>
-     * Overridable when providing the {@link WrappedTick} to {@link MultithreadedTickScheduler#scheduleWrapped(WrappedTick, String, String)}
+     * Overridable when providing the {@link WrappedTick} to {@link MultithreadedTickScheduler#scheduleWrapped(WrappedTick, NamespacedKey)}
      *
      * @return if the tick-loop can sleep.
      */
@@ -58,7 +58,7 @@ public interface WrappedTickLoop {
      * to the {@code tps} command for when further debug is
      * requested from the command source
      * <br><br>
-     * Overridable when providing the {@link WrappedTick} to {@link MultithreadedTickScheduler#scheduleWrapped(WrappedTick, String, String)}
+     * Overridable when providing the {@link WrappedTick} to {@link MultithreadedTickScheduler#scheduleWrapped(WrappedTick, NamespacedKey)}
      *
      * @return the tick-loop debug information
      */

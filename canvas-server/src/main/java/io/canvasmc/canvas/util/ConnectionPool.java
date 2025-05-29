@@ -29,7 +29,7 @@ public class ConnectionPool {
     public Set<Connection> getConnectionsForRegion(ServerRegions.@NotNull WorldTickData regionData) {
         Set<Connection> retVal = new ObjectHashSet<>();
         if (regionData.region == null) {
-            if (Config.INSTANCE.ticking.enableThreadedRegionizing) throw new RuntimeException("Cannot pull connections from world data with regionizing enabled!");
+            if (getServer().isRegionized()) throw new RuntimeException("Cannot pull connections from world data with regionizing enabled!");
             // world data was provided
             for (final Connection connection : this.backend) {
                 if (connection.getPhase().equals(ConnectionHandlePhases.PLAY) && connection.getPlayer().serverLevel() == regionData.world) retVal.add(connection);

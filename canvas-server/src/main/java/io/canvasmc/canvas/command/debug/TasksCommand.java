@@ -33,7 +33,7 @@ public class TasksCommand implements CommandInstance {
                         stack.sendSystemMessage(Component.literal("Main-Thread Tasks: " + (executedTasks - scheduledTasks)));
                         stack.sendSystemMessage(Component.literal("ServerChunkCache.MainThreadExecutor Tasks: " + level.chunkSource.mainThreadProcessor.size()));
                         // region data
-                        if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
+                        if (level.server.isRegionized()) {
                             stack.sendSystemMessage(Component.literal("Regions:"));
                             level.regioniser.computeForAllRegionsUnsynchronised((region) -> {
                                 ServerRegions.WorldTickData tickData = region.getData().tickData;

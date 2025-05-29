@@ -130,7 +130,7 @@
          ProfilerFiller profilerFiller = Profiler.get();
          profilerFiller.push("poi");
          this.poiManager.tick(hasMoreTime);
-@@ -689,58 +_,45 @@
+@@ -689,58 +_,44 @@
  
      // Paper start - optimise chunk tick iteration
      private boolean isChunkNearPlayer(final ChunkMap chunkMap, final ChunkPos chunkPos, final LevelChunk levelChunk) {
@@ -192,7 +192,6 @@
 -            }
 -
 -            output.add(levelChunk);
-+    public volatile int lastTickingChunksCount = 0; // Canvas - last ticking chunks count
 +    // Canvas start - optimize chunk collect
 +    // Note: return value can have null entries.
 +    LevelChunk[] collectSpawningChunks(ServerRegions.WorldTickData tickData) {
@@ -216,7 +215,7 @@
 +            collected[count++] = chunk;
          }
 +
-+        this.lastTickingChunksCount = count;
++        ServerRegions.getTickData(this.level).lastTickingChunksCount = count;
 +        return collected;
      }
 +    // Canvas end
@@ -414,7 +413,7 @@
  
      // Paper start - optimise entity tracker
      private void newTrackerTick() {
-+        if (ThreadedTracker.INSTANCE.tick(level)) return; // Canvas - threaded tracker
++        if (ThreadedTracker.INSTANCE.tick(this.level)) return; // Canvas - threaded tracker
          final ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup entityLookup = (ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup)((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getEntityLookup();;
  
 -        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.entity.Entity> trackerEntities = entityLookup.trackerEntities;

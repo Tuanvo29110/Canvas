@@ -38,11 +38,11 @@ public class ThreadedTracker {
         return processor;
     }
 
-    public boolean tick(@NotNull ChunkSystemServerLevel chunkSystemServerLevel) {
-        if (this.enableThreading || Config.INSTANCE.ticking.enableThreadedRegionizing) { // we run tracking threaded if regionized.
+    public boolean tick(@NotNull ServerLevel world) {
+        if (this.enableThreading || world.server.isRegionized()) { // we run tracking threaded if regionized.
             if (canceled.get()) return true;
-            final NearbyPlayers nearbyPlayers = chunkSystemServerLevel.moonrise$getNearbyPlayers();
-            final Entity[] trackerEntitiesRaw = ServerRegions.getTickData((ServerLevel) chunkSystemServerLevel).trackerEntities.getRawDataUnchecked(); // Canvas - Threaded Regions
+            final NearbyPlayers nearbyPlayers = world.moonrise$getNearbyPlayers();
+            final Entity[] trackerEntitiesRaw = ServerRegions.getTickData((ServerLevel) world).trackerEntities.getRawDataUnchecked(); // Canvas - Threaded Regions
 
             processor.execute(() -> {
                 for (final Entity entity : trackerEntitiesRaw) {

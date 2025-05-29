@@ -1,25 +1,15 @@
 --- a/net/minecraft/server/network/ServerConfigurationPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerConfigurationPacketListenerImpl.java
-@@ -1,11 +_,14 @@
+@@ -1,5 +_,6 @@
  package net.minecraft.server.network;
  
 +import ca.spottedleaf.concurrentutil.util.Priority;
-+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
  import com.mojang.authlib.GameProfile;
  import com.mojang.logging.LogUtils;
  import java.util.List;
- import java.util.Queue;
- import java.util.concurrent.ConcurrentLinkedQueue;
- import javax.annotation.Nullable;
-+import io.canvasmc.canvas.Config;
- import net.minecraft.core.LayeredRegistryAccess;
- import net.minecraft.network.Connection;
- import net.minecraft.network.DisconnectionDetails;
-@@ -27,14 +_,20 @@
- import net.minecraft.server.MinecraftServer;
+@@ -28,13 +_,16 @@
  import net.minecraft.server.RegistryLayer;
  import net.minecraft.server.ServerLinks;
-+import net.minecraft.server.level.ChunkMap;
  import net.minecraft.server.level.ClientInformation;
 +import net.minecraft.server.level.ServerLevel;
  import net.minecraft.server.level.ServerPlayer;
@@ -29,10 +19,8 @@
  import net.minecraft.server.network.config.SynchronizeRegistriesTask;
  import net.minecraft.server.packs.repository.KnownPack;
  import net.minecraft.server.players.PlayerList;
-+import net.minecraft.util.Unit;
  import net.minecraft.world.flag.FeatureFlags;
 +import net.minecraft.world.level.chunk.status.ChunkStatus;
-+import net.minecraft.world.phys.Vec3;
  import org.slf4j.Logger;
  
  public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketListenerImpl implements ServerConfigurationPacketListener, TickablePacketListener {
@@ -76,7 +64,7 @@
 +                    // place ticket AGAIN
 +                    world.getChunkSource().updateRegionTicket(player.chunkPosition(), true, TicketType.LOGIN);
 +                    // queue tick task
-+                    if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++                    if (this.server.isRegionized()) {
 +                        // regionize
 +                        MinecraftServer.getThreadedServer().taskQueue.queueTickTaskQueue(
 +                            world, chunkX, chunkZ,

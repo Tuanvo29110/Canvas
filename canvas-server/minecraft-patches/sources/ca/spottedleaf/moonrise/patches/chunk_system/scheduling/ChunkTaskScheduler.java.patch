@@ -1,10 +1,9 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
-@@ -27,6 +_,8 @@
+@@ -27,6 +_,7 @@
  import com.google.gson.JsonArray;
  import com.google.gson.JsonObject;
  import com.mojang.logging.LogUtils;
-+import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.server.chunk.TheChunkSystem;
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
@@ -129,7 +128,7 @@
                                                                 final Priority priority) {
 -        return this.mainThreadExecutor.createTask(run, priority);
 +        // Canvas start - Threaded Regions
-+        if (!Config.INSTANCE.ticking.enableThreadedRegionizing) {
++        if (!this.world.server.isRegionized()) {
 +            // regionizing disabled, queue to main thread task executor
 +            return this.mainThreadExecutor.createTask(run, priority);
 +        }
@@ -145,7 +144,7 @@
 -        return this.mainThreadExecutor.queueTask(run, priority);
 -    }
 +        // Canvas start - Threaded Regions
-+        if (!Config.INSTANCE.ticking.enableThreadedRegionizing) {
++        if (!this.world.server.isRegionized()) {
 +            return this.mainThreadExecutor.queueTask(run, priority);
 +        }
 +        return MinecraftServer.getThreadedServer().taskQueue.queueChunkTask(this.world, chunkX, chunkZ, run, priority);
@@ -161,7 +160,7 @@
 +                                                                           final Priority priority) {
 +        final PrioritisedExecutor.PrioritisedTask ret = this.createChunkTask(chunkX, chunkZ, run, priority);
 +        this.world.taskQueueRegionData.pushGlobalChunkTask(() -> {
-+            if (Config.INSTANCE.ticking.enableThreadedRegionizing) {
++            if (this.world.server.isRegionized()) {
 +                MinecraftServer.getThreadedServer().taskQueue.queueChunkTask(ChunkTaskScheduler.this.world, chunkX, chunkZ, run, priority);
 +            } else ChunkTaskScheduler.this.mainThreadExecutor.queueTask(run, priority);
 +        });

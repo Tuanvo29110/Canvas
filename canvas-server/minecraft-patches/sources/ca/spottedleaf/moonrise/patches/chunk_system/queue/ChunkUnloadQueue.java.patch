@@ -1,10 +1,9 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/queue/ChunkUnloadQueue.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/queue/ChunkUnloadQueue.java
-@@ -5,8 +_,11 @@
+@@ -5,8 +_,10 @@
  import com.google.gson.JsonArray;
  import com.google.gson.JsonElement;
  import com.google.gson.JsonObject;
-+import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.region.ServerRegions;
  import it.unimi.dsi.fastutil.longs.LongIterator;
  import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
@@ -18,7 +17,7 @@
  
 +    // Canvas start - Threaded Regions
 +    public List<SectionToUnload> retrieveForCurrentRegion(ServerLevel world) {
-+        if (!Config.INSTANCE.ticking.enableThreadedRegionizing) return retrieveForAllRegions();
++        if (!world.server.isRegionized()) return retrieveForAllRegions();
 +        final io.papermc.paper.threadedregions.ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region = ServerRegions.getTickData(world).region;
 +        final io.papermc.paper.threadedregions.ThreadedRegionizer<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> regionizer = region.regioniser;
 +        final int shift = this.coordinateShift;

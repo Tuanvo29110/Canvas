@@ -4,11 +4,12 @@ import io.canvasmc.canvas.region.Region;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.server.ServerEvent;
 import org.jetbrains.annotations.NotNull;
+import java.util.List;
 
 public class RegionSplitEvent extends ServerEvent {
     private static final HandlerList handlers = new HandlerList();
     private final Region from;
-    private final Region into;
+    private final List<Region> into;
 
     @NotNull
     @Override
@@ -21,7 +22,7 @@ public class RegionSplitEvent extends ServerEvent {
         return handlers;
     }
 
-    public RegionSplitEvent(Region from, Region into) {
+    public RegionSplitEvent(Region from, List<Region> into) {
         this.from = from;
         this.into = into;
     }
@@ -30,7 +31,7 @@ public class RegionSplitEvent extends ServerEvent {
         return from;
     }
 
-    public Region getInto() {
+    public List<Region> getInto() {
         return into;
     }
 }

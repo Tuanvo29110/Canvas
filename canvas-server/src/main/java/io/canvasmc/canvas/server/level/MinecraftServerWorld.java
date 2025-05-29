@@ -5,12 +5,14 @@ import io.canvasmc.canvas.Config;
 import io.canvasmc.canvas.LevelAccess;
 import io.canvasmc.canvas.command.ThreadedServerHealthDump;
 import io.canvasmc.canvas.entity.SleepingBlockEntity;
+import io.canvasmc.canvas.region.Region;
 import io.canvasmc.canvas.region.ServerRegions;
 import io.canvasmc.canvas.scheduler.TickScheduler;
 import io.canvasmc.canvas.scheduler.WrappedTickLoop;
 import io.canvasmc.canvas.server.MultiWatchdogThread;
 import io.papermc.paper.threadedregions.ThreadedRegionizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,20 +33,24 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.scheduler.CraftScheduler;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
 
-// TODO: when regionized, remove debug data here and regionize it.
 public abstract class MinecraftServerWorld extends TickScheduler.FullTick<MinecraftServerWorld.TickHandle> implements LevelAccess {
     protected final ConcurrentLinkedQueue<Runnable> queuedForNextTickPost = new ConcurrentLinkedQueue<>();
     protected final ConcurrentLinkedQueue<Runnable> queuedForNextTickPre = new ConcurrentLinkedQueue<>();
@@ -110,7 +116,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
             ServerLevel worldserver = level();
 
             // we cannot poll distance manager updates during task polls, this deadlocks the server
-            worldserver.getChunkSource().mainThreadProcessor.pollTask(!Config.INSTANCE.ticking.enableThreadedRegionizing);
+            worldserver.getChunkSource().mainThreadProcessor.pollTask(!this.server.isRegionized());
             hasTasks = false;
             return super.runTasks(canContinue);
         } finally {
@@ -130,7 +136,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
 
     @Override
     public boolean hasTasks() {
-        return hasTasks || super.hasTasks() || (!Config.INSTANCE.ticking.enableThreadedRegionizing && (!this.isSleeping()));
+        return hasTasks || super.hasTasks() || (!this.server.isRegionized() && (!this.isSleeping()));
     }
 
     @Override
@@ -146,6 +152,20 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
     @Override
     public void scheduleForPreNextTick(Runnable run) {
         queuedForNextTickPre.add(run);
+    }
+
+    @Override
+    public @Unmodifiable List<Region> getAllRegions() {
+        ArrayList<Region> regions = new ArrayList<>();
+        if (!this.server.isRegionized()) return regions;
+        this.forEachRegion(regions::add);
+        return Collections.unmodifiableList(regions);
+    }
+
+    @Override
+    public void forEachRegion(final Consumer<Region> forEach) {
+        if (!this.server.isRegionized()) return;
+        this.level().regioniser.computeForAllRegionsUnsynchronised((region) -> forEach.accept(region.getData()));
     }
 
     @Override
@@ -182,18 +202,18 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
         int pendingFluid = 0;
         int localPlayers = 0;
         int localEntities = 0;
-        if (!Config.INSTANCE.ticking.enableThreadedRegionizing) {
+        if (this.server.isRegionized()) {
+            basic
+                .append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
+                .append(Component.text("Regions: ", ThreadedServerHealthDump.PRIMARY))
+                .append(Component.text(regions.size(), ThreadedServerHealthDump.INFORMATION))
+                .append(ThreadedServerHealthDump.NEW_LINE);
+            return basic.build();
+        } else {
             pendingBlock += this.level().getBlockTicks().count();
             pendingFluid += this.level().getFluidTicks().count();
             localPlayers += this.level().getLocalPlayers().size();
             localEntities += ServerRegions.getTickData(this.level()).getLocalEntitiesCopy().length;
-        } else {
-            for (final ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region : regions) {
-                pendingBlock += region.getData().tickData.getBlockLevelTicks().count();
-                pendingFluid += region.getData().tickData.getFluidLevelTicks().count();
-                localPlayers += region.getData().tickData.getLocalPlayers().size();
-                localEntities += region.getData().tickData.getLocalEntitiesCopy().length;
-            }
         }
         basic
             .append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
@@ -214,7 +234,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
             .append(ThreadedServerHealthDump.NEW_LINE);
         basic.append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
             .append(Component.text("Ticking Chunks: ", ThreadedServerHealthDump.PRIMARY))
-            .append(Component.text(this.level().getChunkSource().chunkMap.lastTickingChunksCount, ThreadedServerHealthDump.INFORMATION))
+            .append(Component.text(ServerRegions.getTickData(this.level()).lastTickingChunksCount, ThreadedServerHealthDump.INFORMATION))
             .append(ThreadedServerHealthDump.NEW_LINE)
             .append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
             .append(Component.text("Regions: ", ThreadedServerHealthDump.PRIMARY))
@@ -222,19 +242,19 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
             .append(ThreadedServerHealthDump.NEW_LINE);
         basic.append(Component.text("Tile Entities", ThreadedServerHealthDump.HEADER, TextDecoration.BOLD))
             .append(ThreadedServerHealthDump.NEW_LINE)
-            .append(doTileEntityInfo())
+            .append(doTileEntityInfo(null))
             .append(ThreadedServerHealthDump.NEW_LINE);
         basic.append(Component.text("Entities", ThreadedServerHealthDump.HEADER, TextDecoration.BOLD))
             .append(ThreadedServerHealthDump.NEW_LINE)
-            .append(doEntityInfo())
+            .append(doEntityInfo(null))
             .append(ThreadedServerHealthDump.NEW_LINE);
         return basic.build();
     }
 
-    private @NotNull Component doTileEntityInfo() {
+    public @NotNull Component doTileEntityInfo(final @Nullable ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region) {
         TextComponent.@NotNull Builder root = text();
         ServerLevel world = this.level();
-        root.append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
+        if (region != null) root.append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
             .append(Component.text("World ", ThreadedServerHealthDump.PRIMARY))
             .append(Component.text("[" + world.dimension().location().toDebugFileName() + "]", ThreadedServerHealthDump.INFORMATION))
             .append(Component.text(":", ThreadedServerHealthDump.PRIMARY))
@@ -251,10 +271,10 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
         final AtomicReference<ChunkPos> highest = new AtomicReference<>();
         final AtomicInteger highestCount = new AtomicInteger();
 
-        world.getAllBlockEntities().forEach(e -> {
+        Consumer<BlockEntity> blockEntityConsumer = (e) -> {
             ResourceLocation key = BlockEntityType.getKey(e.getType());
 
-            MutablePair<Integer, Map<ChunkPos, Integer>> info = list.computeIfAbsent(key, k -> MutablePair.of(0, Maps.newHashMap()));
+            MutablePair<Integer, Map<ChunkPos, Integer>> info = list.computeIfAbsent(key, _ -> MutablePair.of(0, Maps.newHashMap()));
             BlockPos worldPosition = e.worldPosition;
             ChunkPos chunk = new ChunkPos(worldPosition);
             info.left++;
@@ -268,7 +288,15 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
                 highestCount.set(chunkCount);
                 highest.set(chunk);
             }
-        });
+        };
+        if (region != null) {
+            for (final LevelChunk chunk : region.getData().tickData.getTickingChunks().getRawDataUnchecked()) {
+                if (chunk == null) continue;
+                chunk.blockEntities.values().forEach(blockEntityConsumer);
+            }
+        } else {
+            world.getAllBlockEntities().forEach(blockEntityConsumer);
+        }
 
         List<Pair<ResourceLocation, Integer>> info = list.entrySet().stream()
             .filter(e -> names.contains(e.getKey()))
@@ -319,10 +347,10 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
             .build();
     }
 
-    private @NotNull Component doEntityInfo() {
+    public @NotNull Component doEntityInfo(final @Nullable ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region) {
         TextComponent.@NotNull Builder root = text();
         ServerLevel world = level();
-        root.append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
+        if (region != null) root.append(Component.text(" - ", ThreadedServerHealthDump.LIST, TextDecoration.BOLD))
             .append(Component.text("World ", ThreadedServerHealthDump.PRIMARY))
             .append(Component.text("[" + world.dimension().location().toDebugFileName() + "]", ThreadedServerHealthDump.INFORMATION))
             .append(Component.text(":", ThreadedServerHealthDump.PRIMARY))
@@ -340,9 +368,9 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
         final AtomicReference<ChunkPos> highest = new AtomicReference<>();
         final AtomicInteger highestCount = new AtomicInteger();
 
-        world.getAllRegionizedEntities().forEach(e -> {
+        Consumer<Entity> entityConsumer = (e) -> {
             ResourceLocation key = EntityType.getKey(e.getType());
-            MutablePair<Integer, Map<ChunkPos, Integer>> info = list.computeIfAbsent(key, k -> MutablePair.of(0, Maps.newHashMap()));
+            MutablePair<Integer, Map<ChunkPos, Integer>> info = list.computeIfAbsent(key, _ -> MutablePair.of(0, Maps.newHashMap()));
             ChunkPos chunk = e.chunkPosition();
             info.left++;
             int chunkCount = info.right.merge(chunk, 1, Integer::sum);
@@ -356,7 +384,15 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
                 highestCount.set(chunkCount);
                 highest.set(chunk);
             }
-        });
+        };
+        if (region != null) {
+            for (final Entity loadedEntity : region.getData().tickData.getLoadedEntities()) {
+                if (loadedEntity == null) continue;
+                entityConsumer.accept(loadedEntity);
+            }
+        } else {
+            world.getAllRegionizedEntities().forEach(entityConsumer);
+        }
 
         List<Pair<ResourceLocation, Integer>> info = list.entrySet().stream()
             .filter(e -> names.contains(e.getKey()))
