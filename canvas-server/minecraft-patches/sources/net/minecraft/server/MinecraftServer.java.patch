@@ -199,7 +199,7 @@
  
      @Override
      public final void moonrise$executeMidTickTasks() {
-+        if (true) return;
++        if (true) return; // Canvas - don't do this, we cannot trust plugins running this on the right thread
          final long startTime = System.nanoTime();
          if ((startTime - this.lastMidTickExecute) <= CHUNK_TASK_QUEUE_BACKOFF_MIN_TIME || (startTime - this.lastMidTickExecuteFailure) <= TASK_EXECUTION_FAILURE_BACKOFF) {
              // it's shown to be bad to constantly hit the queue (chunk loads slow to a crawl), even if no tasks are executed.
