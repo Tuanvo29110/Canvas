@@ -1,14 +1,14 @@
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -12,6 +_,7 @@
+@@ -11,6 +_,7 @@
+ import io.papermc.paper.configuration.GlobalConfiguration;
  import io.papermc.paper.entity.LookAnchor;
  import io.papermc.paper.entity.PaperPlayerGiveResult;
- import io.papermc.paper.entity.PlayerGiveResult;
 +import it.unimi.dsi.fastutil.shorts.Short2ObjectMaps;
- import it.unimi.dsi.fastutil.shorts.ShortArraySet;
- import it.unimi.dsi.fastutil.shorts.ShortSet;
- import java.io.ByteArrayOutputStream;
-@@ -204,6 +_,7 @@
+ import io.papermc.paper.entity.PlayerGiveResult;
+ import io.papermc.paper.math.Position;
+ import io.papermc.paper.util.MCUtil;
+@@ -207,6 +_,7 @@
  import org.bukkit.scoreboard.Scoreboard;
  import org.jspecify.annotations.NonNull;
  import org.jspecify.annotations.Nullable;
@@ -16,7 +16,7 @@
  
  @DelegateDeserialization(CraftOfflinePlayer.class)
  public class CraftPlayer extends CraftHumanEntity implements Player {
-@@ -1017,7 +_,7 @@
+@@ -1020,7 +_,7 @@
              SectionPos sectionPos = entry.getKey();
              it.unimi.dsi.fastutil.shorts.Short2ObjectMap<net.minecraft.world.level.block.state.BlockState> blockData = entry.getValue();
  
@@ -25,7 +25,7 @@
              this.getHandle().connection.send(packet);
          }
      }
-@@ -1056,7 +_,7 @@
+@@ -1059,7 +_,7 @@
      private record ChunkSectionChanges(ShortSet positions, List<net.minecraft.world.level.block.state.BlockState> blockData) {
  
          public ChunkSectionChanges() {
@@ -34,7 +34,7 @@
          }
      }
  
-@@ -2079,7 +_,7 @@
+@@ -2082,7 +_,7 @@
      private void unregisterEntity(Entity other) {
          // Paper end
          ChunkMap tracker = ((ServerLevel) this.getHandle().level()).getChunkSource().chunkMap;
@@ -43,7 +43,7 @@
          if (entry != null) {
              entry.removePlayer(this.getHandle());
          }
-@@ -2176,7 +_,7 @@
+@@ -2179,7 +_,7 @@
              if (original != null) otherPlayer.setUUID(original); // Paper - uuid override
          }
  
