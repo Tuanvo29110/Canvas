@@ -7,4 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface CommandInstance {
     LiteralCommandNode<CommandSourceStack> register(@NotNull CommandDispatcher<CommandSourceStack> commandDispatcher);
+    default boolean isDebug() {
+        return false;
+    }
 }

@@ -29,4 +29,9 @@ public class FlySpeedCommand implements CommandInstance {
                 }))
         );
     }
+
+    @Override
+    public boolean isDebug() {
+        return true;
+    }
 }

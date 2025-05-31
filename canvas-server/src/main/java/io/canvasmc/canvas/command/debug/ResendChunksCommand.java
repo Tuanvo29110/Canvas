@@ -39,6 +39,11 @@ public class ResendChunksCommand implements CommandInstance {
         );
     }
 
+    @Override
+    public boolean isDebug() {
+        return true;
+    }
+
     public @NotNull ChunkPos bukkitChunk2ChunkPos(@NotNull Chunk chunk) {
         return new ChunkPos(chunk.getX(), chunk.getZ());
     }

@@ -98,4 +98,9 @@ public class SenderInfoCommand implements CommandInstance {
                 })
         );
     }
+
+    @Override
+    public boolean isDebug() {
+        return true;
+    }
 }

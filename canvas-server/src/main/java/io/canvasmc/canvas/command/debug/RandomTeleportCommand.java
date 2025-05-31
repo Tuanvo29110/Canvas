@@ -34,4 +34,9 @@ public class RandomTeleportCommand implements CommandInstance {
                 })))
         );
     }
+
+    @Override
+    public boolean isDebug() {
+        return true;
+    }
 }

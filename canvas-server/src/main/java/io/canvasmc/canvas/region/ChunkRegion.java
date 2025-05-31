@@ -111,7 +111,7 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
 
     @Override
     public boolean hasTasks() {
-        return super.hasTasks() || this.region.getData().tickData.taskQueueData.hasTasks() || !this.world.isSleeping();
+        return (super.hasTasks() || this.region.getData().tickData.taskQueueData.hasTasks()) && !this.world.isSleeping();
     }
 
     public boolean runRegionTasks(final BooleanSupplier canContinue) {

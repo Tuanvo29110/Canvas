@@ -97,6 +97,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
                     }
                 }
             }
+            thisAsTickable.runTasks(hasTimeLeft);
             thisAsTickable.bench(() -> thisAsTickable.worldtick(hasTimeLeft, tickCount));
             TickScheduler.setTickingData(null);
             return !thisAsTickable.cancelled.get();
@@ -136,7 +137,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
 
     @Override
     public boolean hasTasks() {
-        return hasTasks || super.hasTasks() || (!this.server.isRegionized() && (!this.isSleeping()));
+        return (this.hasTasks || super.hasTasks()) && (!this.isSleeping());
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.canvasmc.canvas.CanvasBootstrap;
+import io.canvasmc.canvas.command.debug.EntityDumpCommand;
 import io.canvasmc.canvas.command.debug.FlySpeedCommand;
 import io.canvasmc.canvas.command.debug.PriorityCommand;
 import io.canvasmc.canvas.command.debug.RandomTeleportCommand;
@@ -31,22 +32,24 @@ public final class CanvasCommands {
 
     public static void register(@NotNull CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext context) {
         CanvasCommands.DISPATCHER = dispatcher;
+        // public-server commands
         register(SimulationDistanceCommand::new);
         register(ViewDistanceCommand::new);
         register(SetMaxPlayersCommand::new);
+        // debug commands
         if (CanvasBootstrap.RUNNING_IN_IDE) {
             CanvasBootstrap.LOGGER.info("Registering Canvas debug commands");
-            register(ResendChunksCommand::new);
-            register(SenderInfoCommand::new);
-            register(TrackingControlCommand::new);
-            register(SyncloadCommand::new);
-            register(PriorityCommand::new);
-            register(FlySpeedCommand::new);
-            register(TasksCommand::new);
-            register(RandomTeleportCommand::new);
-
-            registerMinecraftDebugCommands(dispatcher, context);
-        } else if (PurpurConfig.registerMinecraftDebugCommands) {
+        }
+        register(ResendChunksCommand::new);
+        register(SenderInfoCommand::new);
+        register(TrackingControlCommand::new);
+        register(SyncloadCommand::new);
+        register(PriorityCommand::new);
+        register(FlySpeedCommand::new);
+        register(TasksCommand::new);
+        register(RandomTeleportCommand::new);
+        register(EntityDumpCommand::new);
+        if (PurpurConfig.registerMinecraftDebugCommands || CanvasBootstrap.RUNNING_IN_IDE) {
             registerMinecraftDebugCommands(dispatcher, context);
         }
     }
@@ -62,8 +65,10 @@ public final class CanvasCommands {
     }
 
     private static void register(@NotNull Supplier<? extends CommandInstance> instance) {
-        // TODO - /canvas <sub-node> ?
         CommandInstance command = instance.get();
+        if (command.isDebug() && !CanvasBootstrap.RUNNING_IN_IDE) {
+            return;
+        }
         ALL.add(command.register(DISPATCHER));
     }
 }
