@@ -126,6 +126,13 @@ public class Config {
         })
         public int threadPoolPriority = Thread.NORM_PRIORITY + 1;
 
+        @Comment(value = {
+            "Uses an alternative priority manager, making it more dynamic with the player",
+            "position and improving efficiency with the new chunk system. Disabling this",
+            "restores Purpur/Paper priority management"
+        })
+        public boolean useAlternativeChunkSystemPriorityManagement = false;
+
         public ChunkSending chunkSending = new ChunkSending();
         public static class ChunkSending {
             @AlwaysAtTop

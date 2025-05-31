@@ -6,6 +6,7 @@ import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.executor.RadiusAwarePrioritisedExecutor;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkUpgradeGenericStatusTask;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.GenericDataLoadTask;
+import io.canvasmc.canvas.Config;
 import java.lang.invoke.VarHandle;
 import java.util.Comparator;
 import java.util.Map;
@@ -157,27 +158,28 @@ public final class ChunkSystemTaskQueue implements PrioritisedExecutor {
                 // use our own, as some chunk tasks are either not runnables, or
                 // do not contain chunk positions
                 int priority = this.holder.task.priority.priority;
-                // TODO - need better way to do this...
-                if (this.holder.task.priority.isHigherOrEqualPriority(Priority.BLOCKING)) {
-                    priority = PriorityHandler.BLOCKING;
-                } else if (this.holder.task.execute instanceof ChunkUpgradeGenericStatusTask upgradeTask) {
-                    int x = upgradeTask.chunkX;
-                    int z = upgradeTask.chunkZ;
-                    priority = upgradeTask.world.chunkSystemPriorities.priority(x, z);
-                } else if (this.holder.task.execute instanceof RadiusAwarePrioritisedExecutor.Task task) {
-                    int x = task.chunkX;
-                    int z = task.chunkZ;
-                    if (!(x == 0 && z == 0)) {
-                        priority = task.world.chunkSystemPriorities.priority(x, z);
-                    } // else | infinite radius task, ignore.
-                } else if (this.holder.task.execute instanceof GenericDataLoadTask<?, ?>.ProcessOffMainTask offMainTask) {
-                    int x = offMainTask.loadTask().chunkX;
-                    int z = offMainTask.loadTask().chunkZ;
-                    priority = offMainTask.loadTask().world.chunkSystemPriorities.priority(x, z);
-                } else if (this.holder.task.execute instanceof ChunkRunnable chunkRunnable) {
-                    int x = chunkRunnable.chunkX;
-                    int z = chunkRunnable.chunkZ;
-                    priority = chunkRunnable.world.chunkSystemPriorities.priority(x, z);
+                if (Config.INSTANCE.chunks.useAlternativeChunkSystemPriorityManagement) {
+                    if (this.holder.task.priority.isHigherOrEqualPriority(Priority.BLOCKING)) {
+                        priority = PriorityHandler.BLOCKING;
+                    } else if (this.holder.task.execute instanceof ChunkUpgradeGenericStatusTask upgradeTask) {
+                        int x = upgradeTask.chunkX;
+                        int z = upgradeTask.chunkZ;
+                        priority = upgradeTask.world.chunkSystemPriorities.priority(x, z);
+                    } else if (this.holder.task.execute instanceof RadiusAwarePrioritisedExecutor.Task task) {
+                        int x = task.chunkX;
+                        int z = task.chunkZ;
+                        if (!(x == 0 && z == 0)) {
+                            priority = task.world.chunkSystemPriorities.priority(x, z);
+                        } // else | infinite radius task, ignore.
+                    } else if (this.holder.task.execute instanceof GenericDataLoadTask<?, ?>.ProcessOffMainTask offMainTask) {
+                        int x = offMainTask.loadTask().chunkX;
+                        int z = offMainTask.loadTask().chunkZ;
+                        priority = offMainTask.loadTask().world.chunkSystemPriorities.priority(x, z);
+                    } else if (this.holder.task.execute instanceof ChunkRunnable chunkRunnable) {
+                        int x = chunkRunnable.chunkX;
+                        int z = chunkRunnable.chunkZ;
+                        priority = chunkRunnable.world.chunkSystemPriorities.priority(x, z);
+                    }
                 }
                 ChunkSystemTaskQueue.this.chunkSystem.schedule(this.holder.task.execute, priority);
             }
