@@ -43,7 +43,7 @@
      private boolean isFirstPacket = true;
      private final Codec<PlayerAdvancements.Data> codec;
 -    public final Map<net.minecraft.advancements.critereon.SimpleCriterionTrigger<?>, Set<CriterionTrigger.Listener<?>>> criterionData = new java.util.IdentityHashMap<>(); // Paper - fix advancement data player leakage
-+    public final Map<net.minecraft.advancements.critereon.SimpleCriterionTrigger<?>, Set<CriterionTrigger.Listener<?>>> criterionData = Collections.synchronizedMap(new IdentityHashMap<>()); // Paper - fix advancement data player leakage // Canvas - synchronized
++    public final Map<net.minecraft.advancements.critereon.SimpleCriterionTrigger<?>, Set<CriterionTrigger.Listener<?>>> criterionData = Collections.synchronizedMap(new it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap<>()); // Paper - fix advancement data player leakage // Canvas - synchronized && fastutil
  
      public PlayerAdvancements(DataFixer dataFixer, PlayerList playerList, ServerAdvancementManager manager, Path playerSavePath, ServerPlayer player) {
          this.playerList = playerList;

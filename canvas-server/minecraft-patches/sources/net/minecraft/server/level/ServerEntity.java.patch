@@ -1,0 +1,23 @@
+--- a/net/minecraft/server/level/ServerEntity.java
++++ b/net/minecraft/server/level/ServerEntity.java
+@@ -118,7 +_,19 @@
+         // Paper end - optimise collisions
+         List<Entity> passengers = this.entity.getPassengers();
+         if (!passengers.equals(this.lastPassengers)) {
+-            List<UUID> list = this.mountedOrDismounted(passengers).map(Entity::getUUID).toList();
++            // Canvas start - remove streams
++            List<UUID> list = new ArrayList<>();
++            for (Entity entity : this.lastPassengers) {
++                if (!passengers.contains(entity)) {
++                    list.add(entity.getUUID());
++                }
++            }
++            for (Entity entity : passengers) {
++                if (!this.lastPassengers.contains(entity)) {
++                    list.add(entity.getUUID());
++                }
++            }
++            // Canvas end
+             this.broadcastWithIgnore.accept(new ClientboundSetPassengersPacket(this.entity), list);
+             // Paper start - Allow riding players
+             if (this.entity instanceof ServerPlayer player) {

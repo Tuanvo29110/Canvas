@@ -20,22 +20,32 @@
  import net.minecraft.core.registries.BuiltInRegistries;
  import net.minecraft.server.level.ServerLevel;
  import net.minecraft.util.VisibleForDebug;
+@@ -38,6 +_,7 @@
+ import net.minecraft.world.entity.ai.sensing.SensorType;
+ import net.minecraft.world.entity.schedule.Activity;
+ import net.minecraft.world.entity.schedule.Schedule;
++import org.agrona.collections.ObjectHashSet;
+ import org.apache.commons.lang3.mutable.MutableObject;
+ import org.slf4j.Logger;
+ 
 @@ -45,16 +_,73 @@
      static final Logger LOGGER = LogUtils.getLogger();
      private final Supplier<Codec<Brain<E>>> codec;
      private static final int SCHEDULE_UPDATE_DELAY = 20;
 -    private final Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = Maps.newHashMap();
 -    private final Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = Maps.newLinkedHashMap();
--    private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = Maps.newTreeMap();
 +    private Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = Maps.newConcurrentMap(); // Canvas - mutable / concurrent
 +    public Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = Maps.newLinkedHashMap(); // Canvas - mutable / private -> public
-+    private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = Maps.newTreeMap(); // Canvas - mutable
+     private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = Maps.newTreeMap();
      private Schedule schedule = Schedule.EMPTY;
 -    private final Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements = Maps.newHashMap();
+-    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = Maps.newHashMap();
+-    private Set<Activity> coreActivities = Sets.newHashSet();
+-    private final Set<Activity> activeActivities = Sets.newHashSet();
 +    private Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements = Maps.newHashMap(); // Canvas - mutable
-     private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = Maps.newHashMap();
-     private Set<Activity> coreActivities = Sets.newHashSet();
-     private final Set<Activity> activeActivities = Sets.newHashSet();
++    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = new Object2ObjectOpenHashMap<>(); // Canvas - use fastutil
++    private Set<Activity> coreActivities = new ObjectHashSet<>(); // Canvas - use agrona
++    private final Set<Activity> activeActivities = new ObjectHashSet<>(); // Canvas - use agrona
      private Activity defaultActivity = Activity.IDLE;
      private long lastScheduleUpdate = -9999L;
 +    // Canvas start - optimize brain

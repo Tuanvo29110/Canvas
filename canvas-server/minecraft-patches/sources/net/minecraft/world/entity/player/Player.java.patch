@@ -59,3 +59,32 @@
                  this.sleepCounter = 0;
              }
          }
+@@ -630,7 +_,14 @@
+         }
+ 
+         this.tickRegeneration();
++        // Canvas start - only tick items in hand
++        if (Config.INSTANCE.entities.onlyTickItemsInHand) {
++            this.getMainHandItem().inventoryTick(this.level(), this, EquipmentSlot.MAINHAND);
++            this.getOffhandItem().inventoryTick(this.level(), this, EquipmentSlot.OFFHAND);
++        } else {
+         this.inventory.tick();
++        }
++        // Canvas end
+         this.oBob = this.bob;
+         if (this.abilities.flying && !this.isPassenger()) {
+             this.resetFallDistance();
+@@ -1343,6 +_,13 @@
+                                 }
+ 
+                                 if (!cancelled) {
++                                    // Canvas start - flush location while knockback
++                                    if (Config.INSTANCE.entities.flushKnockback && target instanceof ServerPlayer targetPlayer && this instanceof ServerPlayer player1) {
++                                        targetPlayer.connection.send(net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket.of(this));
++                                        player1.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(targetPlayer));
++                                        player1.connection.send(net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket.of(targetPlayer));
++                                    }
++                                    // Canvas end
+                                 ((ServerPlayer)target).connection.send(new ClientboundSetEntityMotionPacket(target));
+                                 target.hurtMarked = false;
+                                 target.setDeltaMovement(deltaMovement);

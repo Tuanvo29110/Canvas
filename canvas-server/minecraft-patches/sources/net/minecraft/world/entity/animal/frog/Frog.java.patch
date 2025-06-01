@@ -1,5 +1,19 @@
 --- a/net/minecraft/world/entity/animal/frog/Frog.java
 +++ b/net/minecraft/world/entity/animal/frog/Frog.java
+@@ -258,11 +_,12 @@
+         VariantUtils.readVariant(compound, this.registryAccess(), Registries.FROG_VARIANT).ifPresent(this::setVariant);
+     }
+ 
++    private int behaviorTick = 0; // Canvas
+     @Override
+     protected void customServerAiStep(ServerLevel level) {
+         ProfilerFiller profilerFiller = Profiler.get();
+         profilerFiller.push("frogBrain");
+-        //if ((getRider() == null || !this.isControllable()) && this.behaviorTick++ % this.activatedPriority == 0) // Pufferfish // Purpur - only use brain if no rider
++        if ((getRider() == null || !this.isControllable()) && this.behaviorTick++ % this.activatedPriority == 0) // Pufferfish // Purpur - only use brain if no rider // Canvas - DAB
+         this.getBrain().tick(level, this);
+         profilerFiller.pop();
+         profilerFiller.push("frogActivityUpdate");
 @@ -485,6 +_,16 @@
      }
  

@@ -1,0 +1,50 @@
+--- a/net/minecraft/world/entity/npc/Villager.java
++++ b/net/minecraft/world/entity/npc/Villager.java
+@@ -181,6 +_,8 @@
+     private boolean isLobotomized = false; public boolean isLobotomized() { return this.isLobotomized; } // Purpur - Lobotomize stuck villagers
+     private int notLobotomizedCount = 0; // Purpur - Lobotomize stuck villagers
+ 
++    public long nextGolemPanic = -1; // Canvas
++
+     public Villager(EntityType<? extends Villager> entityType, Level level) {
+         this(entityType, level, VillagerType.PLAINS);
+     }
+@@ -386,6 +_,7 @@
+     }
+     // Paper end - EAR 2
+ 
++    private int behaviorTick = 0; // Canvas
+     @Override
+     protected void customServerAiStep(ServerLevel level) {
+         // Paper start - EAR 2
+@@ -405,7 +_,11 @@
+         // Purpur end - Lobotomize stuck villagers
+         // Pufferfish start
+         if (!inactive && (getRider() == null || !this.isControllable()) /*&& this.behaviorTick++ % this.activatedPriority == 0*/) { // Purpur - Ridables
++            // Canvas start
++            if (this.behaviorTick++ % this.activatedPriority == 0) {
+             this.getBrain().tick(level, this); // Paper - EAR 2
++            }
++            // Canvas end
+         }
+         else if (this.isLobotomized && shouldRestock()) restock(); // Purpur - Lobotomize stuck villagers
+         // Pufferfish end
+@@ -975,7 +_,17 @@
+ 
+     private int countFoodPointsInInventory() {
+         SimpleContainer inventory = this.getInventory();
+-        return FOOD_POINTS.entrySet().stream().mapToInt(entry -> inventory.countItem(entry.getKey()) * entry.getValue()).sum();
++        // Canvas start - remove streams
++        int sum = 0;
++
++        for (Map.Entry<Item, Integer> entry : FOOD_POINTS.entrySet()) {
++            Item item = entry.getKey();
++            int points = entry.getValue();
++            sum += inventory.countItem(item) * points;
++        }
++
++        return sum;
++        // Canvas end
+     }
+ 
+     public boolean hasFarmSeeds() {

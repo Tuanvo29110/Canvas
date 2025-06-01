@@ -65,7 +65,16 @@
      // Paper start - replace random
      private static final class RandomRandomSource extends ca.spottedleaf.moonrise.common.util.ThreadUnsafeRandom {
          public RandomRandomSource() {
-@@ -267,9 +_,9 @@
+@@ -235,7 +_,7 @@
+     public double yo;
+     public double zo;
+     private Vec3 position;
+-    private BlockPos blockPosition;
++    public BlockPos blockPosition; // Canvas - private -> public
+     private ChunkPos chunkPosition;
+     private Vec3 deltaMovement = Vec3.ZERO;
+     private float yRot;
+@@ -267,9 +_,12 @@
      public int tickCount;
      private int remainingFireTicks = -this.getFireImmuneTicks();
      public boolean wasTouchingWater;
@@ -74,6 +83,9 @@
      protected boolean wasEyeInWater;
 -    private final Set<TagKey<Fluid>> fluidOnEyes = new HashSet<>();
 +    private final Set<TagKey<Fluid>> fluidOnEyes = new ObjectHashSet<>(); // Canvas - agrona
++    private static final int FLUID_WATER = 1; // Canvas - optimize
++    private static final int FLUID_LAVA = 2; // Canvas - optimize
++    private int fluidCache = 0; // Canvas - optimize
      public int invulnerableTime;
      protected boolean firstTick = true;
      protected final SynchedEntityData entityData;
@@ -100,6 +112,15 @@
      private final InsideBlockEffectApplier.StepBasedCollector insideEffectCollector = new InsideBlockEffectApplier.StepBasedCollector();
      private CustomData customData = CustomData.EMPTY;
      // CraftBukkit start
+@@ -346,6 +_,8 @@
+     public boolean fixedPose = false; // Paper - Expand Pose API
+     private final int despawnTime; // Paper - entity despawn time limit
+     public int totalEntityAge; // Paper - age-like counter for all entities
++    public boolean activatedPriorityReset = false; // Canvas - DAB
++    public int activatedPriority = Config.INSTANCE.entities.dynamicActivationofBrain.maximumActivationPrio; // Canvas - DAB (golf score)
+     public final io.papermc.paper.entity.activation.ActivationType activationType = io.papermc.paper.entity.activation.ActivationType.activationTypeFor(this); // Paper - EAR 2/tracking ranges
+     // Paper start - EAR 2
+     public final boolean defaultActivationState;
 @@ -372,6 +_,10 @@
      private int sectionY = Integer.MIN_VALUE;
      private int sectionZ = Integer.MIN_VALUE;
@@ -162,6 +183,15 @@
                  // Paper end - EAR 2
                  movement = this.limitPistonMovement(movement);
                  if (movement.equals(Vec3.ZERO)) {
+@@ -1139,7 +_,7 @@
+             }
+             // Paper end
+ 
+-            movement = this.maybeBackOffFromEdge(movement, type);
++            if (!Config.INSTANCE.entities.optimizePlayerMovementProcessing) movement = this.maybeBackOffFromEdge(movement, type); // Canvas - optimize player movement checks
+             Vec3 vec3 = this.collide(movement);
+             double d = vec3.lengthSqr();
+             if (d > 1.0E-7 || movement.lengthSqr() - d < 1.0E-7) {
 @@ -1411,6 +_,12 @@
      }
  
@@ -196,16 +226,47 @@
              if (gameTime != this.pistonDeltasGameTime) {
                  Arrays.fill(this.pistonDeltas, 0.0);
                  this.pistonDeltasGameTime = gameTime;
-@@ -1651,7 +_,7 @@
+@@ -1640,6 +_,7 @@
+     private void checkInsideBlocks(List<Entity.Movement> movements, InsideBlockEffectApplier.StepBasedCollector stepBasedCollector) {
+         if (this.isAffectedByBlocks()) {
+             LongSet set = this.visitedBlocks;
++            final net.minecraft.world.level.chunk.ChunkAccess[] chunkCache = new net.minecraft.world.level.chunk.ChunkAccess[4]; // Canvas - optimize check inside blocks
+ 
+             for (Entity.Movement movement : movements) {
+                 Vec3 vec3 = movement.from();
+@@ -1651,7 +_,21 @@
                      aabb,
                      (pos, step) -> {
                          if (this.isAlive()) {
 -                            BlockState blockState = this.level().getBlockState(pos);
-+                            BlockState blockState = this.level().getBlockStateIfLoaded(pos); if (blockState == null) return; // Canvas - prevent syncload
++                            // Canvas start - optimize
++                            final int chunkX = pos.getX() >> 4;
++                            final int chunkZ = pos.getZ() >> 4;
++                            final int chunkKey = ((chunkX << 2) | chunkZ) & 3;
++                            net.minecraft.world.level.chunk.ChunkAccess chunk = chunkCache[chunkKey];
++                            if (chunk == null || chunk.locX != chunkX || chunk.locZ != chunkZ) {
++                                chunk = this.level().getChunkIfLoadedImmediately(chunkX, chunkZ);
++                                if (chunk == null) {
++                                    return;
++                                }
++                                chunkCache[chunkKey] = chunk;
++                            }
++                            final BlockState blockState = chunk.getBlockStateIfLoaded(pos);
++                            if (blockState == null) return;
++                            // Canvas end
                              if (!blockState.isAir()) {
                                  if (set.add(pos.asLong())) {
                                      VoxelShape entityInsideCollisionShape = blockState.getEntityInsideCollisionShape(this.level(), pos, this);
-@@ -1949,11 +_,23 @@
+@@ -1940,7 +_,7 @@
+ 
+     private void updateFluidOnEyes() {
+         this.wasEyeInWater = this.isEyeInFluid(FluidTags.WATER);
+-        this.fluidOnEyes.clear();
++        this.fluidCache = 0; // Canvas - optimize
+         double eyeY = this.getEyeY();
+         if (!(
+             this.getVehicle() instanceof AbstractBoat abstractBoat
+@@ -1949,11 +_,30 @@
                  && abstractBoat.getBoundingBox().minY <= eyeY
          )) {
              BlockPos blockPos = BlockPos.containing(this.getX(), eyeY, this.getZ());
@@ -224,12 +285,95 @@
 +            // Canvas end
              double d = blockPos.getY() + fluidState.getHeight(this.level(), blockPos);
              if (d > eyeY) {
-                 fluidState.getTags().forEach(this.fluidOnEyes::add);
+-                fluidState.getTags().forEach(this.fluidOnEyes::add);
++                // Canvas start - optimize
++                if (fluidState.is(FluidTags.WATER)) {
++                    setFluidStatus(FluidTags.WATER, true);
++                }
++                if (fluidState.is(FluidTags.LAVA)) {
++                    setFluidStatus(FluidTags.LAVA, true);
++                }
++                // Canvas end
              }
 +            } // Canvas - prevent syncload
          }
      }
  
+@@ -2033,8 +_,20 @@
+     }
+ 
+     public boolean isEyeInFluid(TagKey<Fluid> fluidTag) {
+-        return this.fluidOnEyes.contains(fluidTag);
+-    }
++        return fluidTag == FluidTags.WATER ? (fluidCache & FLUID_WATER) != 0 : fluidTag == FluidTags.LAVA && (fluidCache & FLUID_LAVA) != 0; // Canvas - optimize
++    }
++    // Canvas start - optimize
++
++    public void setFluidStatus(TagKey<Fluid> fluidTag, boolean isInFluid) {
++        int bit = fluidTag == FluidTags.WATER ? FLUID_WATER
++            : fluidTag == FluidTags.LAVA ? FLUID_LAVA
++            : 0;
++
++        if (bit == 0) return;
++
++        fluidCache = isInFluid ? (fluidCache | bit) : (fluidCache & ~bit);
++    }
++    // Canvas end
+ 
+     public boolean isInLava() {
+         return !this.firstTick && this.fluidHeight.getDouble(FluidTags.LAVA) > 0.0;
+@@ -2152,30 +_,32 @@
+         return new Vec3(this.xOld, this.yOld, this.zOld);
+     }
+ 
+-    public float distanceTo(Entity entity) {
+-        float f = (float)(this.getX() - entity.getX());
+-        float f1 = (float)(this.getY() - entity.getY());
+-        float f2 = (float)(this.getZ() - entity.getZ());
+-        return Mth.sqrt(f * f + f1 * f1 + f2 * f2);
+-    }
+-
+-    public double distanceToSqr(double x, double y, double z) {
+-        double d = this.getX() - x;
+-        double d1 = this.getY() - y;
+-        double d2 = this.getZ() - z;
+-        return d * d + d1 * d1 + d2 * d2;
++    // Canvas start - optimize entity distanceTo
++    public final float distanceTo(Entity entity) {
++        final double dx = this.getX() - entity.getX();
++        final double dy = this.getY() - entity.getY();
++        final double dz = this.getZ() - entity.getZ();
++        return (float) (dx * dx + dy * dy + dz * dz);
++    }
++
++    public final double distanceToSqr(final double x, final double y, final double z) {
++        final double dx = this.getX() - x;
++        final double dy = this.getY() - y;
++        final double dz = this.getZ() - z;
++        return dx * dx + dy * dy + dz * dz;
++    }
++
++    public final double distanceToSqr(Vec3 vector) {
++        final double dx = this.getX() - vector.x;
++        final double dy = this.getY() - vector.y;
++        final double dz = this.getZ() - vector.z;
++        return dx * dx + dy * dy + dz * dz;
+     }
+ 
+     public double distanceToSqr(Entity entity) {
+         return this.distanceToSqr(entity.position());
+     }
+-
+-    public double distanceToSqr(Vec3 vec) {
+-        double d = this.getX() - vec.x;
+-        double d1 = this.getY() - vec.y;
+-        double d2 = this.getZ() - vec.z;
+-        return d * d + d1 * d1 + d2 * d2;
+-    }
++    // Canvas end
+ 
+     public void playerTouch(Player player) {
+     }
 @@ -2846,7 +_,13 @@
  
          for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
@@ -396,6 +540,30 @@
          this.setYRot(positionMoveRotation1.yRot());
          this.setYHeadRot(positionMoveRotation1.yRot());
          this.setXRot(positionMoveRotation1.xRot());
+@@ -4542,9 +_,7 @@
+ 
+     // Paper start - optimise collisions
+     public boolean updateFluidHeightAndDoFluidPushing(final TagKey<Fluid> fluid, final double flowScale) {
+-        if (this.touchingUnloadedChunk()) {
+-            return false;
+-        }
++        // Canvas - prevent double chunk retrieving in entity fluid pushing check and fluid height updating
+ 
+         final AABB boundingBox = this.getBoundingBox().deflate(1.0E-3);
+ 
+@@ -4581,7 +_,11 @@
+ 
+         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
+             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
+-                final net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunkSource.getChunk(currChunkX, currChunkZ, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, false).getSections();
++                // Canvas start - Prevent double chunk retrieving in entity fluid pushing check and fluid height updating
++                final net.minecraft.world.level.chunk.ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, false);
++                if (chunk == null) continue;
++                final net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
++                // Canvas end
+ 
+                 // bound y
+                 for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
 @@ -4722,11 +_,18 @@
      }
  

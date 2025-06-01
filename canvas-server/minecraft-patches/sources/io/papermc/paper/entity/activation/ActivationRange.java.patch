@@ -1,8 +1,9 @@
 --- a/io/papermc/paper/entity/activation/ActivationRange.java
 +++ b/io/papermc/paper/entity/activation/ActivationRange.java
-@@ -1,7 +_,9 @@
+@@ -1,7 +_,10 @@
  package io.papermc.paper.entity.activation;
  
++import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.region.ServerRegions;
  import net.minecraft.core.BlockPos;
  import net.minecraft.server.MinecraftServer;
@@ -81,6 +82,29 @@
              if (world.spigotConfig.ignoreSpectatorActivation && player.isSpectator()) {
                  continue;
              }
+@@ -161,6 +_,22 @@
+                 }
+ 
+                 ActivationRange.activateEntity(entity);
++
++                // Canvas start
++                if (Config.INSTANCE.entities.dynamicActivationofBrain.enabled && entity.getType().dabEnabled &&
++                        (!Config.INSTANCE.entities.dynamicActivationofBrain.dontEnableIfInWater || entity.getType().is(net.minecraft.tags.EntityTypeTags.CAN_BREATHE_UNDER_WATER) || !entity.isInWaterOrRain())) { // Canvas - Option for dontEnableIfInWater
++                    if (!entity.activatedPriorityReset) {
++                        entity.activatedPriorityReset = true;
++                        entity.activatedPriority = Config.INSTANCE.entities.dynamicActivationofBrain.maximumActivationPrio;
++                    }
++                    int squaredDistance = (int) player.distanceToSqr(entity);
++                    entity.activatedPriority = squaredDistance > (Config.INSTANCE.entities.dynamicActivationofBrain.startDistance * Config.INSTANCE.entities.dynamicActivationofBrain.startDistance) ?
++                            Math.max(1, Math.min(squaredDistance >> Config.INSTANCE.entities.dynamicActivationofBrain.activationDistanceMod, entity.activatedPriority)) :
++                            1;
++                } else {
++                    entity.activatedPriority = 1;
++                }
++                // Canvas end
+             }
+         }
+     }
 @@ -171,13 +_,14 @@
       * @param entity
       */

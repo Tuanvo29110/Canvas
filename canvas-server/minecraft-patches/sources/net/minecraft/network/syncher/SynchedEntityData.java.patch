@@ -8,12 +8,20 @@
  import java.util.List;
  import java.util.Locale;
  import java.util.Objects;
-@@ -84,7 +_,7 @@
+@@ -84,7 +_,15 @@
              return null;
          } else {
              this.isDirty = false;
 -            List<SynchedEntityData.DataValue<?>> list = new ArrayList<>();
-+            List<SynchedEntityData.DataValue<?>> list = Collections.synchronizedList(new ArrayList<>()); // Canvas - synchronized
++            // Canvas start - optimize
++            int cap = 0;
++            for (SynchedEntityData.DataItem<?> dataItem : this.itemsById) {
++                if (dataItem.isDirty()) {
++                    cap += 1;
++                }
++            }
++            List<SynchedEntityData.DataValue<?>> list = Collections.synchronizedList(new ArrayList<>(cap));
++            // Canvas end
  
              for (SynchedEntityData.DataItem<?> dataItem : this.itemsById) {
                  if (dataItem.isDirty()) {

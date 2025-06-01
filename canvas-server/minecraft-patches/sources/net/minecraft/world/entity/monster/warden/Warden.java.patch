@@ -1,5 +1,18 @@
 --- a/net/minecraft/world/entity/monster/warden/Warden.java
 +++ b/net/minecraft/world/entity/monster/warden/Warden.java
+@@ -303,10 +_,12 @@
+         }
+     }
+ 
++    private int behaviorTick = 0; // Canvas
+     @Override
+     protected void customServerAiStep(ServerLevel level) {
+         ProfilerFiller profilerFiller = Profiler.get();
+         profilerFiller.push("wardenBrain");
++        if ((getRider() == null || !this.isControllable()) && this.behaviorTick++ % this.activatedPriority == 0) // Canvas - DAB
+         this.getBrain().tick(level, this);
+         profilerFiller.pop();
+         super.customServerAiStep(level);
 @@ -583,6 +_,16 @@
              @Override
              protected PathFinder createPathFinder(int maxVisitedNodes) {

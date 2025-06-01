@@ -18,9 +18,13 @@ import io.canvasmc.canvas.config.internal.ConfigurationManager;
 import io.canvasmc.canvas.util.YamlTextFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.minecraft.Util;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -376,6 +380,71 @@ public class Config {
 
             @Comment("The threshold for an entity to be considered \"crammed\"")
             public int crammedThreshold = 2;
+        }
+
+        @Comment("The amount of ticks between in-wall checks")
+        public int checkStuckInWall = 10;
+
+        @Comment("Only ticks the items inside the Players hand instead of the entire inventory")
+        public boolean onlyTickItemsInHand = false;
+
+        @Comment("Flushes the location of the player while knockback")
+        public boolean flushKnockback = false;
+
+        @Comment(value = {
+            "Whether to optimize player movement processing by skipping",
+            "unnecessary edge checks and avoiding redundant view distance updates"
+        })
+        public boolean optimizePlayerMovementProcessing = true;
+
+        @Comment(value = {
+            "Throttles the AI goal selector in entity inactive ticks",
+            "This can improve performance by a few percent, but has minor gameplay implications"
+        })
+        public boolean throttleInactiveGoalSelectorTick = false;
+
+        public DynamicActivationofBrain dynamicActivationofBrain = new DynamicActivationofBrain();
+        public static class DynamicActivationofBrain {
+            @Comment("Optimizes entity brains when they're far away from the player")
+            public boolean enabled = false;
+            @Comment("This value determines how far away an entity has to be from the player to start being effected by DEAR.")
+            public int startDistance = 12;
+            @Comment("This value defines how often in ticks, the furthest entity will get their pathfinders and behaviors ticked. 20 = 1s")
+            public int maximumActivationPrio = 20;
+            @Comment(value = {
+                "This value defines how much distance modifies an entity's",
+                "tick frequency. freq = (distanceToPlayer^2) / (2^value)",
+                "If you want further away entities to tick less often, use 7.",
+                "If you want further away entities to tick more often, try 9."
+            })
+            public int activationDistanceMod = 8;
+            @Comment(value = {
+                "After enabling this, non-aquatic entities in the water will not be affected by DAB.",
+                "This could fix entities suffocate in the water."
+            })
+            public boolean dontEnableIfInWater = false;
+            @Comment("A list of entities to ignore for activation")
+            public List<String> blackedEntities = new ArrayList<>();
+
+            public static void post() {
+                for (EntityType<?> entityType : BuiltInRegistries.ENTITY_TYPE) {
+                    entityType.dabEnabled = true; // reset all, before setting the ones to true
+                }
+
+                final String DEFAULT_PREFIX = ResourceLocation.DEFAULT_NAMESPACE + ResourceLocation.NAMESPACE_SEPARATOR;
+
+                for (String name : INSTANCE.entities.dynamicActivationofBrain.blackedEntities) {
+                    // Be compatible with both `minecraft:example` and `example` syntax
+                    // If unknown, show user config value in the logger instead of parsed result
+                    String lowerName = name.toLowerCase(Locale.ROOT);
+                    String typeId = lowerName.startsWith(DEFAULT_PREFIX) ? lowerName : DEFAULT_PREFIX + lowerName;
+
+                    EntityType.byString(typeId).ifPresentOrElse(entityType ->
+                            entityType.dabEnabled = false,
+                        () -> CanvasBootstrap.LOGGER.warn("Skip unknown entity {}, in {}", "entities.dynamicActivationofBrain.blackedEntities.blacklisted-entities")
+                    );
+                }
+            }
         }
     }
 

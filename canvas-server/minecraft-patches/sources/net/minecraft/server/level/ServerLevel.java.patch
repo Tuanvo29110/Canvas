@@ -526,7 +526,7 @@
          if (flag || this.emptyTime++ < 300) {
              profilerFiller.push("entities");
              if (this.dragonFight != null && runsNormally) {
-@@ -806,8 +_,7 @@
+@@ -806,9 +_,9 @@
              }
  
              io.papermc.paper.entity.activation.ActivationRange.activateEntities(this); // Paper - EAR
@@ -534,8 +534,10 @@
 -                .forEach(
 +            tickData.forEachTickingEntity( // Canvas - Threaded Regions
                      entity -> {
++                        entity.activatedPriorityReset = false; // Canvas - DAB
                          if (!entity.isRemoved()) {
                              if (!tickRateManager.isEntityFrozen(entity)) {
+                                 profilerFiller.push("checkDespawn");
 @@ -833,30 +_,58 @@
                      }
                  );

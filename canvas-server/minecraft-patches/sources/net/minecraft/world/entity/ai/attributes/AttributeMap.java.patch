@@ -1,13 +1,16 @@
 --- a/net/minecraft/world/entity/ai/attributes/AttributeMap.java
 +++ b/net/minecraft/world/entity/ai/attributes/AttributeMap.java
-@@ -6,17 +_,19 @@
+@@ -2,21 +_,21 @@
+ 
+ import com.google.common.collect.Multimap;
+ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
  import java.util.Collection;
  import java.util.Map;
  import java.util.Set;
-+import java.util.concurrent.ConcurrentHashMap;
  import java.util.stream.Collectors;
  import javax.annotation.Nullable;
-+import it.unimi.dsi.fastutil.objects.ObjectSets;
++import it.unimi.dsi.fastutil.objects.ReferenceSets;
  import net.minecraft.core.Holder;
  import net.minecraft.nbt.CompoundTag;
  import net.minecraft.nbt.ListTag;
@@ -17,9 +20,42 @@
 -    private final Map<Holder<Attribute>, AttributeInstance> attributes = new Object2ObjectOpenHashMap<>();
 -    private final Set<AttributeInstance> attributesToSync = new ObjectOpenHashSet<>();
 -    private final Set<AttributeInstance> attributesToUpdate = new ObjectOpenHashSet<>();
-+    private final Map<Holder<Attribute>, AttributeInstance> attributes = new ConcurrentHashMap<>(); // Canvas - concurrent
-+    private final Set<AttributeInstance> attributesToSync = ObjectSets.synchronize(new ObjectOpenHashSet<>()); // Canvas - synchronize
-+    private final Set<AttributeInstance> attributesToUpdate = ObjectSets.synchronize(new ObjectOpenHashSet<>()); // Canvas - synchronize
++    private final Map<Holder<Attribute>, AttributeInstance> attributes = java.util.Collections.synchronizedMap(new io.canvasmc.canvas.util.AttributeInstanceArrayMap()); // Canvas - optimize - synchronized
++    private final Set<AttributeInstance> attributesToSync = ReferenceSets.synchronize(new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(0)); // Canvas - synchronize && optimized collection
++    private final Set<AttributeInstance> attributesToUpdate = ReferenceSets.synchronize(new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(0)); // Canvas - synchronize && optimized collection
      private final AttributeSupplier supplier;
      private final net.minecraft.world.entity.LivingEntity entity; // Purpur - Ridables
  
+@@ -51,7 +_,17 @@
+ 
+     @Nullable
+     public AttributeInstance getInstance(Holder<Attribute> attribute) {
+-        return this.attributes.computeIfAbsent(attribute, holder -> this.supplier.createInstance(this::onAttributeModified, (Holder<Attribute>)holder));
++        // Canvas start - optimize
++        AttributeInstance v;
++        if ((v = this.attributes.get(attribute)) == null) {
++            AttributeInstance newValue;
++            if ((newValue = this.supplier.createInstance(this::onAttributeModified, attribute)) != null) {
++                this.attributes.put(attribute, newValue);
++                return newValue;
++            }
++        }
++        return v;
++        // Canvas end
+     }
+ 
+     public boolean hasAttribute(Holder<Attribute> attribute) {
+@@ -140,9 +_,11 @@
+     public ListTag save() {
+         ListTag listTag = new ListTag();
+ 
+-        for (AttributeInstance attributeInstance : this.attributes.values()) {
++        // Canvas start
++        this.attributes.forEach((_, attributeInstance) -> {
+             listTag.add(attributeInstance.save());
+-        }
++        });
++        // Canvas end
+ 
+         return listTag;
+     }

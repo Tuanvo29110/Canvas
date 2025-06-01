@@ -35,6 +35,14 @@
  
      @SuppressForbidden(
          reason = "System.out needed before bootstrap"
+@@ -118,6 +_,7 @@
+             Bootstrap.bootStrap();
+             Bootstrap.validate();
+             Util.startTimerHackThread();
++            Config.Entities.DynamicActivationofBrain.post(); // Canvas - DAB
+             Path path1 = Paths.get("server.properties");
+             DedicatedServerSettings dedicatedServerSettings = new DedicatedServerSettings(optionSet); // CraftBukkit - CLI argument support
+             dedicatedServerSettings.forceSave();
 @@ -146,7 +_,7 @@
                  return;
              }

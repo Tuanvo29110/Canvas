@@ -4,7 +4,7 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/CraftCanvasMC/Canvas)](https://github.com/CraftCanvasMC/Canvas/graphs/contributors)
 [![Discord](https://img.shields.io/discord/1168986665038127205?color=5865F2)](https://canvasmc.io/discord)
 
-CanvasMC is a high-performance Minecraft server software focused on maximizing server performance while maintaining plugin compatibility. Built on top of [Purpur](https://github.com/PurpurMC/Purpur), it implements various experimental optimizations to achieve significant performance improvements.
+CanvasMC is a high-performance Minecraft server software focused on maximizing server performance while maintaining plugin compatibility. Built on top of [Purpur](https://github.com/PurpurMC/Purpur) while porting a large number of patches from [Leaf](https://github.com/Winds-Studio/Leaf/), it implements various experimental optimizations to achieve significant performance improvements.
 
 Useful links:
 

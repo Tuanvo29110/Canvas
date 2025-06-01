@@ -46,7 +46,7 @@
          }
      };
 -    private final Map<BlockPos, LevelChunk.RebindableTickingBlockEntityWrapper> tickersInLevel = Maps.newHashMap();
-+    private final Map<BlockPos, LevelChunk.RebindableTickingBlockEntityWrapper> tickersInLevel = Maps.newConcurrentMap(); // Canvas - concurrent
++    private final Map<BlockPos, LevelChunk.RebindableTickingBlockEntityWrapper> tickersInLevel = it.unimi.dsi.fastutil.objects.Object2ObjectMaps.synchronize(new it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap<>()); // Canvas - optimized collection - synchronized
      public boolean loaded;
      public final ServerLevel level; // CraftBukkit - type
      @Nullable

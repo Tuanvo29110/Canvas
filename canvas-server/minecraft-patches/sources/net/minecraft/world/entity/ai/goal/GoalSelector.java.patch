@@ -1,9 +1,10 @@
 --- a/net/minecraft/world/entity/ai/goal/GoalSelector.java
 +++ b/net/minecraft/world/entity/ai/goal/GoalSelector.java
-@@ -1,6 +_,7 @@
+@@ -1,6 +_,8 @@
  package net.minecraft.world.entity.ai.goal;
  
  import com.google.common.annotations.VisibleForTesting;
++import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.util.ConcurrentSet;
  import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
  import java.util.EnumMap;
@@ -17,3 +18,20 @@
      private static final Goal.Flag[] GOAL_FLAG_VALUES = Goal.Flag.values(); // Paper - remove streams from GoalSelector
      private final ca.spottedleaf.moonrise.common.set.OptimizedSmallEnumSet<net.minecraft.world.entity.ai.goal.Goal.Flag> goalTypes = new ca.spottedleaf.moonrise.common.set.OptimizedSmallEnumSet<>(Goal.Flag.class); // Paper - remove streams from GoalSelector
      private int curRate; // Paper - EAR 2
+@@ -38,9 +_,14 @@
+     }
+ 
+     // Paper start - EAR 2
+-    public boolean inactiveTick() {
++    public boolean inactiveTick(int tickRate, boolean inactive) {
++        // Canvas start
++        if (inactive && !Config.INSTANCE.entities.dynamicActivationofBrain.enabled) tickRate = 4; // reset to Paper's
++        tickRate = Math.min(tickRate, 3);
+         this.curRate++;
+-        return this.curRate % 3 == 0; // TODO newGoalRate was already unused in 1.20.4, check if this is correct
++        //return this.curRate % 3 == 0; // TODO newGoalRate was already unused in 1.20.4, check if this is correct
++        return this.curRate % tickRate == 0;
++        // Canvas end
+     }
+ 
+     public boolean hasTasks() {
