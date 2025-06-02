@@ -27,6 +27,15 @@
      public final org.bukkit.craftbukkit.attribute.CraftAttributeMap craftAttributes;
      public boolean collides = true;
      public Set<UUID> collidableExemptions = new java.util.HashSet<>();
+@@ -415,7 +_,7 @@
+             this.getSleepingPos().ifPresent(this::setPosToBed);
+         }
+ 
+-        if (this.level() instanceof ServerLevel serverLevel) {
++        if ((this instanceof Player || this.equipment.lithium$shouldTickEnchantments()) && this.level() instanceof ServerLevel serverLevel) { // Canvas - equipment tracking
+             EnchantmentHelper.tickEffects(serverLevel, this);
+         }
+ 
 @@ -428,7 +_,10 @@
  
          if (this.isAlive() && this.level() instanceof ServerLevel serverLevel1) {
@@ -142,6 +151,14 @@
      }
  
      @Override
+@@ -2730,6 +_,7 @@
+     }
+ 
+     protected void updateSwingTime() {
++        if (!this.swinging && this.swingTime == 0) return; // Canvas - skip unnecessary calculations if player is not flying or swing
+         int currentSwingDuration = this.getCurrentSwingDuration();
+         if (this.swinging) {
+             this.swingTime++;
 @@ -3024,7 +_,7 @@
                  f2 *= 0.5F;
              }
@@ -151,6 +168,33 @@
                  f += (0.54600006F - f) * f2;
                  f1 += (this.getSpeed() - f1) * f2;
              }
+@@ -3332,6 +_,7 @@
+     public void detectEquipmentUpdates() {
+         Map<EquipmentSlot, ItemStack> map = this.collectEquipmentChanges();
+         if (map != null) {
++            if (!(this instanceof net.minecraft.world.entity.player.Player)) this.equipment.lithium$onEquipmentChangesSent();; // Canvas - equipment tracking
+             this.handleHandSwap(map);
+             if (!map.isEmpty()) {
+                 this.handleEquipmentChanges(map);
+@@ -3341,6 +_,10 @@
+ 
+     @Nullable
+     private Map<EquipmentSlot, ItemStack> collectEquipmentChanges() {
++        // Canvas start - equipment tracking
++        final boolean isArmorStandUpdateNoTick = this instanceof net.minecraft.world.entity.decoration.ArmorStand stand && !stand.canTick && stand.noTickEquipmentDirty;
++        if (!isArmorStandUpdateNoTick && !this.equipment.lithium$hasUnsentEquipmentChanges()) return null;
++        // Canvas end - equipment tracking
+         Map<EquipmentSlot, ItemStack> map = null;
+         // Paper start - EntityEquipmentChangedEvent
+         record EquipmentChangeImpl(org.bukkit.inventory.ItemStack oldItem, org.bukkit.inventory.ItemStack newItem) implements io.papermc.paper.event.entity.EntityEquipmentChangedEvent.EquipmentChange {
+@@ -3657,6 +_,7 @@
+     protected void updateFallFlying() {
+         this.checkSlowFallDistance();
+         if (!this.level().isClientSide) {
++            if (!this.isFallFlying() && this.fallFlyTicks == 0) return; // Canvas - skip unnecessary calculations if player is not flying or swing
+             if (!this.canGlide()) {
+                 if (this.getSharedFlag(7) != false && !CraftEventFactory.callToggleGlideEvent(this, false).isCancelled()) // CraftBukkit
+                 this.setSharedFlag(7, false);
 @@ -3709,6 +_,7 @@
      }
  

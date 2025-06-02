@@ -446,6 +446,12 @@ public class Config {
                 }
             }
         }
+
+        @Comment("Makes snowballs knockback players")
+        public boolean snowballCanKnockback = false;
+
+        @Comment("Makes eggs knockback players")
+        public boolean eggCanKnockback = false;
     }
 
     @Comment("Use faster sin/cos math operations")

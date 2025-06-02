@@ -41,7 +41,7 @@
  
          @Override
          public boolean isRemoved() {
-@@ -75,7 +_,7 @@
+@@ -75,14 +_,26 @@
              return "<null>";
          }
      };
@@ -50,6 +50,26 @@
      public boolean loaded;
      public final ServerLevel level; // CraftBukkit - type
      @Nullable
+     private Supplier<FullChunkStatus> fullStatus;
+     @Nullable
+     private LevelChunk.PostLoadProcessor postLoad;
+-    private final Int2ObjectMap<GameEventListenerRegistry> gameEventListenerRegistrySections;
++    // Canvas start - reduce work done by game event system
++    private final GameEventListenerRegistry[] gameEventListenerRegistrySections;
++    private static final int GAME_EVENT_DISPATCHER_RADIUS = 2;
++
++    private static int getGameEventSectionIndex(int sectionIndex) {
++        return sectionIndex + GAME_EVENT_DISPATCHER_RADIUS;
++    }
++
++    private static int getGameEventSectionLength(int sectionCount) {
++        return sectionCount + (GAME_EVENT_DISPATCHER_RADIUS * 2);
++    }
++
++    // Canvas end - reduce work done by game event system
+     private final LevelChunkTicks<Block> blockTicks;
+     private final LevelChunkTicks<Fluid> fluidTicks;
+     private LevelChunk.UnsavedListener unsavedListener = chunkPos -> {};
 @@ -96,7 +_,8 @@
      // Paper end
      // Paper start - rewrite chunk system
@@ -74,7 +94,7 @@
          super(pos, data, level, net.minecraft.server.MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.BIOME), inhabitedTime, sections, blendingData); // Paper - Anti-Xray - The world isn't ready yet, use server singleton for registry
          this.level = (ServerLevel) level; // CraftBukkit - type
 -        this.gameEventListenerRegistrySections = new Int2ObjectOpenHashMap<>();
-+        this.gameEventListenerRegistrySections = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>()); // Canvas - synchronized
++        this.gameEventListenerRegistrySections = new GameEventListenerRegistry[getGameEventSectionLength(this.getSectionsCount())]; // Canvas - reduce work done by game event system
  
          for (Heightmap.Types types : Heightmap.Types.values()) {
              if (ChunkStatus.FULL.heightmapsAfter().contains(types)) {
@@ -87,6 +107,38 @@
          }
  
          this.setAllStarts(chunk.getAllStarts());
+@@ -255,10 +_,27 @@
+ 
+     @Override
+     public GameEventListenerRegistry getListenerRegistry(int sectionY) {
+-        return this.level instanceof ServerLevel serverLevel
+-            ? this.gameEventListenerRegistrySections
+-                .computeIfAbsent(sectionY, i -> new EuclideanGameEventListenerRegistry(serverLevel, sectionY, this::removeGameEventListenerRegistry))
+-            : super.getListenerRegistry(sectionY);
++        // Canvas start - reduce work done by game event system
++        if (this.level instanceof ServerLevel serverLevel) {
++            int sectionIndex = getGameEventSectionIndex(this.getSectionIndexFromSectionY(sectionY));
++
++            // drop game events that are too far away (32 blocks) from loaded sections
++            // this matches the highest radius of game events in the game
++            if (sectionIndex < 0 || sectionIndex >= this.gameEventListenerRegistrySections.length) {
++                return GameEventListenerRegistry.NOOP;
++            }
++
++            var dispatcher = this.gameEventListenerRegistrySections[sectionIndex];
++
++            if (dispatcher == null) {
++                dispatcher = this.gameEventListenerRegistrySections[sectionIndex] = new EuclideanGameEventListenerRegistry(serverLevel, sectionY, this::removeGameEventListenerRegistry);
++            }
++
++            return dispatcher;
++        }
++
++        return super.getListenerRegistry(sectionY);
++        // Canvas end - reduce work done by game event system
+     }
+ 
+     // Paper start - Perf: Reduce instructions and provide final method
 @@ -270,11 +_,18 @@
      public BlockState getBlockStateFinal(final int x, final int y, final int z) {
          // Copied and modified from below
@@ -137,6 +189,15 @@
                  }
  
                  blockEntity.setBlockState(blockState);
+@@ -609,7 +_,7 @@
+     }
+ 
+     private void removeGameEventListenerRegistry(int sectionY) {
+-        this.gameEventListenerRegistrySections.remove(sectionY);
++        this.gameEventListenerRegistrySections[getGameEventSectionIndex(this.getSectionIndexFromSectionY(sectionY))] = null; // Canvas - reduce work done by game event system
+     }
+ 
+     private void removeBlockEntityTicker(BlockPos pos) {
 @@ -628,7 +_,7 @@
  
      // CraftBukkit start
