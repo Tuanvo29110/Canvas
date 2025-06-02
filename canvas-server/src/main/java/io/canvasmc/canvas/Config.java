@@ -53,10 +53,11 @@ public class Config {
         {
             int tickThreads = Runtime.getRuntime().availableProcessors() / 2;
             if (tickThreads <= 4) {
-                tickThreads = 1;
+                tickThreads = 2;
             } else {
                 tickThreads = tickThreads / 4;
             }
+            if (tickThreads == 1) tickThreads = 2; // cannot let the default be 1, as this can cause issues
             allocatedSchedulerThreadCount = tickThreads;
         }
 
@@ -656,6 +657,9 @@ public class Config {
                     // build and print config tree.
                     YamlTextFormatter formatter = new YamlTextFormatter(4);
                     CanvasBootstrap.LOGGER.info(Component.text("Printing configuration tree:").appendNewline().append(formatter.apply(context.contents())));
+                }
+                if (INSTANCE.ticking.allocatedSchedulerThreadCount <= 1) {
+                    CanvasBootstrap.LOGGER.error(Component.text("Allocating 1 or less scheduler threads can result in multiple issues with the chunk system, please allocate more to use Canvas more efficiently."));
                 }
             })
             .build(config, configClass)
