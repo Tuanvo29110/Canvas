@@ -1,0 +1,20 @@
+--- a/net/minecraft/world/level/dimension/end/EndDragonFight.java
++++ b/net/minecraft/world/level/dimension/end/EndDragonFight.java
+@@ -433,7 +_,7 @@
+             .registryAccess()
+             .lookup(Registries.CONFIGURED_FEATURE)
+             .flatMap(registry -> registry.get(EndFeatures.END_GATEWAY_DELAYED))
+-            .ifPresent(endGatewayFeature -> endGatewayFeature.value().place(this.level, this.level.getChunkSource().getGenerator(), RandomSource.create(), pos));
++            .ifPresent(endGatewayFeature -> endGatewayFeature.value().place(this.level, this.level.getChunkSource().getGenerator(), this.level.random, pos)); // Canvas - reduce RandomSource instances
+     }
+ 
+     public void spawnExitPortal(boolean active) {
+@@ -454,7 +_,7 @@
+         }
+         // Paper end - Prevent "softlocked" exit portal generation
+         if (endPodiumFeature.place(
+-            FeatureConfiguration.NONE, this.level, this.level.getChunkSource().getGenerator(), RandomSource.create(), this.portalLocation
++            FeatureConfiguration.NONE, this.level, this.level.getChunkSource().getGenerator(), this.level.random, this.portalLocation // Canvas - reduce RandomSource instances
+         )) {
+             int i = Mth.positiveCeilDiv(4, 16);
+             this.level.getChunkSource().chunkMap.waitForLightBeforeSending(new ChunkPos(this.portalLocation), i);

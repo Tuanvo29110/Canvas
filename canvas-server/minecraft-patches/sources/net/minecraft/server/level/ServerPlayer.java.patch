@@ -18,6 +18,15 @@
      public final ContainerSynchronizer containerSynchronizer = new ContainerSynchronizer() {
          private final LoadingCache<TypedDataComponent<?>, Integer> cache = CacheBuilder.newBuilder()
              .maximumSize(256L)
+@@ -493,7 +_,7 @@
+             long l1 = l * l;
+             int i = l1 > 2147483647L ? Integer.MAX_VALUE : (int)l1;
+             int coprime = this.getCoprime(i);
+-            int randomInt = RandomSource.create().nextInt(i);
++            int randomInt = level.random.nextInt(i); // Canvas - reduce RandomSource instances
+ 
+             for (int i1 = 0; i1 < i; i1++) {
+                 int i2 = (randomInt + coprime * i1) % i;
 @@ -826,15 +_,22 @@
      public void doTick() {
          try {
@@ -66,3 +75,46 @@
      }
  
      private void tellNeutralMobsThatIDied() {
+@@ -1520,6 +_,13 @@
+         super.take(entity, quantity);
+         this.containerMenu.broadcastChanges();
+     }
++    // Canvas start - cache eligible players for despawn checks
++
++    @Override
++    public boolean isAlive() {
++        return !this.isRemoved() && this.entityData.get(DATA_HEALTH_ID) > 0.0f && !this.dead;
++    }
++    // Canvas end
+ 
+     // CraftBukkit start - moved bed result checks from below into separate method
+     private Either<Player.BedSleepingProblem, Unit> getBedResult(BlockPos at, Direction direction) {
+@@ -2152,12 +_,18 @@
+ 
+     @Override
+     public void crit(Entity entityHit) {
+-        this.serverLevel().getChunkSource().broadcastAndSend(this, new ClientboundAnimatePacket(entityHit, 4));
++        // Canvas start - broadcast crit animations as the entity being critted
++        var level = this.serverLevel();
++        level.getChunkSource().broadcastAndSend(Config.INSTANCE.fixes.broadcastCritAnimationsAsTheEntityBeingCritted ? entityHit : this, new ClientboundAnimatePacket(entityHit, 4));
++        // Canvas end
+     }
+ 
+     @Override
+     public void magicCrit(Entity entityHit) {
+-        this.serverLevel().getChunkSource().broadcastAndSend(this, new ClientboundAnimatePacket(entityHit, 5));
++        // Canvas start - broadcast crit animations as the entity being critted
++        var level = this.serverLevel();
++        level.getChunkSource().broadcastAndSend(Config.INSTANCE.fixes.broadcastCritAnimationsAsTheEntityBeingCritted ? entityHit : this, new ClientboundAnimatePacket(entityHit, 5));
++        // Canvas end
+     }
+ 
+     @Override
+@@ -2188,6 +_,7 @@
+             this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.CHANGE_GAME_MODE, gameMode.getId()));
+             if (gameMode == GameType.SPECTATOR) {
+                 this.removeEntitiesOnShoulder();
++                this.stopSleeping(); // Canvas - MC-119417
+                 this.stopRiding();
+                 EnchantmentHelper.stopLocationBasedEffects(this);
+             } else {

@@ -76,7 +76,14 @@
      }
  
      public void forEachEntityTickingChunk(LongConsumer action) {
-@@ -184,7 +_,7 @@
+@@ -178,13 +_,13 @@
+         for (int i = 0; i < size; ++i) {
+             final LevelChunk chunk = raw[i];
+ 
+-            action.accept(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunk.getPos()));
++            action.accept(chunk.getPos().longKey); // Canvas - cache chunk key
+         }
+         // Paper end - rewrite chunk system
      }
  
      public LongIterator getSpawnCandidateChunks() {

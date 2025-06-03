@@ -1,11 +1,6 @@
 --- a/net/minecraft/util/ClassInstanceMultiMap.java
 +++ b/net/minecraft/util/ClassInstanceMultiMap.java
-@@ -11,12 +_,14 @@
- import java.util.List;
- import java.util.Map;
- import java.util.Map.Entry;
-+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+@@ -14,9 +_,9 @@
  import net.minecraft.Util;
  
  public class ClassInstanceMultiMap<T> extends AbstractCollection<T> {
@@ -13,7 +8,7 @@
 +    private final Map<Class<?>, List<T>> byClass = new it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap<>(2); // Canvas - optimized collection
      private final Class<T> baseClass;
 -    private final List<T> allInstances = Lists.newArrayList();
-+    private final List<T> allInstances = new ObjectArrayList<>(); // Canvas - optimized collection
++    private final List<T> allInstances = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(); // Canvas - optimized collection
  
      public ClassInstanceMultiMap(Class<T> baseClass) {
          this.baseClass = baseClass;

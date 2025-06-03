@@ -132,8 +132,41 @@
  
      @Override
      public final boolean moonrise$isHardColliding() {
-@@ -539,6 +_,20 @@
+@@ -522,23 +_,45 @@
+     // Purpur end - Add canSaveToDisk to Entity
+ 
+     // Purpur start - copied from Mob - API for any mob to burn daylight
++    // Canvas start - optimize sun burn tick
++    private BlockPos cached_eye_blockpos;
++    private net.minecraft.world.phys.Vec3 cached_position;
+     public boolean isSunBurnTick() {
+         if (this.level().isBrightOutside() && !this.level().isClientSide) {
+-            float lightLevelDependentMagicValue = this.getLightLevelDependentMagicValue();
+-            BlockPos blockPos = BlockPos.containing(this.getX(), this.getEyeY(), this.getZ());
++            if (this.cached_position != this.position) {
++                this.cached_eye_blockpos = BlockPos.containing(this.getX(), this.getEyeY(), this.getZ());
++                this.cached_position = this.position;
++            }
++
++            float lightLevelDependentMagicValue = this.getLightLevelDependentMagicValue(cached_eye_blockpos); // Pass BlockPos to getBrightness
++
++            // Check brightness first
++            if (lightLevelDependentMagicValue <= 0.5F) return false;
++            if (this.random.nextFloat() * 30.0F >= (lightLevelDependentMagicValue - 0.4F) * 2.0F) return false;
++
+             boolean flag = this.isInWaterOrRain() || this.isInPowderSnow || this.wasInPowderSnow;
+-            if (lightLevelDependentMagicValue > 0.5F
+-                && this.random.nextFloat() * 30.0F < (lightLevelDependentMagicValue - 0.4F) * 2.0F
+-                && !flag
+-                && this.level().canSeeSky(blockPos)) {
+-                return true;
+-            }
++            return !flag && this.level().canSeeSky(this.cached_eye_blockpos);
+         }
+ 
+         return false;
      }
++    // Canvas end
      // Purpur end - copied from Mob - API for any mob to burn daylight
  
 +    // Canvas start - Threaded Regions
@@ -172,6 +205,55 @@
          if (this.isPassenger() && this.getVehicle().isRemoved()) {
              this.stopRiding();
          }
+@@ -895,7 +_,13 @@
+ 
+         this.checkBelowWorld();
+         if (!this.level().isClientSide) {
++            // Canvas start - hide flames on entities with fire resistance
++            if (this instanceof net.minecraft.world.entity.LivingEntity livingEntity) {
++                this.setSharedFlagOnFire(this.remainingFireTicks > 0 && (!Config.INSTANCE.entities.hideFlamesOnEntitiesWithFireResistance || !livingEntity.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE)));
++            } else {
++            // Canvas end
+             this.setSharedFlagOnFire(this.remainingFireTicks > 0);
++            } // Canvas - hide flames on entities with fire resistance
+         }
+ 
+         this.firstTick = false;
+@@ -1062,12 +_,34 @@
+         return this.mainSupportingBlockPos.isPresent() && this.mainSupportingBlockPos.get().equals(pos);
+     }
+ 
++    // Canvas start - cache supporting block check
++    private boolean canSkipSupportingBlockSearch = false;
++    private BlockState cachedSupportingBlockState = null;
++    // Canvas end
+     protected void checkSupportingBlock(boolean onGround, @Nullable Vec3 movement) {
++        // Canvas start - cache supporting block check
++        if (movement == null || (movement.x == 0 && movement.z == 0 && movement.y == 0)) {
++            if (canSkipSupportingBlockSearch) {
++                return;
++            }
++        } else {
++            // Invalidate cache on movement
++            canSkipSupportingBlockSearch = false;
++            cachedSupportingBlockState = null;
++        }
++        // Canvas end
+         if (onGround) {
+             AABB boundingBox = this.getBoundingBox();
+             AABB aabb = new AABB(boundingBox.minX, boundingBox.minY - 1.0E-6, boundingBox.minZ, boundingBox.maxX, boundingBox.minY, boundingBox.maxZ);
+             Optional<BlockPos> optional = this.level.findSupportingBlock(this, aabb);
+             if (optional.isPresent() || this.onGroundNoBlocks) {
++                // Canvas start - cache supporting block check
++                if (optional.isPresent()) { // Cache the block state if found
++                    BlockPos pos = optional.get();
++                    cachedSupportingBlockState = this.level.getBlockState(pos);
++                    canSkipSupportingBlockSearch = true;
++                }
++                // Canvas end
+                 this.mainSupportingBlockPos = optional;
+             } else if (movement != null) {
+                 AABB aabb1 = aabb.move(-movement.x, 0.0, -movement.z);
 @@ -1088,35 +_,16 @@
          return this.onGround;
      }
@@ -219,7 +301,22 @@
              Vec3 vec3 = this.collide(movement);
              double d = vec3.lengthSqr();
              if (d > 1.0E-7 || movement.lengthSqr() - d < 1.0E-7) {
-@@ -1240,13 +_,6 @@
+@@ -1235,18 +_,20 @@
+                     }
+                 }
+ 
++                // Canvas start - skip negligible planar movement multiplication
++                Vec3 oldDeltaMovement = this.getDeltaMovement();
++                if (oldDeltaMovement.x < -1e-6 || oldDeltaMovement.x > 1e-6 || oldDeltaMovement.z < -1e-6 || oldDeltaMovement.z > 1e-6) {
++                // Canvas end
+                 float blockSpeedFactor = this.getBlockSpeedFactor();
+-                this.setDeltaMovement(this.getDeltaMovement().multiply(blockSpeedFactor, 1.0, blockSpeedFactor));
++                // Canvas start
++                    if (blockSpeedFactor < 1 - 1e-6 || blockSpeedFactor > 1 + 1e-6) {
++                        this.setDeltaMovement(oldDeltaMovement.multiply(blockSpeedFactor, 1.0, blockSpeedFactor));
++                    }
++                }
++                // Canvas end
                  profilerFiller.pop();
              }
          }
@@ -363,7 +460,25 @@
  
      public boolean isInLava() {
          return !this.firstTick && this.fluidHeight.getDouble(FluidTags.LAVA) > 0.0;
-@@ -2152,30 +_,32 @@
+@@ -2059,10 +_,16 @@
+ 
+     @Deprecated
+     public float getLightLevelDependentMagicValue() {
++    // Canvas start - optimize sun burn tick
++        return this.getLightLevelDependentMagicValue(BlockPos.containing(this.getX(), this.getEyeY(), this.getZ()));
++    }
++
++    public float getLightLevelDependentMagicValue(BlockPos pos) {
+         return this.level().hasChunkAt(this.getBlockX(), this.getBlockZ())
+-            ? this.level().getLightLevelDependentMagicValue(BlockPos.containing(this.getX(), this.getEyeY(), this.getZ()))
++            ? this.level.getLightLevelDependentMagicValue(pos)
+             : 0.0F;
+     }
++    // Canvas end
+ 
+     public void absSnapTo(double x, double y, double z, float yRot, float xRot) {
+         this.absSnapTo(x, y, z);
+@@ -2152,37 +_,40 @@
          return new Vec3(this.xOld, this.yOld, this.zOld);
      }
  
@@ -415,6 +530,15 @@
  
      public void playerTouch(Player player) {
      }
+ 
+     public void push(Entity entity) {
++        if (!entity.noPhysics && !this.noPhysics) { // Canvas - collision physics check before vehicle check
+         if (!this.isPassengerOfSameVehicle(entity)) {
+-            if (!entity.noPhysics && !this.noPhysics) {
++            // if (!entity.noPhysics && !this.noPhysics) { // Canvas - collision physics check before vehicle check
+                 if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper - Collision option for requiring a player participant
+                 double d = entity.getX() - this.getX();
+                 double d1 = entity.getZ() - this.getZ();
 @@ -2846,7 +_,13 @@
  
          for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {

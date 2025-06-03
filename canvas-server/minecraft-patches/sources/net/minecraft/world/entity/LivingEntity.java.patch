@@ -74,7 +74,20 @@
  
      @Override
      protected float getBlockSpeedFactor() {
-@@ -992,12 +_,16 @@
+@@ -534,10 +_,10 @@
+     }
+ 
+     protected void tryAddFrost() {
+-        if (!this.getBlockStateOnLegacy().isAir()) {
++        if (true) { // Canvas - check frozen ticks before landing block
+             int ticksFrozen = this.getTicksFrozen();
+             if (ticksFrozen > 0) {
+-                AttributeInstance attribute = this.getAttribute(Attributes.MOVEMENT_SPEED);
++                AttributeInstance attribute = this.getBlockStateOnLegacy().isAir() ? null : this.getAttribute(Attributes.MOVEMENT_SPEED); // Canvas - check frozen ticks before landing block
+                 if (attribute == null) {
+                     return;
+                 }
+@@ -992,14 +_,18 @@
      }
  
      private void updateSynchronizedMobEffectParticles() {
@@ -86,8 +99,8 @@
 -            .toList();
 +        // Canvas start - replace stream
 +        List<ParticleOptions> list = new java.util.ArrayList<>();
-+        for (MobEffectInstance mobEffectInstance : this.activeEffects
-+            .values()) {
++        final Collection<MobEffectInstance> effectsValues = this.activeEffects.values(); // Canvas - remove redundant values call
++        for (MobEffectInstance mobEffectInstance : effectsValues) { // Canvas - remove redundant values call
 +            if (mobEffectInstance.isVisible()) {
 +                ParticleOptions particleOptions = mobEffectInstance.getParticleOptions();
 +                list.add(particleOptions);
@@ -95,8 +108,11 @@
 +        }
 +        // Canvas end
          this.entityData.set(DATA_EFFECT_PARTICLES, list);
-         this.entityData.set(DATA_EFFECT_AMBIENCE_ID, areAllEffectsAmbient(this.activeEffects.values()));
+-        this.entityData.set(DATA_EFFECT_AMBIENCE_ID, areAllEffectsAmbient(this.activeEffects.values()));
++        this.entityData.set(DATA_EFFECT_AMBIENCE_ID, areAllEffectsAmbient(effectsValues)); // Canvas - remove redundant values call
      }
+ 
+     private void updateGlowingStatus() {
 @@ -1393,7 +_,7 @@
                  player.setRealHealth(health);
              }

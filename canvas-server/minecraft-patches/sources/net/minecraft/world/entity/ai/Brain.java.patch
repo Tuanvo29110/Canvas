@@ -1,51 +1,32 @@
 --- a/net/minecraft/world/entity/ai/Brain.java
 +++ b/net/minecraft/world/entity/ai/Brain.java
-@@ -15,7 +_,10 @@
+@@ -15,6 +_,8 @@
  import com.mojang.serialization.MapCodec;
  import com.mojang.serialization.MapLike;
  import com.mojang.serialization.RecordBuilder;
 +import io.canvasmc.canvas.util.collections.MaskedList;
-+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
- import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 +import java.util.ArrayList;
+ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  import java.util.Collection;
  import java.util.List;
- import java.util.Map;
-@@ -25,6 +_,8 @@
- import java.util.function.Supplier;
- import java.util.stream.Stream;
- import javax.annotation.Nullable;
-+import it.unimi.dsi.fastutil.objects.Reference2ReferenceLinkedOpenHashMap;
-+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
- import net.minecraft.core.registries.BuiltInRegistries;
- import net.minecraft.server.level.ServerLevel;
- import net.minecraft.util.VisibleForDebug;
-@@ -38,6 +_,7 @@
- import net.minecraft.world.entity.ai.sensing.SensorType;
- import net.minecraft.world.entity.schedule.Activity;
- import net.minecraft.world.entity.schedule.Schedule;
-+import org.agrona.collections.ObjectHashSet;
- import org.apache.commons.lang3.mutable.MutableObject;
- import org.slf4j.Logger;
- 
 @@ -45,16 +_,73 @@
      static final Logger LOGGER = LogUtils.getLogger();
      private final Supplier<Codec<Brain<E>>> codec;
      private static final int SCHEDULE_UPDATE_DELAY = 20;
 -    private final Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = Maps.newHashMap();
 -    private final Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = Maps.newLinkedHashMap();
-+    private Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = Maps.newConcurrentMap(); // Canvas - mutable / concurrent
-+    public Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = Maps.newLinkedHashMap(); // Canvas - mutable / private -> public
++    private final Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = new it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap<>(); // Canvas - optimized collection
++    public Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = new it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap<>();; // Canvas - mutable / private -> public - optimized collection
      private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = Maps.newTreeMap();
      private Schedule schedule = Schedule.EMPTY;
 -    private final Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements = Maps.newHashMap();
 -    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = Maps.newHashMap();
 -    private Set<Activity> coreActivities = Sets.newHashSet();
 -    private final Set<Activity> activeActivities = Sets.newHashSet();
-+    private Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements = Maps.newHashMap(); // Canvas - mutable
-+    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = new Object2ObjectOpenHashMap<>(); // Canvas - use fastutil
-+    private Set<Activity> coreActivities = new ObjectHashSet<>(); // Canvas - use agrona
-+    private final Set<Activity> activeActivities = new ObjectHashSet<>(); // Canvas - use agrona
++    private final Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements = new it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap<>(); // Canvas - optimized collection
++    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = new it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap<>(); // Canvas - optimized collection
++    private Set<Activity> coreActivities = new it.unimi.dsi.fastutil.objects.ObjectOpenHashSet<>(); // Canvas - optimized collection
++    private final Set<Activity> activeActivities = new it.unimi.dsi.fastutil.objects.ObjectOpenHashSet<>(); // Canvas - optimized collection
      private Activity defaultActivity = Activity.IDLE;
      private long lastScheduleUpdate = -9999L;
 +    // Canvas start - optimize brain
@@ -108,16 +89,11 @@
  
      public static <E extends LivingEntity> Brain.Provider<E> provider(
          Collection<? extends MemoryModuleType<?>> memoryTypes, Collection<? extends SensorType<? extends Sensor<? super E>>> sensorTypes
-@@ -146,6 +_,12 @@
+@@ -146,6 +_,7 @@
          for (Brain.MemoryValue<?> memoryValue : memoryValues) {
              memoryValue.setMemoryInternal(this);
          }
 +        this.onTasksChanged(); // Canvas - optimize brain
-+        // Canvas start - use fastutil
-+        this.memories = new Reference2ReferenceOpenHashMap<>(this.memories);
-+        this.sensors = new Reference2ReferenceLinkedOpenHashMap<>(this.sensors);
-+        this.activityRequirements = new Object2ObjectOpenHashMap<>(this.activityRequirements);
-+        // Canvas end
      }
  
      public <T> DataResult<T> serializeStart(DynamicOps<T> ops) {

@@ -320,13 +320,19 @@
      }
  
      public void addTicket(Ticket ticket, ChunkPos chunkPos) {
-@@ -698,6 +_,13 @@
+@@ -698,6 +_,19 @@
          return this.ticketStorage.updateChunkForced(chunkPos, add);
      }
  
 +    // Canvas start - Threaded Regions
 +    public boolean updateRegionTicket(ChunkPos pos, boolean add, TicketType ticketType) {
 +        Ticket ticket = new Ticket(ticketType, ChunkMap.FORCED_TICKET_LEVEL);
++        return add ? this.ticketStorage.addTicket(pos.longKey, ticket) : this.ticketStorage.removeTicket(pos.longKey, ticket);
++    }
++
++    public boolean updateRegionTicket(int chunkX, int chunkZ, boolean add, TicketType ticketType) {
++        Ticket ticket = new Ticket(ticketType, ChunkMap.FORCED_TICKET_LEVEL);
++        ChunkPos pos = new ChunkPos(chunkX, chunkZ);
 +        return add ? this.ticketStorage.addTicket(pos.longKey, ticket) : this.ticketStorage.removeTicket(pos.longKey, ticket);
 +    }
 +

@@ -44,7 +44,7 @@
      public int ticksSinceLastInteraction; // Purpur - Entity lifespan
  
      protected Mob(EntityType<? extends Mob> entityType, Level level) {
-@@ -204,14 +_,16 @@
+@@ -204,14 +_,17 @@
          return this.lookControl;
      }
  
@@ -54,6 +54,7 @@
      public void inactiveTick() {
          super.inactiveTick();
 -        if (this.goalSelector.inactiveTick()) {
++        if (Config.INSTANCE.entities.skipAiForNonAwareMob && !(this.isEffectiveAi() && this.aware)) return; // Canvas - skip AI during inactive ticks for non-aware mobs
 +        boolean isThrottled = Config.INSTANCE.entities.throttleInactiveGoalSelectorTick && inactiveTickDisableCounter++ % 20 != 0; // Canvas - throttle inactive goal selector ticking
 +        if (this.goalSelector.inactiveTick(this.activatedPriority, true) && !isThrottled) { // Canvas - throttle inactive goal selector ticking - DAB
              this.goalSelector.tick();
@@ -63,35 +64,38 @@
              this.targetSelector.tick();
          }
      }
-@@ -707,7 +_,7 @@
+@@ -702,12 +_,30 @@
+         return false;
+     }
+ 
++    public io.canvasmc.canvas.region.ServerRegions.WorldTickData temporaryRegionizedData = null; // Canvas - check eligible players for despawn checks
+     @Override
+     public void checkDespawn() {
          if (this.level().getDifficulty() == Difficulty.PEACEFUL && this.shouldDespawnInPeaceful()) {
              this.discard(EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
          } else if (!this.isPersistenceRequired() && !this.requiresCustomPersistence()) {
 -            Entity nearestPlayer = this.level().findNearbyPlayer(this, -1.0, EntitySelector.PLAYER_AFFECTS_SPAWNING); // Paper - Affects Spawning API
-+            Entity nearestPlayer = this.canvas$optimizeNearbyPlayerLookups(this.level(), this, -1.0); // Paper - Affects Spawning API // Canvas - faster player lookups
++            // Canvas start - check eligible players for despawn checks
++            Entity nearestPlayer = null;
++
++            if (this.level() instanceof ServerLevel serverLevel && this.temporaryRegionizedData != null) { // ensure that if something else calls this(like a plugin), we just run it like normal instead of cached, since we most likely won't have our temporary data
++                double minDist = Double.MAX_VALUE;
++                for (int i = 0; i < this.temporaryRegionizedData.eligibleDespawnCheckingPlayerCache.length; i++) {
++                    Player cachedPlayer = this.temporaryRegionizedData.eligibleDespawnCheckingPlayerCache[i];
++                    double d1 = cachedPlayer.distanceToSqr(this);
++                    if (d1 <= minDist) {
++                        minDist = d1;
++                        nearestPlayer = cachedPlayer;
++                    }
++                }
++            } else {
++                nearestPlayer = this.level().findNearbyPlayer(this, -1.0, EntitySelector.PLAYER_AFFECTS_SPAWNING); // Paper - Affects Spawning API
++            }
++            this.temporaryRegionizedData = null;
++            // Canvas end
              if (nearestPlayer != null) {
                  // Paper start - Configurable despawn distances
                  final io.papermc.paper.configuration.WorldConfiguration.Entities.Spawning.DespawnRangePair despawnRangePair = this.level().paperConfig().entities.spawning.despawnRanges.get(this.getType().getCategory());
-@@ -735,6 +_,19 @@
-             this.noActionTime = 0;
-         }
-     }
-+    // Canvas start - optimize nearby player lookups
-+
-+    private Player canvas$optimizeNearbyPlayerLookups(Level instance, Entity entity, double maxDistance) {
-+        final Player closestPlayer = instance.getNearestPlayer(entity, this.getType().getCategory().getDespawnDistance());
-+        if (closestPlayer != null) {
-+            return closestPlayer;
-+        } else {
-+            final List<? extends Player> players = this.level().players();
-+            if (players.isEmpty()) return null;
-+            return players.get(0);
-+        }
-+    }
-+    // Canvas end
- 
-     @Override
-     protected final void serverAiStep() {
 @@ -755,16 +_,20 @@
          int i = this.tickCount + this.getId();
          if (i % 2 != 0 && this.tickCount > 1) {

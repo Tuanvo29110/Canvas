@@ -50,6 +50,7 @@ import net.minecraft.util.VisibleForDebug;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.village.VillageSiege;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockEventData;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.NaturalSpawner;
@@ -595,6 +596,7 @@ public class ServerRegions {
         public final RedstoneWireTurbo turbo;
         // canvas
         public TPSCalculator tpsCalculator = new TPSCalculator();
+        public Player[] eligibleDespawnCheckingPlayerCache = new Player[0]; // Canvas - cache eligible players for despawn checks
         // scheduler
         public final CanvasRegionScheduler.Scheduler regionScheduler = new CanvasRegionScheduler.Scheduler();
 

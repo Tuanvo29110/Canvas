@@ -99,6 +99,7 @@ public class ThreadedServer implements ThreadedBukkitServer {
             MultiLoopThreadDumper.REGISTRY.add("Tick Runner ");
             MultiLoopThreadDumper.REGISTRY.add("EntityTracking");
             MultiLoopThreadDumper.REGISTRY.add("MobSpawning");
+            MultiLoopThreadDumper.REGISTRY.add("Canvas PlayerData IO Thread");
 
             if (!server.initServer()) {
                 throw new IllegalStateException("Failed to initialize server");

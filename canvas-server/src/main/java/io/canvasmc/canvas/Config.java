@@ -220,6 +220,8 @@ public class Config {
             "Riptide enchantment does not function properly when combined with the Depth Strider enchantment"
         })
         public boolean mc136249 = false;
+        @Comment("Broadcast crit animations as the entity being critted")
+        public boolean broadcastCritAnimationsAsTheEntityBeingCritted = false;
     }
 
     public Spawner spawner = new Spawner();
@@ -243,6 +245,9 @@ public class Config {
 
         @Comment("Allows opening any type of door with your hand, including iron doors")
         public boolean canOpenAnyDoorWithHand = false;
+
+        @Comment("Enables creation of tile entity snapshots on retrieving blockstates")
+        public boolean tileEntitySnapshotCreation = true;
 
         public TNT tnt = new TNT();
         public static class TNT {
@@ -287,6 +292,12 @@ public class Config {
 
         @Comment("The rebound velocity of the non living entity when bouncing on a slime block")
         public double nonLivingEntityVelocityReboundFactor = 0.8D;
+
+        @Comment(value = {
+            "Check if a cactus can survive before growing",
+            "Enabling this can result in dramatic improvement in performance of cacti farms"
+        })
+        public boolean cactusCheckSurvivalBeforeGrowth = false;
     }
 
     @Comment(value = {
@@ -453,6 +464,22 @@ public class Config {
 
         @Comment("Makes eggs knockback players")
         public boolean eggCanKnockback = false;
+
+        @Comment("Hides flames on entities with the fire resistance effect")
+        public boolean hideFlamesOnEntitiesWithFireResistance = false;
+
+        @Comment(value = {
+            "The minecraftToBukkit EntityType convert call is expensive in mob spawn",
+            "This convert call is used for spawn event call, and the results are always the same",
+            "thus there is no need to do the convert process every time, so we cache it"
+        })
+        public boolean cacheMinecraftToBukkitEntityTypeConvert = true;
+
+        @Comment("Skips AI for non aware mobs during inactive ticks")
+        public boolean skipAiForNonAwareMob = false;
+
+        @Comment("Reduces useless entity movement packets")
+        public boolean reduceUselessEntityMovePackets = false;
     }
 
     @Comment("Use faster sin/cos math operations")
@@ -629,6 +656,21 @@ public class Config {
             return enabled && serverTextFilterPool;
         }
     }
+
+    @Comment(value = {
+        "Skips map item data updates if the CraftMapRenderer is not present",
+        "Optimizes \"image in map\" maps, without requiring the map to be locked",
+        "which some old map plugins may not do. This has the disadvantage that",
+        "the vanilla map data will never be updated while the CraftMapRenderer",
+        "is not present, but that's not a huge problem"
+    })
+    public boolean skipMapItemDataUpdates = false;
+
+    @Comment("Makes PlayerData save asynchronously")
+    public boolean asyncPlayerDataSave = false;
+
+    @Comment("Reduces chunk source updates on inter-chunk player moves. Recommended to enable")
+    public boolean reduceChunkSourceUpdates = false;
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);

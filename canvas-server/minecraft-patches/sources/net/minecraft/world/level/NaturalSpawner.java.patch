@@ -17,18 +17,52 @@
                  limit = level.getWorld().getSpawnLimit(spawnCategory);
              }
  
-@@ -173,8 +_,12 @@
+@@ -157,7 +_,7 @@
+ 
+         for (MobCategory mobCategory : categories) {
+             // Paper start - Optional per player mob spawns
+-            final boolean canSpawn;
++            boolean canSpawn = false; // Canvas - mutable
+             int maxSpawns = Integer.MAX_VALUE;
+             if (level.paperConfig().entities.spawning.perPlayerMobSpawns) {
+                 // Copied from getFilteredSpawningCategories
+@@ -173,19 +_,34 @@
                      level.moonrise$getNearbyPlayers().getPlayers(chunk.getPos(), ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.TICK_VIEW_DISTANCE);
                  if (inRange != null) {
                      final net.minecraft.server.level.ServerPlayer[] backingSet = inRange.getRawDataUnchecked();
 -                    for (int k = 0, len = inRange.size(); k < len; k++) {
 -                        minDiff = Math.min(limit - level.getChunkSource().chunkMap.getMobCountNear(backingSet[k], mobCategory), minDiff);
 +                    for (int k = 0, backingSetLength = backingSet.length; k < backingSetLength; k++) { // Canvas - use length instead of size
-+                        // Canvas start - caution ref lists
-+                        ServerPlayer player = backingSet[k];
-+                        if (player == null) continue;
-+                        minDiff = Math.min(limit - level.getChunkSource().chunkMap.getMobCountNear(player, mobCategory), minDiff);
++                        // Canvas start - redo per player spawn limits
++                        ServerPlayer serverPlayer = backingSet[k];
++                        if (serverPlayer == null) continue;
++                        int currentLocal = level.chunkSource.chunkMap.getMobCountNear(serverPlayer, mobCategory);
++                        int maxAbsolute = level.getWorld().getSpawnLimitUnsafe(org.bukkit.craftbukkit.util.CraftSpawnCategory.toBukkit(mobCategory));
++                        if (currentLocal < maxAbsolute) {
++                            // local is less than max, we can spawn more
++                            canSpawn = true;
++                            maxSpawns = maxAbsolute - currentLocal; // max is greater than local, so must be 1 or more, cannot be 0 or negative
++                            break; // we can spawn, don't bother looking at the rest
++                        }
 +                        // Canvas end
                      }
                  }
  
+-                maxSpawns = (minDiff == Integer.MAX_VALUE) ? 0 : minDiff;
+-                canSpawn = maxSpawns > 0;
++                // Canvas - redo per player spawn limits
+             } else {
+                 canSpawn = spawnState.canSpawnForCategoryLocal(mobCategory, chunk.getPos());
+             }
+             if (canSpawn) {
++                // Canvas start - async mob spawning
++                final int max = maxSpawns;
++                level.server.mobSpawnExecutor.submit(() -> {
+                 spawnCategoryForChunk(mobCategory, level, chunk, spawnState::canSpawn, spawnState::afterSpawn,
+-                    maxSpawns, level.paperConfig().entities.spawning.perPlayerMobSpawns ? level.getChunkSource().chunkMap::updatePlayerMobTypeMap : null);
++                    max, level.paperConfig().entities.spawning.perPlayerMobSpawns ? level.getChunkSource().chunkMap::updatePlayerMobTypeMap : null);
++                });
++                // Canvas end
+                 // Paper end - Optional per player mob spawns
+             }
+         }

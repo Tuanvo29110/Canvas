@@ -103,7 +103,7 @@
          final TrackedPlayer[] players = this.players.get(player);
          if (players == null) {
              throw new IllegalStateException("Don't have player " + player);
-@@ -121,7 +_,7 @@
+@@ -121,13 +_,13 @@
          players[NearbyMapType.GENERAL.ordinal()].update(chunk.x, chunk.z, GENERAL_AREA_VIEW_DISTANCE);
          players[NearbyMapType.GENERAL_SMALL.ordinal()].update(chunk.x, chunk.z, GENERAL_SMALL_VIEW_DISTANCE);
          players[NearbyMapType.GENERAL_REALLY_SMALL.ordinal()].update(chunk.x, chunk.z, GENERAL_REALLY_SMALL_VIEW_DISTANCE);
@@ -112,6 +112,22 @@
          players[NearbyMapType.VIEW_DISTANCE.ordinal()].update(chunk.x, chunk.z, PlatformHooks.get().getViewDistance(player));
          players[NearbyMapType.SPAWN_RANGE.ordinal()].update(chunk.x, chunk.z, ChunkTickConstants.PLAYER_SPAWN_TRACK_RANGE); // Moonrise - chunk tick iteration
      }
+ 
+     public TrackedChunk getChunk(final ChunkPos pos) {
+-        return this.byChunk.get(CoordinateUtils.getChunkKey(pos));
++        return this.byChunk.get(pos.longKey); // Canvas - cache chunk key
+     }
+ 
+     public TrackedChunk getChunk(final BlockPos pos) {
+@@ -143,7 +_,7 @@
+     }
+ 
+     public ReferenceList<ServerPlayer> getPlayers(final ChunkPos pos, final NearbyMapType type) {
+-        return this.directByChunk[type.ordinal()].get(CoordinateUtils.getChunkKey(pos));
++        return this.directByChunk[type.ordinal()].get(pos.longKey); // Canvas - cache chunk key
+     }
+ 
+     public ReferenceList<ServerPlayer> getPlayersByChunk(final int chunkX, final int chunkZ, final NearbyMapType type) {
 @@ -220,7 +_,7 @@
          }
      }

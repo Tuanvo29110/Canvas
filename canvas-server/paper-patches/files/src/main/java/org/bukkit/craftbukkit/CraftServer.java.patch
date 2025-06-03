@@ -60,6 +60,15 @@
  
      @Override
      public ResourcePack getServerResourcePack() {
+@@ -976,7 +_,7 @@
+ 
+     @Override
+     public List<World> getWorlds() {
+-        return new ArrayList<World>(this.worlds.values());
++        return new it.unimi.dsi.fastutil.objects.ObjectArrayList<World>(this.worlds.values()); // Canvas - faster list creation
+     }
+ 
+     @Override
 @@ -1053,7 +_,7 @@
              throw new IllegalStateException(org.bukkit.command.defaults.ReloadCommand.RELOADING_DISABLED_MESSAGE);
          }

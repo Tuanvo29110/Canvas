@@ -1,5 +1,26 @@
 --- a/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
 +++ b/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
+@@ -43,6 +_,12 @@
+     private static final long RETIRED_TICK_COUNT = -1L;
+     private final Object stateLock = new Object();
+     private final Long2ObjectOpenHashMap<List<ScheduledTask>> oneTimeDelayed = new Long2ObjectOpenHashMap<>();
++    // Canvas start - optimize entity scheduler
++    private int length = 0;
++    public boolean hasTasks() {
++        return this.length > 0;
++    }
++    // Canvas end
+ 
+     private final ArrayDeque<ScheduledTask> currentlyExecuting = new ArrayDeque<>();
+ 
+@@ -127,6 +_,7 @@
+             this.oneTimeDelayed.computeIfAbsent(this.tickCount + Math.max(1L, delay), (final long keyInMap) -> {
+                 return new ArrayList<>();
+             }).add(task);
++            this.length += 1;
+         }
+ 
+         return true;
 @@ -144,7 +_,7 @@
          final List<ScheduledTask> toRun;
          synchronized (this.stateLock) {

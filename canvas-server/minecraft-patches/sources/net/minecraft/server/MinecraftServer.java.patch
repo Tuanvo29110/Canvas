@@ -339,7 +339,7 @@
          // Purpur start - UPnP Port Forwarding
          if (upnp) {
              if (dev.omega24.upnp4j.UPnP4J.close(this.getPort(), dev.omega24.upnp4j.util.Protocol.TCP)) {
-@@ -1076,12 +_,16 @@
+@@ -1076,12 +_,22 @@
          }
          // Paper end - rewrite chunk system
          // Paper start - Improved watchdog support - move final shutdown items here
@@ -351,6 +351,12 @@
              net.minecrell.terminalconsole.TerminalConsoleAppender.close(); // Paper - Use TerminalConsoleAppender
          } catch (final Exception ignored) {
          }
++        // Canvas start - Async playerdata saving
++        io.canvasmc.canvas.server.AsyncPlayerDataSaving.IO_POOL.shutdown();
++        try {
++            io.canvasmc.canvas.server.AsyncPlayerDataSaving.IO_POOL.awaitTermination(30, java.util.concurrent.TimeUnit.SECONDS);
++        } catch (java.lang.InterruptedException ignored) {}
++        // Canvas end - Async playerdata saving
          io.papermc.paper.log.CustomLogManager.forceReset(); // Paper - Reset loggers after shutdown
 +        LOGGER.info("Exiting server"); // Canvas - better shutdown logging
          this.onServerExit();

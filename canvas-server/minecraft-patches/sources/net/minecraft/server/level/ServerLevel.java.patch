@@ -252,6 +252,15 @@
  
      @Override
      public final ca.spottedleaf.moonrise.common.list.ReferenceList<LevelChunk> moonrise$getPlayerTickingChunks() {
+@@ -505,7 +_,7 @@
+     @Override
+     public final void moonrise$markChunkForPlayerTicking(final LevelChunk chunk) {
+         final ChunkPos pos = chunk.getPos();
+-        if (!this.playerTickingRequests.containsKey(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(pos))) {
++        if (!this.playerTickingRequests.containsKey(pos.longKey)) { // Canvas - cache chunk key
+             return;
+         }
+ 
 @@ -523,7 +_,7 @@
  
          final long chunkKey = ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkX, chunkZ);
@@ -302,7 +311,7 @@
      }
  
      // Paper start
-@@ -723,10 +_,138 @@
+@@ -723,10 +_,147 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -374,13 +383,22 @@
 +
 +    private int sendAllPlayerInfoIn;
 +
-+    public void tickPlayerList() {
++    public void tickPlayerList(ServerRegions.WorldTickData tickData) { // Canvas - Threaded Regions
 +        if (++this.sendAllPlayerInfoIn > 600) {
-+            for (int i = 0; i < this.players.size(); ++i) {
-+                final ServerPlayer target = this.players.get(i);
++            List<ServerPlayer> players = tickData.getLocalPlayers(); // Canvas - Threaded Regions
++            for (int i = 0; i < players.size(); ++i) { // Canvas - Threaded Regions
++                final ServerPlayer targetPlayer = players.get(i); // Canvas - Threaded Regions
++                // Canvas start - optimize player list for sending player info
++                var target = targetPlayer.getBukkitEntity();
++                final List<ServerPlayer> list = new java.util.ArrayList<>(players.size());
++                for (ServerPlayer player : players) {
++                    if (target.canSeePlayer(player.getUUID())) {
++                        list.add(player);
++                    }
++                }
 +
-+                target.connection.send(new ClientboundPlayerInfoUpdatePacket(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY), this.getServer().getPlayerList().
-+                    players.stream().filter(input -> target.getBukkitEntity().canSee(input.getBukkitEntity())).collect(Collectors.toList())));
++                targetPlayer.connection.send(new ClientboundPlayerInfoUpdatePacket(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY), list));
++                // Canvas end
 +            }
 +            this.sendAllPlayerInfoIn = 0;
 +        }
@@ -395,7 +413,7 @@
 +        }
 +        this.syncTimeToPlayers();
 +        for (final Entity entity : tickData.getLocalEntitiesCopy()) {
-+            if (entity == null) continue;
++            if (entity == null || !entity.getBukkitEntity().taskScheduler.hasTasks()) continue; // Canvas - optimize entity scheduler
 +            entity.tickScheduler();
 +        }
 +        chunkSource.tick(() -> true, false);
@@ -526,19 +544,35 @@
          if (flag || this.emptyTime++ < 300) {
              profilerFiller.push("entities");
              if (this.dragonFight != null && runsNormally) {
-@@ -806,9 +_,9 @@
+@@ -806,12 +_,25 @@
              }
  
              io.papermc.paper.entity.activation.ActivationRange.activateEntities(this); // Paper - EAR
 -            this.entityTickList
 -                .forEach(
++            // Canvas start - cache eligible players for despawn checks
++            List<ServerPlayer> localPlayers = tickData.getLocalPlayers();
++            List<ServerPlayer> serverPlayers = new ArrayList<>(localPlayers.size());
++            for (int i = 0; i < localPlayers.size(); i++) {
++                ServerPlayer player = localPlayers.get(i);
++                if (net.minecraft.world.entity.EntitySelector.PLAYER_AFFECTS_SPAWNING.test(player)) {
++                    serverPlayers.add(player);
++                }
++            }
++
++            tickData.eligibleDespawnCheckingPlayerCache = serverPlayers.toArray(new Player[0]);
++            // Canvas end
 +            tickData.forEachTickingEntity( // Canvas - Threaded Regions
                      entity -> {
 +                        entity.activatedPriorityReset = false; // Canvas - DAB
                          if (!entity.isRemoved()) {
                              if (!tickRateManager.isEntityFrozen(entity)) {
                                  profilerFiller.push("checkDespawn");
-@@ -833,30 +_,58 @@
++                                if (entity instanceof Mob mob) mob.temporaryRegionizedData = tickData; // Canvas - check eligible players for despawn checks
+                                 entity.checkDespawn();
+                                 profilerFiller.pop();
+                                 if (true) { // Paper - rewrite chunk system
+@@ -833,30 +_,59 @@
                      }
                  );
              profilerFiller.pop();
@@ -547,6 +581,7 @@
          }
  
 +    // Canvas start - Threaded Regions
++        tickPlayerList(tickData); // Canvas - Threaded Regions
 +    }
 +    public void worldtick3(ProfilerFiller profilerFiller, ServerRegions.WorldTickData tickData) {
 +    // Canvas end
@@ -559,7 +594,7 @@
 +        for (final Runnable runnable : copyOf) {
 +            runnable.run();
 +        }
-+        tickPlayerList();
++        // tickPlayerList(); // Canvas - Threaded Regions
 +        for (ServerPlayer player : this.getLocalPlayers()) { // Canvas - Threaded Regions
 +            player.connection.chunkSender.sendNextChunks(player);
 +            player.connection.resumeFlushing();
@@ -1140,7 +1175,7 @@
          // Paper start - rewrite chunk system
 -        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkPos));
 -        return chunkHolder != null && chunkHolder.isEntityTickingReady();
-+        return this.moonrise$getChunkTaskScheduler().chunkHolderManager.entityTickingChunkHolders.contains(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkPos)); // Canvas - faster impl
++        return this.moonrise$getChunkTaskScheduler().chunkHolderManager.entityTickingChunkHolders.contains(chunkPos.longKey); // Canvas - faster impl
          // Paper end - rewrite chunk system
      }
  

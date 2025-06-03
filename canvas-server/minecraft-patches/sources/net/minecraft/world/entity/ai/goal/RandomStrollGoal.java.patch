@@ -17,3 +17,12 @@
          if (this.mob.hasControllingPassenger()) {
              return false;
          } else {
+@@ -49,7 +_,7 @@
+             }
+ 
+             Vec3 position = this.getPosition();
+-            if (position == null) {
++            if (position == null || (!((net.minecraft.server.level.ServerLevel) this.mob.level()).isPositionEntityTicking(net.minecraft.core.BlockPos.containing(position)))) { // Canvas - prevent entities random strolling into non ticking chunks
+                 return false;
+             } else {
+                 this.wantedX = position.x;

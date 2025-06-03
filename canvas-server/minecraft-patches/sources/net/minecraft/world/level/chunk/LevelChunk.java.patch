@@ -297,10 +297,18 @@
                              this.level.addBlockEntityTicker(rebindableTickingBlockEntityWrapper);
                              return rebindableTickingBlockEntityWrapper;
                          } else {
-@@ -908,6 +_,19 @@
+@@ -903,11 +_,26 @@
+         private final T blockEntity;
+         private final BlockEntityTicker<T> ticker;
+         private boolean loggedInvalidBlockState;
++        private final BlockPos cachedPos; // Canvas - cache position
+ 
+         BoundTickingBlockEntity(final T blockEntity, final BlockEntityTicker<T> ticker) {
              this.blockEntity = blockEntity;
              this.ticker = ticker;
-         }
+-        }
++            this.cachedPos = this.blockEntity.getBlockPos(); // Canvas - cache position
++        }
 +        // Canvas start
 +
 +        private <T extends BlockEntity> void lagCompensation(Runnable original) {
@@ -330,6 +338,15 @@
                              this.loggedInvalidBlockState = false;
                          // Paper start - Remove the Block Entity if it's invalid
                          } else {
+@@ -951,7 +_,7 @@
+ 
+         @Override
+         public BlockPos getPos() {
+-            return this.blockEntity.getBlockPos();
++            return this.cachedPos; // Canvas - cache position
+         }
+ 
+         @Override
 @@ -963,6 +_,13 @@
          public String toString() {
              return "Level ticker for " + this.getType() + "@" + this.getPos();
@@ -344,7 +361,7 @@
      }
  
      public static enum EntityCreationType {
-@@ -976,14 +_,14 @@
+@@ -976,15 +_,18 @@
          void run(LevelChunk chunk);
      }
  
@@ -352,16 +369,29 @@
 -        private TickingBlockEntity ticker;
 +    public static class RebindableTickingBlockEntityWrapper implements TickingBlockEntity { // Canvas - package-private -> public
 +        public TickingBlockEntity ticker; // Canvas - private -> public
++        private BlockPos cachedPos; // Canvas - cache position
  
          RebindableTickingBlockEntityWrapper(TickingBlockEntity ticker) {
              this.ticker = ticker;
++            this.cachedPos = this.ticker.getPos(); // Canvas - cache position
          }
  
 -        void rebind(TickingBlockEntity ticker) {
 +        public void rebind(TickingBlockEntity ticker) { // Canvas - package-private -> public
              this.ticker = ticker;
++            this.cachedPos = this.ticker.getPos(); // Canvas - cache position
          }
  
+         @Override
+@@ -999,7 +_,7 @@
+ 
+         @Override
+         public BlockPos getPos() {
+-            return this.ticker.getPos();
++            return this.cachedPos; // Canvas - cache position
+         }
+ 
+         @Override
 @@ -1011,6 +_,13 @@
          public String toString() {
              return this.ticker + " <wrapped>";

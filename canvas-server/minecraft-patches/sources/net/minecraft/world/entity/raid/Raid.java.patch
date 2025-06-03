@@ -1,5 +1,14 @@
 --- a/net/minecraft/world/entity/raid/Raid.java
 +++ b/net/minecraft/world/entity/raid/Raid.java
+@@ -121,7 +_,7 @@
+     public final ServerBossEvent raidEvent = new ServerBossEvent(RAID_NAME_COMPONENT, BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.NOTCHED_10);
+     private int postRaidTicks;
+     private int raidCooldownTicks;
+-    private final RandomSource random = RandomSource.create();
++    // private final RandomSource random = RandomSource.create(); // Canvas - reduce RandomSource instances
+     public final int numGroups;
+     private Raid.RaidStatus status;
+     private int celebrationTicks;
 @@ -276,8 +_,16 @@
          this.raidEvent.removeAllPlayers();
          this.status = Raid.RaidStatus.STOPPED;
@@ -17,15 +26,27 @@
          if (!this.isStopped()) {
              if (this.status == Raid.RaidStatus.ONGOING) {
                  boolean flag = this.active;
-@@ -503,7 +_,7 @@
+@@ -501,9 +_,9 @@
+         float f = 13.0F;
+         int i = 64;
          Collection<ServerPlayer> players = this.raidEvent.getPlayers();
-         long randomLong = this.random.nextLong();
+-        long randomLong = this.random.nextLong();
++        long randomLong = level.random.nextLong(); // Canvas - reduce RandomSource instances
  
 -        for (ServerPlayer serverPlayer : level.players()) {
 +        for (ServerPlayer serverPlayer : level.getLocalPlayers()) { // Canvas - Threaded Regions
              Vec3 vec3 = serverPlayer.position();
              Vec3 vec31 = Vec3.atCenterOf(pos);
              double squareRoot = Math.sqrt((vec31.x - vec3.x) * (vec31.x - vec3.x) + (vec31.z - vec3.z) * (vec31.z - vec3.z));
+@@ -525,7 +_,7 @@
+ 
+         for (Raid.RaiderType raiderType : Raid.RaiderType.VALUES) {
+             int i1 = this.getDefaultNumSpawns(raiderType, i, shouldSpawnBonusGroup)
+-                + this.getPotentialBonusSpawns(raiderType, this.random, i, currentDifficultyAt, shouldSpawnBonusGroup);
++                + this.getPotentialBonusSpawns(raiderType, level.random, i, currentDifficultyAt, shouldSpawnBonusGroup); // Canvas - reduce RandomSource instances
+             int i2 = 0;
+ 
+             for (int i3 = 0; i3 < i1; i3++) {
 @@ -588,7 +_,7 @@
      }
  

@@ -382,3 +382,21 @@
  
      public float getThunderLevel(float partialTick) {
          return Mth.lerp(partialTick, this.oThunderLevel, this.thunderLevel) * this.getRainLevel(partialTick);
+@@ -2183,4 +_,17 @@
+         return getWorld().getEnvironment() == org.bukkit.World.Environment.THE_END;
+     }
+     // Purpur end - Add allow water in end world option
++    // Canvas start - lithium hoppers
++    public BlockEntity lithium$getLoadedExistingBlockEntity(BlockPos pos) {
++        if (!this.isOutsideBuildHeight(pos)) {
++            if (true) { // Canvas - we aren't on client side, but we are also multithreaded... there is no "game thread", this is true.
++                ChunkAccess chunk = this.getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()), ChunkStatus.FULL, false);
++                if (chunk != null) {
++                    return chunk.getBlockEntity(pos);
++                }
++            }
++        }
++        return null;
++    }
++    // Canvas end
+ }

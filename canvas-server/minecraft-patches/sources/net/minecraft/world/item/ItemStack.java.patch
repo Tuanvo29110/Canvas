@@ -135,6 +135,20 @@
              // CraftBukkit end
  
              return interactionResult;
+@@ -918,11 +_,11 @@
+     }
+ 
+     public static boolean isSameItem(ItemStack stack, ItemStack other) {
+-        return stack.is(other.getItem());
++        return stack == other || stack.is(other.getItem()); // Canvas - optimize identical item checks
+     }
+ 
+     public static boolean isSameItemSameComponents(ItemStack stack, ItemStack other) {
+-        return stack.is(other.getItem()) && (stack.isEmpty() && other.isEmpty() || Objects.equals(stack.components, other.components));
++        return stack == other || stack.is(other.getItem()) && (stack.isEmpty() && other.isEmpty() || Objects.equals(stack.components, other.components)); // Canvas - optimize identical item checks
+     }
+ 
+     public static MapCodec<ItemStack> lenientOptionalFieldOf(String fieldName) {
 @@ -1402,6 +_,21 @@
      }
  

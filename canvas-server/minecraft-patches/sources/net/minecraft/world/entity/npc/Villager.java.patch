@@ -1,5 +1,13 @@
 --- a/net/minecraft/world/entity/npc/Villager.java
 +++ b/net/minecraft/world/entity/npc/Villager.java
+@@ -7,6 +_,7 @@
+ import com.mojang.datafixers.util.Pair;
+ import com.mojang.logging.LogUtils;
+ import com.mojang.serialization.Dynamic;
++import io.canvasmc.canvas.Config;
+ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+ import java.util.List;
+ import java.util.Map;
 @@ -181,6 +_,8 @@
      private boolean isLobotomized = false; public boolean isLobotomized() { return this.isLobotomized; } // Purpur - Lobotomize stuck villagers
      private int notLobotomizedCount = 0; // Purpur - Lobotomize stuck villagers
@@ -9,6 +17,15 @@
      public Villager(EntityType<? extends Villager> entityType, Level level) {
          this(entityType, level, VillagerType.PLAINS);
      }
+@@ -374,7 +_,7 @@
+         if (this.getUnhappyCounter() > 0) {
+             this.setUnhappyCounter(this.getUnhappyCounter() - 1);
+         }
+-        if (this.isEffectiveAi()) {
++        if (this.isEffectiveAi() && (!Config.INSTANCE.entities.skipAiForNonAwareMob || this.aware)) { // Canvas - skip AI during inactive ticks for non-aware mobs
+             if (this.level().spigotConfig.tickInactiveVillagers) {
+                 this.customServerAiStep(this.level().getMinecraftWorld());
+             } else {
 @@ -386,6 +_,7 @@
      }
      // Paper end - EAR 2

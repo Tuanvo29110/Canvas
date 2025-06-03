@@ -28,6 +28,18 @@
  import net.minecraft.ChatFormatting;
  import net.minecraft.FileUtil;
  import net.minecraft.commands.CommandSourceStack;
+@@ -234,6 +_,11 @@
+         org.spigotmc.event.player.PlayerSpawnLocationEvent ev = new org.spigotmc.event.player.PlayerSpawnLocationEvent(spawnPlayer, spawnPlayer.getLocation());
+         this.cserver.getPluginManager().callEvent(ev);
+ 
++        // Canvas start - don't place player in world if kicked before being spawned in
++        if (!connection.isConnected() || player.quitReason != null) {
++            return;
++        }
++        // Canvas end
+         org.bukkit.Location loc = ev.getSpawnLocation();
+         serverLevel = ((org.bukkit.craftbukkit.CraftWorld) loc.getWorld()).getHandle();
+ 
 @@ -275,7 +_,7 @@
                  !_boolean,
                  _boolean2,
