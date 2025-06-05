@@ -478,57 +478,7 @@
  
      public void absSnapTo(double x, double y, double z, float yRot, float xRot) {
          this.absSnapTo(x, y, z);
-@@ -2152,37 +_,40 @@
-         return new Vec3(this.xOld, this.yOld, this.zOld);
-     }
- 
--    public float distanceTo(Entity entity) {
--        float f = (float)(this.getX() - entity.getX());
--        float f1 = (float)(this.getY() - entity.getY());
--        float f2 = (float)(this.getZ() - entity.getZ());
--        return Mth.sqrt(f * f + f1 * f1 + f2 * f2);
--    }
--
--    public double distanceToSqr(double x, double y, double z) {
--        double d = this.getX() - x;
--        double d1 = this.getY() - y;
--        double d2 = this.getZ() - z;
--        return d * d + d1 * d1 + d2 * d2;
-+    // Canvas start - optimize entity distanceTo
-+    public final float distanceTo(Entity entity) {
-+        final double dx = this.getX() - entity.getX();
-+        final double dy = this.getY() - entity.getY();
-+        final double dz = this.getZ() - entity.getZ();
-+        return (float) (dx * dx + dy * dy + dz * dz);
-+    }
-+
-+    public final double distanceToSqr(final double x, final double y, final double z) {
-+        final double dx = this.getX() - x;
-+        final double dy = this.getY() - y;
-+        final double dz = this.getZ() - z;
-+        return dx * dx + dy * dy + dz * dz;
-+    }
-+
-+    public final double distanceToSqr(Vec3 vector) {
-+        final double dx = this.getX() - vector.x;
-+        final double dy = this.getY() - vector.y;
-+        final double dz = this.getZ() - vector.z;
-+        return dx * dx + dy * dy + dz * dz;
-     }
- 
-     public double distanceToSqr(Entity entity) {
-         return this.distanceToSqr(entity.position());
-     }
--
--    public double distanceToSqr(Vec3 vec) {
--        double d = this.getX() - vec.x;
--        double d1 = this.getY() - vec.y;
--        double d2 = this.getZ() - vec.z;
--        return d * d + d1 * d1 + d2 * d2;
--    }
-+    // Canvas end
- 
-     public void playerTouch(Player player) {
+@@ -2181,8 +_,9 @@
      }
  
      public void push(Entity entity) {
