@@ -578,7 +578,7 @@
          List<Entity> passengers = this.getPassengers();
          List<Entity> list = new ArrayList<>(passengers.size());
          this.ejectPassengers();
-@@ -3926,10 +_,125 @@
+@@ -3926,10 +_,128 @@
          }
      }
  
@@ -589,7 +589,6 @@
 -        this.setPosRaw(positionMoveRotation1.position().x, positionMoveRotation1.position().y, positionMoveRotation1.position().z);
 +        // Canvas start - Threaded Regions
 +        final ServerLevel world = (ServerLevel) this.level;
-+        ServerLevel oldLevel = world.level();
 +        ChunkPos position = new ChunkPos(new BlockPos(
 +            (int) Math.round(positionMovementRotation.position().x), (int) Math.round(positionMovementRotation.position().y), (int) Math.round(positionMovementRotation.position().z)));
 +
@@ -670,21 +669,30 @@
 +                            }
 +                        });
 +                    }
-+                    // now we are completely removed from the world, there is quite literally NOTHING that ties us to anywhere, we can now add back.
-+                    // this is non-null, we syncloaded earlier.
-+                    regionData.addEntity(this);
-+                    if (trackerEntities.get()) {
-+                        regionData.trackerEntities.add(this);
-+                    }
-+                    if (navigatingMobs.get()) {
-+                        regionData.navigatingMobs.add((Mob) this);
-+                    }
-+                    if (entityTickList.get()) {
-+                        regionData.entityTickList.add(this);
-+                    }
-+                    if (loadedEntities.get()) {
-+                        regionData.loadedEntities.add(this);
-+                    }
++                    world.getServer().threadedServer().taskQueue.queueTickTaskQueue(world, position.x, position.z, () -> {
++                        // now we are completely removed from the world, there is quite literally NOTHING that ties us to anywhere, we can now add back.
++                        // we schedule this to the region we are adding to, because we need to make sure that we don't syncload anything
++                        // off the owning thread, and if we do that is very bad, so we want to be efficient with this
++                        regionData.addEntity(this);
++                        if (trackerEntities.get()) {
++                            regionData.trackerEntities.add(this);
++                        }
++                        if (navigatingMobs.get()) {
++                            regionData.navigatingMobs.add((Mob) this);
++                        }
++                        if (entityTickList.get()) {
++                            regionData.entityTickList.add(this);
++                        }
++                        if (loadedEntities.get()) {
++                            regionData.loadedEntities.add(this);
++                        }
++
++                        // now we can remove our ticket
++                        if (!dontPlaceTeleportTicket) {
++                            if (Config.INSTANCE.debug.logTeleportTicketDebug) LOGGER.info("Finished teleporting entity, removing teleport ticket");
++                            world.getChunkSource().updateRegionTicket(position, false, TicketType.TELEPORT);
++                        }
++                    }, Priority.BLOCKING);
 +                });
 +                if (this.getServer().isRegionized()) {
 +                    MinecraftServer.getThreadedServer().taskQueue.queueTickTaskQueue(world.level(), this.chunkPosition.x, this.chunkPosition.z, run, Priority.BLOCKING);
@@ -693,11 +701,6 @@
 +        } catch (Throwable thrown) {
 +            if (!dontPlaceTeleportTicket) {
 +                if (Config.INSTANCE.debug.logTeleportTicketDebug) LOGGER.error("Unable to teleport entity, removing teleport ticket");
-+                world.getChunkSource().updateRegionTicket(position, false, TicketType.TELEPORT);
-+            }
-+        } finally {
-+            if (!dontPlaceTeleportTicket) {
-+                if (Config.INSTANCE.debug.logTeleportTicketDebug) LOGGER.info("Finished teleporting entity, removing teleport ticket");
 +                world.getChunkSource().updateRegionTicket(position, false, TicketType.TELEPORT);
 +            }
 +        }

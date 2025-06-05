@@ -159,8 +159,20 @@ public class TickScheduler implements MultithreadedTickScheduler {
 
     // Note: only a region can call this
     public static void setTickingData(ServerRegions.WorldTickData data) {
+        setTickingData(data, true);
+    }
+
+    public static void setTickingData(ServerRegions.WorldTickData data, boolean lockNewData) {
         if (!(Thread.currentThread() instanceof TickRunner runner)) {
             throw new RuntimeException("Unable to set ticking data of a non thread-runner");
+        }
+        if (runner.threadLocalTickData != null) {
+            // we had one previously, release the old lock
+            runner.threadLocalTickData.tickLock.unlock();
+        }
+        if (lockNewData && data != null) {
+            // we are setting to new data, lock
+            data.tickLock.lock();
         }
         runner.threadLocalTickData = data;
     }

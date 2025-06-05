@@ -25,7 +25,7 @@ public class EntityStatusLock extends ReentrantLock {
     }
 
     public void acquire() {
-        if (ServerChunkCache.MainThreadExecutor.entityOverride.contains(Thread.currentThread())) return; // pass
+        if (ServerChunkCache.MainThreadExecutor.ENTITY_OVERRIDE.contains(Thread.currentThread())) return; // pass
         int tries = 0;
         while (!this.tryLock()) {
             // attempt 40 times before we try and exit the lock. this is equivalent to at least 40 milliseconds
@@ -40,7 +40,7 @@ public class EntityStatusLock extends ReentrantLock {
     }
 
     public void release() {
-        if (ServerChunkCache.MainThreadExecutor.entityOverride.contains(Thread.currentThread())) return; // pass
+        if (ServerChunkCache.MainThreadExecutor.ENTITY_OVERRIDE.contains(Thread.currentThread())) return; // pass
         try {
             this.unlock();
         } catch (IllegalMonitorStateException ignored) {}

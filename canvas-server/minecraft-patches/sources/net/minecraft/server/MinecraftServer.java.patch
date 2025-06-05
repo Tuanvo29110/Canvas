@@ -265,7 +265,7 @@
      private boolean hasLoggedStop = false; // Paper - Debugging
      private final Object stopLock = new Object();
      public final boolean hasStopped() {
-@@ -982,20 +_,70 @@
+@@ -982,20 +_,69 @@
  
      public void stopServer() {
          // CraftBukkit start - prevent double stopping on multiple threads
@@ -280,21 +280,6 @@
              this.hasStopped = true;
          }
 +        // Canvas start - Threaded Dimensions
-+        ThreadedServer.LOGGER.info("Halting tick-loops");
-+        ThreadedServer.LOGGER.info("Awaiting scheduler termination for 60s...");
-+        long startNanos = Util.getNanos();
-+        ThreadedServer threadedServer = MinecraftServer.getThreadedServer();
-+        // cleanup tick-loops, ensure all are terminated.
-+        threadedServer.markPrepareHalt(); // notify to threads we are halting
-+        if (TickScheduler.getScheduler().halt(true, TimeUnit.SECONDS.toNanos(60L))) {
-+            ThreadedServer.LOGGER.info("Scheduler halted");
-+        } else {
-+            ThreadedServer.LOGGER.warn("Scheduler did not terminate within 60s, proceeding with shutdown anyways");
-+            TickScheduler.getScheduler().dumpAliveThreadTraces("Did not shut down in time");
-+        }
-+        long nanoTickTime = Util.getNanos() - startNanos;
-+        ThreadedServer.LOGGER.info("Successfully halted all tick-loops in {}ms", (nanoTickTime / 1_000_000));
-+
 +        LOGGER.info("Respawning dead players...");
 +        for (ServerPlayer player : this.playerList.players) {
 +            if (player.isDeadOrDying() || (player.isRemoved() && player.getRemovalReason() == net.minecraft.world.entity.Entity.RemovalReason.KILLED)) {
@@ -323,6 +308,20 @@
 +            }
 +        }
 +        LOGGER.info("Closed player inventories");
++        ThreadedServer.LOGGER.info("Halting tick-loops");
++        ThreadedServer.LOGGER.info("Awaiting scheduler termination for 60s...");
++        long startNanos = Util.getNanos();
++        ThreadedServer threadedServer = MinecraftServer.getThreadedServer();
++        // cleanup tick-loops, ensure all are terminated.
++        threadedServer.markPrepareHalt(); // notify to threads we are halting
++        if (TickScheduler.getScheduler().halt(true, TimeUnit.SECONDS.toNanos(60L))) {
++            ThreadedServer.LOGGER.info("Scheduler halted");
++        } else {
++            ThreadedServer.LOGGER.warn("Scheduler did not terminate within 60s, proceeding with shutdown anyways");
++            TickScheduler.getScheduler().dumpAliveThreadTraces("Did not shut down in time");
++        }
++        long nanoTickTime = Util.getNanos() - startNanos;
++        ThreadedServer.LOGGER.info("Successfully halted all tick-loops in {}ms", (nanoTickTime / 1_000_000));
 +        // Canvas end
          if (!hasLoggedStop && isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
          shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support

@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
@@ -430,6 +431,7 @@ public class ServerRegions {
         @Nullable
         public final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region;
         public final ServerLevel world;
+        public final ReentrantLock tickLock = new ReentrantLock();
         public final RegionizedTaskQueue.RegionTaskQueueData taskQueueData;
         public RegionizedTaskQueue.RegionTaskQueueData getTaskQueueData() {
             return this.taskQueueData;
@@ -934,6 +936,11 @@ public class ServerRegions {
         WorldTickData possible = pullRegionData();
         if (possible != null && possible.world == level && possible.region != null) return possible;
         return level.levelTickData;
+    }
+
+    // Note: this returns null if we are not on a ticker or not ticking/running tick tasks
+    public static @Nullable WorldTickData getTickDataOrNull() {
+        return pullRegionData();
     }
 
     private static @Nullable WorldTickData pullRegionData() {

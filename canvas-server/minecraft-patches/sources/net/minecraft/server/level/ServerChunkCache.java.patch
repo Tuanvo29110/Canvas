@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
-@@ -1,11 +_,15 @@
+@@ -1,15 +_,20 @@
  package net.minecraft.server.level;
  
 +import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -8,14 +8,19 @@
  import com.mojang.datafixers.DataFixer;
  import com.mojang.logging.LogUtils;
 +import io.canvasmc.canvas.region.ServerRegions;
++import io.canvasmc.canvas.scheduler.TickScheduler;
  import it.unimi.dsi.fastutil.longs.LongSet;
  import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 +import io.canvasmc.canvas.Config;
-+import io.netty.util.internal.ConcurrentSet;
  import java.io.IOException;
  import java.nio.file.Path;
  import java.util.Arrays;
+ import java.util.List;
++import java.util.Objects;
+ import java.util.Set;
+ import java.util.concurrent.CompletableFuture;
+ import java.util.concurrent.CompletionStage;
 @@ -57,9 +_,9 @@
  
  public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache { // Paper - rewrite chunk system
@@ -48,6 +53,24 @@
 +    public int ticksSinceLastPurgeStaleTicketsCall = 0; // Canvas
      // Paper end
      // Paper start - rewrite chunk system
+ 
+@@ -101,6 +_,7 @@
+         return this.fullChunks.get(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkX, chunkZ));
+     }
+ 
++    private static final ThreadLocal<ChunkPos> SYNCLOADING = new ThreadLocal<>(); // Canvas - Threaded Regions
+     private ChunkAccess syncLoad(final int chunkX, final int chunkZ, final ChunkStatus toStatus) {
+         final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler chunkTaskScheduler = ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler();
+         final CompletableFuture<ChunkAccess> completable = new CompletableFuture<>();
+@@ -118,7 +_,9 @@
+ 
+         if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.level, chunkX, chunkZ)) {
+             ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler.pushChunkWait(this.level, chunkX, chunkZ);
++            SYNCLOADING.set(new ChunkPos(chunkX, chunkZ)); // Canvas - Threaded Regions
+             this.mainThreadProcessor.managedBlock(completable::isDone);
++            SYNCLOADING.remove(); // Canvas - Threaded Regions
+             ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler.popChunkWait();
+         }
  
 @@ -138,6 +_,14 @@
          final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder currentChunk = chunkHolderManager.getChunkHolder(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkX, chunkZ));
@@ -352,7 +375,7 @@
      }
  
      public void deactivateTicketsOnClosing() {
-@@ -778,7 +_,7 @@
+@@ -778,11 +_,12 @@
  
      public void onChunkReadyToSend(ChunkHolder chunkHolder) {
          if (chunkHolder.hasChangesToBroadcast()) {
@@ -361,36 +384,41 @@
          }
      }
  
-@@ -818,16 +_,77 @@
+     public final class MainThreadExecutor extends BlockableEventLoop<Runnable> {
++        public static Set<Thread> ENTITY_OVERRIDE = new io.canvasmc.canvas.util.ConcurrentSet<>(); // Canvas - safe entity locking - we need polling tasks to bypass this
+         MainThreadExecutor(final Level level) {
+             super("Chunk source main thread executor for " + level.dimension().location());
+         }
+@@ -818,16 +_,97 @@
              super.doRunTask(task);
          }
  
-+        // Canvas start
++        // Canvas start - Threaded Dimensions && Regions
 +        @Override
-+        public void execute(final Runnable runnable) {
++        public void execute(final Runnable task) {
 +            ServerLevel level = ServerChunkCache.this.level;
 +            if (level.isTicking()) {
-+                level.pushTask(runnable);
++                level.pushTask(task);
 +            } else {
-+                super.execute(runnable);
++                this.schedule(this.wrapRunnable(task));
 +            }
-+        }
-+
-+        public static Set<Thread> entityOverride = new ConcurrentSet<>();
-+
-+        public int size() {
-+            return this.pendingRunnables.size();
 +        }
 +
          @Override
          public boolean pollTask() {
+-            // Paper start - rewrite chunk system
 +            return pollTask(true);
 +        }
 +
 +        public boolean pollTask(boolean flag) {
-             // Paper start - rewrite chunk system
              final ServerChunkCache serverChunkCache = ServerChunkCache.this;
 -            if (serverChunkCache.runDistanceManagerUpdates()) {
+-                return true;
+-            } else {
+-                return super.pollTask() | ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask();
+-            }
+-            // Paper end - rewrite chunk system
+-        }
 +            final ServerLevel serverLevel = serverChunkCache.level;
 +            Thread current = Thread.currentThread();
 +            if (current == MinecraftServer.getServer().serverThread) {
@@ -403,34 +431,60 @@
 +                // we could cause parallelism issues with plugins requesting chunks that are waiting for load
 +                return false;
 +            }
-+            if (flag && serverChunkCache.runDistanceManagerUpdates()) {
-                 return true;
-             } else {
--                return super.pollTask() | ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask();
-+                try {
-+                    entityOverride.add(current);
-+                    if (serverLevel.server.isRegionized()) {
-+                        // poll our own tasks.
-+                        ServerRegions.WorldTickData thisData = ServerRegions.getTickData(serverLevel);
-+                        if (thisData.region != null) {
-+                            // we are on a region, execute our chunk task.
-+                            // unlike Folia, we still can have tasks be submitted to the
-+                            // main thread executor, so we run 'super' poll aswell.
-+                            final BooleanSupplier poll = () -> super.pollTask() | thisData.getTaskQueueData().executeChunkTask();
-+                            return tryWake(poll);
-+                        }
++            ChunkPos pos = SYNCLOADING.get();
++            ServerRegions.WorldTickData oldData = null;
++            if (pos != null) {
++                // essentially we set the current tick data if possible to the one owning this chunk
++                // and then that allows us to poll tasks for that area inside that tick data
++                // realistically this should work when 2 tick tasks depend on eachother
++                oldData = ServerRegions.getTickDataOrNull();
++                if (oldData != null) {
++                    ServerRegions.WorldTickData newTickData = serverLevel.server.isRegionized() ?
++                        Objects.requireNonNull(serverLevel.regioniser.getRegionAtUnsynchronised(pos.x, pos.z), "region cannot be null").getData().tickData :
++                        serverLevel.levelTickData;
++                    // try lock now, we are ticking.
++                    // we attempt to lock in the case of if 2 tick tasks depending on eachother
++                    // if they are, then we need to clear them up by ticking our own tasks if POSSIBLE
++                    // if we just lock blatantly then we end up with the issue of both threads blocking
++                    // waiting for us to release, and then we never do release so we just deadlock forever
++                    if (Objects.requireNonNull(newTickData, "tick data cannot be null").tickLock.tryLock()) {
++                        TickScheduler.setTickingData(newTickData, false);
 +                    }
-+                    // not regionized OR we are on global
-+                    serverLevel.taskQueueRegionData.drainGlobalChunkTasks();
-+                    final BooleanSupplier poll = () -> ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask() | super.pollTask();
-+                    return tryWake(poll);
-+                } finally {
-+                    entityOverride.remove(current);
 +                }
++            }
++            try {
++                if (flag && serverChunkCache.runDistanceManagerUpdates()) {
++                    return true;
++                } else {
++                    try {
++                        ENTITY_OVERRIDE.add(current);
++                        if (serverLevel.server.isRegionized()) {
++                            // poll our own tasks.
++                            ServerRegions.WorldTickData thisData = ServerRegions.getTickData(serverLevel);
++                            if (thisData.region != null) {
++                                // we are on a region, execute our chunk task.
++                                // unlike Folia, we still can have tasks be submitted to the
++                                // main thread executor, so we run 'super' poll aswell.
++                                final BooleanSupplier poll = () -> super.pollTask() | thisData.getTaskQueueData().executeChunkTask();
++                                return tryWake(poll);
++                            }
++                        }
++                        // not regionized OR we are on global
++                        serverLevel.taskQueueRegionData.drainGlobalChunkTasks();
++                        final BooleanSupplier poll = () -> ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel) serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask() | super.pollTask();
++                        return tryWake(poll);
++                    } finally {
++                        ENTITY_OVERRIDE.remove(current);
++                    }
++                }
++            } finally {
++                if (pos != null && oldData != null) {
++                    // return back to old tick data
++                    TickScheduler.setTickingData(oldData);
++                }
++            }
++        }
 +        // Canvas end
-             }
-             // Paper end - rewrite chunk system
-         }
 +    }
 +
 +    private boolean tryWake(BooleanSupplier whileTrue) {

@@ -27,11 +27,11 @@ public class ThreadedTracker {
         new NamedAgnosticThreadFactory<>("EntityTracking", TrackerThread::new, Thread.NORM_PRIORITY - 2)
     );
     public static ThreadedTracker INSTANCE = new ThreadedTracker(Config.INSTANCE.entities.entityTracking.enableThreadedTracking);
-    private final boolean enableThreading;
+    public final boolean enableThreading;
     public static final AtomicBoolean canceled = new AtomicBoolean(false);
 
     ThreadedTracker(boolean enableThreading) {
-        this.enableThreading = enableThreading;
+        this.enableThreading = enableThreading || Config.INSTANCE.ticking.enableThreadedRegionizing; // if we are regionized, enable threading
     }
 
     public static ThreadPoolExecutor getProcessor() {
@@ -39,7 +39,7 @@ public class ThreadedTracker {
     }
 
     public boolean tick(@NotNull ServerLevel world) {
-        if (this.enableThreading || world.server.isRegionized()) { // we run tracking threaded if regionized.
+        if (this.enableThreading) {
             if (canceled.get()) return true;
             final NearbyPlayers nearbyPlayers = world.moonrise$getNearbyPlayers();
             final Entity[] trackerEntitiesRaw = ServerRegions.getTickData((ServerLevel) world).trackerEntities.getRawDataUnchecked(); // Canvas - Threaded Regions

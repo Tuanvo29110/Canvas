@@ -8,21 +8,12 @@
  import java.util.Queue;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.Executor;
-@@ -25,7 +_,7 @@
-     public static final long BLOCK_TIME_NANOS = 100000L;
-     private final String name;
-     private static final Logger LOGGER = LogUtils.getLogger();
--    private final Queue<R> pendingRunnables = Queues.newConcurrentLinkedQueue();
-+    protected final Queue<R> pendingRunnables = Queues.newConcurrentLinkedQueue(); // Canvas - private -> protected
-     private int blockingCount;
- 
-     protected BlockableEventLoop(String name) {
 @@ -126,7 +_,15 @@
          } else if (this.blockingCount == 0 && !this.shouldRun(runnable)) {
              return false;
          } else {
 -            this.doRunTask(this.pendingRunnables.remove());
-+            // Canvas start - Multithreaded Dimension Ticking
++            // Canvas start - Threaded Dimensions
 +            // This can technically throw a NSE now, so we catch and ignore
 +            try {
 +                R a = this.pendingRunnables.remove();
@@ -34,13 +25,3 @@
              return true;
          }
      }
-@@ -146,8 +_,7 @@
-     }
- 
-     protected void waitForTasks() {
--        Thread.yield();
--        LockSupport.parkNanos("waiting for tasks", 100000L);
-+        // Canvas - no
-     }
- 
-     protected void doRunTask(R task) {

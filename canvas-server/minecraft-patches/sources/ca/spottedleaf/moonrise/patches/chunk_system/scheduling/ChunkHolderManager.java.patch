@@ -83,7 +83,7 @@
 -    });
 +    // Canvas start - Threaded Regions
 +    public static final class HolderManagerRegionData {
-+        private final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = new ArrayDeque<>();
++        private final Deque<NewChunkHolder> pendingFullLoadUpdate = new java.util.concurrent.ConcurrentLinkedDeque<>(); // use concurrent just incase
 +        private final ConcurrentSkipListSet<NewChunkHolder> autoSaveQueue = new ConcurrentSkipListSet<>((final NewChunkHolder c1, final NewChunkHolder c2) -> {
 +            if (c1 == c2) {
 +                return 0;
@@ -372,7 +372,7 @@
 +            LOGGER.info("Current region data was null when attempting to process full pending update.");
 +            return false;
 +        }
-+        final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = data.pendingFullLoadUpdate;
++        final Deque<NewChunkHolder> pendingFullLoadUpdate = data.pendingFullLoadUpdate;
 +        // Canvas end
  
          boolean ret = false;

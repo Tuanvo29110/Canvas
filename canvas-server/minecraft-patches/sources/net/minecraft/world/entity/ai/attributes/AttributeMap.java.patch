@@ -20,9 +20,9 @@
 -    private final Map<Holder<Attribute>, AttributeInstance> attributes = new Object2ObjectOpenHashMap<>();
 -    private final Set<AttributeInstance> attributesToSync = new ObjectOpenHashSet<>();
 -    private final Set<AttributeInstance> attributesToUpdate = new ObjectOpenHashSet<>();
-+    private final Map<Holder<Attribute>, AttributeInstance> attributes = java.util.Collections.synchronizedMap(new io.canvasmc.canvas.util.AttributeInstanceArrayMap()); // Canvas - optimize - synchronized
-+    private final Set<AttributeInstance> attributesToSync = ReferenceSets.synchronize(new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(0)); // Canvas - synchronize && optimized collection
-+    private final Set<AttributeInstance> attributesToUpdate = ReferenceSets.synchronize(new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(0)); // Canvas - synchronize && optimized collection
++    private final Map<Holder<Attribute>, AttributeInstance> attributes = io.canvasmc.canvas.entity.tracking.ThreadedTracker.INSTANCE.enableThreading ? com.google.common.collect.Maps.newConcurrentMap() : java.util.Collections.synchronizedMap(new io.canvasmc.canvas.util.AttributeInstanceArrayMap()); // Canvas - synchronize && optimized collection - threaded tracking
++    private final Set<AttributeInstance> attributesToSync = io.canvasmc.canvas.entity.tracking.ThreadedTracker.INSTANCE.enableThreading ? com.google.common.collect.Sets.newConcurrentHashSet() : ReferenceSets.synchronize(new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(0)); // Canvas - synchronize && optimized collection - threaded tracking
++    private final Set<AttributeInstance> attributesToUpdate = io.canvasmc.canvas.entity.tracking.ThreadedTracker.INSTANCE.enableThreading ? com.google.common.collect.Sets.newConcurrentHashSet() : ReferenceSets.synchronize(new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(0)); // Canvas - synchronize && optimized collection - threaded tracking
      private final AttributeSupplier supplier;
      private final net.minecraft.world.entity.LivingEntity entity; // Purpur - Ridables
  

@@ -5,7 +5,7 @@
       */
      public boolean callEvent() {
 +        // Canvas start - don't call if the event has no registered listeners
-+        if (!getHandlers().hasRegisteredListeners()) {
++        if (false) { // TODO - come back to this
 +            return !(this instanceof Cancellable) || !((Cancellable) this).isCancelled();
 +        }
 +        // Canvas end
