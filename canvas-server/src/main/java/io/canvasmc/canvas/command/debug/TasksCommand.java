@@ -31,7 +31,6 @@ public class TasksCommand implements CommandInstance {
                         final long scheduledTasks = mainThreadExecutor.getTotalTasksScheduled();
 
                         stack.sendSystemMessage(Component.literal("Main-Thread Tasks: " + (executedTasks - scheduledTasks)));
-                        stack.sendSystemMessage(Component.literal("ServerChunkCache.MainThreadExecutor Tasks: " + level.chunkSource.mainThreadProcessor.size()));
                         // region data
                         if (level.server.isRegionized()) {
                             stack.sendSystemMessage(Component.literal("Regions:"));
