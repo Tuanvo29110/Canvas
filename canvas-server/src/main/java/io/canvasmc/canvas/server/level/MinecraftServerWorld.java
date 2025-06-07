@@ -65,7 +65,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
 
     public static class TickHandle implements WrappedTick {
         @Override
-        public boolean blockTick(final WrappedTickLoop loop, final BooleanSupplier hasTimeLeft, final int tickCount) {
+        public boolean blockTick(final @NotNull WrappedTickLoop loop, final @NotNull BooleanSupplier hasTimeLeft, final int tickCount) {
             ServerLevel thisAsTickable = (ServerLevel) loop; // we are extended by ServerLevel
             if (thisAsTickable.levelTickData == null) {
                 thisAsTickable.levelTickData = new ServerRegions.WorldTickData(thisAsTickable, null);
@@ -131,7 +131,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
     }
 
     @Override
-    public World getWorld() {
+    public @NotNull World getWorld() {
         return this.level().getWorld();
     }
 
@@ -141,22 +141,22 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
     }
 
     @Override
-    public void scheduleOnThread(final Runnable runnable) {
+    public void scheduleOnThread(final @NotNull Runnable runnable) {
         this.pushTask(runnable);
     }
 
     @Override
-    public void scheduleForPostNextTick(Runnable run) {
+    public void scheduleForPostNextTick(@NotNull Runnable run) {
         queuedForNextTickPost.add(run);
     }
 
     @Override
-    public void scheduleForPreNextTick(Runnable run) {
+    public void scheduleForPreNextTick(@NotNull Runnable run) {
         queuedForNextTickPre.add(run);
     }
 
     @Override
-    public @Unmodifiable List<Region> getAllRegions() {
+    public @Unmodifiable @NotNull List<Region> getAllRegions() {
         ArrayList<Region> regions = new ArrayList<>();
         if (!this.server.isRegionized()) return regions;
         this.forEachRegion(regions::add);
@@ -164,7 +164,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
     }
 
     @Override
-    public void forEachRegion(final Consumer<Region> forEach) {
+    public void forEachRegion(final @NotNull Consumer<Region> forEach) {
         if (!this.server.isRegionized()) return;
         this.level().regioniser.computeForAllRegionsUnsynchronised((region) -> forEach.accept(region.getData()));
     }
@@ -178,7 +178,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
     }
 
     @Override
-    public BukkitScheduler getBukkitScheduler() {
+    public @NotNull BukkitScheduler getBukkitScheduler() {
         return bukkitScheduler;
     }
 

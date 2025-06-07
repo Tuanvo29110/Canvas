@@ -24,8 +24,8 @@ public final class SimulationDistanceCommand implements CommandInstance {
     public  LiteralCommandNode<CommandSourceStack> register(@NotNull CommandDispatcher<CommandSourceStack> commandDispatcher) {
         return commandDispatcher.register(
             literal("simulationdistance")
+                .requires((src) -> src.hasPermission(3, "canvas.world.command.simulationdistance"))
                 .then(literal("set")
-                    .requires((src) -> src.hasPermission(3, "canvas.world.command.simulationdistance"))
                     .then(literal("global")
                         .then(argument("simulationDistance", IntegerArgumentType.integer(0))
                             .executes(this::setGlobalSimulationDistance)))

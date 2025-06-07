@@ -9,10 +9,8 @@ public class RegionDestroyEvent extends ServerEvent {
     private static final HandlerList handlers = new HandlerList();
     private final Region region;
 
-    @NotNull
-    @Override
-    public HandlerList getHandlers() {
-        return handlers;
+    public RegionDestroyEvent(@NotNull Region region) {
+        this.region = region;
     }
 
     @NotNull
@@ -20,11 +18,13 @@ public class RegionDestroyEvent extends ServerEvent {
         return handlers;
     }
 
-    public RegionDestroyEvent(Region region) {
-        this.region = region;
+    @NotNull
+    @Override
+    public HandlerList getHandlers() {
+        return handlers;
     }
 
-    public Region getRegion() {
+    public @NotNull Region getRegion() {
         return region;
     }
 }

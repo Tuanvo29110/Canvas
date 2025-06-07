@@ -59,6 +59,15 @@
          if (entityTracker != null) {
              entityTracker.broadcastAndSend(packet);
          }
+@@ -2329,7 +_,7 @@
+         Preconditions.checkArgument(radius >= 0, "Radius value (%s) cannot be negative", radius);
+ 
+         Raids persistentRaid = this.world.getRaids();
+-        net.minecraft.world.entity.raid.Raid raid = persistentRaid.getNearbyRaid(CraftLocation.toBlockPosition(location), radius * radius);
++        net.minecraft.world.entity.raid.Raid raid = persistentRaid.getNearbyRaid(this.getHandle(), CraftLocation.toBlockPosition(location), radius * radius); // Canvas - threadsafe raids
+         return (raid == null) ? null : new CraftRaid(raid, this.world);
+     }
+ 
 @@ -2410,6 +_,13 @@
  
          return this.getStructures(x, z, struct -> registry.getKey(struct).equals(key));

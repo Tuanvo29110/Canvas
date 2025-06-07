@@ -389,7 +389,7 @@
          MainThreadExecutor(final Level level) {
              super("Chunk source main thread executor for " + level.dimension().location());
          }
-@@ -818,16 +_,97 @@
+@@ -818,16 +_,102 @@
              super.doRunTask(task);
          }
  
@@ -410,7 +410,7 @@
 +            return pollTask(true);
 +        }
 +
-+        public boolean pollTask(boolean flag) {
++        public boolean pollTask(boolean runDistanceManagerUpdates) {
              final ServerChunkCache serverChunkCache = ServerChunkCache.this;
 -            if (serverChunkCache.runDistanceManagerUpdates()) {
 -                return true;
@@ -427,12 +427,16 @@
 +                serverLevel.wake();
 +                // return us having no tasks, since technically we don't on this thread
 +                // we return this early because we cannot have main run distance manager updates
-+                // this ensures that ticket updates arent processed on main, since if it is, then
++                // this ensures that ticket updates aren't processed on main, since if it is, then
 +                // we could cause parallelism issues with plugins requesting chunks that are waiting for load
 +                return false;
 +            }
 +            ChunkPos pos = SYNCLOADING.get();
 +            ServerRegions.WorldTickData oldData = null;
++            // we don't do all available chunk tasks when we are on a different
++            // tick data, as if that is going to try to tick we might take too much
++            // time, and then we are just behind, effecting the entire server
++            boolean locked = false;
 +            if (pos != null) {
 +                // essentially we set the current tick data if possible to the one owning this chunk
 +                // and then that allows us to poll tasks for that area inside that tick data
@@ -443,17 +447,18 @@
 +                        Objects.requireNonNull(serverLevel.regioniser.getRegionAtUnsynchronised(pos.x, pos.z), "region cannot be null").getData().tickData :
 +                        serverLevel.levelTickData;
 +                    // try lock now, we are ticking.
-+                    // we attempt to lock in the case of if 2 tick tasks depending on eachother
++                    // we attempt to lock in the case of if 2 tick tasks depending on each other
 +                    // if they are, then we need to clear them up by ticking our own tasks if POSSIBLE
 +                    // if we just lock blatantly then we end up with the issue of both threads blocking
 +                    // waiting for us to release, and then we never do release so we just deadlock forever
 +                    if (Objects.requireNonNull(newTickData, "tick data cannot be null").tickLock.tryLock()) {
 +                        TickScheduler.setTickingData(newTickData, false);
++                        locked = true;
 +                    }
 +                }
 +            }
 +            try {
-+                if (flag && serverChunkCache.runDistanceManagerUpdates()) {
++                if (runDistanceManagerUpdates && serverChunkCache.runDistanceManagerUpdates()) {
 +                    return true;
 +                } else {
 +                    try {
@@ -466,32 +471,32 @@
 +                                // unlike Folia, we still can have tasks be submitted to the
 +                                // main thread executor, so we run 'super' poll aswell.
 +                                final BooleanSupplier poll = () -> super.pollTask() | thisData.getTaskQueueData().executeChunkTask();
-+                                return tryWake(poll);
++                                return locked ? poll.getAsBoolean() : tryWake(poll);
 +                            }
 +                        }
 +                        // not regionized OR we are on global
 +                        serverLevel.taskQueueRegionData.drainGlobalChunkTasks();
 +                        final BooleanSupplier poll = () -> ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel) serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask() | super.pollTask();
-+                        return tryWake(poll);
++                        return locked ? poll.getAsBoolean() : tryWake(poll);
 +                    } finally {
 +                        ENTITY_OVERRIDE.remove(current);
 +                    }
 +                }
 +            } finally {
-+                if (pos != null && oldData != null) {
++                if (locked && pos != null && oldData != null) {
 +                    // return back to old tick data
 +                    TickScheduler.setTickingData(oldData);
 +                }
 +            }
 +        }
-+        // Canvas end
-+    }
 +
-+    private boolean tryWake(BooleanSupplier whileTrue) {
-+        while (whileTrue.getAsBoolean()) {
-+            // wake the world regardless, we may actually need it.
-+            ServerChunkCache.this.level.wake();
++        private boolean tryWake(BooleanSupplier whileTrue) {
++            while (whileTrue.getAsBoolean()) {
++                // wake the world regardless, we may actually need it.
++                ServerChunkCache.this.level.wake();
++            }
++            return false; // the "while true" is now false, so we return false.
 +        }
-+        return false; // the "while true" is now false, so we return false.
++        // Canvas end
      }
  }

@@ -24,8 +24,8 @@ public final class ViewDistanceCommand implements CommandInstance {
     public LiteralCommandNode<CommandSourceStack> register(@NotNull CommandDispatcher<CommandSourceStack> commandDispatcher) {
         return commandDispatcher.register(
             literal("viewdistance")
+                .requires((src) -> src.hasPermission(2, "canvas.world.command.viewdistance"))
                 .then(literal("set")
-                    .requires((src) -> src.hasPermission(2, "canvas.world.command.viewdistance"))
                     .then(literal("global")
                         .then(argument("viewDistance", IntegerArgumentType.integer(0, 255))
                             .executes(this::setGlobalViewDistance)))

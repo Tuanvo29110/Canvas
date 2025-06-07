@@ -170,7 +170,7 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
         }
 
         @Override
-        public boolean blockTick(final WrappedTickLoop loop, final BooleanSupplier hasTimeLeft, final int tickCount) {
+        public boolean blockTick(final @NotNull WrappedTickLoop loop, final @NotNull BooleanSupplier hasTimeLeft, final int tickCount) {
             final ChunkRegion tickHandle = region.getData().tickHandle;
             if (tickHandle.cancelled.get()) {
                 return false;
@@ -224,7 +224,7 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
                     }
                     data.setHandlingTick(false);
                     this.world.regiontick3(profilerFiller, true, runsNormally, data);
-                    ServerRegions.getTickData(this.world).explosionDensityCache.clear();
+                    data.explosionDensityCache.clear();
                     for (final ServerPlayer localPlayer : data.getLocalPlayers()) {
                         localPlayer.connection.chunkSender.sendNextChunks(localPlayer);
                         localPlayer.connection.resumeFlushing();

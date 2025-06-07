@@ -10,17 +10,17 @@ public class TickSchedulerStartEvent extends ServerEvent {
     private static final HandlerList handlers = new HandlerList();
 
     @NotNull
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
+
+    @NotNull
     @Override
     public HandlerList getHandlers() {
         return handlers;
     }
 
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
-    }
-
-    public MultithreadedTickScheduler getScheduler() {
+    public @NotNull MultithreadedTickScheduler getScheduler() {
         return ThreadedBukkitServer.getInstance().getScheduler();
     }
 }

@@ -74,9 +74,10 @@ public interface WrappedTickLoop {
 
     /**
      * Gets the identifier for the tick-loop
+     *
      * @return the possibly unique identifier
      */
-    NamespacedKey getIdentifier();
+    @NotNull NamespacedKey getIdentifier();
 
     /**
      * Gets the {@link Logger} for the tick-loop.
@@ -84,7 +85,7 @@ public interface WrappedTickLoop {
      *
      * @return the logger for the tick-loop
      */
-    Logger getLogger();
+    @NotNull Logger getLogger();
 
     /**
      * Gets the tps data from the last 5 seconds.
@@ -92,7 +93,7 @@ public interface WrappedTickLoop {
      *
      * @return tps data from the last 5 seconds
      */
-    RollingAverage getTps5s();
+    @NotNull RollingAverage getTps5s();
 
     /**
      * Gets the tps data from the last 10 seconds.
@@ -100,7 +101,7 @@ public interface WrappedTickLoop {
      *
      * @return tps data from the last 10 seconds
      */
-    RollingAverage getTps10s();
+    @NotNull RollingAverage getTps10s();
 
     /**
      * Gets the tps data from the last 15 seconds.
@@ -108,7 +109,7 @@ public interface WrappedTickLoop {
      *
      * @return tps data from the last 15 seconds
      */
-    RollingAverage getTps15s();
+    @NotNull RollingAverage getTps15s();
 
     /**
      * Gets the tps data from the last 1 minute.
@@ -116,7 +117,7 @@ public interface WrappedTickLoop {
      *
      * @return tps data from the last 1 minute
      */
-    RollingAverage getTps1m();
+    @NotNull RollingAverage getTps1m();
 
     /**
      * Gets the tick times from the last 5 seconds.
@@ -125,7 +126,7 @@ public interface WrappedTickLoop {
      *
      * @return the tick times in the last 5 seconds
      */
-    TickTimes getTickTimes5s();
+    @NotNull TickTimes getTickTimes5s();
 
     /**
      * Gets the tick times from the last 10 seconds.
@@ -134,7 +135,7 @@ public interface WrappedTickLoop {
      *
      * @return the tick times in the last 10 seconds
      */
-    TickTimes getTickTimes10s();
+    @NotNull TickTimes getTickTimes10s();
 
     /**
      * Gets the tick times from the last 15 seconds.
@@ -143,7 +144,7 @@ public interface WrappedTickLoop {
      *
      * @return the tick times in the last 15 seconds
      */
-    TickTimes getTickTimes15s();
+    @NotNull TickTimes getTickTimes15s();
 
     /**
      * Gets the tick times from the last 1 minute.
@@ -152,7 +153,7 @@ public interface WrappedTickLoop {
      *
      * @return the tick times in the last 1 minute
      */
-    TickTimes getTickTimes60s();
+    @NotNull TickTimes getTickTimes60s();
 
     /**
      * Blocks the current thread until a stop condition becomes true.
@@ -165,7 +166,7 @@ public interface WrappedTickLoop {
      *
      * @param stopCondition the condition to stop blocking
      */
-    void managedBlock(BooleanSupplier stopCondition);
+    void managedBlock(@NotNull BooleanSupplier stopCondition);
 
     /**
      * Pushes a task to the queue for the tick-loop.
@@ -177,7 +178,7 @@ public interface WrappedTickLoop {
      *
      * @param task the schedulable task
      */
-    void pushTask(Runnable task);
+    void pushTask(@NotNull Runnable task);
 
     /**
      * Gets the tick count, which increases by 1
@@ -185,6 +186,7 @@ public interface WrappedTickLoop {
      * <br><br>
      * If called during {@link WrappedTick#blockTick(WrappedTickLoop, BooleanSupplier, int)}, this returns 1 value more
      * than the provided 'tickCount' argument.
+     *
      * @return the tick count
      */
     int getTickCount();
@@ -224,32 +226,35 @@ public interface WrappedTickLoop {
     interface WrappedTick {
         /**
          * Processes the tick-loop
-         * @param loop the owning tick-loop
+         *
+         * @param loop        the owning tick-loop
          * @param hasTimeLeft if the tick has time left. determination of if the loop has time left is as follows:
          *                    <pre>{@code
-         *                    // if the tick-loop is sprinting, the 'nanosecondsOverload' is 0.
-         *                    // if it isn't sprinting, it returns the nanoseconds per tick.
-         *                    nanosecondsOverload == 0L ? () -> false : this::haveTime
-         *                    // haveTime() is determined by if the server is either forcing ticks,
-         *                    // or if the current time(in nanoseconds) is less than the scheduled next tick time(in nanoseconds)
-         *                    }</pre>
-         * @param tickCount the current tick count
+         *                                                          // if the tick-loop is sprinting, the 'nanosecondsOverload' is 0.
+         *                                                          // if it isn't sprinting, it returns the nanoseconds per tick.
+         *                                                          nanosecondsOverload == 0L ? () -> false : this::haveTime
+         *                                                          // haveTime() is determined by if the server is either forcing ticks,
+         *                                                          // or if the current time(in nanoseconds) is less than the scheduled next tick time(in nanoseconds)
+         *                                                          }</pre>
+         * @param tickCount   the current tick count
          * @return if the tick should be rescheduled
          */
-        boolean blockTick(WrappedTickLoop loop, BooleanSupplier hasTimeLeft, int tickCount);
+        boolean blockTick(@NotNull WrappedTickLoop loop, @NotNull BooleanSupplier hasTimeLeft, int tickCount);
 
         /**
          * Debug information overload for the tick-loop.
          * See {@link WrappedTickLoop#debugInfo()}
+         *
          * @return debug information for the tick-loop
          */
-        default Component debugInfo() {
+        default @NotNull Component debugInfo() {
             return Component.empty();
         }
 
         /**
          * Overload for if the tick-loop should sleep.
          * See {@link WrappedTickLoop#shouldSleep()}
+         *
          * @return if the tick-loop should sleep
          */
         default boolean shouldSleep() {

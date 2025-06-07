@@ -9,39 +9,44 @@ import org.jetbrains.annotations.Nullable;
 
 public interface Region {
     /**
+     * Translates a long packed position -> bukkit chunk
+     *
+     * @param chunkKey packed position
+     * @param world    world of the chunk
+     * @return the chunk
+     */
+    static @NotNull Chunk long2Chunk(long chunkKey, @NotNull World world) {
+        int x = (int) chunkKey;
+        int z = (int) (chunkKey >> 32);
+        return world.getChunkAt(x, z);
+    }
+
+    /**
      * Gets the long chunk keys for the region. This can be translated from long -> chunk via {@link Region#long2Chunk(long, World)}
+     *
      * @return fastutil long arraylist of long packed positions
      */
-    LongArrayList getOwnedChunkPositions();
+    @NotNull LongArrayList getOwnedChunkPositions();
 
     /**
      * Gets the center chunk as a packed position
+     *
      * @return the center chunk
      */
     @Nullable
     Long getCenterChunk();
 
     /**
-     * Translates a long packed position -> bukkit chunk
-     * @param chunkKey packed position
-     * @param world world of the chunk
-     * @return the chunk
-     */
-    static @NotNull Chunk long2Chunk(long chunkKey, @NotNull World world) {
-        int x = (int)chunkKey;
-        int z = (int)(chunkKey >> 32);
-        return world.getChunkAt(x, z);
-    }
-
-    /**
      * Gets the world that the region is owned in
+     *
      * @return the world
      */
-    World getWorld();
+    @NotNull World getWorld();
 
     /**
      * Gets the region tick handle
+     *
      * @return the tick task impl for the region
      */
-    WrappedTickLoop getTickHandle();
+    @NotNull WrappedTickLoop getTickHandle();
 }

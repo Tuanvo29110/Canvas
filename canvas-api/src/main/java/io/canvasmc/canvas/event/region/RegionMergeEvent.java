@@ -10,10 +10,9 @@ public class RegionMergeEvent extends ServerEvent {
     private final Region from;
     private final Region into;
 
-    @NotNull
-    @Override
-    public HandlerList getHandlers() {
-        return handlers;
+    public RegionMergeEvent(@NotNull Region from, @NotNull Region into) {
+        this.from = from;
+        this.into = into;
     }
 
     @NotNull
@@ -21,16 +20,17 @@ public class RegionMergeEvent extends ServerEvent {
         return handlers;
     }
 
-    public RegionMergeEvent(Region from, Region into) {
-        this.from = from;
-        this.into = into;
+    @NotNull
+    @Override
+    public HandlerList getHandlers() {
+        return handlers;
     }
 
-    public Region getFrom() {
+    public @NotNull Region getFrom() {
         return from;
     }
 
-    public Region getInto() {
+    public @NotNull Region getInto() {
         return into;
     }
 }

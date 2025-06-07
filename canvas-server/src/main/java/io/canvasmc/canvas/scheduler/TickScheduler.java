@@ -98,14 +98,14 @@ public class TickScheduler implements MultithreadedTickScheduler {
     }
 
     @Override
-    public WrappedTickLoop scheduleWrapped(final WrappedTickLoop.WrappedTick tick, final NamespacedKey identifier) {
+    public @NotNull WrappedTickLoop scheduleWrapped(final WrappedTickLoop.@NotNull WrappedTick tick, final @NotNull NamespacedKey identifier) {
         FullTick<?> tickLoop = new FullTick<>((DedicatedServer) MinecraftServer.getServer(), CraftNamespacedKey.toMinecraft(identifier), tick);
         tickLoop.scheduleTo(this.scheduler);
         return tickLoop;
     }
 
     @Override
-    public @Nullable WrappedTickLoop getTickLoop(final NamespacedKey identifier) {
+    public @Nullable WrappedTickLoop getTickLoop(final @NotNull NamespacedKey identifier) {
         ResourceLocation minecraft = CraftNamespacedKey.toMinecraft(identifier);
         for (final FullTick<?> fullTick : FullTick.ALL_REGISTERED) {
             if (fullTick.identifier.equals(minecraft)) return fullTick;
@@ -119,7 +119,7 @@ public class TickScheduler implements MultithreadedTickScheduler {
     }
 
     @Override
-    public Thread[] getThreads() {
+    public Thread @NotNull [] getThreads() {
         return this.scheduler.getCoreThreads();
     }
 
@@ -153,7 +153,7 @@ public class TickScheduler implements MultithreadedTickScheduler {
     }
 
     @Override
-    public BigDecimal getTpsBase() {
+    public @NotNull BigDecimal getTpsBase() {
         return tpsBase;
     }
 
@@ -500,52 +500,52 @@ public class TickScheduler implements MultithreadedTickScheduler {
         }
 
         @Override
-        public NamespacedKey getIdentifier() {
+        public @NotNull NamespacedKey getIdentifier() {
             return CraftNamespacedKey.fromMinecraft(this.identifier);
         }
 
         @Override
-        public Logger getLogger() {
+        public @NotNull Logger getLogger() {
             return LOGGER;
         }
 
         @Override
-        public RollingAverage getTps1m() {
+        public @NotNull RollingAverage getTps1m() {
             return tps1m;
         }
 
         @Override
-        public RollingAverage getTps5s() {
+        public @NotNull RollingAverage getTps5s() {
             return tps5s;
         }
 
         @Override
-        public RollingAverage getTps10s() {
+        public @NotNull RollingAverage getTps10s() {
             return tps10s;
         }
 
         @Override
-        public RollingAverage getTps15s() {
+        public @NotNull RollingAverage getTps15s() {
             return tps15s;
         }
 
         @Override
-        public TickTimes getTickTimes5s() {
+        public @NotNull TickTimes getTickTimes5s() {
             return tickTimes5s;
         }
 
         @Override
-        public TickTimes getTickTimes10s() {
+        public @NotNull TickTimes getTickTimes10s() {
             return tickTimes10s;
         }
 
         @Override
-        public TickTimes getTickTimes15s() {
+        public @NotNull TickTimes getTickTimes15s() {
             return tickTimes15s;
         }
 
         @Override
-        public TickTimes getTickTimes60s() {
+        public @NotNull TickTimes getTickTimes60s() {
             return tickTimes60s;
         }
 

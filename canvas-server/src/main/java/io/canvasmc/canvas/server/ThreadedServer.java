@@ -38,6 +38,7 @@ import net.minecraft.server.level.ServerLevel;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.CraftWorld;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.slf4j.Logger;
@@ -59,27 +60,22 @@ public class ThreadedServer implements ThreadedBukkitServer {
     }
 
     @Override
-    public @Unmodifiable List<World> getWorlds() {
-        return this.server.server.getWorlds();
-    }
-
-    @Override
-    public LevelAccess getLevelAccess(final World world) {
+    public @NotNull LevelAccess getLevelAccess(final @NotNull World world) {
         return ((CraftWorld) world).getHandle();
     }
 
     @Override
-    public MultithreadedTickScheduler getScheduler() {
+    public @NotNull MultithreadedTickScheduler getScheduler() {
         return TickScheduler.getScheduler();
     }
 
     @Override
-    public void scheduleOnMain(final Runnable runnable) {
+    public void scheduleOnMain(final @NotNull Runnable runnable) {
         this.server.scheduleOnMain(runnable);
     }
 
     @Override
-    public @Nullable Region getRegionAtChunk(final World world, final int chunkX, final int chunkZ) {
+    public @Nullable Region getRegionAtChunk(final @NotNull World world, final int chunkX, final int chunkZ) {
         ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region = ((CraftWorld) world).getHandle().regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
         return region == null ? null : region.getData();
     }

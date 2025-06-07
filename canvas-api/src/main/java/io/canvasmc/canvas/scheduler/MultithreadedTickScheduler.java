@@ -1,8 +1,9 @@
 package io.canvasmc.canvas.scheduler;
 
-import org.bukkit.NamespacedKey;
-import org.jetbrains.annotations.Nullable;
 import java.math.BigDecimal;
+import org.bukkit.NamespacedKey;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An interface into Canvas' tick scheduler
@@ -45,39 +46,44 @@ public interface MultithreadedTickScheduler {
      * @param tick       the tick
      * @param identifier the identifier for your tick-loop. recommended to be unique
      */
-    WrappedTickLoop scheduleWrapped(WrappedTickLoop.WrappedTick tick, NamespacedKey identifier);
+    @NotNull WrappedTickLoop scheduleWrapped(@NotNull WrappedTickLoop.WrappedTick tick, @NotNull NamespacedKey identifier);
 
     /**
      * Gets the tick loop from the internal registry. The loop MUST be active(meaning it's ticking) to be locatable.
      * <br>
      * The identifier for tick loops is not forced to be unique. Within Canvas internals, this is always unique, with plugins, it is unpredictable.
+     *
      * @param identifier the String identifier that defines the tick loop.
      * @return the located loop
      */
     @Nullable
-    WrappedTickLoop getTickLoop(NamespacedKey identifier);
+    WrappedTickLoop getTickLoop(@NotNull NamespacedKey identifier);
 
     /**
      * Returns the amount of threads allocated to the scheduler
+     *
      * @return thread count
      */
     int getThreadCount();
 
     /**
      * Returns an array of the tick runner threads
+     *
      * @return the runner threads
      */
-    Thread[] getThreads();
+    Thread @NotNull [] getThreads();
 
     /**
      * Returns the tick rate for the scheduler. This can be changed at any time and is not final.
      * This is due to the `/tick` command existing, which can affect the tick rate.
+     *
      * @return the tick rate of the server
      */
     int getTickRate();
 
     /**
      * Sets the tick rate for the server
+     *
      * @param tickRate the tick rate
      */
     void setTickRate(int tickRate);
@@ -85,19 +91,22 @@ public interface MultithreadedTickScheduler {
     /**
      * Returns the time in nanoseconds between ticks. This follows the same rules as
      * the tick rate, where it can change at any time. This is directly influenced by the tick rate
+     *
      * @return the time between ticks
      */
     long getTimeBetweenTicks();
 
     /**
      * Returns the tps base, which is used for calculating tps
+     *
      * @return tps base
      */
-    BigDecimal getTpsBase();
+    @NotNull BigDecimal getTpsBase();
 
     /**
      * Gets the "sample rate" which is used for how often we tick TPS
      * and other data
+     *
      * @return the sample rate
      */
     default int getSampleRate() {

@@ -19,6 +19,7 @@ import io.canvasmc.canvas.util.ConcurrentSet;
 import io.canvasmc.canvas.util.TPSCalculator;
 import io.papermc.paper.redstone.RedstoneWireTurbo;
 import io.papermc.paper.threadedregions.ThreadedRegionizer;
+import io.papermc.paper.threadedregions.TickRegions;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -54,6 +55,7 @@ import net.minecraft.world.entity.ai.village.VillageSiege;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockEventData;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.block.Block;
@@ -68,6 +70,8 @@ import net.minecraft.world.level.levelgen.RandomSupport;
 import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.pathfinder.PathTypeCache;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.ticks.LevelTicks;
 import org.bukkit.World;
 import org.jetbrains.annotations.Contract;
@@ -419,7 +423,7 @@ public class ServerRegions {
         }
 
         @Override
-        public WrappedTickLoop getTickHandle() {
+        public @NotNull WrappedTickLoop getTickHandle() {
             return this.tickHandle;
         }
     }
@@ -771,6 +775,10 @@ public class ServerRegions {
             }
         }
 
+        public boolean hasEntity(final Entity entity) {
+            return this.allEntities.contains(entity);
+        }
+
         public void removeEntity(final Entity entity) {
             removeEntity(entity, true);
         }
@@ -998,5 +1006,101 @@ public class ServerRegions {
         @Override
         public void preSplit(final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> from, final List<ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData>> into) {
         }
+    }
+
+    public static boolean isTickThreadFor(final Level world, final @NotNull AABB aabb) {
+        return isTickThreadFor(
+            world,
+            CoordinateUtils.getChunkCoordinate(aabb.minX), CoordinateUtils.getChunkCoordinate(aabb.minZ),
+            CoordinateUtils.getChunkCoordinate(aabb.maxX), CoordinateUtils.getChunkCoordinate(aabb.maxZ)
+        );
+    }
+
+    public static boolean isTickThreadFor(final Level world, final double blockX, final double blockZ) {
+        return isTickThreadFor(world, CoordinateUtils.getChunkCoordinate(blockX), CoordinateUtils.getChunkCoordinate(blockZ));
+    }
+
+    public static boolean isTickThreadFor(final Level world, final Vec3 position, final @NotNull Vec3 deltaMovement, final int buffer) {
+        final int fromChunkX = CoordinateUtils.getChunkX(position);
+        final int fromChunkZ = CoordinateUtils.getChunkZ(position);
+
+        final int toChunkX = CoordinateUtils.getChunkCoordinate(position.x + deltaMovement.x);
+        final int toChunkZ = CoordinateUtils.getChunkCoordinate(position.z + deltaMovement.z);
+
+        // expect from < to, but that may not be the case
+        return isTickThreadFor(
+            world,
+            Math.min(fromChunkX, toChunkX) - buffer,
+            Math.min(fromChunkZ, toChunkZ) - buffer,
+            Math.max(fromChunkX, toChunkX) + buffer,
+            Math.max(fromChunkZ, toChunkZ) + buffer
+        );
+    }
+
+    public static boolean isTickThreadFor(final Level world, final @NotNull BlockPos pos) {
+        return isTickThreadFor(world, pos.getX() >> 4, pos.getZ() >> 4);
+    }
+
+    public static boolean isTickThreadFor(final Level world, final @NotNull BlockPos pos, final int blockRadius) {
+        return isTickThreadFor(
+            world,
+            (pos.getX() - blockRadius) >> 4, (pos.getZ() - blockRadius) >> 4,
+            (pos.getX() + blockRadius) >> 4, (pos.getZ() + blockRadius) >> 4
+        );
+    }
+
+    public static boolean isTickThreadFor(final Level world, final @NotNull ChunkPos pos) {
+        return isTickThreadFor(world, pos.x, pos.z);
+    }
+
+    public static boolean isTickThreadFor(final Level world, final @NotNull Vec3 pos) {
+        return isTickThreadFor(world, net.minecraft.util.Mth.floor(pos.x) >> 4, net.minecraft.util.Mth.floor(pos.z) >> 4);
+    }
+
+    public static boolean isTickThreadFor(final @NotNull Entity entity) {
+        if (ServerRegions.getTickData(entity.level().level()).hasEntity(entity)) {
+            return true;
+        }
+        return isTickThreadFor(entity.level(), entity.chunkPosition().x, entity.chunkPosition().z);
+    }
+
+    public static boolean isTickThreadFor(final Level world, final int chunkX, final int chunkZ) {
+        final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region =
+            ServerRegions.getTickData((ServerLevel) world).region;
+        if (region == null) {
+            return false;
+        }
+        return ((net.minecraft.server.level.ServerLevel)world).regioniser.getRegionAtUnsynchronised(chunkX, chunkZ) == region;
+    }
+
+    public static boolean isTickThreadFor(final Level world, final int chunkX, final int chunkZ, final int radius) {
+        return isTickThreadFor(world, chunkX - radius, chunkZ - radius, chunkX + radius, chunkZ + radius);
+    }
+
+    public static boolean isTickThreadFor(final Level world, final int fromChunkX, final int fromChunkZ, final int toChunkX, final int toChunkZ) {
+        final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region =
+            ServerRegions.getTickData((ServerLevel) world).region;
+        if (region == null) {
+            return false;
+        }
+
+        final int shift = ((net.minecraft.server.level.ServerLevel)world).regioniser.sectionChunkShift;
+
+        final int minSectionX = fromChunkX >> shift;
+        final int maxSectionX = toChunkX >> shift;
+        final int minSectionZ = fromChunkZ >> shift;
+        final int maxSectionZ = toChunkZ >> shift;
+
+        for (int secZ = minSectionZ; secZ <= maxSectionZ; ++secZ) {
+            for (int secX = minSectionX; secX <= maxSectionX; ++secX) {
+                final int lowerLeftCX = secX << shift;
+                final int lowerLeftCZ = secZ << shift;
+                if (((net.minecraft.server.level.ServerLevel)world).regioniser.getRegionAtUnsynchronised(lowerLeftCX, lowerLeftCZ) != region) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

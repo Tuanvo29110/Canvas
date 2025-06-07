@@ -42,7 +42,7 @@
  
      public static NoiseChunk forChunk(
          ChunkAccess chunk,
-@@ -236,7 +_,9 @@
+@@ -236,9 +_,11 @@
          this.arrayInterpolationCounter++;
      }
  
@@ -50,8 +50,11 @@
      public void initializeForFirstCellX() {
 +        firstCellLock.lock(); // Canvas - interpolation lock
          if (this.interpolating) {
-             throw new IllegalStateException("Staring interpolation twice");
+-            throw new IllegalStateException("Staring interpolation twice");
++            return; // Canvas - just return
          } else {
+             this.interpolating = true;
+             this.interpolationCounter = 0L;
 @@ -326,6 +_,7 @@
      }
  

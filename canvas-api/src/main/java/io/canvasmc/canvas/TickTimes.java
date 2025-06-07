@@ -1,6 +1,7 @@
 package io.canvasmc.canvas;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 public class TickTimes {
     private long[] times;
@@ -19,12 +20,13 @@ public class TickTimes {
         times[index % times.length] = time;
     }
 
-    public long[] getTimes() {
+    public long @NotNull [] getTimes() {
         return times.clone();
     }
 
     /**
      * Gets the average mspt in the last interval
+     *
      * @return average mspt
      */
     public double getAverage() {
@@ -37,6 +39,7 @@ public class TickTimes {
 
     /**
      * Gets the calculated thread utilization in the last interval
+     *
      * @return thread util
      */
     public double getUtilization() {

@@ -15,7 +15,7 @@
      }
 +    // Canvas start - Threaded Server
 +
-+    public static io.canvasmc.canvas.ThreadedBukkitServer getThreadedServer() {
++    public static @NotNull io.canvasmc.canvas.ThreadedBukkitServer getThreadedServer() {
 +        return getServer().getThreadedServer();
 +    }
 +    // Canvas end

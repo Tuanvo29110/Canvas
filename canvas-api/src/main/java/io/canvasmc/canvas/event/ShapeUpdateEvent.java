@@ -23,12 +23,12 @@ public class ShapeUpdateEvent extends Event implements Cancellable {
         this.theBlock = theBlock;
     }
 
-    @Override
-    public @NotNull HandlerList getHandlers() {
+    public static @NotNull HandlerList getHandlerList() {
         return handlers;
     }
 
-    public static HandlerList getHandlerList() {
+    @Override
+    public @NotNull HandlerList getHandlers() {
         return handlers;
     }
 
@@ -57,7 +57,7 @@ public class ShapeUpdateEvent extends Event implements Cancellable {
     /**
      * Sets the {@link BlockData} for the shape update
      */
-    public void setBlock(BlockData data) {
+    public void setBlock(@NotNull BlockData data) {
         this.theBlock = data;
     }
 }

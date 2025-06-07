@@ -49,6 +49,7 @@ public class RollingAverage {
 
     /**
      * Gets the TPS in the last interval
+     *
      * @return TPS average
      */
     public double getAverage() {
