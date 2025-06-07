@@ -15,9 +15,10 @@
      private static final int SCHEDULE_UPDATE_DELAY = 20;
 -    private final Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = Maps.newHashMap();
 -    private final Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = Maps.newLinkedHashMap();
-+    private final Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = new it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap<>(); // Canvas - optimized collection
-+    public Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = new it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap<>();; // Canvas - mutable / private -> public - optimized collection
-     private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = Maps.newTreeMap();
+-    private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = Maps.newTreeMap();
++    private final Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = new it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap<>(); // Canvas - optimized collection
++    public Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = new it.unimi.dsi.fastutil.objects.Reference2ReferenceLinkedOpenHashMap<>(); // Canvas - mutable / private -> public - optimized collection
++    private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = new it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap<>();
      private Schedule schedule = Schedule.EMPTY;
 -    private final Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements = Maps.newHashMap();
 -    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = Maps.newHashMap();
@@ -30,7 +31,7 @@
      private Activity defaultActivity = Activity.IDLE;
      private long lastScheduleUpdate = -9999L;
 +    // Canvas start - optimize brain
-+    private ArrayList<BehaviorControl<? super E>> possibleTasks;
++    private List<BehaviorControl<? super E>> possibleTasks;
 +    private MaskedList<BehaviorControl<? super E>> runningTasks;
 +
 +    private void onTasksChanged() {
@@ -43,7 +44,7 @@
 +    }
 +
 +    private void initPossibleTasks() {
-+        this.possibleTasks = new ArrayList<>();
++        this.possibleTasks = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>();
 +        for (Map<Activity, Set<BehaviorControl<? super E>>> map : this.availableBehaviorsByPriority.values()) {
 +            for (Map.Entry<Activity, Set<BehaviorControl<? super E>>> entry : map.entrySet()) {
 +                Activity activity = entry.getKey();
@@ -59,7 +60,7 @@
 +        }
 +    }
 +
-+    private ArrayList<BehaviorControl<? super E>> getPossibleTasks() {
++    private List<BehaviorControl<? super E>> getPossibleTasks() {
 +        if (this.possibleTasks == null) {
 +            this.initPossibleTasks();
 +        }

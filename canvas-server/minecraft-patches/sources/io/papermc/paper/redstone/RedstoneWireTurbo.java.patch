@@ -1,5 +1,14 @@
 --- a/io/papermc/paper/redstone/RedstoneWireTurbo.java
 +++ b/io/papermc/paper/redstone/RedstoneWireTurbo.java
+@@ -281,7 +_,7 @@
+      * Keep track of all block positions discovered during search and their current states.
+      * We want to remember one entry for each position.
+      */
+-    private final Map<BlockPos, UpdateNode> nodeCache = Maps.newHashMap();
++    private final Map<BlockPos, UpdateNode> nodeCache = new it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap<>(); // Canvas - optimized collection
+ 
+     /*
+      * For a newly created UpdateNode object, determine what type of block it is.
 @@ -829,14 +_,14 @@
          j = getMaxCurrentStrength(upd, j);
          int l = 0;

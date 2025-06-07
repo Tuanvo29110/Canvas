@@ -672,6 +672,18 @@ public class Config {
     @Comment("Reduces chunk source updates on inter-chunk player moves. Recommended to enable")
     public boolean reduceChunkSourceUpdates = false;
 
+    public AsyncLocator asyncLocator = new AsyncLocator();
+    public static class AsyncLocator {
+        @Comment(value = {
+            "Whether or not asynchronous locator should be enabled",
+            "This offloads structure locating to other threads",
+            "Only for locate command, dolphin treasure, and eyes of ender currently"
+        })
+        public boolean enabled = false;
+        public int asyncLocatorThreads = 1;
+        public int asyncLocatorKeepalive = 60;
+    }
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         return new AnnotationBasedYamlSerializer<>(SerializationBuilder.<T>newBuilder()
