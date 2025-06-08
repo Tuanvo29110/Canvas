@@ -12,6 +12,7 @@ public class PriorityHandler {
     public static final int BLOCKING = 0;
 
     public final ServerLevel level;
+
     public PriorityHandler(ServerLevel world) {
         this.level = world;
     }

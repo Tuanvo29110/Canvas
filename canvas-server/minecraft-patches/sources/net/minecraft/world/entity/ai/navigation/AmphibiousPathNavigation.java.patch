@@ -13,7 +13,7 @@
 +        nodeEvaluator.setCanOpenDoors(nodeEvaluatorFeatures.canOpenDoors());
 +        return nodeEvaluator;
 +    };
-+    // Canvas end - async path processing
++    // Canvas end
 +
      @Override
      protected PathFinder createPathFinder(int maxVisitedNodes) {
@@ -22,7 +22,7 @@
 +        if (io.canvasmc.canvas.Config.INSTANCE.entities.pathfinding.enableThreadedPathfinding) {
 +            return new PathFinder(this.nodeEvaluator, maxVisitedNodes, nodeEvaluatorGenerator);
 +        }
-+        // Canvas end - async path processing
++        // Canvas end
          return new PathFinder(this.nodeEvaluator, maxVisitedNodes);
      }
  

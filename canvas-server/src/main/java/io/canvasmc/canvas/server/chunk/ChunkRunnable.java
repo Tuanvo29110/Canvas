@@ -5,11 +5,11 @@ import java.lang.invoke.VarHandle;
 import net.minecraft.server.level.ServerLevel;
 
 public class ChunkRunnable implements Runnable {
+    private static final VarHandle TO_RUN_HANDLE = ConcurrentUtil.getVarHandle(ChunkRunnable.class, "toRun", Runnable.class);
     public final int chunkX;
     public final int chunkZ;
     public final ServerLevel world;
-    private volatile Runnable toRun;
-    private static final VarHandle TO_RUN_HANDLE = ConcurrentUtil.getVarHandle(ChunkRunnable.class, "toRun", Runnable.class);
+    private final Runnable toRun;
 
     public ChunkRunnable(int chunkX, int chunkZ, ServerLevel world, Runnable run) {
         this.chunkX = chunkX;
@@ -19,7 +19,7 @@ public class ChunkRunnable implements Runnable {
     }
 
     public void setRunnable(final Runnable run) {
-        final Runnable prev = (Runnable)TO_RUN_HANDLE.compareAndExchange(this, (Runnable)null, run);
+        final Runnable prev = (Runnable) TO_RUN_HANDLE.compareAndExchange(this, (Runnable) null, run);
         if (prev != null) {
             throw new IllegalStateException("Runnable already set");
         }
@@ -27,6 +27,6 @@ public class ChunkRunnable implements Runnable {
 
     @Override
     public void run() {
-        ((Runnable)TO_RUN_HANDLE.getVolatile(this)).run();
+        ((Runnable) TO_RUN_HANDLE.getVolatile(this)).run();
     }
 }

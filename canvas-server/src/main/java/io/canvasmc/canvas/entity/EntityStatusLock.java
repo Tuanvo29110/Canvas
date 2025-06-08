@@ -43,7 +43,8 @@ public class EntityStatusLock extends ReentrantLock {
         if (ServerChunkCache.MainThreadExecutor.ENTITY_OVERRIDE.contains(Thread.currentThread())) return; // pass
         try {
             this.unlock();
-        } catch (IllegalMonitorStateException ignored) {}
+        } catch (IllegalMonitorStateException ignored) {
+        }
     }
 
     @Override
@@ -51,11 +52,11 @@ public class EntityStatusLock extends ReentrantLock {
         return super.getOwner();
     }
 
-    public static enum Status {
+    public enum Status {
         STATUS_CHANGES,
         POS_CHANGE,
         REMOVED,
         TRACKING,
-        SCHEDULER;
+        SCHEDULER
     }
 }

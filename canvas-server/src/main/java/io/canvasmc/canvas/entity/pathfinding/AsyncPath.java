@@ -12,7 +12,11 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * i'll be using this to represent a path that not be processed yet!
+ */
 public class AsyncPath extends Path {
+
     /**
      * runnables waiting for this to be processed
      */

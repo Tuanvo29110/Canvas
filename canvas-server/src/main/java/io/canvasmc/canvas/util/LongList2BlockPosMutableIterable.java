@@ -2,9 +2,8 @@ package io.canvasmc.canvas.util;
 
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongList;
-import net.minecraft.core.BlockPos;
-
 import java.util.Iterator;
+import net.minecraft.core.BlockPos;
 
 /**
  * @author 2No2Name

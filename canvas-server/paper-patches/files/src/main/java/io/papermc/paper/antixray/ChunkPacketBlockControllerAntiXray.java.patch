@@ -1,0 +1,11 @@
+--- a/src/main/java/io/papermc/paper/antixray/ChunkPacketBlockControllerAntiXray.java
++++ b/src/main/java/io/papermc/paper/antixray/ChunkPacketBlockControllerAntiXray.java
+@@ -185,7 +_,7 @@
+             return;
+         }
+ 
+-        if (!Bukkit.isPrimaryThread()) {
++        if (!Bukkit.isPrimaryThread() && !(Thread.currentThread() instanceof io.canvasmc.canvas.server.chunk.AsyncChunkSendThread)) { // Canvas - async chunk sending
+             // Plugins?
+             MinecraftServer.getServer().scheduleOnMain(() -> modifyBlocks(chunkPacket, chunkPacketInfo));
+             return;

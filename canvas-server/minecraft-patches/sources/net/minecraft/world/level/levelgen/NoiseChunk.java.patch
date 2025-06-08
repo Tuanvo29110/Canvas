@@ -1,26 +1,5 @@
 --- a/net/minecraft/world/level/levelgen/NoiseChunk.java
 +++ b/net/minecraft/world/level/levelgen/NoiseChunk.java
-@@ -4,9 +_,12 @@
- import it.unimi.dsi.fastutil.longs.Long2IntMap;
- import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
- import java.util.ArrayList;
-+import java.util.Arrays;
- import java.util.HashMap;
- import java.util.List;
- import java.util.Map;
-+import java.util.concurrent.locks.ReentrantLock;
-+import java.util.function.Supplier;
- import javax.annotation.Nullable;
- import net.minecraft.core.QuartPos;
- import net.minecraft.core.SectionPos;
-@@ -19,6 +_,7 @@
- import net.minecraft.world.level.chunk.ChunkAccess;
- import net.minecraft.world.level.levelgen.blending.Blender;
- import net.minecraft.world.level.levelgen.material.MaterialRuleList;
-+import org.jetbrains.annotations.NotNull;
- 
- public class NoiseChunk implements DensityFunction.ContextProvider, DensityFunction.FunctionContext {
-     private final NoiseSettings noiseSettings;
 @@ -56,7 +_,8 @@
      long interpolationCounter;
      long arrayInterpolationCounter;
@@ -42,51 +21,12 @@
  
      public static NoiseChunk forChunk(
          ChunkAccess chunk,
-@@ -236,9 +_,11 @@
-         this.arrayInterpolationCounter++;
-     }
+@@ -238,7 +_,7 @@
  
-+    private final ReentrantLock firstCellLock = new ReentrantLock(); // Canvas - interpolation lock
      public void initializeForFirstCellX() {
-+        firstCellLock.lock(); // Canvas - interpolation lock
          if (this.interpolating) {
 -            throw new IllegalStateException("Staring interpolation twice");
 +            return; // Canvas - just return
          } else {
              this.interpolating = true;
              this.interpolationCounter = 0L;
-@@ -326,6 +_,7 @@
-     }
- 
-     public void stopInterpolation() {
-+        firstCellLock.unlock(); // Canvas - interpolation lock
-         if (!this.interpolating) {
-             throw new IllegalStateException("Staring interpolation twice");
-         } else {
-@@ -393,7 +_,7 @@
-         }
-     }
- 
--    class BlendAlpha implements NoiseChunk.NoiseChunkDensityFunction {
-+    public class BlendAlpha implements NoiseChunk.NoiseChunkDensityFunction { // Canvas - public
-         @Override
-         public DensityFunction wrapped() {
-             return DensityFunctions.BlendAlpha.INSTANCE;
-@@ -430,7 +_,7 @@
-         }
-     }
- 
--    class BlendOffset implements NoiseChunk.NoiseChunkDensityFunction {
-+    public class BlendOffset implements NoiseChunk.NoiseChunkDensityFunction { // Canvas - public
-         @Override
-         public DensityFunction wrapped() {
-             return DensityFunctions.BlendOffset.INSTANCE;
-@@ -674,7 +_,7 @@
-     public class NoiseInterpolator implements DensityFunctions.MarkerOrMarked, NoiseChunk.NoiseChunkDensityFunction {
-         double[][] slice0;
-         double[][] slice1;
--        private final DensityFunction noiseFiller;
-+        private DensityFunction noiseFiller; // Canvas - mutable
-         private double noise000;
-         private double noise001;
-         private double noise100;

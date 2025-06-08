@@ -4,22 +4,22 @@
      private int remainingCooldown;
      @Nullable
      private Path path;
-+    private boolean finishedProcessing; // Canvas - async path processing
++    private boolean finishedProcessing; // Canvas - track when path is processed
      @Nullable
      private BlockPos lastTargetPos;
      private float speedModifier;
-@@ -53,8 +_,10 @@
+@@ -53,9 +_,10 @@
              Brain<?> brain = owner.getBrain();
              WalkTarget walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET).get();
              boolean flag = this.reachedTarget(owner, walkTarget);
 -            if (!flag && this.tryComputePath(owner, walkTarget, level.getGameTime())) {
-+            if (!io.canvasmc.canvas.Config.INSTANCE.entities.pathfinding.enableThreadedPathfinding && !flag && this.tryComputePath(owner, walkTarget, level.getGameTime())) { // Canvas - async path processing
++            if (!io.canvasmc.canvas.Config.INSTANCE.entities.pathfinding.enableThreadedPathfinding && !flag && this.tryComputePath(owner, walkTarget, level.getGameTime())) { // Canvas - async path processing means we can't know if the path is reachable here
                  this.lastTargetPos = walkTarget.getTarget().currentBlockPosition();
-+                return true;
-+            } else if (io.canvasmc.canvas.Config.INSTANCE.entities.pathfinding.enableThreadedPathfinding && !flag) { // Canvas - async pathfinding
                  return true;
++            } else if (io.canvasmc.canvas.Config.INSTANCE.entities.pathfinding.enableThreadedPathfinding && !flag) { return true; // Canvas - async pathfinding
              } else {
                  brain.eraseMemory(MemoryModuleType.WALK_TARGET);
+                 if (flag) {
 @@ -69,6 +_,7 @@
  
      @Override
@@ -28,7 +28,7 @@
          if (this.path != null && this.lastTargetPos != null) {
              Optional<WalkTarget> memory = entity.getBrain().getMemory(MemoryModuleType.WALK_TARGET);
              boolean flag = memory.map(MoveToTargetSink::isWalkTargetSpectator).orElse(false);
-@@ -95,27 +_,98 @@
+@@ -95,12 +_,68 @@
  
      @Override
      protected void start(ServerLevel level, Mob entity, long gameTime) {
@@ -42,28 +42,13 @@
 +            this.path = this.computePath(entity, walkTarget);
 +            return;
 +        }
-+        // Canvas end - start processing
++        // Canvas end
          entity.getBrain().setMemory(MemoryModuleType.PATH, this.path);
          entity.getNavigation().moveTo(this.path, (double)this.speedModifier);
      }
  
      @Override
      protected void tick(ServerLevel level, Mob owner, long gameTime) {
--        Path path = owner.getNavigation().getPath();
--        Brain<?> brain = owner.getBrain();
--        if (this.path != path) {
--            this.path = path;
--            brain.setMemory(MemoryModuleType.PATH, path);
--        }
--
--        if (path != null && this.lastTargetPos != null) {
--            WalkTarget walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET).get();
--            if (walkTarget.getTarget().currentBlockPosition().distSqr(this.lastTargetPos) > 4.0 && this.tryComputePath(owner, walkTarget, level.getGameTime())) {
--                this.lastTargetPos = walkTarget.getTarget().currentBlockPosition();
--                this.start(level, owner, gameTime);
--            }
--        }
--    }
 +        // Canvas start - Async path processing
 +        if (io.canvasmc.canvas.Config.INSTANCE.entities.pathfinding.enableThreadedPathfinding) {
 +            if (this.path != null && !this.path.isProcessed()) return; // wait for processing
@@ -108,29 +93,24 @@
 +                }
 +            }
 +        } else {
-+            Path path = owner.getNavigation().getPath();
-+            Brain<?> brain = owner.getBrain();
-+            if (this.path != path) {
-+                this.path = path;
-+                brain.setMemory(MemoryModuleType.PATH, path);
-+            }
-+
-+            if (path != null && this.lastTargetPos != null) {
-+                WalkTarget walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET).get();
-+                if (walkTarget.getTarget().currentBlockPosition().distSqr(this.lastTargetPos) > 4.0
-+                        && this.tryComputePath(owner, walkTarget, level.getGameTime())) {
-+                    this.lastTargetPos = walkTarget.getTarget().currentBlockPosition();
-+                    this.start(level, owner, gameTime);
-+                }
-+            }
-+        }
-+        // Canvas end - Async path processing
++            // Canvas end
+         Path path = owner.getNavigation().getPath();
+         Brain<?> brain = owner.getBrain();
+         if (this.path != path) {
+@@ -115,7 +_,23 @@
+                 this.start(level, owner, gameTime);
+             }
+         }
+-    }
++        } // Canvas - async path processing
 +    }
 +
 +    // Canvas start - Async path processing
 +    @Nullable
 +    private Path computePath(Mob entity, WalkTarget walkTarget) {
 +        BlockPos blockPos = walkTarget.getTarget().currentBlockPosition();
++        // don't pathfind outside region
++        //if (!io.papermc.paper.util.TickThread.isTickThreadFor((ServerLevel) entity.level(), blockPos)) return null; // Canvas - Don't need this
 +        this.speedModifier = walkTarget.getSpeedModifier();
 +        Brain<?> brain = entity.getBrain();
 +        if (this.reachedTarget(entity, walkTarget)) {
@@ -138,7 +118,7 @@
 +        }
 +        return entity.getNavigation().createPath(blockPos, 0);
 +    }
-+    // Canvas end - Async path processing
++    // Canvas end
  
      private boolean tryComputePath(Mob mob, WalkTarget target, long time) {
          BlockPos blockPos = target.getTarget().currentBlockPosition();

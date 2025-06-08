@@ -26,7 +26,7 @@
 +                        }
 +                    };
 +                }
-+                // Canvas end - async path processing
++                // Canvas end
                  return new PathFinder(this.nodeEvaluator, maxVisitedNodes) {
                      @Override
                      protected float distance(Node first, Node second) {

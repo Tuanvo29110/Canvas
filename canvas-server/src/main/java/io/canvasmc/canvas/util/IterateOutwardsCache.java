@@ -2,11 +2,10 @@ package io.canvasmc.canvas.util;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
-import net.minecraft.core.BlockPos;
-
 import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.core.BlockPos;
 
 /**
  * @author 2No2Name, original implemenation by SuperCoder7979 and Gegy1000

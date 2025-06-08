@@ -10,7 +10,6 @@ import io.canvasmc.canvas.util.JsonTextFormatter;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.commands.data.EntityDataAccessor;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import org.bukkit.craftbukkit.entity.CraftEntity;

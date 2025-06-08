@@ -15,6 +15,7 @@ import io.canvasmc.canvas.config.annotation.numeric.PositiveNumericValue;
 import io.canvasmc.canvas.config.annotation.numeric.Range;
 import io.canvasmc.canvas.config.impl.ConfigAccess;
 import io.canvasmc.canvas.config.internal.ConfigurationManager;
+import io.canvasmc.canvas.entity.pathfinding.PathfindTaskRejectPolicy;
 import io.canvasmc.canvas.util.YamlTextFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -141,7 +142,10 @@ public class Config {
         public ChunkSending chunkSending = new ChunkSending();
         public static class ChunkSending {
             @AlwaysAtTop
-            @Comment("Runs chunk sending off-level/main in virtual threads")
+            @Comment(value = {
+                "Makes chunk packet preparation and sending asynchronous to improve server performance",
+                "This can significantly reduce main thread load when many players are loading chunks"
+            })
             public boolean asyncChunkSending = true;
 
             @Comment(value = {
@@ -332,10 +336,27 @@ public class Config {
             public boolean enableThreadedPathfinding = true;
 
             @PositiveNumericValue
-            public int maxProcessors = 2;
+            public int keepAlive = 60;
 
             @PositiveNumericValue
-            public int keepAlive = 60;
+            public int maxProcessors;
+
+            @PositiveNumericValue
+            public int asyncPathfindingQueueSize;
+
+            @Comment(value = {
+                "The policy to use when the queue is full and a new task is submitted.",
+                "FLUSH_ALL: All pending tasks will be run on owning thread.",
+                "CALLER_RUNS: Newly submitted task will be run on owning thread.",
+                "DISCARD: Newly submitted task will be dropped directly."
+            })
+            public PathfindTaskRejectPolicy asyncPathfindingRejectPolicy = PathfindTaskRejectPolicy.FLUSH_ALL;
+
+            {
+                final int availableProcessors = Runtime.getRuntime().availableProcessors();
+                this.maxProcessors = Math.max(availableProcessors / 6, 1);
+                this.asyncPathfindingQueueSize = this.maxProcessors * 256;
+            }
         }
 
         public EntityTracking entityTracking = new EntityTracking();
@@ -453,7 +474,7 @@ public class Config {
 
                     EntityType.byString(typeId).ifPresentOrElse(entityType ->
                             entityType.dabEnabled = false,
-                        () -> CanvasBootstrap.LOGGER.warn("Skip unknown entity {}, in {}", "entities.dynamicActivationofBrain.blackedEntities.blacklisted-entities")
+                        () -> CanvasBootstrap.LOGGER.warn("Skip unknown entity {}, in {}", typeId, "entities.dynamicActivationofBrain.blackedEntities.blacklisted-entities")
                     );
                 }
             }

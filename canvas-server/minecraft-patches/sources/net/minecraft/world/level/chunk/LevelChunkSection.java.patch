@@ -7,7 +7,7 @@
 -    short nonEmptyBlockCount; // Paper - package private
 -    private short tickingBlockCount;
 -    private short tickingFluidCount;
-+    public short nonEmptyBlockCount; // Paper - package private // Canvas - package-private -> public
++    public volatile short nonEmptyBlockCount; // Paper - package private // Canvas - package-private -> public - volatile
 +    public short tickingBlockCount; // Canvas - private -> public
 +    public short tickingFluidCount; // Canvas - private -> public
 +    private boolean isRandomlyTickingBlocksStatus; // Canvas - cache random tick block status

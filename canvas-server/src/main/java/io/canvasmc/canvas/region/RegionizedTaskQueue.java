@@ -69,8 +69,8 @@ public final class RegionizedTaskQueue {
     }
 
     public static final class WorldRegionTaskData {
-        private final ServerLevel world;
         public final MultiThreadedQueue<Runnable> globalChunkTask = new MultiThreadedQueue<>();
+        private final ServerLevel world;
         private final Map<Long, ReferenceCountData> referenceCounters = new ConcurrentHashMap<>();
 
         public WorldRegionTaskData(final ServerLevel world) {
@@ -87,7 +87,7 @@ public final class RegionizedTaskQueue {
         }
 
         public void drainGlobalChunkTasks() {
-            while (this.executeGlobalChunkTask());
+            while (this.executeGlobalChunkTask()) ;
         }
 
         public void pushGlobalChunkTask(final Runnable run) {
@@ -97,7 +97,7 @@ public final class RegionizedTaskQueue {
         private PrioritisedQueue getQueue(final boolean synchronise, final int chunkX, final int chunkZ, final boolean isChunkTask) {
             final ThreadedRegionizer<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> regioniser = this.world.regioniser;
             final ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region
-                = synchronise ? regioniser.getRegionAtUnsynchronised(chunkX, chunkZ) : regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
+                = regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
             if (region == null) {
                 return null;
             }
@@ -181,7 +181,7 @@ public final class RegionizedTaskQueue {
         // returns false if reference count is 0, otherwise increments ref count
         public boolean addCount() {
             int failures = 0;
-            for (long curr = this.referenceCount.get();;) {
+            for (long curr = this.referenceCount.get(); ; ) {
                 for (int i = 0; i < failures; ++i) {
                     Thread.onSpinWait();
                 }
@@ -294,12 +294,34 @@ public final class RegionizedTaskQueue {
     }
 
     static final class PrioritisedQueue {
-        private final ArrayDeque<ChunkBasedPriorityTask>[] queues = new ArrayDeque[Priority.TOTAL_SCHEDULABLE_PRIORITIES]; {
+        private final ArrayDeque<ChunkBasedPriorityTask>[] queues = new ArrayDeque[Priority.TOTAL_SCHEDULABLE_PRIORITIES];
+        private boolean isDestroyed;
+
+        {
             for (int i = 0; i < Priority.TOTAL_SCHEDULABLE_PRIORITIES; ++i) {
                 this.queues[i] = new ArrayDeque<>();
             }
         }
-        private boolean isDestroyed;
+
+        private static void mergeInto(final PrioritisedQueue target, final ArrayDeque<ChunkBasedPriorityTask>[] thisQueues) {
+            synchronized (target) {
+                final ArrayDeque<ChunkBasedPriorityTask>[] otherQueues = target.queues;
+                for (int i = 0; i < thisQueues.length; ++i) {
+                    final ArrayDeque<ChunkBasedPriorityTask> fromQ = thisQueues[i];
+                    final ArrayDeque<ChunkBasedPriorityTask> intoQ = otherQueues[i];
+
+                    // it is possible for another thread to queue tasks into the target queue before we do
+                    // since only the ticking region can poll, we don't have to worry about it when they are being queued -
+                    // but when we are merging, we need to ensure order is maintained (notwithstanding priority changes)
+                    // we can ensure order is maintained by adding all of the tasks from the fromQ into the intoQ at the
+                    // front of the queue, but we need to use descending iterator to ensure we do not reverse
+                    // the order of elements from fromQ
+                    for (final Iterator<ChunkBasedPriorityTask> iterator = fromQ.descendingIterator(); iterator.hasNext(); ) {
+                        intoQ.addFirst(iterator.next());
+                    }
+                }
+            }
+        }
 
         public int getScheduledTasks() {
             synchronized (this) {
@@ -330,26 +352,6 @@ public final class RegionizedTaskQueue {
             synchronized (this) {
                 this.isDestroyed = true;
                 mergeInto(target, this.queues);
-            }
-        }
-
-        private static void mergeInto(final PrioritisedQueue target, final ArrayDeque<ChunkBasedPriorityTask>[] thisQueues) {
-            synchronized (target) {
-                final ArrayDeque<ChunkBasedPriorityTask>[] otherQueues = target.queues;
-                for (int i = 0; i < thisQueues.length; ++i) {
-                    final ArrayDeque<ChunkBasedPriorityTask> fromQ = thisQueues[i];
-                    final ArrayDeque<ChunkBasedPriorityTask> intoQ = otherQueues[i];
-
-                    // it is possible for another thread to queue tasks into the target queue before we do
-                    // since only the ticking region can poll, we don't have to worry about it when they are being queued -
-                    // but when we are merging, we need to ensure order is maintained (notwithstanding priority changes)
-                    // we can ensure order is maintained by adding all of the tasks from the fromQ into the intoQ at the
-                    // front of the queue, but we need to use descending iterator to ensure we do not reverse
-                    // the order of elements from fromQ
-                    for (final Iterator<ChunkBasedPriorityTask> iterator = fromQ.descendingIterator(); iterator.hasNext();) {
-                        intoQ.addFirst(iterator.next());
-                    }
-                }
             }
         }
 
@@ -397,7 +399,7 @@ public final class RegionizedTaskQueue {
                 // merge the targets into their queues
                 for (final Iterator<Reference2ReferenceMap.Entry<ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData>, ArrayDeque<ChunkBasedPriorityTask>[]>>
                      iterator = split.reference2ReferenceEntrySet().fastIterator();
-                     iterator.hasNext();) {
+                     iterator.hasNext(); ) {
                     final Reference2ReferenceMap.Entry<ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData>, ArrayDeque<ChunkBasedPriorityTask>[]>
                         entry = iterator.next();
                     final RegionTaskQueueData taskQueueData = entry.getKey().getData().tickData.getTaskQueueData();
@@ -437,7 +439,8 @@ public final class RegionizedTaskQueue {
 
                 search_loop:
                 for (int i = 0; i <= max; ++i) {
-                    if (priority != null && priority.isLowerPriority(Priority.getPriority(i))) break search_loop; // break once we reach the limit
+                    if (priority != null && priority.isLowerPriority(Priority.getPriority(i)))
+                        break; // break once we reach the limit
                     final ArrayDeque<ChunkBasedPriorityTask> queue = queues[i];
                     while ((task = queue.pollFirst()) != null) {
                         if ((referenceCounter = task.trySetCompleting(i)) != null) {
@@ -463,8 +466,11 @@ public final class RegionizedTaskQueue {
         private static final class ChunkBasedPriorityTask implements PrioritisedExecutor.PrioritisedTask {
 
             private static final ReferenceCountData REFERENCE_COUNTER_NOT_SET = new ReferenceCountData();
+            private static final VarHandle REFERENCE_COUNTER_HANDLE = ConcurrentUtil.getVarHandle(ChunkBasedPriorityTask.class, "referenceCounter", ReferenceCountData.class);
+            private static final VarHandle PRIORITY_HANDLE = ConcurrentUtil.getVarHandle(ChunkBasedPriorityTask.class, "priority", Priority.class);
+
             static {
-                REFERENCE_COUNTER_NOT_SET.referenceCount.set((long)Integer.MIN_VALUE);
+                REFERENCE_COUNTER_NOT_SET.referenceCount.set(Integer.MIN_VALUE);
             }
 
             private final WorldRegionTaskData world;
@@ -472,12 +478,9 @@ public final class RegionizedTaskQueue {
             private final int chunkZ;
             private final long sectionLowerLeftCoord; // chunk coordinate
             private final boolean isChunkTask;
-
             private volatile ReferenceCountData referenceCounter;
-            private static final VarHandle REFERENCE_COUNTER_HANDLE = ConcurrentUtil.getVarHandle(ChunkBasedPriorityTask.class, "referenceCounter", ReferenceCountData.class);
             private Runnable run;
             private volatile Priority priority;
-            private static final VarHandle PRIORITY_HANDLE = ConcurrentUtil.getVarHandle(ChunkBasedPriorityTask.class, "priority", Priority.class);
 
             ChunkBasedPriorityTask(final WorldRegionTaskData world, final int chunkX, final int chunkZ, final boolean isChunkTask,
                                    final Runnable run, final Priority priority) {
@@ -496,19 +499,19 @@ public final class RegionizedTaskQueue {
             }
 
             private Priority getPriorityVolatile() {
-                return (Priority)PRIORITY_HANDLE.getVolatile(this);
-            }
-
-            private void setPriorityPlain(final Priority priority) {
-                PRIORITY_HANDLE.set(this, priority);
+                return (Priority) PRIORITY_HANDLE.getVolatile(this);
             }
 
             private void setPriorityVolatile(final Priority priority) {
                 PRIORITY_HANDLE.setVolatile(this, priority);
             }
 
+            private void setPriorityPlain(final Priority priority) {
+                PRIORITY_HANDLE.set(this, priority);
+            }
+
             private Priority compareAndExchangePriority(final Priority expect, final Priority update) {
-                return (Priority)PRIORITY_HANDLE.compareAndExchange(this, expect, update);
+                return (Priority) PRIORITY_HANDLE.compareAndExchange(this, expect, update);
             }
 
             private void setReferenceCounterPlain(final ReferenceCountData value) {
@@ -516,11 +519,11 @@ public final class RegionizedTaskQueue {
             }
 
             private ReferenceCountData getReferenceCounterVolatile() {
-                return (ReferenceCountData)REFERENCE_COUNTER_HANDLE.get(this);
+                return (ReferenceCountData) REFERENCE_COUNTER_HANDLE.get(this);
             }
 
             private ReferenceCountData compareAndExchangeReferenceCounter(final ReferenceCountData expect, final ReferenceCountData update) {
-                return (ReferenceCountData)REFERENCE_COUNTER_HANDLE.compareAndExchange(this, expect, update);
+                return (ReferenceCountData) REFERENCE_COUNTER_HANDLE.compareAndExchange(this, expect, update);
             }
 
             private void executeInternal() {
@@ -537,7 +540,7 @@ public final class RegionizedTaskQueue {
 
             private boolean tryComplete(final boolean cancel) {
                 int failures = 0;
-                for (ReferenceCountData curr = this.getReferenceCounterVolatile();;) {
+                for (ReferenceCountData curr = this.getReferenceCounterVolatile(); ; ) {
                     if (curr == null) {
                         return false;
                     }
@@ -594,7 +597,7 @@ public final class RegionizedTaskQueue {
                 }
 
                 boolean synchronise = false;
-                for (;;) {
+                for (; ; ) {
                     // we need to synchronise for repeated operations so that we guarantee that we do not retrieve
                     // the same queue again, as the region lock will be given to us only when the merge/split operation
                     // is done
@@ -638,7 +641,7 @@ public final class RegionizedTaskQueue {
 
             private ReferenceCountData trySetCompleting(final int minPriority) {
                 // first, try to set priority to EXECUTING
-                for (Priority curr = this.getPriorityVolatile();;) {
+                for (Priority curr = this.getPriorityVolatile(); ; ) {
                     if (curr.isLowerPriority(minPriority)) {
                         return null;
                     }
@@ -648,7 +651,7 @@ public final class RegionizedTaskQueue {
                     } // else: continue
                 }
 
-                for (ReferenceCountData curr = this.getReferenceCounterVolatile();;) {
+                for (ReferenceCountData curr = this.getReferenceCounterVolatile(); ; ) {
                     if (curr == null) {
                         // something acquired before us
                         return null;
@@ -668,7 +671,7 @@ public final class RegionizedTaskQueue {
 
             private void updatePriorityInQueue() {
                 boolean synchronise = false;
-                for (;;) {
+                for (; ; ) {
                     final ReferenceCountData referenceCount = this.getReferenceCounterVolatile();
                     if (referenceCount == REFERENCE_COUNTER_NOT_SET || referenceCount == null) {
                         // cancelled or not queued
@@ -721,7 +724,7 @@ public final class RegionizedTaskQueue {
             @Override
             public boolean lowerPriority(final Priority priority) {
                 int failures = 0;
-                for (Priority curr = this.getPriorityVolatile();;) {
+                for (Priority curr = this.getPriorityVolatile(); ; ) {
                     if (curr == Priority.COMPLETING) {
                         return false;
                     }
@@ -770,7 +773,7 @@ public final class RegionizedTaskQueue {
             @Override
             public boolean setPriority(final Priority priority) {
                 int failures = 0;
-                for (Priority curr = this.getPriorityVolatile();;) {
+                for (Priority curr = this.getPriorityVolatile(); ; ) {
                     if (curr == Priority.COMPLETING) {
                         return false;
                     }
@@ -794,7 +797,7 @@ public final class RegionizedTaskQueue {
             @Override
             public boolean raisePriority(final Priority priority) {
                 int failures = 0;
-                for (Priority curr = this.getPriorityVolatile();;) {
+                for (Priority curr = this.getPriorityVolatile(); ; ) {
                     if (curr == Priority.COMPLETING) {
                         return false;
                     }

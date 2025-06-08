@@ -1,6 +1,5 @@
 package io.canvasmc.canvas.util;
 
-import io.canvasmc.canvas.Config;
 import io.canvasmc.canvas.region.ServerRegions;
 import io.canvasmc.canvas.server.network.ConnectionHandlePhases;
 import java.util.Set;
@@ -29,17 +28,21 @@ public class ConnectionPool {
     public Set<Connection> getConnectionsForRegion(ServerRegions.@NotNull WorldTickData regionData) {
         Set<Connection> retVal = new ObjectHashSet<>();
         if (regionData.region == null) {
-            if (getServer().isRegionized()) throw new RuntimeException("Cannot pull connections from world data with regionizing enabled!");
+            if (getServer().isRegionized())
+                throw new RuntimeException("Cannot pull connections from world data with regionizing enabled!");
             // world data was provided
             for (final Connection connection : this.backend) {
-                if (connection.getPhase().equals(ConnectionHandlePhases.PLAY) && connection.getPlayer().serverLevel() == regionData.world) retVal.add(connection);
+                if (connection.getPhase().equals(ConnectionHandlePhases.PLAY) && connection.getPlayer().serverLevel() == regionData.world)
+                    retVal.add(connection);
             }
         } else {
             // region is not null, isolate per region
             for (final Connection connection : this.backend) {
-                if (connection.getPlayer() == null || regionData.world != connection.getPlayer().serverLevel()) continue; // ensure player isn't null and ensure the player is actually in this world
+                if (connection.getPlayer() == null || regionData.world != connection.getPlayer().serverLevel())
+                    continue; // ensure player isn't null and ensure the player is actually in this world
                 long packed = connection.getPlayer().chunkPosition().longKey;
-                if (connection.getPhase().equals(ConnectionHandlePhases.PLAY) && regionData.region.getOwnedChunks().contains(packed)) retVal.add(connection);
+                if (connection.getPhase().equals(ConnectionHandlePhases.PLAY) && regionData.region.getOwnedChunks().contains(packed))
+                    retVal.add(connection);
             }
         }
         return retVal;

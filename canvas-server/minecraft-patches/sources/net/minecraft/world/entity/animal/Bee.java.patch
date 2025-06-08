@@ -1,14 +1,5 @@
 --- a/net/minecraft/world/entity/animal/Bee.java
 +++ b/net/minecraft/world/entity/animal/Bee.java
-@@ -936,7 +_,7 @@
-                         } else {
-                             Bee.this.pathfindRandomlyTowards(Bee.this.hivePos);
-                         }
--                    } else {
-+                    } else if (navigation.getPath() != null && navigation.getPath().isProcessed()) { // Canvas - check processing
-                         boolean flag = this.pathfindDirectlyTowards(Bee.this.hivePos);
-                         if (!flag) {
-                             this.dropAndBlacklistHive();
 @@ -990,7 +_,7 @@
                  return true;
              } else {

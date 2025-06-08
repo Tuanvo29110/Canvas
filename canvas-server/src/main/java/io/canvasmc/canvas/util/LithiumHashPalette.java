@@ -2,6 +2,9 @@ package io.canvasmc.canvas.util;
 
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
@@ -12,10 +15,6 @@ import net.minecraft.world.level.chunk.MissingPaletteEntryException;
 import net.minecraft.world.level.chunk.Palette;
 import net.minecraft.world.level.chunk.PaletteResize;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Predicate;
 
 import static it.unimi.dsi.fastutil.Hash.FAST_LOAD_FACTOR;
 
@@ -62,6 +61,10 @@ public class LithiumHashPalette<T> implements Palette<T> {
         this.entries = (T[]) new Object[capacity];
         this.table = new Reference2IntOpenHashMap<>(capacity, FAST_LOAD_FACTOR);
         this.table.defaultReturnValue(ABSENT_VALUE);
+    }
+
+    public static <A> Palette<A> create(int bits, IdMap<A> idList, PaletteResize<A> listener, List<A> list) {
+        return new LithiumHashPalette<>(idList, bits, listener, list);
     }
 
     @Override
@@ -199,9 +202,5 @@ public class LithiumHashPalette<T> implements Palette<T> {
     public List<T> getElements() {
         T[] copy = Arrays.copyOf(this.entries, this.size);
         return Arrays.asList(copy);
-    }
-
-    public static <A> Palette<A> create(int bits, IdMap<A> idList, PaletteResize<A> listener, List<A> list) {
-        return new LithiumHashPalette<>(idList, bits, listener, list);
     }
 }

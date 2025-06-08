@@ -3,7 +3,6 @@ package io.canvasmc.canvas.command.debug;
 import ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import io.canvasmc.canvas.Config;
 import io.canvasmc.canvas.command.CommandInstance;
 import io.canvasmc.canvas.region.ServerRegions;
 import net.minecraft.commands.CommandSourceStack;

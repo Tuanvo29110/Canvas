@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/ai/behavior/AcquirePoi.java
 +++ b/net/minecraft/world/entity/ai/behavior/AcquirePoi.java
-@@ -94,21 +_,54 @@
+@@ -94,21 +_,20 @@
                                  }
                              }
                              // Paper end - optimise POI access
@@ -19,50 +19,52 @@
 +                                Path possiblePath = findPathToPois(mob, set);
 +
 +                                // wait on the path to be processed
-+                                io.canvasmc.canvas.entity.pathfinding.AsyncPathProcessor.awaitProcessing(possiblePath, level, path -> {
-+                                    // read canReach check
-+                                    if (path == null || !path.canReach()) {
-+                                        for (Pair<Holder<PoiType>, BlockPos> pair : set) {
-+                                            map.computeIfAbsent(
-+                                                    pair.getSecond().asLong(),
-+                                                    m -> new JitteredLinearRetry(mob.level().random, time)
-+                                            );
-+                                        }
-+                                        return;
-+                                    }
-+                                    BlockPos blockPos = path.getTarget();
-+                                    poiManager.getType(blockPos).ifPresent(poiType -> {
-+                                        poiManager.take(acquirablePois,
-+                                                (holder, blockPos2) -> blockPos2.equals(blockPos),
-+                                                blockPos,
-+                                                1
-+                                        );
-+                                        memoryAccessor.set(GlobalPos.of(level.dimension(), blockPos));
-+                                        entityEventId.ifPresent(status -> level.broadcastEntityEvent(mob, status));
-+                                        map.clear();
-+                                        DebugPackets.sendPoiTicketCountPacket(level, blockPos);
-+                                    });
++                                io.canvasmc.canvas.entity.pathfinding.AsyncPathProcessor.awaitProcessing(level, possiblePath, path -> { // Canvas - Threaded Regions
++                                    processPath(acquirablePois, entityEventId, map, memoryAccessor, level, mob, time, poiManager, set, path);
                                  });
                              } else {
 -                                for (Pair<Holder<PoiType>, BlockPos> pair : set) {
 -                                    map.computeIfAbsent(pair.getSecond().asLong(), l -> new AcquirePoi.JitteredLinearRetry(level.random, time));
+-                                }
 +                                Path path = findPathToPois(mob, set);
-+                                if (path != null && path.canReach()) {
-+                                    BlockPos target = path.getTarget();
-+                                    poiManager.getType(target).ifPresent(holder -> {
-+                                        poiManager.take(acquirablePois, (holder1, blockPos) -> blockPos.equals(target), target, 1);
-+                                        memoryAccessor.set(GlobalPos.of(level.dimension(), target));
-+                                        entityEventId.ifPresent(id -> level.broadcastEntityEvent(mob, id));
-+                                        map.clear();
-+                                        DebugPackets.sendPoiTicketCountPacket(level, target);
-+                                    });
-+                                } else {
-+                                    for (Pair<Holder<PoiType>, BlockPos> pair : set) {
-+                                        map.computeIfAbsent(pair.getSecond().asLong(), l -> new AcquirePoi.JitteredLinearRetry(level.random, time));
-+                                    }
-                                 }
++                                processPath(acquirablePois, entityEventId, map, memoryAccessor, level, mob, time, poiManager, set, path);
                              }
 +                            // Canvas end - Async path processing
  
                              return true;
                          }
+@@ -119,6 +_,34 @@
+             ? oneShot
+             : BehaviorBuilder.create(instance -> instance.group(instance.absent(existingAbsentMemory)).apply(instance, memoryAccessor -> oneShot));
+     }
++
++    // Canvas start - Async path processing
++    private static void processPath(Predicate<Holder<PoiType>> acquirablePois,
++                                    Optional<Byte> entityEventId,
++                                    Long2ObjectMap<JitteredLinearRetry> map,
++                                    net.minecraft.world.entity.ai.behavior.declarative.MemoryAccessor<com.mojang.datafixers.kinds.Const.Mu<com.mojang.datafixers.util.Unit>, GlobalPos> memoryAccessor,
++                                    ServerLevel level,
++                                    PathfinderMob mob,
++                                    long time,
++                                    PoiManager poiManager,
++                                    Set<Pair<Holder<PoiType>, BlockPos>> set,
++                                    @org.jetbrains.annotations.Nullable Path path) {
++        if (path != null && path.canReach()) {
++            BlockPos target = path.getTarget();
++            poiManager.getType(target).ifPresent(holder -> {
++                poiManager.take(acquirablePois, (holder1, blockPos) -> blockPos.equals(target), target, 1);
++                memoryAccessor.set(GlobalPos.of(level.dimension(), target));
++                entityEventId.ifPresent(id -> level.broadcastEntityEvent(mob, id));
++                map.clear();
++                DebugPackets.sendPoiTicketCountPacket(level, target);
++            });
++        } else {
++            for (Pair<Holder<PoiType>, BlockPos> pair : set) {
++                map.computeIfAbsent(pair.getSecond().asLong(), l -> new AcquirePoi.JitteredLinearRetry(level.random, time));
++            }
++        }
++    }
++    // Canvas end - Async path processing
+ 
+     @Nullable
+     public static Path findPathToPois(Mob mob, Set<Pair<Holder<PoiType>, BlockPos>> poiPositions) {

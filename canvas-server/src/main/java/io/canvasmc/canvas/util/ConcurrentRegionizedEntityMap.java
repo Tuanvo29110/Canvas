@@ -24,14 +24,14 @@ import org.jetbrains.annotations.NotNull;
 public class ConcurrentRegionizedEntityMap implements Int2ObjectMap<ChunkMap.TrackedEntity> {
     private final ServerLevel world;
 
+    public ConcurrentRegionizedEntityMap(ServerLevel world) {
+        this.world = world;
+    }
+
     public Set<ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData>> getRegions() {
         Set<ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData>> regions = new ObjectHashSet<>();
         this.world.regioniser.computeForAllRegionsUnsynchronised(regions::add);
         return regions;
-    }
-
-    public ConcurrentRegionizedEntityMap(ServerLevel world) {
-        this.world = world;
     }
 
     @Override
@@ -101,7 +101,8 @@ public class ConcurrentRegionizedEntityMap implements Int2ObjectMap<ChunkMap.Tra
         } else {
             ServerRegions.WorldTickData data = ServerRegions.getTickData(this.world);
             for (final Entity trackerEntity : data.trackerEntities) {
-                if (trackerEntity != null) entrySetMap.put(trackerEntity.getId(), trackerEntity.moonrise$getTrackedEntity());
+                if (trackerEntity != null)
+                    entrySetMap.put(trackerEntity.getId(), trackerEntity.moonrise$getTrackedEntity());
             }
         }
         return entrySetMap.int2ObjectEntrySet();

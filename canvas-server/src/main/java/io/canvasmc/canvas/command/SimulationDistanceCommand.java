@@ -21,7 +21,7 @@ import static net.minecraft.commands.Commands.literal;
 public final class SimulationDistanceCommand implements CommandInstance {
 
     @Override
-    public  LiteralCommandNode<CommandSourceStack> register(@NotNull CommandDispatcher<CommandSourceStack> commandDispatcher) {
+    public LiteralCommandNode<CommandSourceStack> register(@NotNull CommandDispatcher<CommandSourceStack> commandDispatcher) {
         return commandDispatcher.register(
             literal("simulationdistance")
                 .requires((src) -> src.hasPermission(3, "canvas.world.command.simulationdistance"))

@@ -24,7 +24,8 @@ public class FlySpeedCommand implements CommandInstance {
                     if (context.getSource().isPlayer()) {
                         ServerPlayer player = context.getSource().getPlayer();
                         Objects.requireNonNull(player, "player cannot be null").getBukkitEntity().setFlySpeed(speedPercentage / 100);
-                    } else context.getSource().sendFailure(Component.literal("Only a player can execute this command!"));
+                    } else
+                        context.getSource().sendFailure(Component.literal("Only a player can execute this command!"));
                     return 1;
                 }))
         );

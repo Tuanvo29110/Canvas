@@ -1,14 +1,21 @@
 package io.canvasmc.canvas.util;
 
+import java.util.AbstractCollection;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.AbstractSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.AbstractMap.SimpleEntry;
 
 // fast array backend map with O(1) get & put & remove
 public final class AttributeInstanceArrayMap implements Map<Holder<Attribute>, AttributeInstance>, Cloneable {
@@ -171,6 +178,15 @@ public final class AttributeInstanceArrayMap implements Map<Holder<Attribute>, A
         return c;
     }
 
+    private int findNextOccupied(int start) {
+        for (int i = start; i < a.length; i++) {
+            if (a[i] != null) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     private final class KeySet extends AbstractSet<Holder<Attribute>> {
         @Override
         public @NotNull Iterator<Holder<Attribute>> iterator() {
@@ -310,14 +326,5 @@ public final class AttributeInstanceArrayMap implements Map<Holder<Attribute>, A
             setByIndex(currentIndex, null);
             currentIndex = -1;
         }
-    }
-
-    private int findNextOccupied(int start) {
-        for (int i = start; i < a.length; i++) {
-            if (a[i] != null) {
-                return i;
-            }
-        }
-        return -1;
     }
 }

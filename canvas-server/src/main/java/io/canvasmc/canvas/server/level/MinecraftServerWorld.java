@@ -63,47 +63,6 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
         this.bukkitScheduler = new CraftScheduler();
     }
 
-    public static class TickHandle implements WrappedTick {
-        @Override
-        public boolean blockTick(final @NotNull WrappedTickLoop loop, final @NotNull BooleanSupplier hasTimeLeft, final int tickCount) {
-            ServerLevel thisAsTickable = (ServerLevel) loop; // we are extended by ServerLevel
-            if (thisAsTickable.levelTickData == null) {
-                thisAsTickable.levelTickData = new ServerRegions.WorldTickData(thisAsTickable, null);
-            }
-            TickScheduler.setTickingData(thisAsTickable.levelTickData);
-            MinecraftServer server = MinecraftServer.getServer();
-            if (!server.isTicking()) {
-                while (hasTimeLeft.getAsBoolean()) {
-                    thisAsTickable.runTasks(hasTimeLeft);
-                }
-                TickScheduler.setTickingData(null);
-                return !thisAsTickable.cancelled.get();
-            }
-            thisAsTickable.hasTasks = true;
-            int i = server.pauseWhileEmptySeconds() * 20;
-            if (Config.INSTANCE.ticking.emptySleepPerWorlds && i > 0) {
-                if (thisAsTickable.players().isEmpty() && !thisAsTickable.tickRateManager().isSprinting() && server.pluginsBlockingSleep.isEmpty()) {
-                    thisAsTickable.emptyTicks++;
-                } else {
-                    thisAsTickable.emptyTicks = 0;
-                }
-
-                if (thisAsTickable.emptyTicks >= i) {
-                    if (thisAsTickable.emptyTicks == i) {
-                        TickScheduler.LOGGER.info("Level empty for {} seconds, pausing", server.pauseWhileEmptySeconds());
-                        thisAsTickable.sleep();
-                        thisAsTickable.emptyTicks = 0;
-                        return true; // on next tick it will realize we need to sleep and kill the task
-                    }
-                }
-            }
-            thisAsTickable.runTasks(hasTimeLeft);
-            thisAsTickable.bench(() -> thisAsTickable.worldtick(hasTimeLeft, tickCount));
-            TickScheduler.setTickingData(null);
-            return !thisAsTickable.cancelled.get();
-        }
-    }
-
     @Override
     public boolean runTasks(final BooleanSupplier canContinue) {
         MultiWatchdogThread.RunningTick watchdogEntry = new MultiWatchdogThread.RunningTick(Util.getNanos(), this, Thread.currentThread());
@@ -441,5 +400,46 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
         }
         return root.append(Component.text("* First number is ticking entities, second number is non-ticking entities", ThreadedServerHealthDump.PRIMARY))
             .build();
+    }
+
+    public static class TickHandle implements WrappedTick {
+        @Override
+        public boolean blockTick(final @NotNull WrappedTickLoop loop, final @NotNull BooleanSupplier hasTimeLeft, final int tickCount) {
+            ServerLevel thisAsTickable = (ServerLevel) loop; // we are extended by ServerLevel
+            if (thisAsTickable.levelTickData == null) {
+                thisAsTickable.levelTickData = new ServerRegions.WorldTickData(thisAsTickable, null);
+            }
+            TickScheduler.setTickingData(thisAsTickable.levelTickData);
+            MinecraftServer server = MinecraftServer.getServer();
+            if (!server.isTicking()) {
+                while (hasTimeLeft.getAsBoolean()) {
+                    thisAsTickable.runTasks(hasTimeLeft);
+                }
+                TickScheduler.setTickingData(null);
+                return !thisAsTickable.cancelled.get();
+            }
+            thisAsTickable.hasTasks = true;
+            int i = server.pauseWhileEmptySeconds() * 20;
+            if (Config.INSTANCE.ticking.emptySleepPerWorlds && i > 0) {
+                if (thisAsTickable.players().isEmpty() && !thisAsTickable.tickRateManager().isSprinting() && server.pluginsBlockingSleep.isEmpty()) {
+                    thisAsTickable.emptyTicks++;
+                } else {
+                    thisAsTickable.emptyTicks = 0;
+                }
+
+                if (thisAsTickable.emptyTicks >= i) {
+                    if (thisAsTickable.emptyTicks == i) {
+                        TickScheduler.LOGGER.info("Level empty for {} seconds, pausing", server.pauseWhileEmptySeconds());
+                        thisAsTickable.sleep();
+                        thisAsTickable.emptyTicks = 0;
+                        return true; // on next tick it will realize we need to sleep and kill the task
+                    }
+                }
+            }
+            thisAsTickable.runTasks(hasTimeLeft);
+            thisAsTickable.bench(() -> thisAsTickable.worldtick(hasTimeLeft, tickCount));
+            TickScheduler.setTickingData(null);
+            return !thisAsTickable.cancelled.get();
+        }
     }
 }

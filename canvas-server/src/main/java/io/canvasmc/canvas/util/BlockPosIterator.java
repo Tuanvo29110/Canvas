@@ -20,6 +20,15 @@ public final class BlockPosIterator extends AbstractIterator<BlockPos> {
     private final int endZ;
     private @Nullable MutableBlockPos pos = null;
 
+    public BlockPosIterator(AABB bb) {
+        this.startX = Mth.floor(bb.minX);
+        this.startY = Mth.floor(bb.minY);
+        this.startZ = Mth.floor(bb.minZ);
+        this.endX = Mth.floor(bb.maxX);
+        this.endY = Mth.floor(bb.maxY);
+        this.endZ = Mth.floor(bb.maxZ);
+    }
+
     public static Iterable<BlockPos> iterable(AABB bb) {
         return () -> new BlockPosIterator(bb);
     }
@@ -30,15 +39,6 @@ public final class BlockPosIterator extends AbstractIterator<BlockPos> {
         AABB fromBB = boundingBox.move(-vec.x, -vec.y, -vec.z);
         AABB searchArea = fromBB.expandTowards(movement);
         return BlockPosIterator.iterable(searchArea);
-    }
-
-    public BlockPosIterator(AABB bb) {
-        this.startX = Mth.floor(bb.minX);
-        this.startY = Mth.floor(bb.minY);
-        this.startZ = Mth.floor(bb.minZ);
-        this.endX = Mth.floor(bb.maxX);
-        this.endY = Mth.floor(bb.maxY);
-        this.endZ = Mth.floor(bb.maxZ);
     }
 
     @Override

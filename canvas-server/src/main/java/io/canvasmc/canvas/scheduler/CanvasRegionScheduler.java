@@ -20,7 +20,6 @@ import java.util.logging.Level;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
-import net.minecraft.util.Unit;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.CraftWorld;
@@ -150,9 +149,13 @@ public class CanvasRegionScheduler implements RegionScheduler {
 
     public static final class Scheduler {
 
+        // map of region section -> map of deadline -> list of tasks
+        private final Long2ObjectOpenHashMap<Long2ObjectOpenHashMap<List<LocationScheduledTask>>> tasksByDeadlineBySection = new Long2ObjectOpenHashMap<>();
+        private long tickCount = 0L;
+
         public static void merge(final @NotNull Scheduler from, final Scheduler into, final long fromTickOffset) {
             for (final Iterator<Long2ObjectMap.Entry<Long2ObjectOpenHashMap<List<LocationScheduledTask>>>> sectionIterator = from.tasksByDeadlineBySection.long2ObjectEntrySet().fastIterator();
-                 sectionIterator.hasNext();) {
+                 sectionIterator.hasNext(); ) {
                 final Long2ObjectMap.Entry<Long2ObjectOpenHashMap<List<LocationScheduledTask>>> entry = sectionIterator.next();
                 final long sectionKey = entry.getLongKey();
                 final Long2ObjectOpenHashMap<List<LocationScheduledTask>> section = entry.getValue();
@@ -160,7 +163,7 @@ public class CanvasRegionScheduler implements RegionScheduler {
                 final Long2ObjectOpenHashMap<List<LocationScheduledTask>> sectionAdjusted = new Long2ObjectOpenHashMap<>(section.size());
 
                 for (final Iterator<Long2ObjectMap.Entry<List<LocationScheduledTask>>> iterator = section.long2ObjectEntrySet().fastIterator();
-                     iterator.hasNext();) {
+                     iterator.hasNext(); ) {
                     final Long2ObjectMap.Entry<List<LocationScheduledTask>> e = iterator.next();
                     final long newTick = e.getLongKey() + fromTickOffset;
                     final List<LocationScheduledTask> tasks = e.getValue();
@@ -173,13 +176,13 @@ public class CanvasRegionScheduler implements RegionScheduler {
         }
 
         public static void split(final Scheduler from, final int chunkToRegionShift, final Long2ReferenceOpenHashMap<ServerRegions.WorldTickData> regionToData,
-                          final @NotNull ReferenceOpenHashSet<ServerRegions.WorldTickData> dataSet) {
+                                 final @NotNull ReferenceOpenHashSet<ServerRegions.WorldTickData> dataSet) {
             for (final ServerRegions.WorldTickData into : dataSet) {
                 into.regionScheduler.tickCount = from.tickCount;
             }
 
             for (final Iterator<Long2ObjectMap.Entry<Long2ObjectOpenHashMap<List<LocationScheduledTask>>>> sectionIterator = from.tasksByDeadlineBySection.long2ObjectEntrySet().fastIterator();
-                 sectionIterator.hasNext();) {
+                 sectionIterator.hasNext(); ) {
                 final Long2ObjectMap.Entry<Long2ObjectOpenHashMap<List<LocationScheduledTask>>> entry = sectionIterator.next();
                 final long sectionKey = entry.getLongKey();
                 final Long2ObjectOpenHashMap<List<LocationScheduledTask>> section = entry.getValue();
@@ -189,10 +192,6 @@ public class CanvasRegionScheduler implements RegionScheduler {
                 into.regionScheduler.tasksByDeadlineBySection.put(sectionKey, section);
             }
         }
-
-        private long tickCount = 0L;
-        // map of region section -> map of deadline -> list of tasks
-        private final Long2ObjectOpenHashMap<Long2ObjectOpenHashMap<List<LocationScheduledTask>>> tasksByDeadlineBySection = new Long2ObjectOpenHashMap<>();
 
         private void addTicket(final int sectionX, final int sectionZ, ServerRegions.@NotNull WorldTickData data) {
             final ServerLevel world = data.world;
@@ -226,7 +225,7 @@ public class CanvasRegionScheduler implements RegionScheduler {
                 return;
             }
 
-            final int shift = ((CraftWorld)world).getHandle().moonrise$getRegionChunkShift();
+            final int shift = ((CraftWorld) world).getHandle().moonrise$getRegionChunkShift();
             final int sectionX = task.chunkX >> shift;
             final int sectionZ = task.chunkZ >> shift;
 
@@ -252,7 +251,7 @@ public class CanvasRegionScheduler implements RegionScheduler {
             final List<LocationScheduledTask> run = new ArrayList<>();
 
             for (final Iterator<Long2ObjectMap.Entry<Long2ObjectOpenHashMap<List<LocationScheduledTask>>>> sectionIterator = this.tasksByDeadlineBySection.long2ObjectEntrySet().fastIterator();
-                 sectionIterator.hasNext();) {
+                 sectionIterator.hasNext(); ) {
                 final Long2ObjectMap.Entry<Long2ObjectOpenHashMap<List<LocationScheduledTask>>> entry = sectionIterator.next();
                 final long sectionKey = entry.getLongKey();
                 final Long2ObjectOpenHashMap<List<LocationScheduledTask>> section = entry.getValue();
@@ -279,21 +278,19 @@ public class CanvasRegionScheduler implements RegionScheduler {
 
     private static final class LocationScheduledTask implements ScheduledTask, Runnable {
 
-        private static final int STATE_IDLE                = 0;
-        private static final int STATE_EXECUTING           = 1;
+        private static final int STATE_IDLE = 0;
+        private static final int STATE_EXECUTING = 1;
         private static final int STATE_EXECUTING_CANCELLED = 2;
-        private static final int STATE_FINISHED            = 3;
-        private static final int STATE_CANCELLED           = 4;
-
+        private static final int STATE_FINISHED = 3;
+        private static final int STATE_CANCELLED = 4;
+        private static final VarHandle STATE_HANDLE = ConcurrentUtil.getVarHandle(LocationScheduledTask.class, "state", int.class);
         private final Plugin plugin;
         private final int chunkX;
         private final int chunkZ;
         private final long repeatDelay; // in ticks
         private World world;
         private Consumer<ScheduledTask> run;
-
         private volatile int state;
-        private static final VarHandle STATE_HANDLE = ConcurrentUtil.getVarHandle(LocationScheduledTask.class, "state", int.class);
 
         private LocationScheduledTask(final Plugin plugin, final World world, final int chunkX, final int chunkZ,
                                       final long repeatDelay, final Consumer<ScheduledTask> run) {
@@ -305,16 +302,16 @@ public class CanvasRegionScheduler implements RegionScheduler {
             this.run = run;
         }
 
-        private final int getStateVolatile() {
-            return (int)STATE_HANDLE.get(this);
+        private int getStateVolatile() {
+            return (int) STATE_HANDLE.get(this);
         }
 
-        private final int compareAndExchangeStateVolatile(final int expect, final int update) {
-            return (int)STATE_HANDLE.compareAndExchange(this, expect, update);
-        }
-
-        private final void setStateVolatile(final int value) {
+        private void setStateVolatile(final int value) {
             STATE_HANDLE.setVolatile(this, value);
+        }
+
+        private int compareAndExchangeStateVolatile(final int expect, final int update) {
+            return (int) STATE_HANDLE.compareAndExchange(this, expect, update);
         }
 
         @Override
@@ -366,7 +363,7 @@ public class CanvasRegionScheduler implements RegionScheduler {
 
         @Override
         public CancelledState cancel() {
-            for (int curr = this.getStateVolatile();;) {
+            for (int curr = this.getStateVolatile(); ; ) {
                 switch (curr) {
                     case STATE_IDLE: {
                         if (STATE_IDLE == (curr = this.compareAndExchangeStateVolatile(STATE_IDLE, STATE_CANCELLED))) {

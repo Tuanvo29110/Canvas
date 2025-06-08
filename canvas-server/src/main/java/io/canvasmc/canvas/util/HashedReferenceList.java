@@ -3,13 +3,12 @@ package io.canvasmc.canvas.util;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A List implementation that maintains a hash-based counter for O(1) element lookup.
@@ -33,6 +32,13 @@ public class HashedReferenceList<T> implements List<T> {
         for (T obj : this.list) {
             this.counter.addTo(obj, 1);
         }
+    }
+
+    /**
+     * Factory method to create a HashedReferenceList from an existing list.
+     */
+    public static <T> HashedReferenceList<T> wrapper(List<T> list) {
+        return new HashedReferenceList<>(list);
     }
 
     @Override
@@ -292,12 +298,5 @@ public class HashedReferenceList<T> implements List<T> {
         if (this.counter.addTo((T) o, -1) <= 1) {
             this.counter.removeInt(o);
         }
-    }
-
-    /**
-     * Factory method to create a HashedReferenceList from an existing list.
-     */
-    public static <T> HashedReferenceList<T> wrapper(List<T> list) {
-        return new HashedReferenceList<>(list);
     }
 }

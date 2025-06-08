@@ -27,6 +27,17 @@ public class WorldSpecificViewDistancePersistentState extends SavedData {
         return mgr.computeIfAbsent(TYPE);
     }
 
+    private static @NotNull WorldSpecificViewDistancePersistentState unpackState(WorldSpecificViewDistancePersistentState.@NotNull Packed packedState) {
+        var state = new WorldSpecificViewDistancePersistentState();
+        state.localViewDistance = packedState.localViewDistance;
+        state.localSimulationDistance = packedState.localSimulationDistance;
+        return state;
+    }
+
+    private static WorldSpecificViewDistancePersistentState.@NotNull Packed pack(@NotNull WorldSpecificViewDistancePersistentState state) {
+        return new Packed(state.localViewDistance, state.localSimulationDistance);
+    }
+
     public int getLocalViewDistance() {
         return localViewDistance;
     }
@@ -43,17 +54,6 @@ public class WorldSpecificViewDistancePersistentState extends SavedData {
 
     public void setLocalSimulationDistance(int localSimulationDistance) {
         this.localSimulationDistance = localSimulationDistance;
-    }
-
-    private static @NotNull WorldSpecificViewDistancePersistentState unpackState(WorldSpecificViewDistancePersistentState.@NotNull Packed packedState) {
-        var state = new WorldSpecificViewDistancePersistentState();
-        state.localViewDistance = packedState.localViewDistance;
-        state.localSimulationDistance = packedState.localSimulationDistance;
-        return state;
-    }
-
-    private static WorldSpecificViewDistancePersistentState.@NotNull Packed pack(@NotNull WorldSpecificViewDistancePersistentState state) {
-        return new Packed(state.localViewDistance, state.localSimulationDistance);
     }
 
     @Override

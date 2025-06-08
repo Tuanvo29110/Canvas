@@ -13,7 +13,7 @@
 +    public boolean isProcessed() {
 +        return true;
 +    }
-+    // Canvas end - async path processing
++    // Canvas end
 +
      public void advance() {
          this.nextNodeIndex++;
@@ -22,7 +22,7 @@
      }
  
      public boolean sameAs(@Nullable Path pathentity) {
-+        if (pathentity == this) return true; // Canvas - async path processing
++        if (pathentity == this) return true; // Canvas - short circuit
          if (pathentity == null) {
              return false;
          } else if (pathentity.nodes.size() != this.nodes.size()) {

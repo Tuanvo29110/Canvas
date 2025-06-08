@@ -2,13 +2,13 @@ package io.canvasmc.canvas.server;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.canvasmc.canvas.Config;
-import net.minecraft.Util;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import net.minecraft.Util;
 
 public class AsyncPlayerDataSaving {
     public static final ExecutorService IO_POOL = new ThreadPoolExecutor(

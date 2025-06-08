@@ -1,20 +1,8 @@
 package io.canvasmc.canvas;
 
 import io.papermc.paper.ServerBuildInfo;
-import java.io.File;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
-import joptsimple.util.PathConverter;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Eula;
@@ -23,10 +11,20 @@ import org.bukkit.craftbukkit.Main;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
+import java.io.File;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class CanvasBootstrap {
-    public static ComponentLogger LOGGER = ComponentLogger.logger("Canvas");
     public static final Instant BOOT_TIME = Instant.now();
+    public static ComponentLogger LOGGER = ComponentLogger.logger("Canvas");
     public static boolean RUNNING_IN_IDE = false;
 
     public static OptionSet bootstrap(String[] args) {

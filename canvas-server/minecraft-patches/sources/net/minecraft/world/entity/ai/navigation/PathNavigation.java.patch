@@ -1,6 +1,10 @@
 --- a/net/minecraft/world/entity/ai/navigation/PathNavigation.java
 +++ b/net/minecraft/world/entity/ai/navigation/PathNavigation.java
-@@ -8,6 +_,7 @@
+@@ -5,9 +_,11 @@
+ import java.util.stream.Collectors;
+ import java.util.stream.Stream;
+ import javax.annotation.Nullable;
++import io.canvasmc.canvas.Config;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Vec3i;
  import net.minecraft.network.protocol.game.DebugPackets;
@@ -8,15 +12,6 @@
  import net.minecraft.tags.BlockTags;
  import net.minecraft.util.Mth;
  import net.minecraft.util.profiling.Profiler;
-@@ -35,7 +_,7 @@
-     protected final Mob mob;
-     protected final Level level;
-     @Nullable
--    protected Path path;
-+    protected volatile Path path; // Canvas - volatile
-     protected double speedModifier;
-     protected int tick;
-     protected int lastStuckCheck;
 @@ -96,11 +_,18 @@
      }
  
@@ -42,10 +37,10 @@
              return null;
          } else if (!this.canUpdatePath()) {
              return null;
-+            // Canvas start - catch early if it's still processing these positions let it keep processing
++        // Canvas start - catch early if it's still processing these positions let it keep processing
 +        } else if (this.path instanceof io.canvasmc.canvas.entity.pathfinding.AsyncPath asyncPath && !asyncPath.isProcessed() && asyncPath.hasSameProcessingPositions(targets)) {
 +            return this.path;
-+            // Canvas end - catch early if it's still processing these positions let it keep processing
++        // Canvas end
          } else if (this.path != null && !this.path.isDone() && targets.contains(this.targetPos)) {
              return this.path;
          } else {
@@ -53,17 +48,12 @@
              int i = (int)(followRange + regionOffset);
              PathNavigationRegion pathNavigationRegion = new PathNavigationRegion(this.level, blockPos.offset(-i, -i, -i), blockPos.offset(i, i, i));
              Path path = this.pathFinder.findPath(pathNavigationRegion, this.mob, targets, followRange, accuracy, this.maxVisitedNodesMultiplier);
--            profilerFiller.pop();
--            if (path != null && path.getTarget() != null) {
--                this.targetPos = path.getTarget();
--                this.reachRange = accuracy;
--                this.resetStuckTimeout();
-+            // Canvas start - async path processing
-+            if (io.canvasmc.canvas.Config.INSTANCE.entities.pathfinding.enableThreadedPathfinding) {
++            // Canvas start async path processing
++            if (Config.INSTANCE.entities.pathfinding.enableThreadedPathfinding) {
 +                // assign early a target position. most calls will only have 1 position
 +                if (!targets.isEmpty()) this.targetPos = targets.iterator().next();
 +
-+                io.canvasmc.canvas.entity.pathfinding.AsyncPathProcessor.awaitProcessing(path, this.mob.level(), processedPath -> {
++                io.canvasmc.canvas.entity.pathfinding.AsyncPathProcessor.awaitProcessing((ServerLevel) this.level, path, processedPath -> { // Canvas - Threaded Regions
 +                    // check that processing didn't take so long that we calculated a new path
 +                    if (processedPath != this.path) return;
 +
@@ -74,14 +64,14 @@
 +                    }
 +                });
 +            } else {
-+                profilerFiller.pop();
-+                if (path != null && path.getTarget() != null) {
-+                    this.targetPos = path.getTarget();
-+                    this.reachRange = accuracy;
-+                    this.resetStuckTimeout();
-+                }
++            // Canvas end
+             profilerFiller.pop();
+             if (path != null && path.getTarget() != null) {
+                 this.targetPos = path.getTarget();
+                 this.reachRange = accuracy;
+                 this.resetStuckTimeout();
              }
-+            // Canvas end - async path processing
++            } // Canvas - async path processing
  
              return path;
          }
@@ -160,41 +150,3 @@
      }
  
      protected abstract Vec3 getTempMobPos();
-@@ -457,16 +_,31 @@
-         return this.nodeEvaluator.canFloat();
-     }
- 
--    public boolean shouldRecomputePath(BlockPos pos) {
-+    public synchronized boolean shouldRecomputePath(BlockPos pos) { // Canvas - synchronize
-         if (this.hasDelayedRecomputation) {
-             return false;
--        } else if (this.path != null && !this.path.isDone() && this.path.getNodeCount() != 0) {
--            Node endNode = this.path.getEndNode();
-+        // Canvas start
-+        }
-+
-+        Path localPath = this.path;
-+        if (localPath == null) {
-+            return false;
-+        }
-+
-+        if (localPath.isProcessed() && !localPath.isDone() && localPath.getNodeCount() != 0) { // Skip if not processed
-+            Node endNode = localPath.getEndNode();
-             Vec3 vec3 = new Vec3((endNode.x + this.mob.getX()) / 2.0, (endNode.y + this.mob.getY()) / 2.0, (endNode.z + this.mob.getZ()) / 2.0);
--            return pos.closerToCenterThan(vec3, this.path.getNodeCount() - this.path.getNextNodeIndex());
--        } else {
--            return false;
-+            int nodeCount = localPath.getNodeCount();
-+            int nextNodeIndex = localPath.getNextNodeIndex();
-+            // Check again, since technically this can get modified from another thread
-+            if (this.path == null) {
-+                return false;
-+            }
-+            return pos.closerToCenterThan(vec3, nodeCount - nextNodeIndex);
-         }
-+
-+        return false;
-+        // Canvas end
-     }
- 
-     public float getMaxDistanceToWaypoint() {

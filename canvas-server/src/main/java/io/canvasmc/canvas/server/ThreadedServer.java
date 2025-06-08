@@ -40,18 +40,17 @@ import org.bukkit.World;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ThreadedServer implements ThreadedBukkitServer {
     public static final Logger LOGGER = LoggerFactory.getLogger("ThreadedServer");
     public static BooleanSupplier SHOULD_KEEP_TICKING;
-    private final DedicatedServer server;
     public final TickScheduler scheduler;
+    public final RegionizedTaskQueue taskQueue = new RegionizedTaskQueue(); // Threaded Regions
+    private final DedicatedServer server;
     protected long tickSection;
     private boolean started = false;
-    public final RegionizedTaskQueue taskQueue = new RegionizedTaskQueue(); // Threaded Regions
 
     public ThreadedServer(MinecraftServer server) {
         ThreadedBukkitServer.setInstance(this);
@@ -95,7 +94,7 @@ public class ThreadedServer implements ThreadedBukkitServer {
             MultiLoopThreadDumper.REGISTRY.add("Tick Runner ");
             MultiLoopThreadDumper.REGISTRY.add("EntityTracking");
             MultiLoopThreadDumper.REGISTRY.add("MobSpawning");
-            MultiLoopThreadDumper.REGISTRY.add("Canvas PlayerData IO Thread");
+            MultiLoopThreadDumper.REGISTRY.add("Canvas Async "/*this includes things like pathfinding, chunk sending, etc*/);
 
             if (!server.initServer()) {
                 throw new IllegalStateException("Failed to initialize server");

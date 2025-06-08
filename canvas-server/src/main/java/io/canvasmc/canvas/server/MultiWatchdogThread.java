@@ -39,10 +39,10 @@ public class MultiWatchdogThread extends TickThread {
     private final long earlyWarningEvery;
     private final long earlyWarningDelay;
     private final LinkedHashSet<RunningTick> ticks = new LinkedHashSet<>();
+    private final String BREAK = "------------------------------";
     private long timeoutTime;
     private boolean restart;
     private volatile boolean stopping;
-    private final String BREAK = "------------------------------";
 
     private MultiWatchdogThread(long timeoutTime, boolean restart) {
         super("MutliLoop Watchdog Thread");

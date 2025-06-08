@@ -2,7 +2,6 @@ package io.canvasmc.canvas.entity.tracking;
 
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.util.TickThread;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
 import ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity;
 import io.canvasmc.canvas.Config;
 import io.canvasmc.canvas.region.ServerRegions;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ThreadedTracker {
+    public static final AtomicBoolean canceled = new AtomicBoolean(false);
     private static final ThreadPoolExecutor processor = new ThreadPoolExecutor(
         Config.INSTANCE.entities.entityTracking.maxProcessors,
         Integer.MAX_VALUE,
@@ -28,7 +28,6 @@ public class ThreadedTracker {
     );
     public static ThreadedTracker INSTANCE = new ThreadedTracker(Config.INSTANCE.entities.entityTracking.enableThreadedTracking);
     public final boolean enableThreading;
-    public static final AtomicBoolean canceled = new AtomicBoolean(false);
 
     ThreadedTracker(boolean enableThreading) {
         this.enableThreading = enableThreading || Config.INSTANCE.ticking.enableThreadedRegionizing; // if we are regionized, enable threading
@@ -42,7 +41,7 @@ public class ThreadedTracker {
         if (this.enableThreading) {
             if (canceled.get()) return true;
             final NearbyPlayers nearbyPlayers = world.moonrise$getNearbyPlayers();
-            final Entity[] trackerEntitiesRaw = ServerRegions.getTickData((ServerLevel) world).trackerEntities.getRawDataUnchecked(); // Canvas - Threaded Regions
+            final Entity[] trackerEntitiesRaw = ServerRegions.getTickData(world).trackerEntities.getRawDataUnchecked(); // Canvas - Threaded Regions
 
             processor.execute(() -> {
                 for (final Entity entity : trackerEntitiesRaw) {
@@ -54,7 +53,7 @@ public class ThreadedTracker {
                     }
 
                     trackedInstance.moonrise$tick(nearbyPlayers.getChunk(entity.chunkPosition()));
-                    @Nullable FullChunkStatus chunkStatus = ((ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity)entity).moonrise$getChunkStatus(); // Canvas
+                    @Nullable FullChunkStatus chunkStatus = ((ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity) entity).moonrise$getChunkStatus(); // Canvas
                     if ((trackedInstance).moonrise$hasPlayers()
                         || (chunkStatus == null || chunkStatus.isOrAfter(FullChunkStatus.ENTITY_TICKING))) {
                         trackedInstance.serverEntity.sendChanges();

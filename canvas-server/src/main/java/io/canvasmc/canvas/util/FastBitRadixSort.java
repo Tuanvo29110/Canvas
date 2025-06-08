@@ -1,9 +1,8 @@
 package io.canvasmc.canvas.util;
 
-import net.minecraft.world.entity.Entity;
-
-import java.lang.reflect.Array; // Required for Array.newInstance
+import java.lang.reflect.Array;
 import java.util.List;
+import net.minecraft.world.entity.Entity;
 
 public class FastBitRadixSort {
 

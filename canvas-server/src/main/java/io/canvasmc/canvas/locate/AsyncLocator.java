@@ -3,6 +3,14 @@ package io.canvasmc.canvas.locate;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.datafixers.util.Pair;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -12,34 +20,9 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.Structure;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-
 public class AsyncLocator {
 
     private static final ExecutorService LOCATING_EXECUTOR_SERVICE;
-
-    private AsyncLocator() {
-    }
-
-    public static class AsyncLocatorThread extends TickThread {
-        private static final AtomicInteger THREAD_COUNTER = new AtomicInteger(0);
-
-        public AsyncLocatorThread(Runnable run, String name) {
-            super(null, run, name, THREAD_COUNTER.incrementAndGet());
-        }
-
-        @Override
-        public void run() {
-            super.run();
-        }
-    }
 
     static {
         int threads = io.canvasmc.canvas.Config.INSTANCE.asyncLocator.asyncLocatorThreads;
@@ -62,6 +45,9 @@ public class AsyncLocator {
                 .setPriority(Thread.NORM_PRIORITY - 2)
                 .build()
         );
+    }
+
+    private AsyncLocator() {
     }
 
     public static void shutdownExecutorService() {
@@ -130,6 +116,19 @@ public class AsyncLocator {
         Pair<BlockPos, Holder<Structure>> foundPair = level.getChunkSource().getGenerator()
             .findNearestMapStructure(level, structureSet, pos, searchRadius, skipExistingChunks);
         completableFuture.complete(foundPair);
+    }
+
+    public static class AsyncLocatorThread extends TickThread {
+        private static final AtomicInteger THREAD_COUNTER = new AtomicInteger(0);
+
+        public AsyncLocatorThread(Runnable run, String name) {
+            super(null, run, name, THREAD_COUNTER.incrementAndGet());
+        }
+
+        @Override
+        public void run() {
+            super.run();
+        }
     }
 
     /**
