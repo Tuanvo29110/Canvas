@@ -9,7 +9,7 @@ public class ChunkRunnable implements Runnable {
     public final int chunkX;
     public final int chunkZ;
     public final ServerLevel world;
-    private final Runnable toRun;
+    private volatile Runnable toRun;
 
     public ChunkRunnable(int chunkX, int chunkZ, ServerLevel world, Runnable run) {
         this.chunkX = chunkX;
