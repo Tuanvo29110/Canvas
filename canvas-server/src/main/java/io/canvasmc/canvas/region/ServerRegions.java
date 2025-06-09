@@ -42,6 +42,7 @@ import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ChunkHolder;
@@ -81,9 +82,6 @@ import org.jetbrains.annotations.Nullable;
 public class ServerRegions {
 
     public static @NotNull WorldTickData getTickData(@NotNull ServerLevel level) {
-        if (Thread.currentThread() instanceof AsyncProcessor.ProcessingThread && level.server.isRegionized()) {
-            throw new IllegalStateException("Cannot pull tick data from async processor, use getRegionizedTickData");
-        }
         if (level.levelTickData == null) {
             level.levelTickData = new WorldTickData(level, null);
         }
@@ -304,7 +302,12 @@ public class ServerRegions {
                 final ChunkPos pos = player.chunkPosition();
                 // Note: It is impossible for an entity in the world to _not_ be in an entity chunk, which means
                 // the chunk holder must _exist_, and so the region section exists.
-                conn.switchTo(regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift)));
+                WorldTickData data = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
+                if (data == null) {
+                    conn.disconnect(Component.literal("No longer owned by region"));
+                    continue;
+                }
+                conn.switchTo(data);
             }
             // entities
             for (final ServerPlayer player : from.localPlayers) {

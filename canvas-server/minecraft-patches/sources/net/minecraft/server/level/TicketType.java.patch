@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/TicketType.java
 +++ b/net/minecraft/server/level/TicketType.java
-@@ -45,12 +_,18 @@
+@@ -45,21 +_,34 @@
      public static final TicketType FORCED = register("forced", 0L, true, TicketType.TicketUse.LOADING_AND_SIMULATION);
      public static final TicketType PORTAL = register("portal", 300L, true, TicketType.TicketUse.LOADING_AND_SIMULATION);
      public static final TicketType ENDER_PEARL = register("ender_pearl", 40L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
@@ -19,4 +19,29 @@
 +    // Canvas end
  
      public static TicketType register(String name, long timeout, boolean persist, TicketType.TicketUse use) {
-         return Registry.register(BuiltInRegistries.TICKET_TYPE, name, new TicketType(timeout, persist, use));
+-        return Registry.register(BuiltInRegistries.TICKET_TYPE, name, new TicketType(timeout, persist, use));
++        return Registry.register(BuiltInRegistries.TICKET_TYPE, name, new TicketType(timeout, persist, use).setName(name)); // Canvas - add name for debug
+     }
+ 
+     // Paper start - rewrite chunk system - convert to class
+     private final long timeout;
+     private final boolean persist;
+     private final net.minecraft.server.level.TicketType.TicketUse use;
++    // Canvas start - add name for debug
++    private String name = "unknown_plugin";
++    public TicketType<T> setName(String name) {
++        this.name = name;
++        return this;
++    }
++    // Canvas end
+ 
+     public TicketType(long timeout, boolean persist, net.minecraft.server.level.TicketType.TicketUse use) {
+         this.timeout = timeout;
+@@ -95,6 +_,7 @@
+         return "TicketType[" +
+             "timeout=" + timeout + ", " +
+             "persist=" + persist + ", " +
++            "name=" + name + ", " + // Canvas - add name for debug
+             "use=" + use + ']';
+     }
+     // Paper end - rewrite chunk system - convert to class

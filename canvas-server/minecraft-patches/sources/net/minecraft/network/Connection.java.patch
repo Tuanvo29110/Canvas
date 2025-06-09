@@ -36,7 +36,7 @@
 +    // Canvas start - packet processor
 +    private final AtomicReference<ServerRegions.WorldTickData> currentlyOwned = new AtomicReference<>();
 +
-+    public synchronized void switchTo(ServerRegions.WorldTickData data) {
++    public synchronized void switchTo(@org.jetbrains.annotations.NotNull ServerRegions.WorldTickData data) {
 +        if (this.currentlyOwned.get() != null) {
 +            this.currentlyOwned.get().connections.remove(this);
 +        }
@@ -84,14 +84,19 @@
  
      public Connection(PacketFlow receiving) {
          this.receiving = receiving;
-@@ -589,7 +_,10 @@
+@@ -589,7 +_,15 @@
      private static int joinAttemptsThisTick; // Paper - Buffer joins to world
      private static int currTick; // Paper - Buffer joins to world
      private static int tickSecond; // Purpur - Max joins per second
 +    private volatile boolean isTicking = false; // Canvas - ensure no double tick
      public void tick() {
-+        if (this.isTicking) throw new RuntimeException("double ticking"); // Canvas - ensure no double tick
-+        this.isTicking = true; // Canvas - ensure no double tick
++        // Canvas start - ensure no double tick
++        if (this.isTicking) {
++            LOGGER.debug("double ticking client connection of player \"{}\", returning", this.getPlayer().getName().getString());
++            return;
++        }
++        this.isTicking = true;
++        // Canvas end
          this.flushQueue();
          // Paper start - Buffer joins to world
          if (Connection.currTick != net.minecraft.server.MinecraftServer.currentTick) {
