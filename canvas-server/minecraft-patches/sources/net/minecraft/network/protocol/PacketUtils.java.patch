@@ -1,9 +1,10 @@
 --- a/net/minecraft/network/protocol/PacketUtils.java
 +++ b/net/minecraft/network/protocol/PacketUtils.java
-@@ -2,14 +_,21 @@
+@@ -2,14 +_,24 @@
  
  import com.mojang.logging.LogUtils;
  import javax.annotation.Nullable;
++import io.canvasmc.canvas.region.ServerRegions;
 +import io.papermc.paper.threadedregions.ThreadedRegionizer;
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
@@ -11,8 +12,10 @@
  import net.minecraft.network.PacketListener;
 +import net.minecraft.server.MinecraftServer;
  import net.minecraft.server.RunningOnDifferentThreadException;
++import net.minecraft.server.level.ServerChunkCache;
  import net.minecraft.server.level.ServerLevel;
 +import net.minecraft.server.level.ServerPlayer;
++import net.minecraft.server.level.TicketType;
 +import net.minecraft.server.network.ServerConfigurationPacketListenerImpl;
 +import net.minecraft.server.network.ServerGamePacketListenerImpl;
 +import net.minecraft.server.network.ServerLoginPacketListenerImpl;
@@ -37,7 +40,7 @@
                  if (processor instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl serverCommonPacketListener && serverCommonPacketListener.processedDisconnect) return; // Paper - Don't handle sync packets for kicked players
                  if (processor.shouldHandleMessage(packet)) {
                      try {
-@@ -37,13 +_,28 @@
+@@ -37,13 +_,43 @@
                  } else {
                      LOGGER.debug("Ignoring packet due to disconnection: {}", packet);
                  }
@@ -45,9 +48,6 @@
 -                } finally {
 -                    totalMainThreadPacketsProcessed.getAndIncrement();
 -                    packetProcessing.pop();
--                }
--                // Paper end - detailed watchdog information
--            });
 +            // Canvas start
 +            };
 +            if (processor instanceof ServerGamePacketListenerImpl gamePacketListener) {
@@ -58,9 +58,26 @@
 +            } else if (processor instanceof ServerConfigurationPacketListenerImpl configurationPacketListener) {
 +                // push to main
 +                ServerPlayer serverPlayer = configurationPacketListener.player;
-+                configurationPacketListener.connection.switchTo(serverPlayer.server.isRegionized() ?
-+                    Objects.requireNonNull(serverPlayer.serverLevel().regioniser.getRegionAtUnsynchronised(serverPlayer.chunkPosition().x, serverPlayer.chunkPosition().z)).getData().tickData :
-+                    Objects.requireNonNull(serverPlayer.serverLevel().levelTickData));
++                final ServerRegions.WorldTickData switchTo;
++                if (serverPlayer.server.isRegionized()) {
++                    final int chunkX = serverPlayer.chunkPosition().x;
++                    final int chunkZ = serverPlayer.chunkPosition().z;
++                    ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region =
++                        serverPlayer.serverLevel().regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
++                    if (region == null) {
++                        // we need to load this chunk
++                        final ServerChunkCache chunkSource = serverPlayer.serverLevel().chunkSource;
++                        chunkSource.updateRegionTicket(serverPlayer.chunkPosition(), true, TicketType.LOGIN);
++                        chunkSource.getChunk(chunkX, chunkZ, true);
++                        region = serverPlayer.serverLevel().regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
++                    }
++                    switchTo = Objects.requireNonNull(region, "region cannot be null").getData().tickData;
++                } else {
++                    switchTo = Objects.requireNonNull(serverPlayer.serverLevel().levelTickData, "level tick data cannot be null");
+                 }
+-                // Paper end - detailed watchdog information
+-            });
++                configurationPacketListener.connection.switchTo(switchTo);
 +                configurationPacketListener.player.serverLevel().wake();
 +                configurationPacketListener.connection.schedulePacket(run);
 +            } else if (processor instanceof ServerLoginPacketListenerImpl) {
