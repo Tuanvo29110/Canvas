@@ -121,7 +121,7 @@
      public final io.papermc.paper.entity.activation.ActivationType activationType = io.papermc.paper.entity.activation.ActivationType.activationTypeFor(this); // Paper - EAR 2/tracking ranges
      // Paper start - EAR 2
      public final boolean defaultActivationState;
-@@ -372,6 +_,10 @@
+@@ -376,6 +_,10 @@
      private int sectionY = Integer.MIN_VALUE;
      private int sectionZ = Integer.MIN_VALUE;
      private boolean updatingSectionStatus;
@@ -132,7 +132,7 @@
  
      @Override
      public final boolean moonrise$isHardColliding() {
-@@ -522,23 +_,45 @@
+@@ -526,23 +_,45 @@
      // Purpur end - Add canSaveToDisk to Entity
  
      // Purpur start - copied from Mob - API for any mob to burn daylight
@@ -186,7 +186,7 @@
      public Entity(EntityType<?> entityType, Level level) {
          this.type = entityType;
          this.level = level;
-@@ -673,7 +_,7 @@
+@@ -677,7 +_,7 @@
      public void resendPossiblyDesyncedEntityData(net.minecraft.server.level.ServerPlayer player) {
          if (player.getBukkitEntity().canSee(this.getBukkitEntity())) {
              ServerLevel world = (net.minecraft.server.level.ServerLevel)this.level();
@@ -195,7 +195,7 @@
              if (tracker == null) {
                  return;
              }
-@@ -847,7 +_,9 @@
+@@ -851,7 +_,9 @@
          ProfilerFiller profilerFiller = Profiler.get();
          profilerFiller.push("entityBaseTick");
          if (firstTick && this instanceof net.minecraft.world.entity.NeutralMob neutralMob) neutralMob.tickInitialPersistentAnger(level); // Paper - Prevent entity loading causing async lookups
@@ -205,7 +205,7 @@
          if (this.isPassenger() && this.getVehicle().isRemoved()) {
              this.stopRiding();
          }
-@@ -895,7 +_,13 @@
+@@ -899,7 +_,13 @@
  
          this.checkBelowWorld();
          if (!this.level().isClientSide) {
@@ -219,7 +219,7 @@
          }
  
          this.firstTick = false;
-@@ -1062,12 +_,34 @@
+@@ -1066,12 +_,34 @@
          return this.mainSupportingBlockPos.isPresent() && this.mainSupportingBlockPos.get().equals(pos);
      }
  
@@ -254,7 +254,7 @@
                  this.mainSupportingBlockPos = optional;
              } else if (movement != null) {
                  AABB aabb1 = aabb.move(-movement.x, 0.0, -movement.z);
-@@ -1088,35 +_,16 @@
+@@ -1092,35 +_,16 @@
          return this.onGround;
      }
  
@@ -292,7 +292,7 @@
                  // Paper end - EAR 2
                  movement = this.limitPistonMovement(movement);
                  if (movement.equals(Vec3.ZERO)) {
-@@ -1139,7 +_,7 @@
+@@ -1143,7 +_,7 @@
              }
              // Paper end
  
@@ -301,7 +301,7 @@
              Vec3 vec3 = this.collide(movement);
              double d = vec3.lengthSqr();
              if (d > 1.0E-7 || movement.lengthSqr() - d < 1.0E-7) {
-@@ -1235,18 +_,20 @@
+@@ -1239,18 +_,20 @@
                      }
                  }
  
@@ -330,7 +330,7 @@
      }
  
      private void applyMovementEmissionAndPlaySound(Entity.MovementEmission movementEmission, Vec3 movement, BlockPos pos, BlockState state) {
-@@ -1411,6 +_,12 @@
+@@ -1415,6 +_,12 @@
      }
  
      protected BlockPos getOnPos(float yOffset) {
@@ -343,7 +343,7 @@
          if (this.mainSupportingBlockPos.isPresent() && this.level().getChunkIfLoadedImmediately(this.mainSupportingBlockPos.get()) != null) { // Paper - ensure no loads
              BlockPos blockPos = this.mainSupportingBlockPos.get();
              if (!(yOffset > 1.0E-5F)) {
-@@ -1424,10 +_,7 @@
+@@ -1428,10 +_,7 @@
                      : blockPos;
              }
          } else {
@@ -355,7 +355,7 @@
          }
      }
  
-@@ -1455,7 +_,7 @@
+@@ -1459,7 +_,7 @@
          if (pos.lengthSqr() <= 1.0E-7) {
              return pos;
          } else {
@@ -364,7 +364,7 @@
              if (gameTime != this.pistonDeltasGameTime) {
                  Arrays.fill(this.pistonDeltas, 0.0);
                  this.pistonDeltasGameTime = gameTime;
-@@ -1640,6 +_,7 @@
+@@ -1644,6 +_,7 @@
      private void checkInsideBlocks(List<Entity.Movement> movements, InsideBlockEffectApplier.StepBasedCollector stepBasedCollector) {
          if (this.isAffectedByBlocks()) {
              LongSet set = this.visitedBlocks;
@@ -372,7 +372,7 @@
  
              for (Entity.Movement movement : movements) {
                  Vec3 vec3 = movement.from();
-@@ -1651,7 +_,21 @@
+@@ -1655,7 +_,21 @@
                      aabb,
                      (pos, step) -> {
                          if (this.isAlive()) {
@@ -395,7 +395,7 @@
                              if (!blockState.isAir()) {
                                  if (set.add(pos.asLong())) {
                                      VoxelShape entityInsideCollisionShape = blockState.getEntityInsideCollisionShape(this.level(), pos, this);
-@@ -1940,7 +_,7 @@
+@@ -1944,7 +_,7 @@
  
      private void updateFluidOnEyes() {
          this.wasEyeInWater = this.isEyeInFluid(FluidTags.WATER);
@@ -404,7 +404,7 @@
          double eyeY = this.getEyeY();
          if (!(
              this.getVehicle() instanceof AbstractBoat abstractBoat
-@@ -1949,11 +_,30 @@
+@@ -1953,11 +_,30 @@
                  && abstractBoat.getBoundingBox().minY <= eyeY
          )) {
              BlockPos blockPos = BlockPos.containing(this.getX(), eyeY, this.getZ());
@@ -437,7 +437,7 @@
          }
      }
  
-@@ -2033,8 +_,20 @@
+@@ -2037,8 +_,20 @@
      }
  
      public boolean isEyeInFluid(TagKey<Fluid> fluidTag) {
@@ -460,7 +460,7 @@
  
      public boolean isInLava() {
          return !this.firstTick && this.fluidHeight.getDouble(FluidTags.LAVA) > 0.0;
-@@ -2059,10 +_,16 @@
+@@ -2063,10 +_,16 @@
  
      @Deprecated
      public float getLightLevelDependentMagicValue() {
@@ -478,7 +478,7 @@
  
      public void absSnapTo(double x, double y, double z, float yRot, float xRot) {
          this.absSnapTo(x, y, z);
-@@ -2181,8 +_,9 @@
+@@ -2185,8 +_,9 @@
      }
  
      public void push(Entity entity) {
@@ -489,7 +489,7 @@
                  if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper - Collision option for requiring a player participant
                  double d = entity.getX() - this.getX();
                  double d1 = entity.getZ() - this.getZ();
-@@ -2846,7 +_,13 @@
+@@ -2850,7 +_,13 @@
  
          for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
              for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
@@ -504,7 +504,7 @@
  
                  for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
                      final int sectionIdx = currChunkY - minSection;
-@@ -3280,6 +_,7 @@
+@@ -3284,6 +_,7 @@
                      TeleportTransition portalDestination = this.portalProcess.getPortalDestination(serverLevel, this);
                      if (portalDestination != null) {
                          ServerLevel level = portalDestination.newLevel();
@@ -512,7 +512,7 @@
                          if (this instanceof ServerPlayer // CraftBukkit - always call event for players
                              || (level != null && (level.dimension() == serverLevel.dimension() || this.canTeleport(serverLevel, level)))) { // CraftBukkit
                              this.teleport(portalDestination);
-@@ -3776,6 +_,7 @@
+@@ -3780,6 +_,7 @@
      public Entity teleport(TeleportTransition teleportTransition) {
          // Paper start - Fix item duplication and teleport issues
          if ((!this.isAlive() || !this.valid) && (teleportTransition.newLevel() != this.level)) {
@@ -520,7 +520,7 @@
              LOGGER.warn("Illegal Entity Teleport {} to {}:{}", this, teleportTransition.newLevel(), teleportTransition.position(), new Throwable());
              return null;
          }
-@@ -3854,6 +_,7 @@
+@@ -3858,6 +_,7 @@
      }
  
      private Entity teleportCrossDimension(ServerLevel level, TeleportTransition teleportTransition) {
@@ -528,7 +528,7 @@
          List<Entity> passengers = this.getPassengers();
          List<Entity> list = new ArrayList<>(passengers.size());
          this.ejectPassengers();
-@@ -3926,10 +_,128 @@
+@@ -3930,10 +_,128 @@
          }
      }
  
@@ -658,7 +658,7 @@
          this.setYRot(positionMoveRotation1.yRot());
          this.setYHeadRot(positionMoveRotation1.yRot());
          this.setXRot(positionMoveRotation1.xRot());
-@@ -4542,9 +_,7 @@
+@@ -4546,9 +_,7 @@
  
      // Paper start - optimise collisions
      public boolean updateFluidHeightAndDoFluidPushing(final TagKey<Fluid> fluid, final double flowScale) {
@@ -669,7 +669,7 @@
  
          final AABB boundingBox = this.getBoundingBox().deflate(1.0E-3);
  
-@@ -4581,7 +_,11 @@
+@@ -4585,7 +_,11 @@
  
          for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
              for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
@@ -682,7 +682,7 @@
  
                  // bound y
                  for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
-@@ -4722,11 +_,18 @@
+@@ -4726,11 +_,18 @@
      }
  
      public BlockState getInBlockState() {
@@ -701,7 +701,7 @@
      }
  
      public ChunkPos chunkPosition() {
-@@ -4738,9 +_,7 @@
+@@ -4742,9 +_,7 @@
      }
  
      public void setDeltaMovement(Vec3 deltaMovement) {
@@ -711,7 +711,7 @@
      }
  
      public void addDeltaMovement(Vec3 addend) {
-@@ -4825,15 +_,18 @@
+@@ -4829,15 +_,18 @@
  
      public final void setPosRaw(double x, double y, double z, boolean forceBoundingBoxUpdate) {
          // Paper start - rewrite chunk system
@@ -730,7 +730,7 @@
              return;
          }
          // Paper end - Block invalid positions and bounding box
-@@ -4848,15 +_,15 @@
+@@ -4852,15 +_,15 @@
          }
          // Paper end - Fix MC-4
          if (this.position.x != x || this.position.y != y || this.position.z != z) {
@@ -748,7 +748,7 @@
                  if (SectionPos.blockToSectionCoord(floor) != this.chunkPosition.x || SectionPos.blockToSectionCoord(floor2) != this.chunkPosition.z) {
                      this.chunkPosition = new ChunkPos(this.blockPosition);
                  }
-@@ -4870,6 +_,7 @@
+@@ -4874,6 +_,7 @@
              this.setBoundingBox(this.makeBoundingBox());
          }
          // Paper end - Block invalid positions and bounding box
@@ -756,7 +756,7 @@
      }
  
      public void checkDespawn() {
-@@ -4967,6 +_,14 @@
+@@ -4971,6 +_,14 @@
      @Override
      public final void setRemoved(Entity.RemovalReason removalReason, @Nullable org.bukkit.event.entity.EntityRemoveEvent.Cause cause) { // CraftBukkit - add Bukkit remove cause
          // Paper start - rewrite chunk system
@@ -771,7 +771,7 @@
          if (!((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel)this.level).moonrise$getEntityLookup().canRemoveEntity((Entity)(Object)this)) {
              LOGGER.warn("Entity " + this + " is currently prevented from being removed from the world since it is processing section status updates", new Throwable());
              return;
-@@ -4990,6 +_,14 @@
+@@ -4994,6 +_,14 @@
              // Players need to be special cased, because they are regularly removed from the world
              this.retireScheduler();
          }
@@ -786,7 +786,7 @@
          // Paper end - Folia schedulers
      }
  
-@@ -5005,6 +_,25 @@
+@@ -5009,6 +_,25 @@
          // we need to force create the bukkit entity so that the scheduler can be retired...
          this.getBukkitEntity().taskScheduler.retire();
      }
