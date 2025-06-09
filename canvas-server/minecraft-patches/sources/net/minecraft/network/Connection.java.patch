@@ -29,7 +29,7 @@
  import net.minecraft.util.Mth;
  import net.minecraft.util.debugchart.LocalSampleLogger;
  import org.apache.commons.lang3.Validate;
-@@ -149,6 +_,56 @@
+@@ -149,6 +_,54 @@
      public boolean isPending = true;
      public boolean queueImmunity;
      // Paper end - Optimize network
@@ -42,15 +42,13 @@
 +        }
 +        this.currentlyOwned.set(data);
 +        data.connections.add(this);
++        this.setPhase(ConnectionHandlePhases.PLAY);
 +    }
 +
 +    public synchronized void ensureCorrect(ServerRegions.WorldTickData data) {
 +        ServerRegions.WorldTickData current = this.currentlyOwned.get();
 +        if (current != null && current != data) {
 +            throw new IllegalStateException("connection mismatched");
-+        }
-+        if (this.getPlayer() != null && this.phase.equals(ConnectionHandlePhases.PLAY) && !data.getLocalPlayers().contains(this.getPlayer())) {
-+            throw new IllegalStateException("player connection mismatched");
 +        }
 +    }
 +
@@ -86,6 +84,17 @@
  
      public Connection(PacketFlow receiving) {
          this.receiving = receiving;
+@@ -589,7 +_,10 @@
+     private static int joinAttemptsThisTick; // Paper - Buffer joins to world
+     private static int currTick; // Paper - Buffer joins to world
+     private static int tickSecond; // Purpur - Max joins per second
++    private volatile boolean isTicking = false; // Canvas - ensure no double tick
+     public void tick() {
++        if (this.isTicking) throw new RuntimeException("double ticking"); // Canvas - ensure no double tick
++        this.isTicking = true; // Canvas - ensure no double tick
+         this.flushQueue();
+         // Paper start - Buffer joins to world
+         if (Connection.currTick != net.minecraft.server.MinecraftServer.currentTick) {
 @@ -610,13 +_,7 @@
              if (!(this.packetListener instanceof net.minecraft.server.network.ServerLoginPacketListenerImpl loginPacketListener)
                  || loginPacketListener.state != net.minecraft.server.network.ServerLoginPacketListenerImpl.State.VERIFYING
@@ -100,11 +109,12 @@
              } // Paper end - Buffer joins to world
          }
  
-@@ -635,6 +_,7 @@
+@@ -635,6 +_,8 @@
          if (this.bandwidthDebugMonitor != null) {
              this.bandwidthDebugMonitor.tick();
          }
 +        this.tickPackets(); // Canvas - packet processor
++        this.isTicking = false; // Canvas - ensure no double tick
      }
  
      protected void tickSecond() {
