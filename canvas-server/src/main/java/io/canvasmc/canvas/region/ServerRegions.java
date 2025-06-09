@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ChunkHolder;
@@ -274,6 +275,14 @@ public class ServerRegions {
 
         private void splitRegion(@NotNull Long2ReferenceOpenHashMap<WorldTickData> regionToData, int chunkToRegionShift, final @NotNull ReferenceOpenHashSet<WorldTickData> dataSet) {
             final WorldTickData from = this.tickData;
+            // connections
+            for (final Connection conn : from.connections) {
+                final ServerPlayer player = conn.getPlayer();
+                final ChunkPos pos = player.chunkPosition();
+                // Note: It is impossible for an entity in the world to _not_ be in an entity chunk, which means
+                // the chunk holder must _exist_, and so the region section exists.
+                conn.switchTo(regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift)));
+            }
             // entities
             for (final ServerPlayer player : from.localPlayers) {
                 final ChunkPos pos = player.chunkPosition();
@@ -450,6 +459,10 @@ public class ServerRegions {
             final long currentTickTo = into.peekTick();
             final long currentTickFrom = from.peekTick();
             final long fromTickOffset = currentTickTo - currentTickFrom;
+            // connections
+            for (final Connection connection : from.connections) {
+                connection.switchTo(into);
+            }
             // time
             final long fromRedstoneTimeOffset = into.redstoneTime - from.redstoneTime;
             // entities
@@ -559,6 +572,8 @@ public class ServerRegions {
     // for this, since TECHNICALLY we could have both a
     // region-sharded world, or a full region-world
     public static class WorldTickData {
+        // connections
+        public final List<Connection> connections = new CopyOnWriteArrayList<>();
         // entities
         private static final Entity[] EMPTY_ENTITY_ARRAY = new Entity[0];
         // ticking chunks

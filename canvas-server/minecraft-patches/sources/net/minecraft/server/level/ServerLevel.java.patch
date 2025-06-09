@@ -311,7 +311,7 @@
      }
  
      // Paper start
-@@ -723,10 +_,147 @@
+@@ -723,10 +_,151 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -336,34 +336,38 @@
 +            return;
 +        }
 +        // Canvas end
-+        for (ServerPlayer player : this.getLocalPlayers()) {
++        for (ServerPlayer player : data.getLocalPlayers()) {
 +            player.connection.suspendFlushing();
 +        }
-+        Iterator<Connection> iterator = this.server.connectionPool.getConnectionsForRegion(data).iterator(); // Canvas - Threaded Regions
-+        while (iterator.hasNext()) {
-+            Connection networkmanager = iterator.next();
++        final List<Connection> connections = new ArrayList<>(data.connections);
++        Collections.shuffle(connections);
++        for (final Connection conn : connections) {
++            if (!conn.isConnected()) {
++                conn.handleDisconnection();
++                data.connections.remove(conn);
++                continue;
++            }
++            if (!data.connections.contains(conn)) {
++                // removed by connection tick?
++                continue;
++            }
 +
-+            if (!networkmanager.isConnecting()) {
-+                if (networkmanager.isConnected()) {
-+                    try {
-+                        networkmanager.tick();
-+                    } catch (Exception exception) {
-+                        if (networkmanager.isMemoryConnection()) {
-+                            throw new ReportedException(CrashReport.forThrowable(exception, "Ticking memory connection"));
-+                        }
-+
-+                        LOGGER.warn("Failed to handle packet for {}", networkmanager.getLoggableAddress(this.server.logIPs()), exception);
-+                        MutableComponent ichatmutablecomponent = Component.literal(exception.getMessage() == null ? "null" : exception.getMessage());
-+
-+                        networkmanager.send(new ClientboundDisconnectPacket(ichatmutablecomponent), PacketSendListener.thenRun(() -> {
-+                            networkmanager.disconnect(ichatmutablecomponent);
-+                        }));
-+                        networkmanager.setReadOnly();
-+                    }
-+                } else {
-+                    if (networkmanager.preparing) continue;
-+                    networkmanager.handleDisconnection();
++            try {
++                conn.ensureCorrect(data);
++                conn.tick();
++            } catch (final Exception exception) {
++                if (conn.isMemoryConnection()) {
++                    throw new ReportedException(CrashReport.forThrowable(exception, "Ticking memory connection"));
 +                }
++
++                LOGGER.warn("Failed to handle packet for {}", conn.getLoggableAddress(MinecraftServer.getServer().logIPs()), exception);
++                MutableComponent ichatmutablecomponent = Component.literal("Internal server error");
++
++                conn.send(new ClientboundDisconnectPacket(ichatmutablecomponent), PacketSendListener.thenRun(() -> {
++                    conn.disconnect(ichatmutablecomponent);
++                }));
++                conn.setReadOnly();
++                continue;
 +            }
 +        }
 +    }

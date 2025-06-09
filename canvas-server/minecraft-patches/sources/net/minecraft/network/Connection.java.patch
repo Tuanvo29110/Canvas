@@ -1,21 +1,24 @@
 --- a/net/minecraft/network/Connection.java
 +++ b/net/minecraft/network/Connection.java
-@@ -4,6 +_,7 @@
+@@ -4,6 +_,8 @@
  import com.google.common.collect.Queues;
  import com.google.common.util.concurrent.ThreadFactoryBuilder;
  import com.mojang.logging.LogUtils;
++import io.canvasmc.canvas.region.ServerRegions;
 +import io.canvasmc.canvas.server.network.ConnectionHandlePhases;
  import io.netty.bootstrap.Bootstrap;
  import io.netty.channel.Channel;
  import io.netty.channel.ChannelException;
-@@ -37,6 +_,7 @@
+@@ -37,7 +_,9 @@
  import java.nio.channels.ClosedChannelException;
  import java.util.Objects;
  import java.util.Queue;
 +import java.util.concurrent.ConcurrentLinkedQueue;
  import java.util.concurrent.RejectedExecutionException;
++import java.util.concurrent.atomic.AtomicReference;
  import java.util.function.Consumer;
  import java.util.function.Supplier;
+ import javax.annotation.Nullable;
 @@ -58,7 +_,9 @@
  import net.minecraft.network.protocol.login.LoginProtocols;
  import net.minecraft.network.protocol.status.ClientStatusPacketListener;
@@ -26,11 +29,31 @@
  import net.minecraft.util.Mth;
  import net.minecraft.util.debugchart.LocalSampleLogger;
  import org.apache.commons.lang3.Validate;
-@@ -149,6 +_,36 @@
+@@ -149,6 +_,56 @@
      public boolean isPending = true;
      public boolean queueImmunity;
      // Paper end - Optimize network
 +    // Canvas start - packet processor
++    private final AtomicReference<ServerRegions.WorldTickData> currentlyOwned = new AtomicReference<>();
++
++    public synchronized void switchTo(ServerRegions.WorldTickData data) {
++        if (this.currentlyOwned.get() != null) {
++            this.currentlyOwned.get().connections.remove(this);
++        }
++        this.currentlyOwned.set(data);
++        data.connections.add(this);
++    }
++
++    public synchronized void ensureCorrect(ServerRegions.WorldTickData data) {
++        ServerRegions.WorldTickData current = this.currentlyOwned.get();
++        if (current != null && current != data) {
++            throw new IllegalStateException("connection mismatched");
++        }
++        if (this.getPlayer() != null && this.phase.equals(ConnectionHandlePhases.PLAY) && !data.getLocalPlayers().contains(this.getPlayer())) {
++            throw new IllegalStateException("player connection mismatched");
++        }
++    }
++
 +    private final Queue<Runnable> packetsToProcess = new ConcurrentLinkedQueue<>();
 +    private final Object lockObject = new Object();
 +    private ConnectionHandlePhases phase = ConnectionHandlePhases.JOIN;
@@ -85,11 +108,3 @@
      }
  
      protected void tickSecond() {
-@@ -861,6 +_,7 @@
-     }
- 
-     public void handleDisconnection() {
-+        MinecraftServer.getServer().connectionPool.disconnect(this); // Canvas - Threaded Dimensions
-         if (this.channel != null && !this.channel.isOpen()) {
-             if (this.disconnectionHandled) {
-                 // LOGGER.warn("handleDisconnection() called twice"); // Paper - Don't log useless message

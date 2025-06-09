@@ -1,18 +1,27 @@
 --- a/net/minecraft/network/protocol/PacketUtils.java
 +++ b/net/minecraft/network/protocol/PacketUtils.java
-@@ -6,8 +_,12 @@
+@@ -2,14 +_,21 @@
+ 
+ import com.mojang.logging.LogUtils;
+ import javax.annotation.Nullable;
++import io.papermc.paper.threadedregions.ThreadedRegionizer;
+ import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportedException;
  import net.minecraft.network.PacketListener;
 +import net.minecraft.server.MinecraftServer;
  import net.minecraft.server.RunningOnDifferentThreadException;
  import net.minecraft.server.level.ServerLevel;
++import net.minecraft.server.level.ServerPlayer;
 +import net.minecraft.server.network.ServerConfigurationPacketListenerImpl;
 +import net.minecraft.server.network.ServerGamePacketListenerImpl;
 +import net.minecraft.server.network.ServerLoginPacketListenerImpl;
  import net.minecraft.util.thread.BlockableEventLoop;
  import org.slf4j.Logger;
++import java.util.Objects;
  
+ public class PacketUtils {
+     private static final Logger LOGGER = LogUtils.getLogger();
 @@ -19,10 +_,10 @@
      }
  
@@ -28,7 +37,7 @@
                  if (processor instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl serverCommonPacketListener && serverCommonPacketListener.processedDisconnect) return; // Paper - Don't handle sync packets for kicked players
                  if (processor.shouldHandleMessage(packet)) {
                      try {
-@@ -37,13 +_,25 @@
+@@ -37,13 +_,28 @@
                  } else {
                      LOGGER.debug("Ignoring packet due to disconnection: {}", packet);
                  }
@@ -48,7 +57,10 @@
 +                gamePacketListener.player.connection.connection.schedulePacket(run);
 +            } else if (processor instanceof ServerConfigurationPacketListenerImpl configurationPacketListener) {
 +                // push to main
-+                MinecraftServer.getServer().connectionPool.connect(configurationPacketListener.connection);
++                ServerPlayer serverPlayer = configurationPacketListener.player;
++                configurationPacketListener.connection.switchTo(serverPlayer.server.isRegionized() ?
++                    Objects.requireNonNull(serverPlayer.serverLevel().regioniser.getRegionAtUnsynchronised(serverPlayer.chunkPosition().x, serverPlayer.chunkPosition().z)).getData().tickData :
++                    Objects.requireNonNull(serverPlayer.serverLevel().levelTickData));
 +                configurationPacketListener.player.serverLevel().wake();
 +                configurationPacketListener.connection.schedulePacket(run);
 +            } else if (processor instanceof ServerLoginPacketListenerImpl) {
