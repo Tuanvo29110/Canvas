@@ -81,7 +81,7 @@ import org.jetbrains.annotations.Nullable;
 public class ServerRegions {
 
     public static @NotNull WorldTickData getTickData(@NotNull ServerLevel level) {
-        if (Thread.currentThread() instanceof AsyncProcessor.ProcessingThread) {
+        if (Thread.currentThread() instanceof AsyncProcessor.ProcessingThread && level.server.isRegionized()) {
             throw new IllegalStateException("Cannot pull tick data from async processor, use getRegionizedTickData");
         }
         if (level.levelTickData == null) {
@@ -98,7 +98,10 @@ public class ServerRegions {
     // Note: this ALWAYS returns a region tick data if the server is regionized
     public static @NotNull WorldTickData getRegionizedTickData(int chunkX, int chunkZ, @NotNull ServerLevel level) {
         if (!level.server.isRegionized()) {
-            return getTickData(level);
+            if (level.levelTickData == null) {
+                level.levelTickData = new WorldTickData(level, null);
+            }
+            return level.levelTickData;
         }
         WorldTickData running = pullRegionData();
         if (running != null && running.region != null) {
