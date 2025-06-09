@@ -30,7 +30,15 @@
              }
              ++this.tickCount;
              if (this.oneTimeDelayed.isEmpty()) {
-@@ -169,6 +_,7 @@
+@@ -162,13 +_,14 @@
+ 
+         // Note: It is allowed for the tasks executed to retire the entity in a given task.
+         for (int i = 0, len = this.currentlyExecuting.size(); i < len; ++i) {
+-            if (!TickThread.isTickThreadFor(thisEntity)) {
++            if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(thisEntity)) { // Canvas - Threaded Regions
+                 // tp has been queued sync by one of the tasks
+                 // in this case, we need to delay the tasks for next tick
+                 break;
              }
              final ScheduledTask task = this.currentlyExecuting.pollFirst();
  

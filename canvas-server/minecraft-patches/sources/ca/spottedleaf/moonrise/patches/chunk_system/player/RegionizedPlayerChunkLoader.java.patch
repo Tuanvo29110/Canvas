@@ -199,7 +199,7 @@
              long ratedGensThisTick = 0L;
              while (!this.genQueue.isEmpty()) {
                  final long chunkKey = this.genQueue.firstLong();
-@@ -815,7 +_,7 @@
+@@ -815,14 +_,14 @@
  
              // try to pull sending chunks
              final long maxSends = Math.max(0L, Math.min(MAX_RATE, Integer.MAX_VALUE)); // note: no logic to track concurrent sends
@@ -208,6 +208,14 @@
              // we do not return sends that we took from the allocation back because we want to limit the max send rate, not target it
              for (int i = 0; i < maxSendsThisTick; ++i) {
                  final long pendingSend = this.sendQueue.firstLong();
+                 final int pendingSendX = CoordinateUtils.getChunkX(pendingSend);
+                 final int pendingSendZ = CoordinateUtils.getChunkZ(pendingSend);
+                 final LevelChunk chunk = ((ChunkSystemLevel)this.world).moonrise$getFullChunkIfLoaded(pendingSendX, pendingSendZ);
+-                if (!this.areNeighboursGenerated(pendingSendX, pendingSendZ, 1) || !TickThread.isTickThreadFor(this.world, pendingSendX, pendingSendZ)) {
++                if (!this.areNeighboursGenerated(pendingSendX, pendingSendZ, 1) || !io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.world, pendingSendX, pendingSendZ)) { // Canvas - Threaded Regions
+                     // nothing to do
+                     // the target chunk may not be owned by this region, but this should be resolved in the future
+                     break;
 @@ -849,6 +_,7 @@
          }
  

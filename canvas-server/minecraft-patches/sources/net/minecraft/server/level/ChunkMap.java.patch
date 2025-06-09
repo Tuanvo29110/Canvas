@@ -480,6 +480,24 @@
                  this.updatePlayer(player);
              }
  
+@@ -1190,7 +_,7 @@
+         public final void moonrise$removeNonTickThreadPlayers() {
+             boolean foundToRemove = false;
+             for (final ServerPlayerConnection conn : this.seenBy) {
+-                if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(conn.getPlayer())) {
++                if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(conn.getPlayer())) { // Canvas - Threaded Regions
+                     foundToRemove = true;
+                     break;
+                 }
+@@ -1202,7 +_,7 @@
+ 
+             for (final ServerPlayerConnection conn : new java.util.ArrayList<>(this.seenBy)) {
+                 ServerPlayer player = conn.getPlayer();
+-                if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(player)) {
++                if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(player)) { // Canvas - Threaded Regions
+                     this.removePlayer(player);
+                 }
+             }
 @@ -1302,7 +_,7 @@
                  flag = flag && this.entity.broadcastToPlayer(player) && ChunkMap.this.isChunkTracked(player, this.entity.chunkPosition().x, this.entity.chunkPosition().z);
                  // Paper end - Configurable entity tracking range by Y

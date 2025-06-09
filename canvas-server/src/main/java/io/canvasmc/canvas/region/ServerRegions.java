@@ -15,7 +15,6 @@ import io.canvasmc.canvas.event.region.RegionSplitEvent;
 import io.canvasmc.canvas.scheduler.CanvasRegionScheduler;
 import io.canvasmc.canvas.scheduler.TickScheduler;
 import io.canvasmc.canvas.scheduler.WrappedTickLoop;
-import io.canvasmc.canvas.util.AsyncProcessor;
 import io.canvasmc.canvas.util.ConcurrentSet;
 import io.canvasmc.canvas.util.TPSCalculator;
 import io.papermc.paper.redstone.RedstoneWireTurbo;
@@ -1030,7 +1029,7 @@ public class ServerRegions {
             BlockEventData ret;
             while (!this.blockEvents.isEmpty()) {
                 ret = this.blockEvents.removeFirst();
-                if (TickThread.isTickThreadFor(this.world, ret.pos())) {
+                if (ServerRegions.isTickThreadFor(this.world, ret.pos())) {
                     return ret;
                 } // else: chunk must have been unloaded
             }

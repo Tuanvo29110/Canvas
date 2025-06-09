@@ -28,7 +28,7 @@
 +        // Canvas start - Threaded Regions
 +        // check if the spawn pos is no longer owned by this region
 +        if (worldData.villageSiegeState.siegeState != State.SIEGE_DONE
-+            && !ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(level, worldData.villageSiegeState.spawnX >> 4, worldData.villageSiegeState.spawnZ >> 4, 8)) {
++            && !io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(level, worldData.villageSiegeState.spawnX >> 4, worldData.villageSiegeState.spawnZ >> 4, 8)) { // Canvas - Threaded Regions
 +            // can't spawn here, just re-set
 +            worldData.villageSiegeState = new ServerRegions.WorldTickData.VillageSiegeState();
 +        }

@@ -40,6 +40,73 @@
      private final io.papermc.paper.threadedregions.scheduler.FoliaAsyncScheduler asyncScheduler = new io.papermc.paper.threadedregions.scheduler.FoliaAsyncScheduler();
      private final io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler globalRegionScheduler = new io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler();
  
+@@ -339,14 +_,14 @@
+ 
+     @Override
+     public final boolean isOwnedByCurrentRegion(World world, io.papermc.paper.math.Position position) {
+-        return ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(
++        return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor( // Canvas - Threaded Regions
+             ((CraftWorld) world).getHandle(), position.blockX() >> 4, position.blockZ() >> 4
+         );
+     }
+ 
+     @Override
+     public final boolean isOwnedByCurrentRegion(World world, io.papermc.paper.math.Position position, int squareRadiusChunks) {
+-        return ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(
++        return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor( // Canvas - Threaded Regions
+             ((CraftWorld) world).getHandle(), position.blockX() >> 4, position.blockZ() >> 4, squareRadiusChunks
+         );
+     }
+@@ -354,7 +_,7 @@
+     @Override
+     public final boolean isOwnedByCurrentRegion(Location location) {
+         World world = location.getWorld();
+-        return ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(
++        return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor( // Canvas - Threaded Regions
+             ((CraftWorld) world).getHandle(), location.getBlockX() >> 4, location.getBlockZ() >> 4
+         );
+     }
+@@ -362,35 +_,35 @@
+     @Override
+     public final boolean isOwnedByCurrentRegion(Location location, int squareRadiusChunks) {
+         World world = location.getWorld();
+-        return ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(
++        return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor( // Canvas - Threaded Regions
+             ((CraftWorld) world).getHandle(), location.getBlockX() >> 4, location.getBlockZ() >> 4, squareRadiusChunks
+         );
+     }
+ 
+     @Override
+     public final boolean isOwnedByCurrentRegion(World world, int chunkX, int chunkZ) {
+-        return ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(
++        return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor( // Canvas - Threaded Regions
+             ((CraftWorld) world).getHandle(), chunkX, chunkZ
+         );
+     }
+ 
+     @Override
+     public final boolean isOwnedByCurrentRegion(World world, int chunkX, int chunkZ, int squareRadiusChunks) {
+-        return ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(
++        return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor( // Canvas - Threaded Regions
+             ((CraftWorld) world).getHandle(), chunkX, chunkZ, squareRadiusChunks
+         );
+     }
+ 
+     @Override
+     public final boolean isOwnedByCurrentRegion(World world, int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ) {
+-        return ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(
++        return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor( // Canvas - Threaded Regions
+             ((CraftWorld) world).getHandle(), minChunkX, minChunkZ, maxChunkX, maxChunkZ
+         );
+     }
+ 
+     @Override
+     public final boolean isOwnedByCurrentRegion(Entity entity) {
+-        return ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(((org.bukkit.craftbukkit.entity.CraftEntity) entity).getHandleRaw());
++        return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(((org.bukkit.craftbukkit.entity.CraftEntity) entity).getHandleRaw()); // Canvas - Threaded Regions
+     }
+ 
+     @Override
 @@ -858,6 +_,19 @@
      public ServerTickManager getServerTickManager() {
          return this.serverTickManager;
