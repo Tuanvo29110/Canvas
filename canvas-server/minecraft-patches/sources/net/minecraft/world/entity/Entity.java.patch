@@ -121,18 +121,6 @@
      public final io.papermc.paper.entity.activation.ActivationType activationType = io.papermc.paper.entity.activation.ActivationType.activationTypeFor(this); // Paper - EAR 2/tracking ranges
      // Paper start - EAR 2
      public final boolean defaultActivationState;
-@@ -363,6 +_,11 @@
-     public final AABB getBoundingBoxAt(double x, double y, double z) {
-         return this.dimensions.makeBoundingBox(x, y, z);
-     }
-+    // Canvas start - temporary memory leak fix
-+    public void clearMovementsThisTick() {
-+        this.movementThisTick.clear();
-+    }
-+    // Canvas end
-     // Paper end
-     // Paper start - rewrite chunk system
-     private final boolean isHardColliding = this.moonrise$isHardCollidingUncached();
 @@ -372,6 +_,10 @@
      private int sectionY = Integer.MIN_VALUE;
      private int sectionZ = Integer.MIN_VALUE;
