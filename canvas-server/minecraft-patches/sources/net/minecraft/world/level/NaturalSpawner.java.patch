@@ -1,5 +1,14 @@
 --- a/net/minecraft/world/level/NaturalSpawner.java
 +++ b/net/minecraft/world/level/NaturalSpawner.java
+@@ -1,6 +_,8 @@
+ package net.minecraft.world.level;
+ 
+ import com.mojang.logging.LogUtils;
++import io.canvasmc.canvas.Config;
++import io.canvasmc.canvas.region.ServerRegions;
+ import it.unimi.dsi.fastutil.objects.Object2IntMap;
+ import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 @@ -18,6 +_,7 @@
  import net.minecraft.core.registries.BuiltInRegistries;
  import net.minecraft.core.registries.Registries;
@@ -26,7 +35,7 @@
              int maxSpawns = Integer.MAX_VALUE;
              if (level.paperConfig().entities.spawning.perPlayerMobSpawns) {
                  // Copied from getFilteredSpawningCategories
-@@ -173,19 +_,34 @@
+@@ -173,19 +_,37 @@
                      level.moonrise$getNearbyPlayers().getPlayers(chunk.getPos(), ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.TICK_VIEW_DISTANCE);
                  if (inRange != null) {
                      final net.minecraft.server.level.ServerPlayer[] backingSet = inRange.getRawDataUnchecked();
@@ -57,11 +66,14 @@
              if (canSpawn) {
 +                // Canvas start - async mob spawning
 +                final int max = maxSpawns;
-+                level.server.mobSpawnExecutor.submit(() -> {
++                Runnable run = () -> {
                  spawnCategoryForChunk(mobCategory, level, chunk, spawnState::canSpawn, spawnState::afterSpawn,
 -                    maxSpawns, level.paperConfig().entities.spawning.perPlayerMobSpawns ? level.getChunkSource().chunkMap::updatePlayerMobTypeMap : null);
 +                    max, level.paperConfig().entities.spawning.perPlayerMobSpawns ? level.getChunkSource().chunkMap::updatePlayerMobTypeMap : null);
-+                });
++                };
++                if (Config.INSTANCE.entities.enableAsyncSpawning) {
++                    level.server.mobSpawnExecutor.submit(run);
++                } else run.run();
 +                // Canvas end
                  // Paper end - Optional per player mob spawns
              }

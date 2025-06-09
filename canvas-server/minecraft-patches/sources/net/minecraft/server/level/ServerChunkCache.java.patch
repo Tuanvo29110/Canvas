@@ -185,7 +185,7 @@
 +                }
 +                if (tickData.spawnCountsReady.getAndSet(false)) {
 +                    net.minecraft.server.MinecraftServer.getServer().mobSpawnExecutor.submit(() -> {
-+                        int mapped = distanceManager.getNaturalSpawnChunkCount();
++                        int mapped = tickData.spawnChunkTracker.getTotalPositions();
 +                        tickData.setLastSpawnState(NaturalSpawner.createState(mapped, tickData.entityTickList, this::getFullChunk, null, true)); // Canvas - Threaded Regions
 +                        tickData.spawnCountsReady.set(true);
 +                    });

@@ -16,7 +16,7 @@ public class AsyncProcessor {
         this.taskQueue = new LinkedBlockingQueue<>();
         this.isRunning = true;
 
-        this.workerThread = new TickThread(() -> {
+        this.workerThread = new ProcessingThread(() -> {
             while (isRunning || !taskQueue.isEmpty()) {
                 try {
                     Runnable task = taskQueue.take();
@@ -69,5 +69,11 @@ public class AsyncProcessor {
      */
     public boolean isRunning() {
         return isRunning;
+    }
+
+    public static class ProcessingThread extends TickThread {
+        public ProcessingThread(final Runnable run, final String name) {
+            super(run, name);
+        }
     }
 }

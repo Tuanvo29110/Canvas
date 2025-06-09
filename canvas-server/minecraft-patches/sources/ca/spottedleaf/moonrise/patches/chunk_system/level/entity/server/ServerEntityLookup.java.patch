@@ -24,7 +24,7 @@
 -            ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().addPlayer(player);
 +            // ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().addPlayer(player); // Canvas - Threaded Regions
          }
-+        ServerRegions.getTickData(this.serverWorld).addEntity(entity); // Canvas - Threaded Regions
++        ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, this.serverWorld).addEntity(entity); // Canvas - Threaded Regions
      }
  
      @Override
@@ -39,7 +39,7 @@
      protected void entityStartLoaded(final Entity entity) {
          // Moonrise start - entity tracker
 -        this.trackerEntities.add(entity);
-+        ServerRegions.getTickData(this.world.level()).getTrackerEntities(entity.chunkPosition()).add(entity); // Canvas - Threaded Regions
++        ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, this.world.level()).getTrackerEntities(entity.chunkPosition()).add(entity); // Canvas - Threaded Regions
          // Moonrise end - entity tracker
      }
  
@@ -47,7 +47,7 @@
      protected void entityEndLoaded(final Entity entity) {
          // Moonrise start - entity tracker
 -        this.trackerEntities.remove(entity);
-+        ServerRegions.getTickData(this.world.level()).getTrackerEntities(entity.chunkPosition()).remove(entity); // Canvas - Threaded Regions
++        ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, this.world.level()).getTrackerEntities(entity.chunkPosition()).remove(entity); // Canvas - Threaded Regions
          // Moonrise end - entity tracker
      }
  

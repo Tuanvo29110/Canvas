@@ -71,12 +71,13 @@
      }
  
      private void setChunkUnsaved(ChunkPos chunkPos) {
-@@ -251,14 +_,18 @@
+@@ -251,14 +_,19 @@
  
          final int index = entity.getType().getCategory().ordinal();
          final ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> inRange =
 -            this.level.moonrise$getNearbyPlayers().getPlayers(entity.chunkPosition(), ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.TICK_VIEW_DISTANCE);
-+            this.level.moonrise$getNearbyPlayers(entity.chunkPosition()).getPlayers(entity.chunkPosition(), ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.TICK_VIEW_DISTANCE); // Canvas - Threaded Regions
++            // Note: we can use normal getNearbyPlayers because we are ensured regionized because we use getRegionizedTickDat
++            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, this.level).getNearbyPlayers().getPlayers(entity.chunkPosition(), ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.TICK_VIEW_DISTANCE); // Canvas - Threaded Regions
          if (inRange == null) {
              return;
          }

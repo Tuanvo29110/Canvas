@@ -68,7 +68,7 @@
 +    }
 +
 +    public List<ServerPlayer> getLocalPlayers(ChunkPos pos) {
-+        return ServerRegions.getTickData(this.level()).getLocalPlayers(pos);
++        return ServerRegions.getRegionizedTickData(pos.x, pos.z, this.level()).getLocalPlayers(pos);
 +    }
 +    // Canvas end
  

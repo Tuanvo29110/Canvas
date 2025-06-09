@@ -15,6 +15,7 @@ import io.canvasmc.canvas.event.region.RegionSplitEvent;
 import io.canvasmc.canvas.scheduler.CanvasRegionScheduler;
 import io.canvasmc.canvas.scheduler.TickScheduler;
 import io.canvasmc.canvas.scheduler.WrappedTickLoop;
+import io.canvasmc.canvas.util.AsyncProcessor;
 import io.canvasmc.canvas.util.ConcurrentSet;
 import io.canvasmc.canvas.util.TPSCalculator;
 import io.papermc.paper.redstone.RedstoneWireTurbo;
@@ -22,7 +23,6 @@ import io.papermc.paper.threadedregions.ThreadedRegionizer;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import java.util.ArrayDeque;
@@ -81,6 +81,9 @@ import org.jetbrains.annotations.Nullable;
 public class ServerRegions {
 
     public static @NotNull WorldTickData getTickData(@NotNull ServerLevel level) {
+        if (Thread.currentThread() instanceof AsyncProcessor.ProcessingThread) {
+            throw new IllegalStateException("Cannot pull tick data from async processor, use getRegionizedTickData");
+        }
         if (level.levelTickData == null) {
             level.levelTickData = new WorldTickData(level, null);
         }
@@ -90,6 +93,23 @@ public class ServerRegions {
         WorldTickData possible = pullRegionData();
         if (possible != null && possible.world == level && possible.region != null) return possible;
         return level.levelTickData;
+    }
+
+    // Note: this ALWAYS returns a region tick data if the server is regionized
+    public static @NotNull WorldTickData getRegionizedTickData(int chunkX, int chunkZ, @NotNull ServerLevel level) {
+        if (!level.server.isRegionized()) {
+            return getTickData(level);
+        }
+        WorldTickData running = pullRegionData();
+        if (running != null && running.region != null) {
+            // we are running on a region, return that
+            return running;
+        }
+        // we are on a world or off tickers, regionize
+        ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region = level.regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
+        if (region == null) throw new IllegalStateException("region must be loaded");
+        // region isn't null, return it's data
+        return region.getData().tickData;
     }
 
     // Note: this returns null if we are not on a ticker or not ticking/running tick tasks
@@ -574,19 +594,60 @@ public class ServerRegions {
     public static class WorldTickData {
         // connections
         public final List<Connection> connections = new CopyOnWriteArrayList<>();
-        // entities
         private static final Entity[] EMPTY_ENTITY_ARRAY = new Entity[0];
-        // ticking chunks
         private static final LevelChunk[] EMPTY_CHUNK_AND_HOLDER_ARRAY = new LevelChunk[0];
         @Nullable
         public final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region;
         public final ServerLevel world;
         public final ReentrantLock tickLock = new ReentrantLock();
         public final RegionizedTaskQueue.RegionTaskQueueData taskQueueData;
+        // entities
         public final ReferenceList<Entity> allEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
         public final ReferenceList<Entity> loadedEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
+        private final ReferenceList<Entity> trackerUnloadedEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
         public final Set<Entity> entityTickList = Sets.newConcurrentHashSet();
-        public final Set<Mob> navigatingMobs = Sets.newConcurrentHashSet(); // must be concurrent
+        public final Set<Mob> navigatingMobs = new ConcurrentSet<>() { // must be concurrent
+            @Override
+            public boolean add(final Mob o) {
+                if (o.getServer().isRegionized() && WorldTickData.this.region == null) {
+                    throw new IllegalStateException("Cannot add navigating mob to regionized world");
+                }
+                return super.add(o);
+            }
+
+            @Override
+            public boolean remove(final Object o) {
+                if (o instanceof Mob mob && mob.getServer().isRegionized() && WorldTickData.this.region == null) {
+                    throw new IllegalStateException("Cannot add navigating mob to regionized world");
+                }
+                return super.remove(o);
+            }
+        };
+
+        public boolean addNavigatingMob(Mob mob) {
+            if (this.world.server.isRegionized()) {
+                ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(mob.chunkPosition().x, mob.chunkPosition().z);
+                // the chunk has to exist for the entity to be added, so we are ok to assume non-null
+                if (theRegion.getData().tickData != this) {
+                    // we are not correctly regionized, regionize here.
+                    return theRegion.getData().tickData.navigatingMobs.add(mob);
+                }
+            }
+            return this.navigatingMobs.add(mob);
+        }
+
+        public boolean removeNavigatingMob(Mob mob) {
+            if (this.world.server.isRegionized()) {
+                ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(mob.chunkPosition().x, mob.chunkPosition().z);
+                // the chunk has to exist for the entity to be added, so we are ok to assume non-null
+                if (theRegion.getData().tickData != this) {
+                    // we are not correctly regionized, regionize here.
+                    return theRegion.getData().tickData.navigatingMobs.remove(mob);
+                }
+            }
+            return this.navigatingMobs.remove(mob);
+        }
+
         public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY) {
             @Override
             public boolean add(final Entity entity) {
@@ -596,7 +657,7 @@ public class ServerRegions {
         // shouldSignal is threadlocal, don't need to isolate
         public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(64, 0.25f);
         public final PathTypeCache pathTypesByPosCache = new PathTypeCache();
-        public final List<LevelChunk> temporaryChunkTickList = new ObjectArrayList<>();
+        // public final List<LevelChunk> temporaryChunkTickList = new ObjectArrayList<>(); // Canvas - optimize chunk collect
         // mob spawning
         public final PositionCountingAreaMap<ServerPlayer> spawnChunkTracker = new PositionCountingAreaMap<>();
         public final AtomicBoolean spawnCountsReady = new AtomicBoolean(false);
@@ -605,10 +666,11 @@ public class ServerRegions {
         public final RedstoneWireTurbo turbo;
         // scheduler
         public final CanvasRegionScheduler.Scheduler regionScheduler = new CanvasRegionScheduler.Scheduler();
+        // region data for chunk holder manager
         private final ChunkHolderManager.HolderManagerRegionData holderManagerRegionData = new ChunkHolderManager.HolderManagerRegionData();
+        // players
         private final List<ServerPlayer> localPlayers = new CopyOnWriteArrayList<>(); // concurrent
         private final NearbyPlayers nearbyPlayers;
-        private final ReferenceList<Entity> trackerUnloadedEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
         // block ticking
         private final ObjectLinkedOpenHashSet<BlockEventData> blockEvents = new ObjectLinkedOpenHashSet<>();
         private final LevelTicks<Block> blockLevelTicks;
@@ -639,7 +701,6 @@ public class ServerRegions {
         public int wakeupInactiveRemainingMonsters;
         public int wakeupInactiveRemainingVillagers;
         public int currentPrimedTnt = 0;
-        // not transient
         public ArrayDeque<RedstoneTorchBlock.Toggle> redstoneUpdateInfos;
         public int catSpawnerNextTick = 0;
         public int patrolSpawnerNextTick = 0;
@@ -648,13 +709,11 @@ public class ServerRegions {
         public int wanderingTraderSpawnDelay;
         public int wanderingTraderSpawnChance;
         public VillageSiegeState villageSiegeState = new VillageSiegeState();
-        // async mob spawning
         public boolean firstRunSpawnCounts = true;
-        // canvas
-        public TPSCalculator tpsCalculator = new TPSCalculator();
         public Player[] eligibleDespawnCheckingPlayerCache = new Player[0]; // Canvas - cache eligible players for despawn checks
-        private long currentTick = 0;
         // ticks
+        public TPSCalculator tpsCalculator = new TPSCalculator();
+        private long currentTick = 0;
         private long lagCompensationTick;
         private boolean isHandlingTick;
         private boolean tickingBlockEntities;
@@ -709,7 +768,7 @@ public class ServerRegions {
         public ReferenceList<Entity> getTrackerEntities(ChunkPos chunkPos) {
             // let's ensure we actually run this on the appropriate region
             if (this.world.server.isRegionized() && chunkPos != null) {
-                ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtSynchronised(chunkPos.x, chunkPos.z);
+                ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(chunkPos.x, chunkPos.z);
                 if (theRegion == null) return trackerEntities;
                 if (theRegion.getData().tickData != this) {
                     return theRegion.getData().tickData.trackerEntities;
@@ -857,7 +916,7 @@ public class ServerRegions {
                 if (theRegion == null) {
                     // syncload it... this really only happens inter-dimensionally
                     this.world.getChunkSource().getChunk(entity.chunkPosition().x, entity.chunkPosition().z, ChunkStatus.FULL, true);
-                    theRegion = this.world.regioniser.getRegionAtSynchronised(entity.chunkPosition().x, entity.chunkPosition().z); // its loaded now.
+                    theRegion = this.world.regioniser.getRegionAtUnsynchronised(entity.chunkPosition().x, entity.chunkPosition().z); // its loaded now.
                 }
                 if (theRegion.getData().tickData != this) {
                     theRegion.getData().tickData.removeEntityTickingEntity(entity);
@@ -885,7 +944,7 @@ public class ServerRegions {
                 if (theRegion == null) {
                     // syncload it... this really only happens inter-dimensionally
                     this.world.getChunkSource().getChunk(entity.chunkPosition().x, entity.chunkPosition().z, ChunkStatus.FULL, true);
-                    theRegion = this.world.regioniser.getRegionAtSynchronised(entity.chunkPosition().x, entity.chunkPosition().z); // its loaded now.
+                    theRegion = this.world.regioniser.getRegionAtUnsynchronised(entity.chunkPosition().x, entity.chunkPosition().z); // its loaded now.
                 }
                 if (theRegion.getData().tickData != this) {
                     theRegion.getData().tickData.addEntity(entity, false);
