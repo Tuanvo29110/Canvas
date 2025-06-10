@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
-@@ -1,15 +_,20 @@
+@@ -1,15 +_,19 @@
  package net.minecraft.server.level;
  
 +import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
@@ -9,9 +9,10 @@
  import com.mojang.logging.LogUtils;
 +import io.canvasmc.canvas.region.ServerRegions;
 +import io.canvasmc.canvas.scheduler.TickScheduler;
++import io.papermc.paper.threadedregions.ThreadedRegionizer;
  import it.unimi.dsi.fastutil.longs.LongSet;
- import it.unimi.dsi.fastutil.objects.ObjectArrayList;
- import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 +import io.canvasmc.canvas.Config;
  import java.io.IOException;
  import java.nio.file.Path;
@@ -21,6 +22,14 @@
  import java.util.Set;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.CompletionStage;
+@@ -19,7 +_,6 @@
+ import java.util.function.Supplier;
+ import javax.annotation.Nullable;
+ import net.minecraft.FileUtil;
+-import net.minecraft.Util;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.SectionPos;
+ import net.minecraft.network.protocol.Packet;
 @@ -57,9 +_,9 @@
  
  public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moonrise.patches.chunk_system.world.ChunkSystemServerChunkCache { // Paper - rewrite chunk system
@@ -389,7 +398,7 @@
          MainThreadExecutor(final Level level) {
              super("Chunk source main thread executor for " + level.dimension().location());
          }
-@@ -818,16 +_,102 @@
+@@ -818,16 +_,107 @@
              super.doRunTask(task);
          }
  
@@ -443,15 +452,20 @@
 +                // realistically this should work when 2 tick tasks depend on eachother
 +                oldData = ServerRegions.getTickDataOrNull();
 +                if (oldData != null) {
-+                    ServerRegions.WorldTickData newTickData = serverLevel.server.isRegionized() ?
-+                        Objects.requireNonNull(serverLevel.regioniser.getRegionAtUnsynchronised(pos.x, pos.z), "region cannot be null").getData().tickData :
-+                        serverLevel.levelTickData;
++                    ServerRegions.WorldTickData newTickData = null;
++                    if (serverLevel.server.isRegionized()) {
++                        ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region =
++                            serverLevel.regioniser.getRegionAtUnsynchronised(pos.x, pos.z);
++                        if (region != null) {
++                            newTickData = region.getData().tickData;
++                        }
++                    } else newTickData = serverLevel.levelTickData;
 +                    // try lock now, we are ticking.
 +                    // we attempt to lock in the case of if 2 tick tasks depending on each other
 +                    // if they are, then we need to clear them up by ticking our own tasks if POSSIBLE
 +                    // if we just lock blatantly then we end up with the issue of both threads blocking
 +                    // waiting for us to release, and then we never do release so we just deadlock forever
-+                    if (Objects.requireNonNull(newTickData, "tick data cannot be null").tickLock.tryLock()) {
++                    if (newTickData != null && newTickData.tickLock.tryLock()) {
 +                        TickScheduler.setTickingData(newTickData, false);
 +                        locked = true;
 +                    }
