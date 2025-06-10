@@ -8,6 +8,7 @@ import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
 import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import com.google.common.collect.Sets;
+import io.canvasmc.canvas.CanvasBootstrap;
 import io.canvasmc.canvas.event.region.RegionCreateEvent;
 import io.canvasmc.canvas.event.region.RegionDestroyEvent;
 import io.canvasmc.canvas.event.region.RegionMergeEvent;
@@ -32,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -609,7 +611,28 @@ public class ServerRegions {
     // region-sharded world, or a full region-world
     public static class WorldTickData {
         // connections
-        public final List<Connection> connections = new CopyOnWriteArrayList<>();
+        public final List<Connection> connections = new CopyOnWriteArrayList<>() {
+            @Override
+            public boolean add(final Connection connection) {
+                try {
+                    return super.add(connection);
+                } finally {
+                    CanvasBootstrap.LOGGER.info("Docked connection for \"{}\" on {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
+                        WorldTickData.this.world.toString() : WorldTickData.this.getApiData().toString());
+                }
+            }
+
+            @Override
+            public boolean remove(final Object o) {
+                if (!(o instanceof Connection connection)) throw new RuntimeException("must be connection");
+                try {
+                    return super.remove(o);
+                } finally {
+                    CanvasBootstrap.LOGGER.info("Undocked connection for \"{}\" from {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
+                        WorldTickData.this.world.toString() : WorldTickData.this.region.getData().tickHandle.toString());
+                }
+            }
+        };
         private static final Entity[] EMPTY_ENTITY_ARRAY = new Entity[0];
         private static final LevelChunk[] EMPTY_CHUNK_AND_HOLDER_ARRAY = new LevelChunk[0];
         @Nullable
@@ -1165,6 +1188,8 @@ public class ServerRegions {
 
         @Override
         public void onRegionDestroy(final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region) {
+            TickRegionData data = region.getData();
+            Objects.requireNonNull(region.regioniser.world.levelTickData).connections.addAll(data.tickData.connections);
             new RegionDestroyEvent(region.getData()).callEvent();
         }
 

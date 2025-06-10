@@ -316,7 +316,7 @@
      }
  
      // Paper start
-@@ -723,10 +_,151 @@
+@@ -723,10 +_,162 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -338,6 +338,18 @@
 +        // in MOST instances, this is very intentional for connections
 +        // to be passed through here to get to the region
 +        if (this.server.isRegionized() && (data.region == null)) { // if the region in the data is null, we are running a world region, cannot do this with regionizing
++            for (final Connection connection : data.connections) {
++                ServerPlayer player = connection.getPlayer();
++                if (player == null) continue;
++                final int chunkX = player.chunkPosition().x;
++                final int chunkZ = player.chunkPosition().z;
++                ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region =
++                    this.regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
++                if (region != null) {
++                    region.getData().tickData.connections.add(connection);
++                    data.connections.remove(connection);
++                }
++            }
 +            return;
 +        }
 +        // Canvas end
@@ -358,7 +370,6 @@
 +            }
 +
 +            try {
-+                conn.ensureCorrect(data);
 +                conn.tick();
 +            } catch (final Exception exception) {
 +                if (conn.isMemoryConnection()) {

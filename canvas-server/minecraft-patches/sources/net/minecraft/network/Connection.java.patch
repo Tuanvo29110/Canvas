@@ -29,7 +29,7 @@
  import net.minecraft.util.Mth;
  import net.minecraft.util.debugchart.LocalSampleLogger;
  import org.apache.commons.lang3.Validate;
-@@ -149,6 +_,54 @@
+@@ -149,6 +_,47 @@
      public boolean isPending = true;
      public boolean queueImmunity;
      // Paper end - Optimize network
@@ -43,13 +43,6 @@
 +        this.currentlyOwned.set(data);
 +        data.connections.add(this);
 +        this.setPhase(ConnectionHandlePhases.PLAY);
-+    }
-+
-+    public synchronized void ensureCorrect(ServerRegions.WorldTickData data) {
-+        ServerRegions.WorldTickData current = this.currentlyOwned.get();
-+        if (current != null && current != data) {
-+            throw new IllegalStateException("connection mismatched");
-+        }
 +    }
 +
 +    private final Queue<Runnable> packetsToProcess = new ConcurrentLinkedQueue<>();
@@ -92,7 +85,7 @@
      public void tick() {
 +        // Canvas start - ensure no double tick
 +        if (this.isTicking) {
-+            LOGGER.debug("double ticking client connection of player \"{}\", returning", this.getPlayer().getName().getString());
++            LOGGER.info("double ticking client connection of player \"{}\", returning", this.getPlayer().getName().getString());
 +            return;
 +        }
 +        this.isTicking = true;
