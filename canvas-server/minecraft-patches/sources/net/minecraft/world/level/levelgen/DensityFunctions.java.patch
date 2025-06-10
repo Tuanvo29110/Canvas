@@ -19,51 +19,6 @@
  import net.minecraft.core.Holder;
  import net.minecraft.core.Registry;
  import net.minecraft.core.registries.BuiltInRegistries;
-@@ -348,7 +_,7 @@
-         }
-     }
- 
--    protected static enum BlendAlpha implements DensityFunction.SimpleFunction {
-+    public static enum BlendAlpha implements DensityFunction.SimpleFunction { // Canvas - protected -> public
-         INSTANCE;
- 
-         public static final KeyDispatchDataCodec<DensityFunction> CODEC = KeyDispatchDataCodec.of(MapCodec.unit(INSTANCE));
-@@ -379,7 +_,7 @@
-         }
-     }
- 
--    record BlendDensity(@Override DensityFunction input) implements DensityFunctions.TransformerWithContext {
-+    public record BlendDensity(@Override DensityFunction input) implements DensityFunctions.TransformerWithContext { // Canvas - public
-         static final KeyDispatchDataCodec<DensityFunctions.BlendDensity> CODEC = DensityFunctions.singleFunctionArgumentCodec(
-             DensityFunctions.BlendDensity::new, DensityFunctions.BlendDensity::input
-         );
-@@ -410,7 +_,7 @@
-         }
-     }
- 
--    protected static enum BlendOffset implements DensityFunction.SimpleFunction {
-+    public static enum BlendOffset implements DensityFunction.SimpleFunction { // Canvas - protected -> public
-         INSTANCE;
- 
-         public static final KeyDispatchDataCodec<DensityFunction> CODEC = KeyDispatchDataCodec.of(MapCodec.unit(INSTANCE));
-@@ -441,7 +_,7 @@
-         }
-     }
- 
--    protected record Clamp(@Override DensityFunction input, @Override double minValue, @Override double maxValue) implements DensityFunctions.PureTransformer {
-+    public record Clamp(@Override DensityFunction input, @Override double minValue, @Override double maxValue) implements DensityFunctions.PureTransformer { // Canvas - protected -> public
-         private static final MapCodec<DensityFunctions.Clamp> DATA_CODEC = RecordCodecBuilder.mapCodec(
-             instance -> instance.group(
-                     DensityFunction.DIRECT_CODEC.fieldOf("input").forGetter(DensityFunctions.Clamp::input),
-@@ -468,7 +_,7 @@
-         }
-     }
- 
--    record Constant(double value) implements DensityFunction.SimpleFunction {
-+    public record Constant(double value) implements DensityFunction.SimpleFunction { // Canvas - public
-         static final KeyDispatchDataCodec<DensityFunctions.Constant> CODEC = DensityFunctions.singleArgumentCodec(
-             DensityFunctions.NOISE_VALUE_CODEC, DensityFunctions.Constant::new, DensityFunctions.Constant::value
-         );
 @@ -501,6 +_,11 @@
      }
  
@@ -107,93 +62,6 @@
          }
  
          @Override
-@@ -619,7 +_,7 @@
-         }
-     }
- 
--    protected record Mapped(DensityFunctions.Mapped.Type type, @Override DensityFunction input, @Override double minValue, @Override double maxValue)
-+    public record Mapped(DensityFunctions.Mapped.Type type, @Override DensityFunction input, @Override double minValue, @Override double maxValue) // Canvas - protected -> public
-         implements DensityFunctions.PureTransformer {
-         public static DensityFunctions.Mapped create(DensityFunctions.Mapped.Type type, DensityFunction input) {
-             double d = input.minValue();
-@@ -659,7 +_,7 @@
-             return this.type.codec;
-         }
- 
--        static enum Type implements StringRepresentable {
-+        public static enum Type implements StringRepresentable { // Canvas - public
-             ABS("abs"),
-             SQUARE("square"),
-             CUBE("cube"),
-@@ -683,7 +_,37 @@
-         }
-     }
- 
--    protected record Marker(@Override DensityFunctions.Marker.Type type, @Override DensityFunction wrapped) implements DensityFunctions.MarkerOrMarked {
-+    // Canvas start - dfc - public - make to class
-+    public static final class Marker implements MarkerOrMarked {
-+        private final Type type;
-+        private final DensityFunction wrapped;
-+        private Object c2me$optionalEquality;
-+
-+        @Override
-+        public boolean equals(final Object that) {
-+            if (that == this) return true;
-+            if (that == null || that.getClass() != this.getClass()) return false;
-+            var a = (Marker) that;
-+            return Objects.equals(this.type, a.type) &&
-+                Objects.equals(this.wrapped, a.wrapped);
-+        }
-+
-+        @Override
-+        public int hashCode() {
-+            Supplier<Integer> original = () -> Objects.hash(type, wrapped);
-+            Object c2me$optionalEquality1 = this.c2me$optionalEquality;
-+            if (c2me$optionalEquality1 != null && false) {
-+                return c2me$optionalEquality1.hashCode();
-+            } else {
-+                return original.get();
-+            }
-+        }
-+
-+        public Marker(Type type, DensityFunction wrapped) {
-+            this.type = type;
-+            this.wrapped = wrapped;
-+        }
-+        // Canvas end
-         @Override
-         public double compute(DensityFunction.FunctionContext context) {
-             return this.wrapped.compute(context);
-@@ -704,7 +_,19 @@
-             return this.wrapped.maxValue();
-         }
- 
--        static enum Type implements StringRepresentable {
-+        // Canvas start - dfc - convert to class
-+        @Override
-+        public Type type() {
-+            return type;
-+        }
-+
-+        @Override
-+        public DensityFunction wrapped() {
-+            return wrapped;
-+        }
-+
-+        public static enum Type implements StringRepresentable { // - public
-+        // Canvas end
-             Interpolated("interpolated"),
-             FlatCache("flat_cache"),
-             Cache2D("cache_2d"),
-@@ -798,7 +_,7 @@
-         }
-     }
- 
--    protected record Noise(DensityFunction.NoiseHolder noise, @Deprecated double xzScale, double yScale) implements DensityFunction {
-+    public record Noise(DensityFunction.NoiseHolder noise, @Deprecated double xzScale, double yScale) implements DensityFunction { // Canvas - protected -> public
-         public static final MapCodec<DensityFunctions.Noise> DATA_CODEC = RecordCodecBuilder.mapCodec(
-             instance -> instance.group(
-                     DensityFunction.NoiseHolder.CODEC.fieldOf("noise").forGetter(DensityFunctions.Noise::noise),
 @@ -815,8 +_,40 @@
          }
  
@@ -237,25 +105,7 @@
          }
  
          @Override
-@@ -860,7 +_,7 @@
-         double transform(double value);
-     }
- 
--    record RangeChoice(DensityFunction input, double minInclusive, double maxExclusive, DensityFunction whenInRange, DensityFunction whenOutOfRange)
-+    public record RangeChoice(DensityFunction input, double minInclusive, double maxExclusive, DensityFunction whenInRange, DensityFunction whenOutOfRange) // Canvas - public
-         implements DensityFunction {
-         public static final MapCodec<DensityFunctions.RangeChoice> DATA_CODEC = RecordCodecBuilder.mapCodec(
-             instance -> instance.group(
-@@ -919,7 +_,7 @@
-         }
-     }
- 
--    protected record Shift(@Override DensityFunction.NoiseHolder offsetNoise) implements DensityFunctions.ShiftNoise {
-+    public record Shift(@Override DensityFunction.NoiseHolder offsetNoise) implements DensityFunctions.ShiftNoise { // Canvas - protected -> public
-         static final KeyDispatchDataCodec<DensityFunctions.Shift> CODEC = DensityFunctions.singleArgumentCodec(
-             DensityFunction.NoiseHolder.CODEC, DensityFunctions.Shift::new, DensityFunctions.Shift::offsetNoise
-         );
-@@ -938,9 +_,49 @@
+@@ -938,6 +_,46 @@
          public KeyDispatchDataCodec<? extends DensityFunction> codec() {
              return CODEC;
          }
@@ -301,11 +151,7 @@
 +        // Canvas end
      }
  
--    protected record ShiftA(@Override DensityFunction.NoiseHolder offsetNoise) implements DensityFunctions.ShiftNoise {
-+    public record ShiftA(@Override DensityFunction.NoiseHolder offsetNoise) implements DensityFunctions.ShiftNoise { // Canvas - protected -> public
-         static final KeyDispatchDataCodec<DensityFunctions.ShiftA> CODEC = DensityFunctions.singleArgumentCodec(
-             DensityFunction.NoiseHolder.CODEC, DensityFunctions.ShiftA::new, DensityFunctions.ShiftA::offsetNoise
-         );
+     protected record ShiftA(@Override DensityFunction.NoiseHolder offsetNoise) implements DensityFunctions.ShiftNoise {
 @@ -959,9 +_,49 @@
          public KeyDispatchDataCodec<? extends DensityFunction> codec() {
              return CODEC;

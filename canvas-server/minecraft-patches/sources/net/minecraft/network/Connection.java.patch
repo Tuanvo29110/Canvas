@@ -83,11 +83,11 @@
      private static int currTick; // Paper - Buffer joins to world
      private static int tickSecond; // Purpur - Max joins per second
      public void tick() {
-+            // Canvas start - ensure not on main with play phase
-+            if (Thread.currentThread().equals(MinecraftServer.getServer().serverThread) && this.phase.equals(ConnectionHandlePhases.PLAY)) {
-+                throw new IllegalStateException("Cannot run on main with play phase");
-+            }
-+            // Canvas end
++        // Canvas start - ensure not on main with play phase
++        if (Thread.currentThread().equals(MinecraftServer.getServer().serverThread) && this.phase.equals(ConnectionHandlePhases.PLAY)) {
++            throw new IllegalStateException("Cannot run on main with play phase");
++        }
++        // Canvas end
          this.flushQueue();
          // Paper start - Buffer joins to world
          if (Connection.currTick != net.minecraft.server.MinecraftServer.currentTick) {
