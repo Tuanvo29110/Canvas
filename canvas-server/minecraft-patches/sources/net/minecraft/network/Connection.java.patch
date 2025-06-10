@@ -79,11 +79,10 @@
  
      public Connection(PacketFlow receiving) {
          this.receiving = receiving;
-@@ -590,6 +_,12 @@
+@@ -590,6 +_,11 @@
      private static int currTick; // Paper - Buffer joins to world
      private static int tickSecond; // Purpur - Max joins per second
      public void tick() {
-+        synchronized (lockObject) { // Canvas - lock
 +            // Canvas start - ensure not on main with play phase
 +            if (Thread.currentThread().equals(MinecraftServer.getServer().serverThread) && this.phase.equals(ConnectionHandlePhases.PLAY)) {
 +                throw new IllegalStateException("Cannot run on main with play phase");
@@ -106,12 +105,11 @@
              } // Paper end - Buffer joins to world
          }
  
-@@ -635,6 +_,8 @@
+@@ -635,6 +_,7 @@
          if (this.bandwidthDebugMonitor != null) {
              this.bandwidthDebugMonitor.tick();
          }
 +        this.tickPackets(); // Canvas - packet processor
-+        } // Canvas - lock
      }
  
      protected void tickSecond() {
