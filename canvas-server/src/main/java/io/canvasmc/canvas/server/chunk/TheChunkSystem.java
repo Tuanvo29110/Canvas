@@ -25,7 +25,12 @@ public class TheChunkSystem extends ExecutorManager {
         LOGGER.info("Initialized new ChunkSystem '{}' with {} allocated threads", name, workerThreadCount);
     }
 
-    public int getAliveThreads() {
+    @Override
+    public Thread[] getAliveThreads() {
+        return this.workerThreads;
+    }
+
+    public int getAliveThreadCount() {
         int count = 0;
         for (final WorkerThread thread : this.workerThreads) {
             if (thread.active) {
@@ -35,6 +40,7 @@ public class TheChunkSystem extends ExecutorManager {
         return count;
     }
 
+    @Override
     public Thread[] getCoreThreads() {
         final WorkerThread[] threads = this.workerThreads;
 

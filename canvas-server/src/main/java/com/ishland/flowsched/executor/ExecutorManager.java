@@ -1,5 +1,6 @@
 package com.ishland.flowsched.executor;
 
+import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import com.ishland.flowsched.structs.DynamicPriorityQueue;
 import com.ishland.flowsched.util.Assertions;
@@ -9,7 +10,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
-public class ExecutorManager {
+public abstract class ExecutorManager extends PrioritisedThreadPool {
 
     public final DynamicPriorityQueue<Task> globalWorkQueue; // Canvas - private -> protected
     protected final ConcurrentMap<LockToken, FreeableTaskList> lockListeners = new ConcurrentHashMap<>(); // Canvas - private -> protected
@@ -33,6 +34,7 @@ public class ExecutorManager {
      * @param threadInitializer the thread initializer.
      */
     public ExecutorManager(int workerThreadCount, Consumer<Thread> threadInitializer) {
+        super(threadInitializer);
         globalWorkQueue = new DynamicPriorityQueue<>();
         workerThreads = new WorkerThread[workerThreadCount];
         for (int i = 0; i < workerThreadCount; i++) {
