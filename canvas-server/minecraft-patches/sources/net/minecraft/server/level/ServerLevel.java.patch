@@ -316,7 +316,7 @@
      }
  
      // Paper start
-@@ -723,10 +_,162 @@
+@@ -723,10 +_,167 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -348,6 +348,11 @@
 +                if (region != null) {
 +                    region.getData().tickData.connections.add(connection);
 +                    data.connections.remove(connection);
++                } else {
++                    // schedule, we need to load this chunk
++                    final ServerChunkCache chunkSource = player.serverLevel().chunkSource;
++                    chunkSource.updateRegionTicket(player.chunkPosition(), true, TicketType.UNKNOWN);
++                    chunkSource.getChunk(chunkX, chunkZ, true);
 +                }
 +            }
 +            return;

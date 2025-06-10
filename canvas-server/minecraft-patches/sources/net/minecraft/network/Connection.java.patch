@@ -36,12 +36,12 @@
 +    // Canvas start - packet processor
 +    private final AtomicReference<ServerRegions.WorldTickData> currentlyOwned = new AtomicReference<>();
 +
-+    public synchronized void switchTo(@org.jetbrains.annotations.NotNull ServerRegions.WorldTickData data) {
++    public synchronized void switchTo(ServerRegions.WorldTickData data) {
 +        if (this.currentlyOwned.get() != null) {
 +            this.currentlyOwned.get().connections.remove(this);
 +        }
 +        this.currentlyOwned.set(data);
-+        data.connections.add(this);
++        if (data != null) data.connections.add(this);
 +        this.setPhase(ConnectionHandlePhases.PLAY);
 +    }
 +
@@ -85,7 +85,7 @@
      public void tick() {
 +        // Canvas start - ensure no double tick
 +        if (this.isTicking) {
-+            LOGGER.info("double ticking client connection of player \"{}\", returning", this.getPlayer().getName().getString());
++            LOGGER.debug("double ticking client connection of player \"{}\", returning", this.getPlayer().getName().getString());
 +            return;
 +        }
 +        this.isTicking = true;

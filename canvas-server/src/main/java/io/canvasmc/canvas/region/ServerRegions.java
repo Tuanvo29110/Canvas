@@ -614,10 +614,11 @@ public class ServerRegions {
         public final List<Connection> connections = new CopyOnWriteArrayList<>() {
             @Override
             public boolean add(final Connection connection) {
+                boolean added = super.add(connection);
                 try {
-                    return super.add(connection);
+                    return added;
                 } finally {
-                    CanvasBootstrap.LOGGER.info("Docked connection for \"{}\" on {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
+                    if (added) CanvasBootstrap.LOGGER.info("Docked connection for \"{}\" on {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
                         WorldTickData.this.world.toString() : WorldTickData.this.getApiData().toString());
                 }
             }
@@ -625,10 +626,11 @@ public class ServerRegions {
             @Override
             public boolean remove(final Object o) {
                 if (!(o instanceof Connection connection)) throw new RuntimeException("must be connection");
+                boolean removed = super.remove(o);
                 try {
-                    return super.remove(o);
+                    return removed;
                 } finally {
-                    CanvasBootstrap.LOGGER.info("Undocked connection for \"{}\" from {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
+                    if (removed) CanvasBootstrap.LOGGER.info("Undocked connection for \"{}\" from {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
                         WorldTickData.this.world.toString() : WorldTickData.this.region.getData().tickHandle.toString());
                 }
             }

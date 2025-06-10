@@ -1,5 +1,14 @@
 --- a/net/minecraft/world/level/levelgen/NoiseChunk.java
 +++ b/net/minecraft/world/level/levelgen/NoiseChunk.java
+@@ -7,6 +_,8 @@
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
++import java.util.concurrent.locks.ReentrantLock;
++import java.util.concurrent.locks.StampedLock;
+ import javax.annotation.Nullable;
+ import net.minecraft.core.QuartPos;
+ import net.minecraft.core.SectionPos;
 @@ -56,7 +_,8 @@
      long interpolationCounter;
      long arrayInterpolationCounter;
@@ -21,12 +30,21 @@
  
      public static NoiseChunk forChunk(
          ChunkAccess chunk,
-@@ -238,7 +_,7 @@
+@@ -236,7 +_,9 @@
+         this.arrayInterpolationCounter++;
+     }
  
++    private final ReentrantLock firstCellLock = new ReentrantLock(); // Canvas - interpolation lock
      public void initializeForFirstCellX() {
++        firstCellLock.lock(); // Canvas - interpolation lock // TODO - come back to this, wtf is going on?
          if (this.interpolating) {
--            throw new IllegalStateException("Staring interpolation twice");
-+            return; // Canvas - just return
+             throw new IllegalStateException("Staring interpolation twice");
          } else {
-             this.interpolating = true;
-             this.interpolationCounter = 0L;
+@@ -329,6 +_,7 @@
+         if (!this.interpolating) {
+             throw new IllegalStateException("Staring interpolation twice");
+         } else {
++            this.firstCellLock.unlock(); // Canvas - interpolation lock
+             this.interpolating = false;
+         }
+     }

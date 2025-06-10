@@ -40,7 +40,7 @@
                  if (processor instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl serverCommonPacketListener && serverCommonPacketListener.processedDisconnect) return; // Paper - Don't handle sync packets for kicked players
                  if (processor.shouldHandleMessage(packet)) {
                      try {
-@@ -37,13 +_,43 @@
+@@ -37,13 +_,26 @@
                  } else {
                      LOGGER.debug("Ignoring packet due to disconnection: {}", packet);
                  }
@@ -48,6 +48,9 @@
 -                } finally {
 -                    totalMainThreadPacketsProcessed.getAndIncrement();
 -                    packetProcessing.pop();
+-                }
+-                // Paper end - detailed watchdog information
+-            });
 +            // Canvas start
 +            };
 +            if (processor instanceof ServerGamePacketListenerImpl gamePacketListener) {
@@ -58,26 +61,7 @@
 +            } else if (processor instanceof ServerConfigurationPacketListenerImpl configurationPacketListener) {
 +                // push to main
 +                ServerPlayer serverPlayer = configurationPacketListener.player;
-+                final ServerRegions.WorldTickData switchTo;
-+                if (serverPlayer.server.isRegionized()) {
-+                    final int chunkX = serverPlayer.chunkPosition().x;
-+                    final int chunkZ = serverPlayer.chunkPosition().z;
-+                    ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region =
-+                        serverPlayer.serverLevel().regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
-+                    if (region == null) {
-+                        // we need to load this chunk
-+                        final ServerChunkCache chunkSource = serverPlayer.serverLevel().chunkSource;
-+                        chunkSource.updateRegionTicket(serverPlayer.chunkPosition(), true, TicketType.LOGIN);
-+                        chunkSource.getChunk(chunkX, chunkZ, true);
-+                        region = serverPlayer.serverLevel().regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
-+                    }
-+                    switchTo = Objects.requireNonNull(region, "region cannot be null").getData().tickData;
-+                } else {
-+                    switchTo = Objects.requireNonNull(serverPlayer.serverLevel().levelTickData, "level tick data cannot be null");
-                 }
--                // Paper end - detailed watchdog information
--            });
-+                configurationPacketListener.connection.switchTo(switchTo);
++                configurationPacketListener.connection.switchTo(Objects.requireNonNull(serverPlayer.serverLevel().levelTickData, "level tick data cannot be null"));
 +                configurationPacketListener.player.serverLevel().wake();
 +                configurationPacketListener.connection.schedulePacket(run);
 +            } else if (processor instanceof ServerLoginPacketListenerImpl) {
