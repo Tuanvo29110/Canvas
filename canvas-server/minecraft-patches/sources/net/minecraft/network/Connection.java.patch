@@ -113,3 +113,23 @@
      }
  
      protected void tickSecond() {
+@@ -923,6 +_,19 @@
+         }
+         this.pendingActions.clear();
+     }
++    // Canvas start - connection threading
++
++    public void removeFromAll() {
++        for (final ServerLevel level : MinecraftServer.getServer().getAllLevels()) {
++            // remove from level
++            level.levelTickData.connections.remove(this);
++            level.regioniser.computeForAllRegionsUnsynchronised((region) -> {
++                // remove from all regions
++                region.getData().tickData.connections.remove(this);
++            });
++        }
++    }
++    // Canvas end
+ 
+     private static class InnerUtil { // Attempt to hide these methods from ProtocolLib, so it doesn't accidently pick them up.
+ 

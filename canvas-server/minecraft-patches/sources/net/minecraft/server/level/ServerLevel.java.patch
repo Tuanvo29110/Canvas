@@ -366,7 +366,7 @@
 +        for (final Connection conn : connections) {
 +            if (!conn.isConnected()) {
 +                conn.handleDisconnection();
-+                data.connections.remove(conn);
++                conn.removeFromAll();
 +                continue;
 +            }
 +            if (!data.connections.contains(conn)) {

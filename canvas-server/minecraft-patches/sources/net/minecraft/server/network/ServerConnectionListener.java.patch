@@ -22,3 +22,11 @@
                  if (!connection.isConnecting()) {
                      if (connection.isConnected()) {
                          try {
+@@ -268,6 +_,7 @@
+                         if (connection.preparing) continue; // Spigot - Fix a race condition where a NetworkManager could be unregistered just before connection
+                         iterator.remove();
+                         connection.handleDisconnection();
++                        connection.removeFromAll(); // Canvas - connection threading
+                     }
+                 }
+             }
