@@ -316,7 +316,7 @@
      }
  
      // Paper start
-@@ -723,10 +_,167 @@
+@@ -723,10 +_,166 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -388,7 +388,6 @@
 +                    conn.disconnect(ichatmutablecomponent);
 +                }));
 +                conn.setReadOnly();
-+                continue;
 +            }
 +        }
 +    }

@@ -210,6 +210,8 @@ public class Config {
         public boolean printConfigurationTree = true;
         @Comment("Logs teleport ticket debug when an entity is teleported")
         public boolean logTeleportTicketDebug = false;
+        @Comment("Logs connection docking and undocking")
+        public boolean logConnectionDocking = false;
     }
 
     public Fixes fixes = new Fixes();

@@ -9,6 +9,7 @@ import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
 import com.google.common.collect.Sets;
 import io.canvasmc.canvas.CanvasBootstrap;
+import io.canvasmc.canvas.Config;
 import io.canvasmc.canvas.event.region.RegionCreateEvent;
 import io.canvasmc.canvas.event.region.RegionDestroyEvent;
 import io.canvasmc.canvas.event.region.RegionMergeEvent;
@@ -618,7 +619,7 @@ public class ServerRegions {
                 try {
                     return added;
                 } finally {
-                    if (added) CanvasBootstrap.LOGGER.info("Docked connection for \"{}\" on {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
+                    if (added && Config.INSTANCE.debug.logConnectionDocking) CanvasBootstrap.LOGGER.info("Docked connection for \"{}\" on {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
                         WorldTickData.this.world.toString() : WorldTickData.this.getApiData().toString());
                 }
             }
@@ -630,7 +631,7 @@ public class ServerRegions {
                 try {
                     return removed;
                 } finally {
-                    if (removed) CanvasBootstrap.LOGGER.info("Undocked connection for \"{}\" from {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
+                    if (removed && Config.INSTANCE.debug.logConnectionDocking) CanvasBootstrap.LOGGER.info("Undocked connection for \"{}\" from {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
                         WorldTickData.this.world.toString() : WorldTickData.this.region.getData().tickHandle.toString());
                 }
             }
