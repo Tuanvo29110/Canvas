@@ -749,9 +749,10 @@ public class Config {
         System.setProperty("com.ishland.c2me.opts.natives_math.duringGameInit", "true");
         if (INSTANCE.chunks.nativeAcceleration.nativeAccelerationEnabled) {
             try {
+                //noinspection ResultOfMethodCallIgnored
                 Class.forName("io.canvasmc.canvas.util.NativeLoader").getField("lookup").get(null);
             } catch (Throwable t) {
-                t.printStackTrace();
+                CanvasBootstrap.LOGGER.error("Couldn't load NativeLoader", t);
             }
         }
         CanvasBootstrap.LOGGER.info("Finished Canvas config init in {}ms", TimeUnit.MILLISECONDS.convert(Util.getNanos() - startNanos, TimeUnit.NANOSECONDS));

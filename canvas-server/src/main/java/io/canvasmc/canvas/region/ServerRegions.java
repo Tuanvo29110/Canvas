@@ -84,9 +84,6 @@ import org.jetbrains.annotations.Nullable;
 public class ServerRegions {
 
     public static @NotNull WorldTickData getTickData(@NotNull ServerLevel level) {
-        if (level.levelTickData == null) {
-            level.levelTickData = new WorldTickData(level, null);
-        }
         if (!level.server.isRegionized()) {
             return level.levelTickData;
         }
@@ -98,9 +95,6 @@ public class ServerRegions {
     // Note: this ALWAYS returns a region tick data if the server is regionized
     public static @NotNull WorldTickData getRegionizedTickData(int chunkX, int chunkZ, @NotNull ServerLevel level) {
         if (!level.server.isRegionized()) {
-            if (level.levelTickData == null) {
-                level.levelTickData = new WorldTickData(level, null);
-            }
             return level.levelTickData;
         }
         WorldTickData running = pullRegionData();
@@ -631,7 +625,7 @@ public class ServerRegions {
                     return added;
                 } finally {
                     if (added && Config.INSTANCE.debug.logConnectionDocking) CanvasBootstrap.LOGGER.info("Docked connection for \"{}\" on {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
-                        WorldTickData.this.world.toString() : WorldTickData.this.getApiData().toString(), new Throwable());
+                        WorldTickData.this.world.toString() : WorldTickData.this.getApiData().toString());
                 }
             }
 
@@ -643,7 +637,7 @@ public class ServerRegions {
                     return removed;
                 } finally {
                     if (removed && Config.INSTANCE.debug.logConnectionDocking) CanvasBootstrap.LOGGER.info("Undocked connection for \"{}\" from {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
-                        WorldTickData.this.world.toString() : WorldTickData.this.region.getData().tickHandle.toString(), new Throwable());
+                        WorldTickData.this.world.toString() : WorldTickData.this.region.getData().tickHandle.toString());
                 }
             }
         };

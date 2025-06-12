@@ -4,14 +4,14 @@ import io.canvasmc.canvas.CanvasBootstrap;
 import io.canvasmc.canvas.Config;
 import io.canvasmc.canvas.region.ServerRegions;
 import io.papermc.paper.threadedregions.ThreadedRegionizer;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.network.Connection;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import org.jetbrains.annotations.NotNull;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NetworkRouter {
     private final ServerLevel world;
@@ -22,7 +22,8 @@ public class NetworkRouter {
             try {
                 return added;
             } finally {
-                if (added && Config.INSTANCE.debug.logConnectionDocking) CanvasBootstrap.LOGGER.info("Docked connection for \"{}\" on network router for {}", connection.getPlayer().getName().getString(), NetworkRouter.this.world, new Throwable());
+                if (added && Config.INSTANCE.debug.logConnectionDocking)
+                    CanvasBootstrap.LOGGER.info("Docked connection for \"{}\" on network router for {}", connection.getPlayer().getName().getString(), NetworkRouter.this.world);
             }
         }
 
@@ -33,7 +34,8 @@ public class NetworkRouter {
             try {
                 return removed;
             } finally {
-                if (removed && Config.INSTANCE.debug.logConnectionDocking) CanvasBootstrap.LOGGER.info("Undocked connection for \"{}\" from network router for {}", connection.getPlayer().getName().getString(), NetworkRouter.this.world, new Throwable());
+                if (removed && Config.INSTANCE.debug.logConnectionDocking)
+                    CanvasBootstrap.LOGGER.info("Undocked connection for \"{}\" from network router for {}", connection.getPlayer().getName().getString(), NetworkRouter.this.world);
             }
         }
     };

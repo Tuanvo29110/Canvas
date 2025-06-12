@@ -406,9 +406,6 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
         @Override
         public boolean blockTick(final @NotNull WrappedTickLoop loop, final @NotNull BooleanSupplier hasTimeLeft, final int tickCount) {
             ServerLevel thisAsTickable = (ServerLevel) loop; // we are extended by ServerLevel
-            if (thisAsTickable.levelTickData == null) {
-                thisAsTickable.levelTickData = new ServerRegions.WorldTickData(thisAsTickable, null);
-            }
             TickScheduler.setTickingData(thisAsTickable.levelTickData);
             MinecraftServer server = MinecraftServer.getServer();
             if (!server.isTicking()) {

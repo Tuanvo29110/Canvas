@@ -139,7 +139,7 @@
 +        this,
 +        this.tickRegions
 +    );
-+    public @Nullable ServerRegions.WorldTickData levelTickData = null;
++    public final ServerRegions.WorldTickData levelTickData;
 +    public final RegionizedTaskQueue.WorldRegionTaskData taskQueueRegionData = new RegionizedTaskQueue.WorldRegionTaskData(this);
 +    // Canvas end
 +    // private final MinecraftServer server; // Canvas - clashes with super
@@ -296,7 +296,7 @@
          // Purpur start - Allow toggling special MobSpawners per world
          this.customSpawners = new ArrayList<>();
          if (purpurConfig.phantomSpawning) {
-@@ -692,6 +_,20 @@
+@@ -692,6 +_,21 @@
          // Paper end - rewrite chunk system
          this.getCraftServer().addWorld(this.getWorld()); // CraftBukkit
          this.preciseTime = this.serverLevelData.getDayTime(); // Purpur - Configurable daylight cycle
@@ -313,6 +313,7 @@
 +        this.chunkSystemPriorities = new PriorityHandler(this);
 +        this.scheduleTo(MinecraftServer.getThreadedServer().scheduler.scheduler);
 +        this.networkRouter = new io.canvasmc.canvas.server.NetworkRouter(this); // connection threading
++        this.levelTickData = new ServerRegions.WorldTickData(this, null); // Threaded Regions
 +        // Canvas end
      }
  
@@ -639,7 +640,7 @@
 -            if (this.serverLevelData.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
 +            // Canvas start - Threaded Regions
 +            boolean canTickDaylight = false;
-+            if (this.server.isRegionized() && tickData == this.levelTickData/*regions enabled, and we are ticking on a world*/) {
++            if (this.server.isRegionized() && tickData.region == null/*regions enabled, and we are ticking on a world*/) {
 +                canTickDaylight = true;
 +            } else if (!this.server.isRegionized()) {
 +                // regions disabled, we are without a doubt ticking on world
