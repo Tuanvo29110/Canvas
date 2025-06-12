@@ -512,14 +512,31 @@
                          if (this instanceof ServerPlayer // CraftBukkit - always call event for players
                              || (level != null && (level.dimension() == serverLevel.dimension() || this.canTeleport(serverLevel, level)))) { // CraftBukkit
                              this.teleport(portalDestination);
-@@ -3780,6 +_,7 @@
+@@ -3778,8 +_,10 @@
+ 
+     @Nullable
      public Entity teleport(TeleportTransition teleportTransition) {
++        try { // Canvas - Threaded Dimensions - resync time on teleport
          // Paper start - Fix item duplication and teleport issues
          if ((!this.isAlive() || !this.valid) && (teleportTransition.newLevel() != this.level)) {
 +            LOGGER.warn("Illegal Entity Teleport details: !Alive:{} !Valid:{} TeleportDest:{}", !this.isAlive(), !this.valid, (teleportTransition.newLevel() != this.level)); // Canvas - include extra debug info
              LOGGER.warn("Illegal Entity Teleport {} to {}:{}", this, teleportTransition.newLevel(), teleportTransition.position(), new Throwable());
              return null;
          }
+@@ -3838,6 +_,13 @@
+         } else {
+             return null;
+         }
++        // Canvas start - Threaded Dimensions - resync time on teleport
++        } finally {
++            if (this instanceof ServerPlayer serverPlayer) {
++                serverPlayer.requestingTimeResync = true;
++            }
++        }
++        // Canvas end
+     }
+ 
+     private Entity teleportSameDimension(ServerLevel level, TeleportTransition teleportTransition) {
 @@ -3858,6 +_,7 @@
      }
  

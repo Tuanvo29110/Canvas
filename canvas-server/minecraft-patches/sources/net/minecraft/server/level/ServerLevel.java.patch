@@ -388,7 +388,7 @@
 +        long worldTime = this.getGameTime();
 +        final ClientboundSetTimePacket worldPacket = new ClientboundSetTimePacket(worldTime, dayTime, doDaylight);
 +        for (ServerPlayer entityhuman : this.getLocalPlayers()) {
-+            if (entityhuman == null || (ServerRegions.getCurrentTick(this) + entityhuman.getId()) % 20 != 0) {
++            if (entityhuman == null || (!entityhuman.requestingTimeResync && (ServerRegions.getCurrentTick(this) + entityhuman.getId()) % 20 != 0)) {
 +                continue;
 +            }
 +            entityhuman.connection.send(worldPacket);
