@@ -1,147 +1,95 @@
 --- a/src/main/java/org/purpurmc/purpur/task/TPSBarTask.java
 +++ b/src/main/java/org/purpurmc/purpur/task/TPSBarTask.java
-@@ -1,18 +_,44 @@
- package org.purpurmc.purpur.task;
- 
-+import io.canvasmc.canvas.ThreadedBukkitServer;
-+import io.canvasmc.canvas.command.ThreadedServerHealthDump;
-+import io.canvasmc.canvas.region.ChunkRegion;
-+import io.canvasmc.canvas.region.ServerRegions;
-+import io.papermc.paper.threadedregions.ThreadedRegionizer;
- import net.kyori.adventure.bossbar.BossBar;
- import net.kyori.adventure.text.Component;
-+import net.kyori.adventure.text.format.TextColor;
- import net.kyori.adventure.text.minimessage.MiniMessage;
- import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-+import net.kyori.adventure.util.HSVLike;
-+import net.minecraft.server.MinecraftServer;
-+import net.minecraft.server.level.ServerLevel;
-+import net.minecraft.server.level.ServerPlayer;
-+import org.bukkit.craftbukkit.entity.CraftPlayer;
- import org.purpurmc.purpur.PurpurConfig;
--import org.bukkit.Bukkit;
+@@ -9,9 +_,10 @@
  import org.bukkit.entity.Player;
-+import java.util.HashMap;
-+import java.util.Map;
-+import java.util.UUID;
  
  public class TPSBarTask extends BossBarTask {
++    public static final ThreadLocal<java.text.DecimalFormat> TWO_DECIMAL_PLACES = ThreadLocal.withInitial(() -> new java.text.DecimalFormat("#,##0.00")); // Canvas - Threaded Regions
      private static TPSBarTask instance;
 -    private double tps = 20.0D;
 -    private double mspt = 0.0D;
-+    // Canvas start - Replaced doubles (tps and mspt) with maps to get data of player current world
-+    private final Map<UUID, Double> tps = new HashMap<>(0) {
-+        @Override
-+        public Double get(final Object key) {
-+            return this.computeIfAbsent((UUID) key, (_) -> 0.0D);
-+        }
-+    };
-+    private final Map<UUID, Double> mspt = new HashMap<>(0) {
-+        @Override
-+        public Double get(final Object key) {
-+            return this.computeIfAbsent((UUID) key, (_) -> 0.0D);
-+        }
-+    };
-+    // Canvas end
++    // private double tps = 20.0D; // Canvas - Threaded Server - localize
++    // private double mspt = 0.0D; // Canvas - Threaded Server - localize
      private int tick = 0;
-+    private final RegionBarTask regionBarTask = new RegionBarTask(); // Canvas - Threaded Regions
  
      public static TPSBarTask instance() {
-         if (instance == null) {
-@@ -28,115 +_,113 @@
+@@ -23,16 +_,37 @@
+ 
+     @Override
+     BossBar createBossBar() {
+-        return BossBar.bossBar(Component.text(""), 0.0F, instance().getBossBarColor(), PurpurConfig.commandTPSBarProgressOverlay);
++        return BossBar.bossBar(Component.text(""), 0.0F, Bukkit.getServer().isRegionized() ? BossBar.Color.BLUE : BossBar.Color.GREEN, PurpurConfig.commandTPSBarProgressOverlay); // Canvas - Threaded Server
+     }
  
      @Override
      void updateBossBar(BossBar bossbar, Player player) {
 -        bossbar.progress(getBossBarProgress());
-+        // Canvas start - get player's current world UUID and pass it to some of the methods for showing TPS and MSPT of current world
-+        UUID playerWorldUID = player.getWorld().getUID();
-+
-+        bossbar.progress(getBossBarProgress(playerWorldUID));
-         bossbar.color(getBossBarColor());
-         bossbar.name(MiniMessage.miniMessage().deserialize(PurpurConfig.commandTPSBarTitle,
+-        bossbar.color(getBossBarColor());
+-        bossbar.name(MiniMessage.miniMessage().deserialize(PurpurConfig.commandTPSBarTitle,
 -                Placeholder.component("tps", getTPSColor()),
 -                Placeholder.component("mspt", getMSPTColor()),
--                Placeholder.component("ping", getPingColor(player.getPing()))
-+            Placeholder.component("tps", ThreadedServerHealthDump.getTPSColor(((CraftPlayer) player).getHandle().serverLevel().getTps5s().getAverage())),
-+            Placeholder.component("mspt", ThreadedServerHealthDump.getMSPTColor(((CraftPlayer) player).getHandle().serverLevel().getTickTimes5s().getAverage())),
-+            Placeholder.component("ping", getPingColor(player.getPing()))
-         ));
++        // Canvas start - Threaded Server
++        io.canvasmc.canvas.LevelAccess levelAccess = player.getWorld().getLevelAccess();
++        final int chunkX = player.getLocation().getBlockX() >> 4;
++        final int chunkZ = player.getLocation().getBlockZ() >> 4;
++        io.canvasmc.canvas.region.Region region = Bukkit.getThreadedServer().getRegionAtChunk(
++            levelAccess.getWorld(), chunkX, chunkZ
++        );
++        double tps = Double.parseDouble(TWO_DECIMAL_PLACES.get().format(
++            player.getServer().isRegionized() ?
++                region == null ? -1 : region.getTickHandle().getTps5s().getAverage() :
++                levelAccess.getTps5s().getAverage()
++        ));
++        double mspt = Double.parseDouble(TWO_DECIMAL_PLACES.get().format(
++            player.getServer().isRegionized() ?
++                region == null ? -1 : region.getTickHandle().getTickTimes5s().getAverage() :
++                levelAccess.getTickTimes5s().getAverage()
++        ));
++        bossbar.progress(getBossBarProgress(tps, mspt));
++        bossbar.color(player.getServer().isRegionized() ? BossBar.Color.BLUE : BossBar.Color.GREEN);
++        bossbar.name(MiniMessage.miniMessage().deserialize(
++            "<gray>" + (player.getServer().isRegionized() ? "Region" : "World") +
++                " TPS<yellow>:</yellow> <tps> " + (player.getServer().isRegionized() ? "Region" : "World") +
++                " MSPT<yellow>:</yellow> <mspt> Ping<yellow>:</yellow> <ping>ms",
++                Placeholder.component("tps", getTPSColor(tps)),
++                Placeholder.component("mspt", getMSPTColor(mspt)),
 +        // Canvas end
+                 Placeholder.component("ping", getPingColor(player.getPing()))
+         ));
      }
- 
-     @Override
-     public void run() {
--        if (++tick < PurpurConfig.commandTPSBarTickInterval) {
-+        if (++tick < PurpurConfig.commandTPSBarTickInterval || tick < MinecraftServer.getServer().tickRateManager().tickrate()) { // Canvas - don't run task more often than once a second
-             return;
+@@ -44,20 +_,21 @@
          }
          tick = 0;
  
 -        this.tps = Math.max(Math.min(Bukkit.getTPS()[0], 20.0D), 0.0D);
 -        this.mspt = Bukkit.getAverageTickTime();
-+        // Canvas start - Per level TPS and MSPT
-+        for (ServerLevel level : MinecraftServer.getServer().getAllLevels()) {
-+            tps.put(level.uuid, Math.max(Math.min(level.tps5s.getAverage(), 20.0D), 0.0D));
-+            mspt.put(level.uuid, level.tickTimes5s.getAverage());
-+        }
-+        // Canvas end
++        // this.tps = Math.max(Math.min(Bukkit.getTPS()[0], 20.0D), 0.0D); // Canvas - Threaded Server - localize
++        // this.mspt = Bukkit.getAverageTickTime(); // Canvas - Threaded Server - localize
  
          super.run();
      }
  
 -    private float getBossBarProgress() {
-+    private float getBossBarProgress(UUID playerWorldUID) {  // Canvas - Add UUID as an argument
++    private float getBossBarProgress(double tps, double mspt) { // Canvas - Threaded Server
          if (PurpurConfig.commandTPSBarProgressFillMode == FillMode.MSPT) {
 -            return Math.max(Math.min((float) mspt / 50.0F, 1.0F), 0.0F);
-+            return Math.max(Math.min(mspt.get(playerWorldUID).floatValue() / ThreadedBukkitServer.getInstance().getScheduler().getTimeBetweenTicks(), 1.0F), 0.0F); // Canvas - get MSPT from map
++            return Math.max(Math.min((float) mspt / io.canvasmc.canvas.ThreadedBukkitServer.getInstance().getScheduler().getTimeBetweenTicks(), 1.0F), 0.0F); // Canvas - Threaded Server
          } else {
 -            return Math.max(Math.min((float) tps / 20.0F, 1.0F), 0.0F);
-+            return Math.max(Math.min(tps.get(playerWorldUID).floatValue() / ThreadedBukkitServer.getInstance().getScheduler().getTickRate(), 1.0F), 0.0F); // Canvas - get TPS from map
++            return Math.max(Math.min((float) tps / io.canvasmc.canvas.ThreadedBukkitServer.getInstance().getScheduler().getTickRate(), 1.0F), 0.0F); // Canvas - Threaded Server
          }
      }
  
++    /* // Canvas - Threaded Server
      private BossBar.Color getBossBarColor() {
--        if (isGood(PurpurConfig.commandTPSBarProgressFillMode)) {
--            return PurpurConfig.commandTPSBarProgressColorGood;
--        } else if (isMedium(PurpurConfig.commandTPSBarProgressFillMode)) {
--            return PurpurConfig.commandTPSBarProgressColorMedium;
--        } else {
--            return PurpurConfig.commandTPSBarProgressColorLow;
--        }
--    }
--
--    private boolean isGood(FillMode mode) {
--        return isGood(mode, 0);
--    }
--
--    private boolean isGood(FillMode mode, int ping) {
--        if (mode == FillMode.MSPT) {
--            return mspt < 40;
--        } else if (mode == FillMode.TPS) {
--            return tps >= 19;
--        } else if (mode == FillMode.PING) {
--            return ping < 100;
--        } else {
--            return false;
--        }
--    }
--
--    private boolean isMedium(FillMode mode) {
--        return isMedium(mode, 0);
--    }
--
--    private boolean isMedium(FillMode mode, int ping) {
--        if (mode == FillMode.MSPT) {
--            return mspt < 50;
--        } else if (mode == FillMode.TPS) {
--            return tps >= 15;
--        } else if (mode == FillMode.PING) {
--            return ping < 200;
--        } else {
--            return false;
--        }
--    }
--
+         if (isGood(PurpurConfig.commandTPSBarProgressFillMode)) {
+             return PurpurConfig.commandTPSBarProgressColorGood;
+@@ -99,42 +_,27 @@
+             return false;
+         }
+     }
++     */ // Canvas - Threaded Server
+ 
 -    private Component getTPSColor() {
 -        String color;
 -        if (isGood(FillMode.TPS)) {
@@ -152,8 +100,13 @@
 -            color = PurpurConfig.commandTPSBarTextColorLow;
 -        }
 -        return MiniMessage.miniMessage().deserialize(color, Placeholder.parsed("text", String.format("%.2f", tps)));
--    }
--
++    // Canvas start - Threaded Server
++    private Component getTPSColor(double tps) {
++        net.kyori.adventure.text.format.TextColor textColor =
++            io.canvasmc.canvas.command.ThreadedServerHealthDump.getColorForTPS(tps);
++        return Component.text(tps, textColor);
+     }
+ 
 -    private Component getMSPTColor() {
 -        String color;
 -        if (isGood(FillMode.MSPT)) {
@@ -164,9 +117,13 @@
 -            color = PurpurConfig.commandTPSBarTextColorLow;
 -        }
 -        return MiniMessage.miniMessage().deserialize(color, Placeholder.parsed("text", String.format("%.2f", mspt)));
--    }
--
--    private Component getPingColor(int ping) {
++    private Component getMSPTColor(double mspt) {
++        net.kyori.adventure.text.format.TextColor textColor =
++            io.canvasmc.canvas.command.ThreadedServerHealthDump.getColorForMSPT(mspt);
++        return Component.text(mspt, textColor);
+     }
+ 
+     private Component getPingColor(int ping) {
 -        String color;
 -        if (isGood(FillMode.PING, ping)) {
 -            color = PurpurConfig.commandTPSBarTextColorGood;
@@ -176,75 +133,11 @@
 -            color = PurpurConfig.commandTPSBarTextColorLow;
 -        }
 -        return MiniMessage.miniMessage().deserialize(color, Placeholder.parsed("text", String.format("%s", ping)));
--    }
-+        return BossBar.Color.GREEN; // Canvas - rwerite TPS bars
-+    }
-+
-+    // Canvas start - rewrite TPS bars
-+    private static Component getPingColor(int ping) {
-+        final double clamped = Math.min(Math.max(ping, 0), 300);
-+        final double hue = 130.0 - (130.0 * (clamped / 300.0));
-+        final float saturation = 0.85f;
-+        final float value = 0.80f;
-+
-+        return Component.text(String.valueOf(ping))
-+            .color(TextColor.color(HSVLike.hsvLike((float)(hue / 360.0), saturation, value)));
-+    }
++        net.kyori.adventure.text.format.TextColor textColor =
++            io.canvasmc.canvas.command.ThreadedServerHealthDump.getColorForPing(ping);
++        return Component.text(ping, textColor);
+     }
 +    // Canvas end
  
      public enum FillMode {
          TPS, MSPT, PING
-     }
-+    // Canvas start - Threaded Regions
-+
-+    public static class RegionBarTask extends BossBarTask {
-+        private static org.purpurmc.purpur.task.TPSBarTask.RegionBarTask instance;
-+        private int tick = 0;
-+
-+        public static org.purpurmc.purpur.task.TPSBarTask.RegionBarTask instance() {
-+            if (instance == null) {
-+                instance = new org.purpurmc.purpur.task.TPSBarTask.RegionBarTask();
-+            }
-+            return instance;
-+        }
-+
-+        @Override
-+        BossBar createBossBar() {
-+            return BossBar.bossBar(Component.text(""), 0.0F, BossBar.Color.BLUE, PurpurConfig.commandTPSBarProgressOverlay);
-+        }
-+
-+        @Override
-+        void updateBossBar(BossBar bossbar, Player player) {
-+            ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-+            ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> chunkRegion = serverPlayer.serverLevel().regioniser.getRegionAtUnsynchronised(serverPlayer.chunkPosition().x, serverPlayer.chunkPosition().z);
-+            if (chunkRegion == null) {
-+                return;
-+            }
-+
-+            bossbar.progress(getBossBarProgress(chunkRegion.getData().tickHandle));
-+            bossbar.color(BossBar.Color.BLUE);
-+            bossbar.name(MiniMessage.miniMessage().deserialize("<gray>Region TPS<yellow>:</yellow> <tps> Region MSPT<yellow>:</yellow> <mspt>",
-+                Placeholder.component("tps", ThreadedServerHealthDump.getTPSColor(chunkRegion.getData().tickHandle.getTps5s().getAverage())),
-+                Placeholder.component("mspt", ThreadedServerHealthDump.getMSPTColor(chunkRegion.getData().tickHandle.getTickTimes5s().getAverage()))
-+            ));
-+        }
-+
-+        @Override
-+        public void run() {
-+            if (++tick < PurpurConfig.commandTPSBarTickInterval || tick < MinecraftServer.getServer().tickRateManager().tickrate()) {
-+                return;
-+            }
-+            tick = 0;
-+            super.run();
-+        }
-+
-+        private float getBossBarProgress(ChunkRegion region) {
-+            if (PurpurConfig.commandTPSBarProgressFillMode == org.purpurmc.purpur.task.TPSBarTask.FillMode.MSPT) {
-+                return Math.max(Math.min(((float) region.tickTimes5s.getAverage()) / ThreadedBukkitServer.getInstance().getScheduler().getTimeBetweenTicks(), 1.0F), 0.0F);
-+            } else {
-+                return Math.max(Math.min(((float) region.tps5s.getAverage()) / ThreadedBukkitServer.getInstance().getScheduler().getTickRate(), 1.0F), 0.0F);
-+            }
-+        }
-+    }
-+    // Canvas end
- }

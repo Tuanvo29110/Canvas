@@ -194,6 +194,15 @@ public class ThreadedServerHealthDump {
         return TextColor.color(HSVLike.hsvLike((float) (hue / 360.0), 0.85f, 0.80f));
     }
 
+    public static @NotNull TextColor getColorForPing(final double ping) {
+        final double badPing = 300;
+        final double clamped = Math.min(ping, badPing * 2);
+        final double percent = Math.max(0.0, (clamped - badPing) / badPing);
+
+        final double hue = interpolateHue(percent);
+        return TextColor.color(HSVLike.hsvLike((float) (hue / 360.0), 0.85f, 0.80f));
+    }
+
     private static double interpolateHue(double percent) {
         percent = Math.min(Math.max(percent, 0.0), 1.0);
         return 130.0 * (1.0 - percent);
