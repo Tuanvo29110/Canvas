@@ -614,29 +614,29 @@
 +                    AtomicBoolean loadedEntities = new AtomicBoolean(false);
 +                    AtomicBoolean navigatingMobs = new AtomicBoolean(false);
 +                    AtomicBoolean trackerEntities = new AtomicBoolean(false);
-+                    for (final ServerLevel level : this.getServer().getAllLevels()) {
-+                        level.regioniser.computeForAllRegions(region -> {
-+                            ServerRegions.WorldTickData from = region.getData().tickData;
-+                            from.removeEntity(this, false);
-+                            if (from.trackerEntities.contains(this)) {
-+                                trackerEntities.set(true);
-+                                from.trackerEntities.remove(this);
-+                            }
-+                            if (this instanceof Mob mob && from.navigatingMobs.contains(this)) {
-+                                navigatingMobs.set(true);
-+                                from.navigatingMobs.remove(mob);
-+                            }
-+                            if (from.entityTickList.contains(this)) {
-+                                entityTickList.set(true);
-+                                from.entityTickList.remove(this);
-+                            }
-+                            if (from.loadedEntities.contains(this)) {
-+                                loadedEntities.set(true);
-+                                from.loadedEntities.remove(this);
-+                            }
-+                        });
-+                    }
 +                    world.getServer().threadedServer().taskQueue.queueTickTaskQueue(world, position.x, position.z, () -> {
++                        for (final ServerLevel level : this.getServer().getAllLevels()) {
++                            level.regioniser.computeForAllRegions(region -> {
++                                ServerRegions.WorldTickData from = region.getData().tickData;
++                                from.removeEntity(this, false);
++                                if (from.trackerEntities.contains(this)) {
++                                    trackerEntities.set(true);
++                                    from.trackerEntities.remove(this);
++                                }
++                                if (this instanceof Mob mob && from.navigatingMobs.contains(this)) {
++                                    navigatingMobs.set(true);
++                                    from.navigatingMobs.remove(mob);
++                                }
++                                if (from.entityTickList.contains(this)) {
++                                    entityTickList.set(true);
++                                    from.entityTickList.remove(this);
++                                }
++                                if (from.loadedEntities.contains(this)) {
++                                    loadedEntities.set(true);
++                                    from.loadedEntities.remove(this);
++                                }
++                            });
++                        }
 +                        // now we are completely removed from the world, there is quite literally NOTHING that ties us to anywhere, we can now add back.
 +                        // we schedule this to the region we are adding to, because we need to make sure that we don't syncload anything
 +                        // off the owning thread, and if we do that is very bad, so we want to be efficient with this
