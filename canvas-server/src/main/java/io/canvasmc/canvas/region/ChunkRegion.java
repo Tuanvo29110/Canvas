@@ -38,7 +38,7 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
     public final ServerLevel world;
 
     public ChunkRegion(final ThreadedRegionizer.@NotNull ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region, final DedicatedServer server) {
-        super(server, IDENTIFIER_GENERATOR.apply(region.regioniser.world), new TickHandle(region));
+        super(server, IDENTIFIER_GENERATOR.apply(region.regioniser.world), new TickHandle(region), false);
         this.region = region;
         this.world = region.regioniser.world;
     }

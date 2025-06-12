@@ -99,7 +99,7 @@ public class TickScheduler implements MultithreadedTickScheduler {
 
     @Override
     public @NotNull WrappedTickLoop scheduleWrapped(final WrappedTickLoop.@NotNull WrappedTick tick, final @NotNull NamespacedKey identifier) {
-        FullTick<?> tickLoop = new FullTick<>((DedicatedServer) MinecraftServer.getServer(), CraftNamespacedKey.toMinecraft(identifier), tick);
+        FullTick<?> tickLoop = new FullTick<>((DedicatedServer) MinecraftServer.getServer(), CraftNamespacedKey.toMinecraft(identifier), tick, false);
         tickLoop.scheduleTo(this.scheduler);
         return tickLoop;
     }
@@ -225,10 +225,13 @@ public class TickScheduler implements MultithreadedTickScheduler {
         public ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<>();
         public boolean alreadyScheduled = false;
 
-        public FullTick(DedicatedServer server, ResourceLocation identifier, T tick) {
+        public FullTick(DedicatedServer server, ResourceLocation identifier, T tick, boolean startSleeping) {
             this.server = server;
             this.identifier = identifier;
             this.tick = tick;
+            if (startSleeping) {
+                this.sleep();
+            }
             this.setScheduledStart(System.nanoTime() + getScheduler().getTimeBetweenTicks());
             this.tickSchedule = new Schedule(DEADLINE_NOT_SET);
             this.constructorInit = Util.getNanos();

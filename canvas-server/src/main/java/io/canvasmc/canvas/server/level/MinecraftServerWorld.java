@@ -59,7 +59,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
     protected boolean hasTasks = true;
 
     public MinecraftServerWorld(final ResourceLocation worldIdentifier) {
-        super((DedicatedServer) MinecraftServer.getServer(), worldIdentifier, new TickHandle());
+        super((DedicatedServer) MinecraftServer.getServer(), worldIdentifier, new TickHandle(), true);
         this.bukkitScheduler = new CraftScheduler();
     }
 
