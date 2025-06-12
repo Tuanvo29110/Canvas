@@ -320,7 +320,8 @@ public class ServerRegions {
                     conn.disconnect(Component.literal("No longer owned by region"));
                     continue;
                 }
-                conn.switchTo(data);
+                data.connections.add(conn);
+                conn.owner.set(data);
             }
             // entities
             for (final ServerPlayer player : from.localPlayers) {
@@ -500,7 +501,8 @@ public class ServerRegions {
             final long fromTickOffset = currentTickTo - currentTickFrom;
             // connections
             for (final Connection connection : from.connections) {
-                connection.switchTo(into);
+                into.connections.add(connection);
+                connection.owner.set(into);
             }
             // time
             final long fromRedstoneTimeOffset = into.redstoneTime - from.redstoneTime;
@@ -605,6 +607,15 @@ public class ServerRegions {
         public @NotNull WrappedTickLoop getTickHandle() {
             return this.tickHandle;
         }
+
+        @Override
+        public String toString() {
+            return "TickRegionData{" +
+                "tickHandle=" + tickHandle +
+                ", tickData=" + tickData +
+                ", world=" + world +
+                '}';
+        }
     }
 
     // with how canvas works, we need an isolated class
@@ -620,7 +631,7 @@ public class ServerRegions {
                     return added;
                 } finally {
                     if (added && Config.INSTANCE.debug.logConnectionDocking) CanvasBootstrap.LOGGER.info("Docked connection for \"{}\" on {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
-                        WorldTickData.this.world.toString() : WorldTickData.this.getApiData().toString());
+                        WorldTickData.this.world.toString() : WorldTickData.this.getApiData().toString(), new Throwable());
                 }
             }
 
@@ -632,7 +643,7 @@ public class ServerRegions {
                     return removed;
                 } finally {
                     if (removed && Config.INSTANCE.debug.logConnectionDocking) CanvasBootstrap.LOGGER.info("Undocked connection for \"{}\" from {}", connection.getPlayer().getName().getString(), WorldTickData.this.region == null ?
-                        WorldTickData.this.world.toString() : WorldTickData.this.region.getData().tickHandle.toString());
+                        WorldTickData.this.world.toString() : WorldTickData.this.region.getData().tickHandle.toString(), new Throwable());
                 }
             }
         };
@@ -1192,7 +1203,9 @@ public class ServerRegions {
         @Override
         public void onRegionDestroy(final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region) {
             TickRegionData data = region.getData();
-            Objects.requireNonNull(region.regioniser.world.levelTickData).connections.addAll(data.tickData.connections);
+            for (final Connection connection : data.tickData.connections) {
+                data.world.networkRouter.connectToWorld(connection);
+            }
             new RegionDestroyEvent(region.getData()).callEvent();
         }
 

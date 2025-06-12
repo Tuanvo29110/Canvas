@@ -1,11 +1,10 @@
 --- a/net/minecraft/network/Connection.java
 +++ b/net/minecraft/network/Connection.java
-@@ -4,6 +_,8 @@
+@@ -4,6 +_,7 @@
  import com.google.common.collect.Queues;
  import com.google.common.util.concurrent.ThreadFactoryBuilder;
  import com.mojang.logging.LogUtils;
 +import io.canvasmc.canvas.region.ServerRegions;
-+import io.canvasmc.canvas.server.network.ConnectionHandlePhases;
  import io.netty.bootstrap.Bootstrap;
  import io.netty.channel.Channel;
  import io.netty.channel.ChannelException;
@@ -29,27 +28,28 @@
  import net.minecraft.util.Mth;
  import net.minecraft.util.debugchart.LocalSampleLogger;
  import org.apache.commons.lang3.Validate;
-@@ -149,6 +_,49 @@
+@@ -96,7 +_,7 @@
+     @Nullable
+     private volatile PacketListener disconnectListener;
+     @Nullable
+-    private volatile PacketListener packetListener;
++    public volatile PacketListener packetListener; // Canvas - private -> public - connection threading
+     @Nullable
+     private DisconnectionDetails disconnectionDetails;
+     private boolean encrypted;
+@@ -149,6 +_,27 @@
      public boolean isPending = true;
      public boolean queueImmunity;
      // Paper end - Optimize network
 +    // Canvas start - packet processor
-+    private final AtomicReference<ServerRegions.WorldTickData> currentlyOwned = new AtomicReference<>();
-+
-+    public void switchTo(ServerRegions.WorldTickData data) {
-+        synchronized (lockObject) {
-+            if (this.currentlyOwned.get() != null) {
-+                this.currentlyOwned.get().connections.remove(this);
-+            }
-+            this.currentlyOwned.set(data);
-+            if (data != null) data.connections.add(this);
-+            this.phase = ConnectionHandlePhases.PLAY;
++    // if owner ref is null, it's being routed, else, it's owned by something
++    public final AtomicReference<ServerRegions.WorldTickData> owner = new AtomicReference<>();
++    public void computeIfOwningTickDataPresent(Consumer<ServerRegions.WorldTickData> ownerConsumer) {
++        if (owner.get() != null) {
++            ownerConsumer.accept(owner.get());
 +        }
 +    }
-+
 +    private final Queue<Runnable> packetsToProcess = new ConcurrentLinkedQueue<>();
-+    private final Object lockObject = new Object();
-+    private ConnectionHandlePhases phase = ConnectionHandlePhases.JOIN;
 +
 +    public void schedulePacket(Runnable runnable) {
 +        packetsToProcess.add(runnable);
@@ -61,36 +61,10 @@
 +            task.run();
 +        }
 +    }
-+
-+    public void setPhase(ConnectionHandlePhases phase) {
-+        synchronized (lockObject) {
-+            this.phase = phase;
-+        }
-+    }
-+
-+    public ConnectionHandlePhases getPhase() {
-+        ConnectionHandlePhases phase;
-+        synchronized (lockObject) {
-+            phase = this.phase;
-+        }
-+        return phase;
-+    }
 +    // Canvas end
  
      public Connection(PacketFlow receiving) {
          this.receiving = receiving;
-@@ -590,6 +_,11 @@
-     private static int currTick; // Paper - Buffer joins to world
-     private static int tickSecond; // Purpur - Max joins per second
-     public void tick() {
-+        // Canvas start - ensure not on main with play phase
-+        if (Thread.currentThread().equals(MinecraftServer.getServer().serverThread) && this.phase.equals(ConnectionHandlePhases.PLAY)) {
-+            throw new IllegalStateException("Cannot run on main with play phase");
-+        }
-+        // Canvas end
-         this.flushQueue();
-         // Paper start - Buffer joins to world
-         if (Connection.currTick != net.minecraft.server.MinecraftServer.currentTick) {
 @@ -610,13 +_,7 @@
              if (!(this.packetListener instanceof net.minecraft.server.network.ServerLoginPacketListenerImpl loginPacketListener)
                  || loginPacketListener.state != net.minecraft.server.network.ServerLoginPacketListenerImpl.State.VERIFYING

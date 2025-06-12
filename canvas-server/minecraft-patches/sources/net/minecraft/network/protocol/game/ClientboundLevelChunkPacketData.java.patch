@@ -9,7 +9,7 @@
 +    public ClientboundLevelChunkPacketData(LevelChunk levelChunk, io.papermc.paper.antixray.ChunkPacketInfo<net.minecraft.world.level.block.state.BlockState> chunkPacketInfo, BlockEntity[] blockEntities, Map<Heightmap.Types, long[]> heightmaps) {
 +        this.heightmaps = heightmaps;
 +
-+        if (Thread.currentThread() instanceof io.canvasmc.canvas.server.chunk.AsyncChunkSendThread) {
++        if (Thread.currentThread() instanceof io.canvasmc.canvas.server.chunk.AsyncChunkSend.AsyncChunkSendThread) {
 +            var buffer = new io.netty.buffer.UnpooledByteBufAllocator(false).buffer(calculateChunkSize(levelChunk));
 +            extractChunkData(new FriendlyByteBuf(buffer), levelChunk, chunkPacketInfo);
 +            var array = it.unimi.dsi.fastutil.bytes.ByteArrays.trim(buffer.array(), buffer.writerIndex());

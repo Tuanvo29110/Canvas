@@ -296,7 +296,7 @@
          // Purpur start - Allow toggling special MobSpawners per world
          this.customSpawners = new ArrayList<>();
          if (purpurConfig.phantomSpawning) {
-@@ -692,6 +_,19 @@
+@@ -692,6 +_,20 @@
          // Paper end - rewrite chunk system
          this.getCraftServer().addWorld(this.getWorld()); // CraftBukkit
          this.preciseTime = this.serverLevelData.getDayTime(); // Purpur - Configurable daylight cycle
@@ -312,11 +312,12 @@
 +
 +        this.chunkSystemPriorities = new PriorityHandler(this);
 +        this.scheduleTo(MinecraftServer.getThreadedServer().scheduler.scheduler);
++        this.networkRouter = new io.canvasmc.canvas.server.NetworkRouter(this); // connection threading
 +        // Canvas end
      }
  
      // Paper start
-@@ -723,10 +_,166 @@
+@@ -723,10 +_,153 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -324,6 +325,7 @@
 -    public void tick(BooleanSupplier hasTimeLeft) {
 +    // Canvas start - Threaded Dimensions
 +
++    public final io.canvasmc.canvas.server.NetworkRouter networkRouter; // connection threading
 +    private int ticksSinceLastBlockEventsTickCall = 0;
 +    private int ticksSinceLastRaidTickCall = 0;
 +    private int ticksSinceLastTickCustomSpawnersCall = 0;
@@ -337,25 +339,11 @@
 +        // to the region tick data or not
 +        // in MOST instances, this is very intentional for connections
 +        // to be passed through here to get to the region
-+        if (this.server.isRegionized() && (data.region == null)) { // if the region in the data is null, we are running a world region, cannot do this with regionizing
-+            for (final Connection connection : data.connections) {
-+                ServerPlayer player = connection.getPlayer();
-+                if (player == null) continue;
-+                final int chunkX = player.chunkPosition().x;
-+                final int chunkZ = player.chunkPosition().z;
-+                ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region =
-+                    this.regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
-+                if (region != null) {
-+                    region.getData().tickData.connections.add(connection);
-+                    data.connections.remove(connection);
-+                } else {
-+                    // schedule, we need to load this chunk
-+                    final ServerChunkCache chunkSource = player.serverLevel().chunkSource;
-+                    chunkSource.updateRegionTicket(player.chunkPosition(), true, TicketType.UNKNOWN);
-+                    chunkSource.getChunk(chunkX, chunkZ, true);
-+                }
++        if (data.region == null) {
++            this.networkRouter.tickRouter();
++            if (this.server.isRegionized()) { // if the region in the data is null, we are running a world region, cannot do this with regionizing
++                return;
 +            }
-+            return;
 +        }
 +        // Canvas end
 +        for (ServerPlayer player : data.getLocalPlayers()) {

@@ -5,7 +5,7 @@
          }
  
 -        if (!Bukkit.isPrimaryThread()) {
-+        if (!Bukkit.isPrimaryThread() && !(Thread.currentThread() instanceof io.canvasmc.canvas.server.chunk.AsyncChunkSendThread)) { // Canvas - async chunk sending
++        if (!Bukkit.isPrimaryThread() && !(Thread.currentThread() instanceof io.canvasmc.canvas.server.chunk.AsyncChunkSend.AsyncChunkSendThread)) { // Canvas - async chunk sending
              // Plugins?
              MinecraftServer.getServer().scheduleOnMain(() -> modifyBlocks(chunkPacket, chunkPacketInfo));
              return;

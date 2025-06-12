@@ -264,6 +264,33 @@ public final class ThreadedRegionizer<R extends ThreadedRegionizer.ThreadedRegio
             this.regionLock.tryUnlockRead();
         }
     }
+    // Canvas start - add more helper methods
+
+    public void computeAtRegionIfPresentOrElseSynchronized(final int chunkX, final int chunkZ,
+                                                           Consumer<ThreadedRegion<R, S>> ifPresent, Runnable notPresent) {
+        this.regionLock.readLock();
+        try {
+            ThreadedRegion<R, S> region = getRegionAtSynchronised(chunkX, chunkZ);
+            if (region != null) {
+                ifPresent.accept(region);
+            } else {
+                notPresent.run();
+            }
+        } finally {
+            this.regionLock.tryUnlockRead();
+        }
+    }
+
+    public void computeAtRegionIfPresentOrElseUnsynchronized(final int chunkX, final int chunkZ,
+                                                           Consumer<ThreadedRegion<R, S>> ifPresent, Runnable notPresent) {
+        ThreadedRegion<R, S> region = getRegionAtUnsynchronised(chunkX, chunkZ);
+        if (region != null) {
+            ifPresent.accept(region);
+        } else {
+            notPresent.run();
+        }
+    }
+    // Canvas end
 
     /**
      * Adds a chunk to the regioniser. Note that it is illegal to add a chunk unless

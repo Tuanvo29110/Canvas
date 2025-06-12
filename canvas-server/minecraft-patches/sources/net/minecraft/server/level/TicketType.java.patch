@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/TicketType.java
 +++ b/net/minecraft/server/level/TicketType.java
-@@ -45,21 +_,34 @@
+@@ -45,21 +_,35 @@
      public static final TicketType FORCED = register("forced", 0L, true, TicketType.TicketUse.LOADING_AND_SIMULATION);
      public static final TicketType PORTAL = register("portal", 300L, true, TicketType.TicketUse.LOADING_AND_SIMULATION);
      public static final TicketType ENDER_PEARL = register("ender_pearl", 40L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
@@ -16,6 +16,7 @@
 +    public static final TicketType TELEPORT = register("canvas:teleport", 20L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
 +    public static final TicketType END_GATEWAY = register("canvas:end_gateway", 20L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
 +    public static final TicketType REGION_SCHEDULER_API_HOLD = register("canvas:region_scheduler_api_hold", 0L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
++    public static final TicketType NETWORK_ROUTER = register("canvas:network_router", 40L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
 +    // Canvas end
  
      public static TicketType register(String name, long timeout, boolean persist, TicketType.TicketUse use) {

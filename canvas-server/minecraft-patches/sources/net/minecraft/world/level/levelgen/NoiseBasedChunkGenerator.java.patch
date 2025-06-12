@@ -40,64 +40,6 @@
      }
  
      @Override
-@@ -293,31 +_,33 @@
-     @Override
-     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
-         NoiseSettings noiseSettings = this.settings.value().noiseSettings().clampToHeightAccessor(chunk.getHeightAccessorForGeneration());
-+        // Canvas start - optimize noise generation
-         int minY = noiseSettings.minY();
--        int i = Mth.floorDiv(minY, noiseSettings.getCellHeight());
--        int i1 = Mth.floorDiv(noiseSettings.height(), noiseSettings.getCellHeight());
--        return i1 <= 0 ? CompletableFuture.completedFuture(chunk) : CompletableFuture.supplyAsync(() -> {
--            int sectionIndex = chunk.getSectionIndex(i1 * noiseSettings.getCellHeight() - 1 + minY);
--            int sectionIndex1 = chunk.getSectionIndex(minY);
--            Set<LevelChunkSection> set = Sets.newHashSet();
--
--            for (int i2 = sectionIndex; i2 >= sectionIndex1; i2--) {
--                LevelChunkSection section = chunk.getSection(i2);
--                section.acquire();
--                set.add(section);
--            }
--
--            ChunkAccess var20;
--            try {
--                var20 = this.doFill(blender, structureManager, randomState, chunk, i, i1);
--            } finally {
--                for (LevelChunkSection levelChunkSection1 : set) {
--                    levelChunkSection1.release();
--                }
--            }
--
--            return var20;
--        }, Runnable::run); // Paper - rewrite chunk system
-+        int minYDiv = Mth.floorDiv(minY, noiseSettings.getCellHeight());
-+        int cellHeightDiv = Mth.floorDiv(noiseSettings.height(), noiseSettings.getCellHeight());
-+
-+        if (cellHeightDiv <= 0) {
-+            return CompletableFuture.completedFuture(chunk);
-+        }
-+
-+        try {
-+            int startIndex = chunk.getSectionIndex(cellHeightDiv * noiseSettings.getCellHeight() - 1 + minY);
-+            int minYIndex = chunk.getSectionIndex(minY);
-+            LevelChunkSection[] sections = chunk.getSections();
-+
-+            for (int i = startIndex; i >= minYIndex; --i) {
-+                sections[i].acquire();
-+            }
-+
-+            ChunkAccess access = this.doFill(blender, structureManager, randomState, chunk, minYDiv, cellHeightDiv);
-+            for (int i = startIndex; i >= minYIndex; --i) {
-+                sections[i].release();
-+            }
-+            return CompletableFuture.completedFuture(access);
-+        } catch (Throwable throwable) {
-+            throw new RuntimeException("unexpected error when running wgen/fill-noise", throwable);
-+        }
-+        // Canvas end
-     }
- 
-     private ChunkAccess doFill(Blender blender, StructureManager structureManager, RandomState random, ChunkAccess chunk, int minCellY, int cellCountY) {
 @@ -375,7 +_,7 @@
  
                                  interpolatedState = this.debugPreliminarySurfaceLevel(noiseChunk, i10, i7, i13, interpolatedState);

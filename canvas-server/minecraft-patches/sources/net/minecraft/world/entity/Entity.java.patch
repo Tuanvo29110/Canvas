@@ -528,7 +528,7 @@
          List<Entity> passengers = this.getPassengers();
          List<Entity> list = new ArrayList<>(passengers.size());
          this.ejectPassengers();
-@@ -3930,10 +_,141 @@
+@@ -3930,10 +_,131 @@
          }
      }
  
@@ -584,11 +584,6 @@
 +                        from.loadedEntities.remove(this);
 +                        to.loadedEntities.add(this);
 +                    }
-+                    // connections
-+                    if (this instanceof ServerPlayer player) {
-+                        // switch the connection over
-+                        player.connection.connection.switchTo(to);
-+                    }
 +                    if (Config.INSTANCE.debug.regionTeleports) LOGGER.info("Moved entity {} across region surrounding {} and {}", this, newRegion.getCenterChunk(), oldRegion.getCenterChunk()); // debug print
 +                }
 +                // we have the extra check for regions because if we disable regionizing, then they are always null
@@ -622,10 +617,6 @@
 +                                loadedEntities.set(true);
 +                                from.loadedEntities.remove(this);
 +                            }
-+                            // connections
-+                            if (this instanceof ServerPlayer player) {
-+                                from.connections.remove(player.connection.connection);
-+                            }
 +                        });
 +                    }
 +                    world.getServer().threadedServer().taskQueue.queueTickTaskQueue(world, position.x, position.z, () -> {
@@ -645,10 +636,6 @@
 +                        if (loadedEntities.get()) {
 +                            regionData.loadedEntities.add(this);
 +                        }
-+                        // connections
-+                        if (this instanceof ServerPlayer player) {
-+                            player.connection.connection.switchTo(regionData);
-+                        }
 +
 +                        // now we can remove our ticket
 +                        if (!dontPlaceTeleportTicket) {
@@ -660,6 +647,9 @@
 +                if (this.getServer().isRegionized()) {
 +                    MinecraftServer.getThreadedServer().taskQueue.queueTickTaskQueue(world.level(), this.chunkPosition.x, this.chunkPosition.z, run, Priority.BLOCKING);
 +                } else world.scheduleForPreNextTick(run);
++            }
++            if (this instanceof ServerPlayer serverPlayer) {
++                serverPlayer.serverLevel().networkRouter.connectToWorld(serverPlayer.connection.connection);
 +            }
 +        } catch (Throwable thrown) {
 +            if (!dontPlaceTeleportTicket) {
