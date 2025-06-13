@@ -1,5 +1,14 @@
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
+@@ -337,7 +_,7 @@
+         if (dismount) this.entity.stopRiding(); // Paper - Teleport passenger API
+ 
+         // Let the server handle cross world teleports
+-        if (location.getWorld() != null && !location.getWorld().equals(this.getWorld())) {
++        if (true) { // Canvas - we must let the entity teleport through here so Canvas can regionize them correctly.
+             // Prevent teleportation to an other world during world generation
+             Preconditions.checkState(!this.entity.generation, "Cannot teleport entity to an other world during world generation");
+             this.entity.teleport(new TeleportTransition(((CraftWorld) location.getWorld()).getHandle(), CraftLocation.toVec3(location), Vec3.ZERO, location.getPitch(), location.getYaw(), Set.of(), TeleportTransition.DO_NOTHING, TeleportCause.PLUGIN));
 @@ -754,7 +_,7 @@
          ImmutableSet.Builder<Player> players = ImmutableSet.builder();
  
