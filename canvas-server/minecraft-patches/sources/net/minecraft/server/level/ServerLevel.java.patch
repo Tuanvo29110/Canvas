@@ -1299,13 +1299,13 @@
          public void onTickingStart(Entity entity) {
              if (entity instanceof net.minecraft.world.entity.Marker && !paperConfig().entities.markers.tick) return; // Paper - Configurable marker ticking
 -            ServerLevel.this.entityTickList.add(entity);
-+            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, entity.level().level()).addEntityTickingEntity(entity); // Canvas - Threaded Regions
++            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, ServerLevel.this).addEntityTickingEntity(entity); // Canvas - Threaded Regions
          }
  
          @Override
          public void onTickingEnd(Entity entity) {
 -            ServerLevel.this.entityTickList.remove(entity);
-+            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, entity.level().level()).removeEntityTickingEntity(entity); // Canvas - Threaded Regions
++            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, ServerLevel.this).removeEntityTickingEntity(entity); // Canvas - Threaded Regions
              // Paper start - Reset pearls when they stop being ticked
              if (ServerLevel.this.paperConfig().fixes.disableUnloadedChunkEnderpearlExploit && ServerLevel.this.paperConfig().misc.legacyEnderPearlBehavior && entity instanceof net.minecraft.world.entity.projectile.ThrownEnderpearl pearl) {
                  pearl.cachedOwner = null;
@@ -1316,7 +1316,7 @@
 +            try { entity.statusLock.acquire(); // Canvas - lock tracking
 +            TNTMergeManager.onEntityLoad(entity); // Canvas - tnt merging
              org.spigotmc.AsyncCatcher.catchOp("entity register"); // Spigot
-+            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, entity.level().level()).addLoadedEntity(entity); // Canvas - Threaded Regions
++            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, this.outer).addLoadedEntity(entity); // Canvas - Threaded Regions
              // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
              if (entity instanceof ServerPlayer serverPlayer) {
                  ServerLevel.this.players.add(serverPlayer);
@@ -1350,7 +1350,7 @@
 +            TNTMergeManager.onEntityUnload(entity); // Canvas - tnt merging
              org.spigotmc.AsyncCatcher.catchOp("entity unregister"); // Spigot
              // Spigot start // TODO I don't think this is needed anymore
-+            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, entity.level().level()).removeLoadedEntity(entity); // Canvas - Threaded Regions
++            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, this.outer).removeLoadedEntity(entity); // Canvas - Threaded Regions
              if (entity instanceof Player player) {
                  for (final ServerLevel level : ServerLevel.this.getServer().getAllLevels()) {
 -                    for (final Optional<net.minecraft.world.level.saveddata.SavedData> savedData : level.getDataStorage().cache.values()) {

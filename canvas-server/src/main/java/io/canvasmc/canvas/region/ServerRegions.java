@@ -695,12 +695,7 @@ public class ServerRegions {
             return this.navigatingMobs.remove(mob);
         }
 
-        public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY) {
-            @Override
-            public boolean add(final Entity entity) {
-                return super.add(entity);
-            }
-        };
+        public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
         // shouldSignal is threadlocal, don't need to isolate
         public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(64, 0.25f);
         public final PathTypeCache pathTypesByPosCache = new PathTypeCache();
