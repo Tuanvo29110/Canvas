@@ -32,7 +32,7 @@ public class AsyncPathProcessor {
 
     static {
         pathProcessingExecutor = new ThreadPoolExecutor(
-            1,
+            Config.INSTANCE.entities.pathfinding.maxProcessors,
             Config.INSTANCE.entities.pathfinding.maxProcessors,
             Config.INSTANCE.entities.pathfinding.keepAlive, TimeUnit.SECONDS,
             getQueueImpl(),
@@ -43,9 +43,6 @@ public class AsyncPathProcessor {
             new RejectedTaskHandler()
         );
         LOGGER.info("Using {} threads for Async Pathfinding", Config.INSTANCE.entities.pathfinding.maxProcessors);
-    }
-
-    public static void init() {
     }
 
     protected static @NotNull CompletableFuture<Void> queue(@NotNull AsyncPath path) {
