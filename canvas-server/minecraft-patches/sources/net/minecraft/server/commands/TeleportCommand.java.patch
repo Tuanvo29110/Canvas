@@ -44,6 +44,22 @@
              double d = relatives.contains(Relative.X) ? x - target.getX() : x;
              double d1 = relatives.contains(Relative.Y) ? y - target.getY() : y;
              double d2 = relatives.contains(Relative.Z) ? z - target.getZ() : z;
+@@ -293,6 +_,15 @@
+             // CraftBukkit start - Teleport event
+             boolean result;
+             if (target instanceof final net.minecraft.server.level.ServerPlayer player) {
++                // Canvas start - async teleport
++                if (Config.INSTANCE.commands.teleport.teleportAsync) {
++                    target.getBukkitEntity().teleportAsync(
++                        new Location(level.getWorld(), d, d1, d2, f2, f3),
++                        PlayerTeleportEvent.TeleportCause.COMMAND
++                    ).thenAccept(resultConsumer);
++                    return;
++                }
++                // Canvas end
+                 result = player.teleportTo(level, d, d1, d2, relatives, f2, f3, true, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND);
+             } else {
+                 org.bukkit.Location to = new org.bukkit.Location(level.getWorld(), d, d1, d2, f2, f3);
 @@ -310,24 +_,19 @@
                  f3 = to.getPitch();
                  level = ((org.bukkit.craftbukkit.CraftWorld) to.getWorld()).getHandle();

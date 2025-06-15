@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -76,7 +75,9 @@ import net.minecraft.world.level.pathfinder.PathTypeCache;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.ticks.LevelTicks;
+import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.craftbukkit.CraftWorld;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,6 +234,30 @@ public class ServerRegions {
         }
 
         return true;
+    }
+
+    public static boolean isSameRegion(@NotNull Location location1, @NotNull Location location2) {
+        if ((location1.getWorld() != null && !location1.getWorld().equals(location2.getWorld()))) return false; // not same world, shortcut
+        BlockPos pos1 = new BlockPos(location1.getBlockX(), location1.getBlockY(), location1.getBlockZ());
+        BlockPos pos2 = new BlockPos(location2.getBlockX(), location2.getBlockY(), location2.getBlockZ());
+        return isSameRegion(pos1, pos2, ((CraftWorld) location1.getWorld()).getHandle());
+    }
+
+    // Note: this is assuming the positions are in the same world provided
+    public static boolean isSameRegion(@NotNull BlockPos location1, @NotNull BlockPos location2, @NotNull ServerLevel world) {
+        ThreadedRegionizer<TickRegionData, TickRegionSectionData> regionizer = world.regioniser;
+        ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> regionAt1 = regionizer.getRegionAtUnsynchronised(
+            location1.getX() >> 4, location1.getZ() >> 4
+        );
+        ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> regionAt2 = regionizer.getRegionAtUnsynchronised(
+            location2.getX() >> 4, location2.getZ() >> 4
+        );
+
+        // if they are both null, assume not same as they are both not loaded
+        if (regionAt1 == null && regionAt2 == null) {
+            return false;
+        }
+        return regionAt1 == regionAt2;
     }
 
     public static final class TickRegionSectionData implements ThreadedRegionizer.ThreadedRegionSectionData {

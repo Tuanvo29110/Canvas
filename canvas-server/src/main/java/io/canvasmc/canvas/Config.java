@@ -26,6 +26,7 @@ import net.minecraft.Util;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
+import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -318,6 +319,9 @@ public class Config {
         "server suffer performance loss)"
     })
     public boolean pluginCompatibilityMode = false;
+
+    @Comment("Uses a shortcut to skip calling a plugin event if the event has no listeners")
+    public boolean optimizePluginEventManager = true;
 
     public Commands commands = new Commands();
     public static class Commands {
@@ -738,6 +742,7 @@ public class Config {
                 if (INSTANCE.ticking.allocatedSchedulerThreadCount <= 1) {
                     CanvasBootstrap.LOGGER.error(Component.text("Allocating 1 or less scheduler threads can result in multiple issues with the chunk system, please allocate more to use Canvas more efficiently."));
                 }
+                Event.SHORTCUT_CALL = INSTANCE.optimizePluginEventManager;
             })
             .build(config, configClass)
         );

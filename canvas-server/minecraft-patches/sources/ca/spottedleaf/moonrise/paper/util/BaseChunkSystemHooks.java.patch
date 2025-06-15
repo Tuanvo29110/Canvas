@@ -17,7 +17,7 @@
      }
  
      @Override
-@@ -76,7 +_,7 @@
+@@ -76,18 +_,19 @@
  
      @Override
      public void onChunkHolderCreate(final ServerLevel level, final ChunkHolder holder) {
@@ -26,7 +26,12 @@
      }
  
      @Override
-@@ -88,6 +_,7 @@
+     public void onChunkHolderDelete(final ServerLevel level, final ChunkHolder holder) {
+         // Update progress listener for LevelLoadingScreen
+-        final ChunkProgressListener progressListener = level.getChunkSource().chunkMap.progressListener;
++        final ChunkProgressListener progressListener = null; // Canvas - cannot schedule chunk task here, as it would create a chunkholder
+         if (progressListener != null) {
+             this.scheduleChunkTask(level, holder.getPos().x, holder.getPos().z, () -> {
                  progressListener.onStatusChange(holder.getPos(), null);
              });
          }
