@@ -27,7 +27,7 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-public class CanvasRegionScheduler implements RegionScheduler {
+public class CanvasRegionScheduler implements RegionScheduler, TickableScheduler {
 
     private static @NotNull Runnable wrap(final Plugin plugin, final World world, final int chunkX, final int chunkZ, final Runnable run) {
         return () -> {
@@ -140,6 +140,7 @@ public class CanvasRegionScheduler implements RegionScheduler {
     }
 
     // Note: must only be called from a region
+    @Override
     public void tick(ServerRegions.WorldTickData data) {
         if (data == null || data.region == null) {
             throw new RuntimeException("trying to tick with non-region data");

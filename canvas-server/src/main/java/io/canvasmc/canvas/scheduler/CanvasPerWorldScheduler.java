@@ -2,6 +2,7 @@ package io.canvasmc.canvas.scheduler;
 
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.concurrentutil.util.Validate;
+import io.canvasmc.canvas.region.ServerRegions;
 import io.papermc.paper.threadedregions.scheduler.RegionScheduler;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -19,14 +20,16 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-public final class CanvasPerWorldScheduler implements RegionScheduler {
+public final class CanvasPerWorldScheduler implements RegionScheduler, TickableScheduler {
     private static final Map<ServerLevel, Long2ObjectOpenHashMap<List<CanvasPerWorldScheduler.GlobalScheduledTask>>> tasksByDeadline = new ConcurrentHashMap<>();
     private final Object stateLock = new Object();
 
     public CanvasPerWorldScheduler() {
     }
 
-    public void tick(ServerLevel level) {
+    @Override
+    public void tick(ServerRegions.@NotNull WorldTickData tickData) {
+        final ServerLevel level = tickData.world;
         final List<CanvasPerWorldScheduler.GlobalScheduledTask> run;
         Long2ObjectOpenHashMap<List<CanvasPerWorldScheduler.GlobalScheduledTask>> tasks = tasksByDeadline.computeIfAbsent(level, (_) -> new Long2ObjectOpenHashMap<>());
         synchronized (this.stateLock) {

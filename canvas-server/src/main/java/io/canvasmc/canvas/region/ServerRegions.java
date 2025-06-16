@@ -129,7 +129,7 @@ public class ServerRegions {
         return getTickData(level).currentTick;
     }
 
-    public static boolean isTickThreadFor(final Level world, final @NotNull AABB aabb) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull AABB aabb) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         return isTickThreadFor(
             world,
@@ -138,12 +138,12 @@ public class ServerRegions {
         );
     }
 
-    public static boolean isTickThreadFor(final Level world, final double blockX, final double blockZ) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final double blockX, final double blockZ) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         return isTickThreadFor(world, CoordinateUtils.getChunkCoordinate(blockX), CoordinateUtils.getChunkCoordinate(blockZ));
     }
 
-    public static boolean isTickThreadFor(final Level world, final Vec3 position, final @NotNull Vec3 deltaMovement, final int buffer) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final Vec3 position, final @NotNull Vec3 deltaMovement, final int buffer) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         final int fromChunkX = CoordinateUtils.getChunkX(position);
         final int fromChunkZ = CoordinateUtils.getChunkZ(position);
@@ -161,12 +161,12 @@ public class ServerRegions {
         );
     }
 
-    public static boolean isTickThreadFor(final Level world, final @NotNull BlockPos pos) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull BlockPos pos) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         return isTickThreadFor(world, pos.getX() >> 4, pos.getZ() >> 4);
     }
 
-    public static boolean isTickThreadFor(final Level world, final @NotNull BlockPos pos, final int blockRadius) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull BlockPos pos, final int blockRadius) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         return isTickThreadFor(
             world,
@@ -175,12 +175,12 @@ public class ServerRegions {
         );
     }
 
-    public static boolean isTickThreadFor(final Level world, final @NotNull ChunkPos pos) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull ChunkPos pos) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         return isTickThreadFor(world, pos.x, pos.z);
     }
 
-    public static boolean isTickThreadFor(final Level world, final @NotNull Vec3 pos) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull Vec3 pos) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         return isTickThreadFor(world, net.minecraft.util.Mth.floor(pos.x) >> 4, net.minecraft.util.Mth.floor(pos.z) >> 4);
     }
@@ -193,7 +193,7 @@ public class ServerRegions {
         return isTickThreadFor(entity.level(), entity.chunkPosition().x, entity.chunkPosition().z);
     }
 
-    public static boolean isTickThreadFor(final Level world, final int chunkX, final int chunkZ) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final int chunkX, final int chunkZ) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region =
             ServerRegions.getTickData((ServerLevel) world).region;
@@ -203,12 +203,12 @@ public class ServerRegions {
         return ((net.minecraft.server.level.ServerLevel) world).regioniser.getRegionAtUnsynchronised(chunkX, chunkZ) == region;
     }
 
-    public static boolean isTickThreadFor(final Level world, final int chunkX, final int chunkZ, final int radius) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final int chunkX, final int chunkZ, final int radius) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         return isTickThreadFor(world, chunkX - radius, chunkZ - radius, chunkX + radius, chunkZ + radius);
     }
 
-    public static boolean isTickThreadFor(final Level world, final int fromChunkX, final int fromChunkZ, final int toChunkX, final int toChunkZ) {
+    public static boolean isTickThreadFor(final @NotNull Level world, final int fromChunkX, final int fromChunkZ, final int toChunkX, final int toChunkZ) {
         if (!world.server.isRegionized()) return TickThread.isTickThread();
         final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region =
             ServerRegions.getTickData((ServerLevel) world).region;
@@ -245,6 +245,9 @@ public class ServerRegions {
 
     // Note: this is assuming the positions are in the same world provided
     public static boolean isSameRegion(@NotNull BlockPos location1, @NotNull BlockPos location2, @NotNull ServerLevel world) {
+        if (!world.server.isRegionized()) {
+            return true; // we assume the positions are in the same world, and when regionizing is disabled, the entire world is 1 region
+        }
         ThreadedRegionizer<TickRegionData, TickRegionSectionData> regionizer = world.regioniser;
         ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> regionAt1 = regionizer.getRegionAtUnsynchronised(
             location1.getX() >> 4, location1.getZ() >> 4
@@ -278,7 +281,9 @@ public class ServerRegions {
         }
 
         @Override
-        public void split(final @NotNull ThreadedRegionizer<TickRegionData, TickRegionSectionData> regioniser, final @NotNull Long2ReferenceOpenHashMap<ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData>> into, final @NotNull ReferenceOpenHashSet<ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData>> regions) {
+        public void split(final @NotNull ThreadedRegionizer<TickRegionData, TickRegionSectionData> regioniser,
+                          final @NotNull Long2ReferenceOpenHashMap<ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData>> into,
+                          final @NotNull ReferenceOpenHashSet<ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData>> regions) {
             final int shift = regioniser.sectionChunkShift;
             // copy current tick
             for (final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region : regions) {

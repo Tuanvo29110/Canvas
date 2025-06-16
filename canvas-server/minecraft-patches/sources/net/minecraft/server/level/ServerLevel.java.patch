@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -5,8 +_,24 @@
+@@ -5,8 +_,25 @@
  import com.mojang.datafixers.DataFixer;
  import com.mojang.datafixers.util.Pair;
  import com.mojang.logging.LogUtils;
@@ -13,6 +13,7 @@
 +import io.canvasmc.canvas.scheduler.CanvasPerWorldScheduler;
 +import io.canvasmc.canvas.scheduler.CanvasRegionScheduler;
 +import io.canvasmc.canvas.scheduler.TickScheduler;
++import io.canvasmc.canvas.scheduler.TickableScheduler;
 +import io.canvasmc.canvas.server.chunk.PriorityHandler;
 +import io.canvasmc.canvas.server.level.distance.command.DistanceUtils;
 +import io.canvasmc.canvas.util.SimpleThreadLocalRandomSource;
@@ -319,7 +320,7 @@
      }
  
      // Paper start
-@@ -723,10 +_,153 @@
+@@ -723,10 +_,149 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -420,11 +421,7 @@
 +    }
 +
 +    public void regionTick1(ServerRegions.WorldTickData tickData) {
-+        if (this.server.isRegionized()) {
-+            ((CanvasRegionScheduler) this.server.server.getRegionScheduler()).tick(tickData);
-+        } else {
-+            ((CanvasPerWorldScheduler) this.server.server.getRegionScheduler()).tick(this);
-+        }
++        ((TickableScheduler) this.server.server.getRegionScheduler()).tick(tickData);
 +        this.syncTimeToPlayers();
 +        for (final Entity entity : tickData.getLocalEntitiesCopy()) {
 +            if (entity == null || !entity.getBukkitEntity().taskScheduler.hasTasks()) continue; // Canvas - optimize entity scheduler
