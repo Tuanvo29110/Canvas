@@ -24,7 +24,7 @@
 -            ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().addPlayer(player);
 +            // ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().addPlayer(player); // Canvas - Threaded Regions
          }
-+        ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, this.serverWorld).addEntity(entity); // Canvas - Threaded Regions
++        ServerRegions.getTickData(this.world.level()).addEntity(entity); // Canvas - Threaded Regions
      }
  
      @Override

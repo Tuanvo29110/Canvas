@@ -55,9 +55,9 @@ public class NetworkRouter {
                 // route to world
                 ServerPlayer player = connection.getPlayer();
                 this.world.chunkSource.updateRegionTicket(player.chunkPosition(), true, TicketType.NETWORK_ROUTER);
+                this.pendingRoute.remove(connection);
                 this.world.levelTickData.connections.add(connection);
                 connection.owner.set(this.world.levelTickData);
-                this.pendingRoute.remove(connection);
             }
         }
     }
@@ -75,9 +75,9 @@ public class NetworkRouter {
             if (region == null) {
                 throw new IllegalStateException("literally shouldn't be possible?");
             }
-            region.getData().tickData.connections.add(connection);
             connection.owner.set(region.getData().tickData);
             this.pendingRoute.remove(connection);
+            region.getData().tickData.connections.add(connection);
         }, () -> {
             // schedule, we need to load this chunk
             chunkSource.updateRegionTicket(player.chunkPosition(), true, TicketType.NETWORK_ROUTER);

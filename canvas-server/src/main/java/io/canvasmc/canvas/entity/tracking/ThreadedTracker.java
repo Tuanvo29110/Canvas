@@ -30,7 +30,7 @@ public class ThreadedTracker {
     public final boolean enableThreading;
 
     ThreadedTracker(boolean enableThreading) {
-        this.enableThreading = enableThreading || Config.INSTANCE.ticking.enableThreadedRegionizing; // if we are regionized, enable threading
+        this.enableThreading = enableThreading; // if we are regionized, enable threading
     }
 
     public static ThreadPoolExecutor getProcessor() {
