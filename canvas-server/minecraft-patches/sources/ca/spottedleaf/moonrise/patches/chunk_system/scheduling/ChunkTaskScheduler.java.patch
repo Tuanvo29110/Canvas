@@ -76,6 +76,15 @@
          this.chunkHolderManager = new ChunkHolderManager(world, this);
      }
  
+@@ -365,7 +_,7 @@
+                                      final Consumer<LevelChunk> onComplete) {
+         final int radius = toStatus.ordinal() - 1; // 0 -> BORDER, 1 -> TICKING, 2 -> ENTITY_TICKING
+ 
+-        if (!TickThread.isTickThreadFor(this.world, chunkX, chunkZ, Math.max(0, radius))) {
++        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.world, chunkX, chunkZ, Math.max(0, radius))) { // Canvas - use our tick thread checks
+             this.scheduleChunkTask(chunkX, chunkZ, () -> {
+                 ChunkTaskScheduler.this.scheduleTickingState(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
+             }, priority);
 @@ -373,7 +_,12 @@
          }
          final int accessRadius = getAccessRadius(toStatus);
@@ -90,6 +99,15 @@
          }
          if (this.schedulingLockArea.isHeldByCurrentThread(chunkX, chunkZ, accessRadius)) {
              throw new IllegalStateException("Cannot schedule chunk loading recursively");
+@@ -569,7 +_,7 @@
+ 
+     public void scheduleChunkLoad(final int chunkX, final int chunkZ, final ChunkStatus toStatus, final boolean addTicket,
+                                   final Priority priority, final Consumer<ChunkAccess> onComplete) {
+-        if (!TickThread.isTickThreadFor(this.world, chunkX, chunkZ)) {
++        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.world, chunkX, chunkZ)) { // Canvas - use our tick thread checks
+             this.scheduleChunkTask(chunkX, chunkZ, () -> {
+                 ChunkTaskScheduler.this.scheduleChunkLoad(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
+             }, priority);
 @@ -577,7 +_,12 @@
          }
          final int accessRadius = getAccessRadius(toStatus);
