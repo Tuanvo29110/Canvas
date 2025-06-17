@@ -731,13 +731,16 @@
  
          profilerFiller.pop();
      }
-@@ -1798,6 +_,12 @@
+@@ -1798,6 +_,15 @@
      }
  
      private void synchronizeTime(ServerLevel level) {
 +        // Canvas start - not all worlds have the same time anymore due to tick isolation
 +        if (true) {
-+            level.syncTimeToPlayers();
++            // use time request for next tick
++            for (final ServerPlayer serverPlayer : level.players()) {
++                serverPlayer.requestingTimeResync = true;
++            }
 +            return;
 +        }
 +        // Canvas end
@@ -749,7 +752,7 @@
  
          for (ServerLevel serverLevel : this.getAllLevels()) {
 -            this.synchronizeTime(serverLevel);
-+            serverLevel.syncTimeToPlayers(); // Canvas
++            synchronizeTime(serverLevel); // Canvas - not all worlds have the same time anymore due to tick isolation
          }
  
          profilerFiller.pop();
