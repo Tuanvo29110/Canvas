@@ -320,7 +320,7 @@
      }
  
      // Paper start
-@@ -723,10 +_,149 @@
+@@ -723,10 +_,150 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -392,6 +392,7 @@
 +            if (entityhuman == null || (!entityhuman.requestingTimeResync && (ServerRegions.getCurrentTick(this) + entityhuman.getId()) % 20 != 0)) {
 +                continue;
 +            }
++            entityhuman.requestingTimeResync = false;
 +            entityhuman.connection.send(worldPacket);
 +        }
 +    }
@@ -422,7 +423,7 @@
 +
 +    public void regionTick1(ServerRegions.WorldTickData tickData) {
 +        ((TickableScheduler) this.server.server.getRegionScheduler()).tick(tickData);
-+        this.syncTimeToPlayers();
++        if (this.server.isRegionized()) this.syncTimeToPlayers();
 +        for (final Entity entity : tickData.getLocalEntitiesCopy()) {
 +            if (entity == null || !entity.getBukkitEntity().taskScheduler.hasTasks()) continue; // Canvas - optimize entity scheduler
 +            entity.tickScheduler();
@@ -655,7 +656,7 @@
                  // Purpur end - Configurable daylight cycle
 -                this.setDayTime(this.levelData.getDayTime() + 1L);
 +                this.setDayTime(lagCompensation(this.levelData.getDayTime(), tickData) + 1L); // Canvas - lag compensation - Threaded Regions
-+                if (!this.server.isRegionized() && this.tickCount % 20 == 0) this.syncTimeToPlayers(); // Canvas - resync every 20 ticks - Threaded Regions
++                if (!this.server.isRegionized()) this.syncTimeToPlayers(); // Canvas - Threaded Regions
              }
          }
      }

@@ -537,7 +537,7 @@
          List<Entity> passengers = this.getPassengers();
          List<Entity> list = new ArrayList<>(passengers.size());
          this.ejectPassengers();
-@@ -3930,9 +_,76 @@
+@@ -3930,9 +_,77 @@
          }
      }
  
@@ -610,14 +610,16 @@
 +                }
 +            }
 +        };
-+        removeFromAllTickData.run();
++        if (minecraftServer.isRegionized()) removeFromAllTickData.run();
++        // Canvas end
          this.setPosRaw(positionMoveRotation1.position().x, positionMoveRotation1.position().y, positionMoveRotation1.position().z);
          this.setYRot(positionMoveRotation1.yRot());
          this.setYHeadRot(positionMoveRotation1.yRot());
-@@ -3940,6 +_,57 @@
+@@ -3940,6 +_,59 @@
          this.reapplyPosition();
          this.setOldPosAndRot();
          this.setDeltaMovement(positionMoveRotation1.deltaMovement());
++        // Canvas start
 +        // new position has been set in the destination world, begin adding the entity back to the server
 +        // at this point, nothing in the server should contain the entity, we are safe to assume that we
 +        // will not have multiple sets of tick data owning this entity
@@ -653,18 +655,19 @@
 +            if (this instanceof ServerPlayer serverPlayer) {
 +                destinationWorld.networkRouter.connectToWorld(serverPlayer.connection.connection);
 +            }
-+            this.getBukkitEntity().taskScheduler.schedule((_) -> {
-+                destinationWorld.getChunkSource().updateRegionTicket(chunkX, chunkZ, false, TicketType.TELEPORT);
-+            }, null, 0);
 +        };
 +        if (minecraftServer.isRegionized()) {
 +            // add to regionized task queue
 +            minecraftServer.threadedServer().taskQueue.queueTickTaskQueue(
 +                destinationWorld, chunkX, chunkZ, wrap, Priority.BLOCKING
 +            );
-+        } else {
-+            destinationWorld.pushTask(wrap);
 +        }
++        if (this instanceof ServerPlayer serverPlayer) {
++            destinationWorld.networkRouter.connectToWorld(serverPlayer.connection.connection);
++        }
++        this.getBukkitEntity().taskScheduler.schedule((_) -> {
++            destinationWorld.getChunkSource().updateRegionTicket(chunkX, chunkZ, false, TicketType.TELEPORT);
++        }, null, 0);
 +        // now we are added to the new data as a replica of what we were prior
 +        // it is safe to assume we are only held by 1 single set of tick data
 +        // we can now remove the teleport ticket, as we have finished teleporting

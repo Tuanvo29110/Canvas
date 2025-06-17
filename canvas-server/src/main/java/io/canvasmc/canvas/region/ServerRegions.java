@@ -88,7 +88,7 @@ public class ServerRegions {
         if (!level.server.isRegionized()) {
             return level.levelTickData;
         }
-        WorldTickData possible = pullRegionData();
+        WorldTickData possible = pullLocalTickDataSoft();
         if (possible != null && possible.world == level && possible.region != null) return possible;
         return level.levelTickData;
     }
@@ -98,7 +98,7 @@ public class ServerRegions {
         if (!level.server.isRegionized()) {
             return level.levelTickData;
         }
-        WorldTickData running = pullRegionData();
+        WorldTickData running = pullLocalTickDataSoft();
         if (running != null && running.region != null) {
             // we are running on a region, return that
             return running;
@@ -111,18 +111,48 @@ public class ServerRegions {
     }
 
     // Note: this returns null if we are not on a ticker or not ticking/running tick tasks
-    public static @Nullable WorldTickData getTickDataOrNull() {
-        return pullRegionData();
-    }
-
-    private static @Nullable WorldTickData pullRegionData() {
+    public static @Nullable WorldTickData pullLocalTickDataSoft() {
         Thread current = Thread.currentThread();
         if (current instanceof TickScheduler.TickRunner runner) {
-            // the runners CAN have a region attached to it.
-            // if this is null, then there isn't a region actively ticking this, so we should pull the level.
             return runner.threadLocalTickData;
         }
         return null;
+    }
+
+    public static @NotNull WorldTickData pullLocalTickData() {
+        Thread current = Thread.currentThread();
+        if (current instanceof TickScheduler.TickRunner runner) {
+            WorldTickData tickData = runner.threadLocalTickData;
+            if (tickData == null) {
+                throw new IllegalStateException("Must be ticking");
+            }
+            return tickData;
+        }
+        throw new NullPointerException("cannot locate local tick data when not on tick runner");
+    }
+
+    public static @NotNull ServerLevel pullLocalWorld() {
+        Thread current = Thread.currentThread();
+        if (current instanceof TickScheduler.TickRunner runner) {
+            ServerLevel world = runner.threadLocalWorld;
+            if (world == null) {
+                throw new IllegalStateException("Must be ticking");
+            }
+            return world;
+        }
+        throw new NullPointerException("cannot locate local world data when not on tick runner");
+    }
+
+    public static @NotNull ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> pullLocalRegion() {
+        Thread current = Thread.currentThread();
+        if (current instanceof TickScheduler.TickRunner runner) {
+            ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region = runner.threadLocalRegion;
+            if (region == null) {
+                throw new IllegalStateException("Must be ticking");
+            }
+            return region;
+        }
+        throw new NullPointerException("cannot locate local region data when not on tick runner");
     }
 
     public static long getCurrentTick(ServerLevel level) throws IllegalStateException {
@@ -238,7 +268,7 @@ public class ServerRegions {
 
     // Note: when we check this, we are not regionized
     private static boolean isTickThreadNonRegionized(@NotNull Level world) {
-        WorldTickData currentTickData = pullRegionData();
+        WorldTickData currentTickData = pullLocalTickDataSoft();
         if (currentTickData == null) {
             return false;
         }

@@ -434,6 +434,8 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
                 }
             }
             thisAsTickable.runTasks(hasTimeLeft);
+            // set again because 'runTasks' sets back to null
+            TickScheduler.setTickingData(thisAsTickable.levelTickData);
             thisAsTickable.bench(() -> thisAsTickable.worldtick(hasTimeLeft, tickCount));
             TickScheduler.setTickingData(null);
             return !thisAsTickable.cancelled.get();

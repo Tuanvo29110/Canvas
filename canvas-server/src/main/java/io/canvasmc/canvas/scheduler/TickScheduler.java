@@ -11,6 +11,7 @@ import io.canvasmc.canvas.server.ThreadedServer;
 import io.canvasmc.canvas.util.ConcurrentSet;
 import io.canvasmc.canvas.util.IdGenerator;
 import io.papermc.paper.threadedregions.ScheduledTaskThreadPool;
+import io.papermc.paper.threadedregions.ThreadedRegionizer;
 import io.papermc.paper.util.TraceUtil;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -30,6 +31,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTickRateManager;
 import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.TimeUtil;
 import org.bukkit.NamespacedKey;
 import org.bukkit.craftbukkit.util.CraftNamespacedKey;
@@ -162,7 +164,7 @@ public class TickScheduler implements MultithreadedTickScheduler {
         setTickingData(data, true);
     }
 
-    public static void setTickingData(ServerRegions.WorldTickData data, boolean lockNewData) {
+    public static void setTickingData(@Nullable ServerRegions.WorldTickData data, boolean lockNewData) {
         if (!(Thread.currentThread() instanceof TickRunner runner)) {
             throw new RuntimeException("Unable to set ticking data of a non thread-runner");
         }
@@ -175,10 +177,14 @@ public class TickScheduler implements MultithreadedTickScheduler {
             data.tickLock.lock();
         }
         runner.threadLocalTickData = data;
+        runner.threadLocalWorld = data == null ? null : data.world;
+        runner.threadLocalRegion = data == null ? null : data.region;
     }
 
     public static class TickRunner extends TickThread {
-        public volatile ServerRegions.WorldTickData threadLocalTickData;
+        public ServerRegions.WorldTickData threadLocalTickData;
+        public ServerLevel threadLocalWorld;
+        public ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> threadLocalRegion;
         public TickRunner(final ThreadGroup group, final Runnable run, final String name) {
             super(group, run, name);
         }
@@ -330,13 +336,12 @@ public class TickScheduler implements MultithreadedTickScheduler {
                         tickEnd = Util.getNanos();
                     } catch (Throwable throwable) {
                         MultiWatchdogThread.WATCHDOG.undock(runningTick); // don't continue dock on watchdog if we fail to tick.
-                        LOGGER.error("Encountered tick task crash at '{}'", this);
+                        LOGGER.error("Encountered tick task crash at '{}'", this, throwable);
                         //noinspection removal
                         if (throwable instanceof ThreadDeath) {
                             LOGGER.error("Tick task terminated by WatchDog due to hard crash", throwable);
                             return false;
                         }
-                        LOGGER.error("", throwable);
                         CrashReport crashreport = MinecraftServer.constructOrExtractCrashReport(throwable);
 
                         this.server.fillSystemReport(crashreport.getSystemReport());
