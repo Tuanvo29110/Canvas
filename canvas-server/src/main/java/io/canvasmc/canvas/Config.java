@@ -18,8 +18,10 @@ import io.canvasmc.canvas.config.internal.ConfigurationManager;
 import io.canvasmc.canvas.entity.pathfinding.PathfindTaskRejectPolicy;
 import io.canvasmc.canvas.util.YamlTextFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.minecraft.Util;
@@ -713,6 +715,7 @@ public class Config {
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
+        Set<String> changes = new LinkedHashSet<>();
         return new AnnotationBasedYamlSerializer<>(SerializationBuilder.<T>newBuilder()
             .header(new String[]{
                 "This is the main Canvas configuration file",
@@ -743,8 +746,11 @@ public class Config {
                     CanvasBootstrap.LOGGER.error(Component.text("Allocating 1 or less scheduler threads can result in multiple issues with the chunk system, please allocate more to use Canvas more efficiently."));
                 }
                 Event.SHORTCUT_CALL = INSTANCE.optimizePluginEventManager;
+                for (final String change : changes) {
+                    CanvasBootstrap.LOGGER.info(change);
+                }
             })
-            .build(config, configClass)
+            .build(config, configClass), changes::add
         );
     }
 

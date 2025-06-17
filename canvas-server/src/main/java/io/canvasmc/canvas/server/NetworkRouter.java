@@ -69,7 +69,7 @@ public class NetworkRouter {
         final ServerChunkCache chunkSource = player.serverLevel().chunkSource;
         this.world.regioniser.computeAtRegionIfPresentOrElseUnsynchronized(chunkX, chunkZ, (_) -> {
             // region is present, move to region
-            chunkSource.updateRegionTicket(player.chunkPosition(), true, TicketType.NETWORK_ROUTER);
+            chunkSource.updateRegionTicket(chunkX, chunkZ, true, TicketType.NETWORK_ROUTER);
             ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region =
                 this.world.regioniser.getRegionAtSynchronised(chunkX, chunkZ);
             if (region == null) {
@@ -80,7 +80,7 @@ public class NetworkRouter {
             region.getData().tickData.connections.add(connection);
         }, () -> {
             // schedule, we need to load this chunk
-            chunkSource.updateRegionTicket(player.chunkPosition(), true, TicketType.NETWORK_ROUTER);
+            chunkSource.updateRegionTicket(chunkX, chunkZ, true, TicketType.NETWORK_ROUTER);
             chunkSource.getChunk(chunkX, chunkZ, true);
         });
     }

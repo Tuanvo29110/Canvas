@@ -12,7 +12,6 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -26,29 +25,31 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class AnnotationBasedYamlSerializer<T> implements ConfigSerializer<T> {
     private static final String NEW_LINE = "\n";
-    private final Map<Class<? extends Annotation>, AnnotationContextProvider> annotationContextProviderRegistry = new HashMap<>();
-    private final Map<Class<? extends Annotation>, AnnotationValidationProvider> annotationValidationProviderRegistry = new HashMap<>();
+    private final Map<Class<? extends Annotation>, AnnotationContextProvider> annotationContextProviderRegistry = new LinkedHashMap<>();
+    private final Map<Class<? extends Annotation>, AnnotationValidationProvider> annotationValidationProviderRegistry = new LinkedHashMap<>();
     private final List<Consumer<PostSerializeContext<T>>> postConsumerContexts = new LinkedList<>();
     private final Configuration definition;
     private final Class<T> configClass;
     private final Yaml yaml;
     private final List<Pair<Pattern, RuntimeModifier<?>>> runtimeModifiers = new LinkedList<>();
+    private final Consumer<String> logger;
     // only available for builders
     private String[] header;
 
-    public AnnotationBasedYamlSerializer(Configuration definition, @NotNull Class<T> configClass, Yaml yaml) {
+    public AnnotationBasedYamlSerializer(Configuration definition, @NotNull Class<T> configClass, Yaml yaml, Consumer<String> logger) {
         this.definition = definition;
         this.configClass = configClass;
         this.yaml = yaml;
         this.header = new String[0];
+        this.logger = logger == null ? System.out::println : logger;
     }
 
-    public AnnotationBasedYamlSerializer(Configuration definition, Class<T> configClass) {
-        this(definition, configClass, new Yaml());
+    public AnnotationBasedYamlSerializer(Configuration definition, Class<T> configClass, Consumer<String> logger) {
+        this(definition, configClass, new Yaml(), logger);
     }
 
-    public AnnotationBasedYamlSerializer(SerializationBuilder.@NotNull Final builder) {
-        this(builder.definition(), (Class<T>) builder.owningClass());
+    public AnnotationBasedYamlSerializer(SerializationBuilder.@NotNull Final builder, Consumer<String> logger) {
+        this(builder.definition(), (Class<T>) builder.owningClass(), logger);
         this.annotationContextProviderRegistry.putAll(builder.wrappedContextMap());
         this.annotationValidationProviderRegistry.putAll(builder.wrappedValidationMap());
         this.postConsumerContexts.addAll(builder.postConsumers());
@@ -304,6 +305,31 @@ public class AnnotationBasedYamlSerializer<T> implements ConfigSerializer<T> {
             // Write annotation handlers to yaml
             writeYaml(yamlWriter, reorderedData, keyToField, 0, "");
 
+            // Print diff
+            // Get flattened key sets
+            Map<String, Object> newData = buildYamlData(config); // This is what we're about to write
+            Map<String, Object> oldData = new LinkedHashMap<>();
+            if (Files.exists(configPath)) {
+                String oldYaml = Files.readString(configPath);
+                oldData = this.yaml.load(oldYaml);
+                if (oldData == null) oldData = new LinkedHashMap<>(); // Fallback if file was empty
+            }
+
+            Set<String> newKeys = flattenKeys(newData, "");
+            Set<String> oldKeys = flattenKeys(oldData, "");
+
+            Set<String> addedKeys = new java.util.HashSet<>(newKeys);
+            addedKeys.removeAll(oldKeys);
+
+            Set<String> removedKeys = new java.util.HashSet<>(oldKeys);
+            removedKeys.removeAll(newKeys);
+
+            for (String key : addedKeys) {
+                this.logger.accept("New configuration option added, \"" + key + "\" in config " + this.definition.value());
+            }
+            for (String key : removedKeys) {
+                this.logger.accept("Configuration option, \"" + key + "\" was removed in config " + this.definition.value());
+            }
             // Write to disk
             Files.writeString(configPath, yamlWriter.toString());
             T deserialized = deserialize();
@@ -329,6 +355,19 @@ public class AnnotationBasedYamlSerializer<T> implements ConfigSerializer<T> {
         } catch (IOException e) {
             throw new SerializationException(e);
         }
+    }
+
+    private @NotNull Set<String> flattenKeys(@NotNull Map<String, Object> map, String prefix) {
+        Set<String> keys = new java.util.HashSet<>();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String fullKey = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
+            keys.add(fullKey);
+            Object value = entry.getValue();
+            if (value instanceof Map<?, ?> subMap) {
+                keys.addAll(flattenKeys((Map<String, Object>) subMap, fullKey));
+            }
+        }
+        return keys;
     }
 
     private Map<String, Object> buildYamlData(T config) {
