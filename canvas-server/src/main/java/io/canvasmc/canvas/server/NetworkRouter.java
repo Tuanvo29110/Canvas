@@ -85,6 +85,14 @@ public class NetworkRouter {
         });
     }
 
+    public void clearFromRouter(@NotNull Connection connection) {
+        this.pendingRoute.remove(connection);
+        connection.computeIfOwningTickDataPresent((tickData) -> {
+            tickData.connections.remove(connection);
+            connection.owner.set(null);
+        });
+    }
+
     public void connectToWorld(@NotNull Connection connection) {
         if (this.pendingRoute.contains(connection)) {
             return; // no need to re-add to routing if we already are routing
