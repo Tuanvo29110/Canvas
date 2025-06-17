@@ -22,7 +22,7 @@
      private boolean tpsBar = false; // Purpur - Implement TPSBar
      private boolean compassBar = false; // Purpur - Add compass command
      private boolean ramBar = false; // Purpur - Implement rambar commands
-+    public boolean requestingTimeResync = false; // Canvas - Threaded Dimensions
++    public volatile boolean requestingTimeResync = false; // Canvas - Threaded Dimensions
  
      // Paper start - rewrite chunk system
      private ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.PlayerChunkLoaderData chunkLoader;
