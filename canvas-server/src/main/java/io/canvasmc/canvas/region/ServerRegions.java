@@ -1019,9 +1019,11 @@ public class ServerRegions {
             if (this.world.server.isRegionized()) {
                 ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> theRegion = this.world.regioniser.getRegionAtUnsynchronised(entity.chunkPosition().x, entity.chunkPosition().z);
                 // the chunk has to exist for the entity to be added, so we are ok to assume non-null
-                if (theRegion.getData().tickData != this) {
-                    theRegion.getData().tickData.addEntityTickingEntity(entity);
-                    return;
+                if (theRegion != null) {
+                    if (theRegion.getData().tickData != this) {
+                        theRegion.getData().tickData.addEntityTickingEntity(entity);
+                        return;
+                    }
                 }
             }
             this.entityTickList.add(entity);
