@@ -3,6 +3,7 @@ package io.canvasmc.canvas.entity.pathfinding;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -20,7 +21,7 @@ public class AsyncPath extends Path {
     /**
      * runnables waiting for this to be processed
      */
-    private final List<Runnable> postProcessing = new ArrayList<>(0);
+    private final List<Consumer<BlockPos>> postProcessing = new ArrayList<>(0);
     /**
      * a list of positions that this path could path towards
      */
@@ -79,11 +80,11 @@ public class AsyncPath extends Path {
     /**
      * returns the future representing the processing state of this path
      */
-    public synchronized void postProcessing(@NotNull Runnable runnable) {
+    public synchronized void postProcessing(@NotNull Consumer<BlockPos> postProcess) {
         if (isProcessed()) {
-            runnable.run();
+            postProcess.accept(this.target);
         } else {
-            this.postProcessing.add(runnable);
+            this.postProcessing.add(postProcess);
         }
     }
 
@@ -121,8 +122,8 @@ public class AsyncPath extends Path {
 
         processState = PathProcessState.COMPLETED;
 
-        for (Runnable runnable : this.postProcessing) {
-            runnable.run();
+        for (Consumer<BlockPos> runnable : this.postProcessing) {
+            runnable.accept(this.target);
         } // Run tasks after processing
     }
 

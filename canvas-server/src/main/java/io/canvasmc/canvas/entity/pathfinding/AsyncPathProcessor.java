@@ -66,10 +66,17 @@ public class AsyncPathProcessor {
      */
     public static void awaitProcessing(@NotNull ServerLevel world, @Nullable Path path, Consumer<@Nullable Path> afterProcessing) {
         if (path != null && !path.isProcessed() && path instanceof AsyncPath asyncPath) {
-            asyncPath.postProcessing(() -> {
-                // schedule on level instead of main.
-                // we cannot regionize this, as the 'target' BlockPos is nullable
-                world.pushTask(() -> afterProcessing.accept(path));
+            asyncPath.postProcessing((blockPos) -> {
+                Runnable task = () -> afterProcessing.accept(path);
+                int chunkX = blockPos.getX() >> 4;
+                int chunkZ = blockPos.getZ() >> 4;
+                if (world.server.isRegionized()) {
+                    world.server.threadedServer().taskQueue.queueTickTaskQueue(
+                        world, chunkX, chunkZ, task
+                    );
+                } else {
+                    world.pushTask(task);
+                }
             });
         } else {
             afterProcessing.accept(path);
