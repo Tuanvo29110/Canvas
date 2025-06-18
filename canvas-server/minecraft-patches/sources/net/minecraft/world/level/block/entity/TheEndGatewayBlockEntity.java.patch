@@ -26,7 +26,7 @@
          }
  
          return findTallestBlock(level, blockPos, 16, true);
-@@ -185,12 +_,27 @@
+@@ -185,12 +_,21 @@
              LOGGER.debug("Skipping forward past empty chunk at {}", vec31);
          }
  
@@ -40,22 +40,38 @@
 +        // Canavs start - Threaded Regions
 +        int chunkX = Mth.floor(pos.x / 16.0);
 +        int chunkZ = Mth.floor(pos.z / 16.0);
-+        LOGGER.info("Placing ticket for gateway to check if chunk is empty");
 +        level.chunkSource.updateRegionTicket(chunkX, chunkZ, true, TicketType.END_GATEWAY);
 +        try {
 +            return getChunk(level, pos).getHighestFilledSectionIndex() == -1;
-+        } catch (Throwable thrown) {
-+            LOGGER.error("Couldn't load chunk to check if empty for gateway, removing ticket");
-+            level.chunkSource.updateRegionTicket(chunkX, chunkZ, false, TicketType.END_GATEWAY);
-+            throw thrown;
 +        } finally {
-+            LOGGER.info("Loaded chunk successfully to check if chunk was empty for gateway, removing ticket");
 +            level.chunkSource.updateRegionTicket(chunkX, chunkZ, false, TicketType.END_GATEWAY);
 +        }
 +        // Canvas end
      }
  
      private static BlockPos findTallestBlock(BlockGetter level, BlockPos pos, int radius, boolean allowBedrock) {
+@@ -201,7 +_,20 @@
+                 if (i != 0 || i1 != 0 || allowBedrock) {
+                     for (int y = level.getMaxY(); y > (blockPos == null ? level.getMinY() : blockPos.getY()); y--) {
+                         BlockPos blockPos1 = new BlockPos(pos.getX() + i, y, pos.getZ() + i1);
+-                        BlockState blockState = level.getBlockState(blockPos1);
++                        // Canvas start
++                        int chunkX = blockPos1.getX() >> 4;
++                        int chunkZ = blockPos1.getZ() >> 4;
++                        BlockState blockState = null;
++                        if (level instanceof ServerLevel serverLevel) {
++                            serverLevel.chunkSource.updateRegionTicket(chunkX, chunkZ, true, TicketType.END_GATEWAY);
++                            try {
++                                blockState = level.getBlockState(blockPos1);
++                            } finally {
++                                serverLevel.chunkSource.updateRegionTicket(chunkX, chunkZ, false, TicketType.END_GATEWAY);
++                            }
++                        }
++                        if (blockState == null) continue;
++                        // Canvas end
+                         if (blockState.isCollisionShapeFullBlock(level, blockPos1) && (allowBedrock || !blockState.is(Blocks.BEDROCK))) {
+                             blockPos = blockPos1;
+                             break;
 @@ -246,7 +_,7 @@
      }
  
