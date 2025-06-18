@@ -692,7 +692,7 @@
  
      // Paper start - optimise random ticking
 -    private final ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom simpleRandom = new ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom(net.minecraft.world.level.levelgen.RandomSupport.generateUniqueSeed());
-+    private final SimpleThreadLocalRandomSource simpleRandom = SimpleThreadLocalRandomSource.INSTANCE; // Canvas
++    public final SimpleThreadLocalRandomSource simpleRandom = SimpleThreadLocalRandomSource.INSTANCE; // Canvas - threadlocal - private -> public
  
      private void optimiseRandomTick(final LevelChunk chunk, final int tickSpeed) {
          final LevelChunkSection[] sections = chunk.getSections();
@@ -702,11 +702,13 @@
          final boolean doubleTickFluids = !ca.spottedleaf.moonrise.common.PlatformHooks.get().configFixMC224294();
  
          final ChunkPos cpos = chunk.getPos();
-@@ -951,14 +_,14 @@
+@@ -950,15 +_,15 @@
+     }
      // Paper end - optimise random ticking
  
-     public void tickChunk(LevelChunk chunk, int randomTickSpeed) {
+-    public void tickChunk(LevelChunk chunk, int randomTickSpeed) {
 -        final ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom simpleRandom = this.simpleRandom; // Paper - optimise random ticking
++    public void tickChunk(LevelChunk chunk, int randomTickSpeed, ServerRegions.WorldTickData tickData) { // Canvas - Threaded Regions
 +        final SimpleThreadLocalRandomSource simpleRandom = this.simpleRandom; // Paper - optimise random ticking // Canvas - Threaded Regions
          ChunkPos pos = chunk.getPos();
          int minBlockX = pos.getMinBlockX();
@@ -719,15 +721,20 @@
          for (int i = 0; i < randomTickSpeed; i++) {
              if (simpleRandom.nextInt(48) == 0) {  // Paper - optimise random ticking
                  this.tickPrecipitation(this.getBlockRandomPos(minBlockX, 0, minBlockZ, 15));
-@@ -967,7 +_,7 @@
+@@ -967,8 +_,11 @@
          } // Paper - Option to disable ice and snow
  
          profilerFiller.popPush("tickBlocks");
 -        if (randomTickSpeed > 0) {
+-            this.optimiseRandomTick(chunk, randomTickSpeed); // Paper - optimise random ticking
 +        if (randomTickSpeed > 0 && (chunk.ticksSinceLastRandomTickCall++ > Config.INSTANCE.ticksBetweenRandomTickUpdates && randomTickSpeed > 0)) { chunk.ticksSinceLastRandomTickCall = 0; // Canvas - random tick intervals
-             this.optimiseRandomTick(chunk, randomTickSpeed); // Paper - optimise random ticking
++            // Canvas start - optimize random tick
++            if (Config.INSTANCE.ticking.optimizedRandomTick) tickData.randomTickSystem.tickChunk(this.simpleRandom, chunk, randomTickSpeed);
++            else this.optimiseRandomTick(chunk, randomTickSpeed); // Paper - optimise random ticking
++            // Canvas end
          }
  
+         profilerFiller.pop();
 @@ -1119,7 +_,7 @@
      }
  

@@ -17,6 +17,7 @@ import io.canvasmc.canvas.event.region.RegionSplitEvent;
 import io.canvasmc.canvas.scheduler.CanvasRegionScheduler;
 import io.canvasmc.canvas.scheduler.TickScheduler;
 import io.canvasmc.canvas.scheduler.WrappedTickLoop;
+import io.canvasmc.canvas.server.level.RandomTickSystem;
 import io.canvasmc.canvas.util.ConcurrentSet;
 import io.canvasmc.canvas.util.TPSCalculator;
 import io.papermc.paper.redstone.RedstoneWireTurbo;
@@ -836,6 +837,7 @@ public class ServerRegions {
         private long lagCompensationTick;
         private boolean isHandlingTick;
         private boolean tickingBlockEntities;
+        public RandomTickSystem randomTickSystem = new RandomTickSystem(); // Canvas - optimize random tick
         // time
         private long redstoneTime = 1L;
         // tnt merging

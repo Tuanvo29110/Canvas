@@ -51,6 +51,14 @@
          thread.start(); // Paper - Enhance console tab completions for brigadier commands; start console thread after MinecraftServer.console & PaperConfig are initialized
          io.papermc.paper.command.PaperCommands.registerCommands(this); // Paper - setup /paper command
          this.server.spark.registerCommandBeforePlugins(this.server); // Paper - spark
+@@ -342,6 +_,7 @@
+                 LOGGER.info("JMX monitoring enabled");
+             }
+ 
++            net.minecraft.world.level.block.Blocks.initPathType(); // Canvas - cache path type
+             org.purpurmc.purpur.task.BossBarTask.startAll(); // Purpur - Implement TPSBar
+             if (org.purpurmc.purpur.PurpurConfig.beeCountPayload) org.purpurmc.purpur.task.BeehiveTask.instance().register(); // Purpur - Give bee counts in beehives to Purpur clients
+             return true;
 @@ -602,6 +_,14 @@
  
      @Override

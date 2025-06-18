@@ -53,6 +53,26 @@
          }
      }
  
+@@ -470,6 +_,7 @@
+         private boolean emptyCollisionShape;
+         private boolean emptyConstantCollisionShape;
+         private VoxelShape constantCollisionShape;
++        public net.minecraft.world.level.pathfinder.PathType pathType; // Canvas - cache path type
+ 
+         private static void initCaches(final VoxelShape shape, final boolean neighbours) {
+             ((ca.spottedleaf.moonrise.patches.collisions.shape.CollisionVoxelShape)shape).moonrise$isFullBlock();
+@@ -637,6 +_,11 @@
+             // Paper end - optimise collisions
+         }
+ 
++        // Canvas start - cache path type
++        public void initPathType() {
++            this.pathType = net.minecraft.world.level.pathfinder.WalkNodeEvaluator.getPathTypeFromState(this.asState());
++        }
++        // Canvas end
+         public Block getBlock() {
+             return this.owner;
+         }
 @@ -925,7 +_,16 @@
              BlockState neighborState,
              RandomSource random

@@ -96,12 +96,21 @@
  
          if (ifPresent != null && (toStatus != ChunkStatus.FULL || currentChunk.isFullChunkReady())) {
              return ifPresent;
+@@ -157,7 +_,7 @@
+     // Paper end - rewrite chunk system
+     // Paper start - chunk tick iteration optimisations
+     private final ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom shuffleRandom = new ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom(0L);
+-    private void iterateTickingChunksFaster() {
++    private void iterateTickingChunksFaster(ServerRegions.WorldTickData tickData) { // Canvas - Threaded Regions
+         final ServerLevel world = this.level;
+         final int randomTickSpeed = world.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
+ 
 @@ -173,11 +_,11 @@
  
          java.util.Objects.checkFromToIndex(0, size, raw.length);
          for (int i = 0; i < size; ++i) {
 -            world.tickChunk(raw[i], randomTickSpeed);
-+            LevelChunk chunk = raw[i]; if (chunk == null) continue; world.tickChunk(chunk, randomTickSpeed); // Canvas - ensure non null
++            LevelChunk chunk = raw[i]; if (chunk == null) continue; world.tickChunk(chunk, randomTickSpeed, tickData); // Canvas - ensure nonnull - Threaded Regions
  
              // call mid-tick tasks for chunk system
              if ((i & 7) == 0) {
@@ -234,7 +243,7 @@
                  // Paper start - per player mob spawning backoff
                  for (int ii = 0; ii < ServerPlayer.MOBCATEGORY_TOTAL_ENUMS; ii++) {
                      player.mobCounts[ii] = 0;
-@@ -558,48 +_,53 @@
+@@ -558,52 +_,58 @@
                  }
                  // Paper end - per player mob spawning backoff
              }
@@ -302,6 +311,12 @@
          }
  
          profiler.popPush("tickTickingChunks");
+-        this.iterateTickingChunksFaster(); // Paper - chunk tick iteration optimisations
++        tickData.randomTickSystem.tick(this.level); // Canvas - optimize random tick
++        this.iterateTickingChunksFaster(tickData); // Paper - chunk tick iteration optimisations // Canvas - Threaded Regions
+         profiler.pop();
+         profiler.popPush("customSpawners");
+         if (_boolean) {
 @@ -611,7 +_,7 @@
          }
      }
@@ -352,20 +367,22 @@
      }
  
      public void addTicket(Ticket ticket, ChunkPos chunkPos) {
-@@ -698,6 +_,19 @@
+@@ -698,6 +_,21 @@
          return this.ticketStorage.updateChunkForced(chunkPos, add);
      }
  
 +    // Canvas start - Threaded Regions
 +    public boolean updateRegionTicket(ChunkPos pos, boolean add, TicketType ticketType) {
 +        Ticket ticket = new Ticket(ticketType, ChunkMap.FORCED_TICKET_LEVEL);
++        if (Config.INSTANCE.debug.logTicketDebug) {
++            LOGGER.info("{} ticket of type {} {} chunk at {}", (add ? "Adding" : "Removing"), ticketType, (add ? "to" : "from"), pos);
++        }
 +        return add ? this.ticketStorage.addTicket(pos.longKey, ticket) : this.ticketStorage.removeTicket(pos.longKey, ticket);
 +    }
 +
 +    public boolean updateRegionTicket(int chunkX, int chunkZ, boolean add, TicketType ticketType) {
-+        Ticket ticket = new Ticket(ticketType, ChunkMap.FORCED_TICKET_LEVEL);
 +        ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-+        return add ? this.ticketStorage.addTicket(pos.longKey, ticket) : this.ticketStorage.removeTicket(pos.longKey, ticket);
++        return updateRegionTicket(pos, add, ticketType);
 +    }
 +
 +    // Canvas end

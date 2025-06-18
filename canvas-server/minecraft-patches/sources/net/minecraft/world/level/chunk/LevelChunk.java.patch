@@ -80,7 +80,7 @@
  
      @Override
      public final boolean moonrise$isPostProcessingDone() {
-@@ -121,6 +_,8 @@
+@@ -121,12 +_,56 @@
      private final int maxSection;
      private final boolean debug;
      private final BlockState defaultBlockState;
@@ -89,6 +89,54 @@
  
      @Override
      public final BlockState moonrise$getBlock(final int x, final int y, final int z) {
+         return this.getBlockStateFinal(x, y, z);
+     }
+     // Paper end - get block chunk optimisation
++    // Canvas start - optimize random tick
++    private boolean leaf$tickingBlocksDirty = true;
++    private int leaf$tickingBlocksCount;
++    private int leaf$firstTickingSectionIndex = -1;
++    public final int leaf$tickingBlocksCount() {
++        if (!leaf$tickingBlocksDirty) {
++            return leaf$tickingBlocksCount;
++        }
++        leaf$tickingBlocksDirty = false;
++        int sum = 0;
++        leaf$firstTickingSectionIndex = -1;
++        for (int i = 0; i < sections.length; i++) {
++            LevelChunkSection section = sections[i];
++            int size = section.moonrise$getTickingBlockList().size();
++            if (size != 0 && leaf$firstTickingSectionIndex == -1) {
++                leaf$firstTickingSectionIndex = i;
++            }
++            sum += size;
++        }
++        leaf$tickingBlocksCount = sum;
++        return sum;
++    }
++    public final java.util.OptionalLong leaf$getTickingPos(int idx) {
++        if (leaf$firstTickingSectionIndex != -1) {
++            for (int i = leaf$firstTickingSectionIndex; i < sections.length; i++) {
++                LevelChunkSection section = sections[i];
++                var l = section.moonrise$getTickingBlockList();
++                int size = l.size();
++                if (idx < size) {
++                    short loc = l.getRaw(idx);
++                    int x = (loc & 15) | (chunkPos.x << 4);
++                    int y = (loc >>> 8) | ((getMinSectionY() + i) << 4);
++                    int z = ((loc >>> 4) & 15) | (chunkPos.z << 4);
++                    return java.util.OptionalLong.of(BlockPos.asLong(x, y, z));
++                }
++                idx -= size;
++            }
++        }
++        leaf$tickingBlocksDirty = true;
++        return java.util.OptionalLong.empty();
++    }
++    // Canvas end
+ 
+     public LevelChunk(Level level, ChunkPos pos) {
+         this(level, pos, UpgradeData.EMPTY, new LevelChunkTicks<>(), new LevelChunkTicks<>(), 0L, null, null, null);
 @@ -145,7 +_,7 @@
      ) {
          super(pos, data, level, net.minecraft.server.MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.BIOME), inhabitedTime, sections, blendingData); // Paper - Anti-Xray - The world isn't ready yet, use server singleton for registry
@@ -163,6 +211,18 @@
      }
  
      @Override
+@@ -371,6 +_,11 @@
+             if (blockState == state) {
+                 return null;
+             } else {
++                // Canvas start - optimize random tick
++                if (blockState.isRandomlyTicking() != state.isRandomlyTicking()) {
++                    leaf$tickingBlocksDirty = true;
++                }
++                // Canvas end
+                 Block block = state.getBlock();
+                 this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING).update(i, y, i2, state);
+                 this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES).update(i, y, i2, state);
 @@ -412,7 +_,7 @@
                  if (!section.getBlockState(i, i1, i2).is(block)) {
                      return null;

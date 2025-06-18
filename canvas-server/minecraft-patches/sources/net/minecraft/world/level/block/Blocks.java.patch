@@ -8,3 +8,17 @@
              .strength(5.0F, 6.0F)
      );
      public static final Block RAW_GOLD_BLOCK = register(
+@@ -7077,4 +_,13 @@
+             }
+         }
+     }
++    // Canvas start - cache path type
++    public static void initPathType() {
++        for (Block block : BuiltInRegistries.BLOCK) {
++            for (BlockState blockState : block.getStateDefinition().getPossibleStates()) {
++                blockState.initPathType();
++            }
++        }
++    }
++    // Canvas end
+ }

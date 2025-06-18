@@ -22,6 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.minecraft.Util;
@@ -83,6 +84,9 @@ public class Config {
 
         @Comment("The amount of time(in seconds) before watchdog starts printing error logs from slowdown")
         public long watchdogLoggingTime = 4L;
+
+        @Comment("Enables an optimized random tick system from Leaf upstream")
+        public boolean optimizedRandomTick = false;
     }
 
     public Chunks chunks = new Chunks();
@@ -201,18 +205,25 @@ public class Config {
             @Comment("Disables the rate-limiter for the chunk generator. The limit only affects players")
             public boolean disableChunkGenRateLimiter = false;
         }
+
+        public Biomes biomes = new Biomes();
+        public static class Biomes {
+            @Experimental
+            @Comment("Replace vanilla SHA-256 seed obfuscation in BiomeManager with XXHash")
+            public boolean fastBiomeManagerSeedObfuscation = false;
+            @Comment("Seed obfuscation key for XXHash. Requires fastBiomeManagerSeedObfuscation to be enabled")
+            public long seedObfuscationKey = ThreadLocalRandom.current().nextLong();
+        }
     }
 
     public Debug debug = new Debug();
     public static class Debug {
-        @Comment("Logs region teleports with entities")
-        public boolean regionTeleports = false;
         @Comment("Logs task retiring with the tick scheduler")
         public boolean taskRetire = false;
         @Comment("Prints the configuration tree at startup. Not really recommended to disable, as this helps a ton with debugging issues")
         public boolean printConfigurationTree = true;
-        @Comment("Logs teleport ticket debug when an entity is teleported")
-        public boolean logTeleportTicketDebug = false;
+        @Comment("Logs when a new region ticket is updated")
+        public boolean logTicketDebug = false;
         @Comment("Logs connection docking and undocking")
         public boolean logConnectionDocking = false;
     }
@@ -493,6 +504,9 @@ public class Config {
 
         @Comment("Makes eggs knockback players")
         public boolean eggCanKnockback = false;
+
+        @Comment("Restores old blast protection knockback logic from 1.20.4 and older")
+        public boolean oldBlastProtectionKnockbackBehavior = false;
 
         @Comment("Hides flames on entities with the fire resistance effect")
         public boolean hideFlamesOnEntitiesWithFireResistance = false;

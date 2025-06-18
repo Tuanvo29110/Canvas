@@ -9,6 +9,28 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Holder;
  import net.minecraft.core.QuartPos;
+@@ -12,6 +_,7 @@
+     private static final int ZOOM_BITS = 2;
+     private static final int ZOOM = 4;
+     private static final int ZOOM_MASK = 3;
++    private static final net.jpountz.xxhash.XXHash64 XXHASH = net.jpountz.xxhash.XXHashFactory.fastestInstance().hash64(); // Canvas - replace SHA-256 with XXHash
+     private final BiomeManager.NoiseBiomeSource noiseBiomeSource;
+     private final long biomeZoomSeed;
+ 
+@@ -21,6 +_,13 @@
+     }
+ 
+     public static long obfuscateSeed(long seed) {
++        // Canvas start - replace SHA-256 with XXHash
++        if (Config.INSTANCE.chunks.biomes.fastBiomeManagerSeedObfuscation) {
++            java.nio.ByteBuffer buf = java.nio.ByteBuffer.allocate(8);
++            buf.putLong(0, seed);
++            return XXHASH.hash(buf, Config.INSTANCE.chunks.biomes.seedObfuscationKey);
++        }
++        // Canvas end
+         return Hashing.sha256().hashLong(seed).asLong();
+     }
+ 
 @@ -29,39 +_,63 @@
      }
  
