@@ -36,7 +36,7 @@
      public void wasExploded(ServerLevel level, BlockPos pos, Explosion explosion) {
 +        // Canvas start - merge tnt logic
 +        if (Config.INSTANCE.blocks.tnt.mergeTntLogic) {
-+            if (TNTMergeManager.tntCount.computeIfAbsent(ServerRegions.getTickData(level), (_) -> new AtomicInteger(0)).get() >= Config.INSTANCE.blocks.tnt.maxTntPrimedForMerge) {
++            if (ServerRegions.getTickData(level).tntCount.get() >= Config.INSTANCE.blocks.tnt.maxTntPrimedForMerge) {
 +                PrimedTnt nearestEntity = getNearestTNTEntity(level, pos.getCenter(), 5);
 +                if (nearestEntity != null) {
 +                    nearestEntity.addPower();

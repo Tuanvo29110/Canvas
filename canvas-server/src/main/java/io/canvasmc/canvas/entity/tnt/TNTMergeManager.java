@@ -9,15 +9,13 @@ import net.minecraft.world.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
 
 public class TNTMergeManager {
-    public static final Map<ServerRegions.WorldTickData, AtomicInteger> tntCount = new ConcurrentHashMap<>();
-
     public static void onEntityUnload(@NotNull Entity entity) {
         if (entity.getType() == EntityType.TNT)
-            tntCount.computeIfAbsent(ServerRegions.getTickData(entity.level().level()), (_) -> new AtomicInteger(0)).decrementAndGet();
+            ServerRegions.getTickData(entity.level().level()).tntCount.decrementAndGet();
     }
 
     public static void onEntityLoad(@NotNull Entity entity) {
         if (entity.getType() == EntityType.TNT)
-            tntCount.computeIfAbsent(ServerRegions.getTickData(entity.level().level()), (_) -> new AtomicInteger(0)).incrementAndGet();
+            ServerRegions.getTickData(entity.level().level()).tntCount.incrementAndGet();
     }
 }

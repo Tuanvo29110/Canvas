@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -551,6 +552,11 @@ public class ServerRegions {
             }
             // region scheduler
             CanvasRegionScheduler.Scheduler.split(from.regionScheduler, chunkToRegionShift, regionToData, dataSet);
+            // tnt merging
+            // we cant reliably split this into regions, so we reset to 0
+            for (final WorldTickData into : regionToData.values()) {
+                into.tntCount.set(0);
+            }
             // event
             new RegionSplitEvent(from.getApiData(), dataSet.stream().map(WorldTickData::getApiData).toList()).callEvent();
         }
@@ -646,6 +652,8 @@ public class ServerRegions {
             this.tickData.taskQueueData.mergeInto(into.taskQueueData);
             // region scheduler
             CanvasRegionScheduler.Scheduler.merge(from.regionScheduler, into.regionScheduler, fromTickOffset);
+            // tnt merging
+            into.tntCount.set(into.tntCount.get() + from.tntCount.get());
             // event
             new RegionMergeEvent(from.region.getData(), into.region.getData()).callEvent();
         }
@@ -830,6 +838,8 @@ public class ServerRegions {
         private boolean tickingBlockEntities;
         // time
         private long redstoneTime = 1L;
+        // tnt merging
+        public final AtomicInteger tntCount = new AtomicInteger();
         @Nullable
         @VisibleForDebug
         private NaturalSpawner.SpawnState lastSpawnState;

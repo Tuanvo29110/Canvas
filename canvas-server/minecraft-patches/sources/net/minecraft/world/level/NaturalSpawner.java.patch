@@ -40,7 +40,7 @@
                  if (inRange != null) {
                      final net.minecraft.server.level.ServerPlayer[] backingSet = inRange.getRawDataUnchecked();
 -                    for (int k = 0, len = inRange.size(); k < len; k++) {
-+                    for (int k = 0, backingSetLength = backingSet.length; k < backingSetLength; k++) { // Canvas - use length instead of size
++                    for (int k = 0, backingSetLength = backingSet.length; k < backingSetLength; k++) { if (backingSet[k] == null) continue; // Canvas - use length instead of size - ensure nonnull
                          minDiff = Math.min(limit - level.getChunkSource().chunkMap.getMobCountNear(backingSet[k], mobCategory), minDiff);
                      }
                  }
