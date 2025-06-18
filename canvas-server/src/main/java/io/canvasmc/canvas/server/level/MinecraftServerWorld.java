@@ -142,7 +142,7 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
     }
 
     public String getDebugLocation() {
-        return "w:" + this.level().dimension().location();
+        return "w:" + this.level().dimension().location().getPath();
     }
 
     @Override

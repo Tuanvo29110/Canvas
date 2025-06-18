@@ -52,7 +52,7 @@
 +                ThreadedBukkitServer.getInstance().getScheduler().setTickRate(newRate);
 +            } else if (args.length > 0 && args[0].equalsIgnoreCase("dump")) {
 +                TickScheduler.getScheduler().dumpAliveThreadTraces("Requested dump");
-+            } else ThreadedServerHealthDump.dump(sender, sender.getServer().isRegionized() && Arrays.stream(args).toList().contains("regions"));
++            } else ThreadedServerHealthDump.dump(sender, args);
 +            return true;
 +        }
 +        // Canvas end

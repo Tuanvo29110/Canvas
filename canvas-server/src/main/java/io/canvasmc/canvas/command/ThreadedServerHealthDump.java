@@ -1,24 +1,26 @@
 package io.canvasmc.canvas.command;
 
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkFullTask;
 import io.canvasmc.canvas.CanvasBootstrap;
 import io.canvasmc.canvas.ThreadedBukkitServer;
 import io.canvasmc.canvas.TickTimes;
-import io.canvasmc.canvas.region.ChunkRegion;
 import io.canvasmc.canvas.scheduler.TickScheduler;
 import io.papermc.paper.ServerBuildInfo;
 import io.papermc.paper.ServerBuildInfoImpl;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.objects.Object2DoubleArrayMap;
 import java.text.DecimalFormat;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.util.HSVLike;
-import net.minecraft.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
@@ -37,41 +39,72 @@ public class ThreadedServerHealthDump {
     public static final ThreadLocal<DecimalFormat> ONE_DECIMAL_PLACES = ThreadLocal.withInitial(() -> new DecimalFormat("#,##0.0"));
     public static final TextColor ORANGE = TextColor.color(255, 165, 0);
 
-    public static boolean dump(@NotNull final CommandSender sender, boolean regionDump) {
+    public static boolean dump(@NotNull final CommandSender sender, final String @NotNull [] args) {
+        final int lowestRegionsCount;
+        if (args.length < 1) {
+            lowestRegionsCount = 3;
+        } else {
+            try {
+                lowestRegionsCount = Integer.parseInt(args[0]);
+            } catch (final NumberFormatException ex) {
+                sender.sendMessage(text("Highest utilisation count '" + args[1] + "' must be an integer", NamedTextColor.RED));
+                return true;
+            }
+        }
+
+        final long currTime = System.nanoTime();
         final int build = ServerBuildInfo.buildInfo().buildNumber().orElse(-1);
         final int maxThreadCount = TickScheduler.getScheduler().scheduler.getCoreThreads().length;
         final double minTps;
         final double medianTps;
         final double maxTps;
-        final Object2DoubleArrayMap<TickScheduler.FullTick<?>> utilization = new Object2DoubleArrayMap<>();
-        final DoubleArrayList allTps = new DoubleArrayList();
+        final Object2DoubleArrayMap<TickScheduler.FullTick<?>> taskUtilization = new Object2DoubleArrayMap<>();
+        final DoubleArrayList tpsByRegion = new DoubleArrayList();
         for (final TickScheduler.FullTick<?> fullTick : TickScheduler.FullTick.ALL_REGISTERED) {
             if (fullTick.isSleeping()) continue;
             TickTimes timings15 = fullTick.getTickTimes15s();
-            allTps.add(fullTick.getTps15s().getAverage());
-            utilization.put(fullTick, timings15.getUtilization());
+            tpsByRegion.add(fullTick.getTps15s().getAverage());
+            taskUtilization.put(fullTick, timings15.getUtilization());
         }
 
-        allTps.sort(null);
-        if (!allTps.isEmpty()) {
-            minTps = allTps.getDouble(0);
-            maxTps = allTps.getDouble(allTps.size() - 1);
+        tpsByRegion.sort(null);
+        if (!tpsByRegion.isEmpty()) {
+            minTps = tpsByRegion.getDouble(0);
+            maxTps = tpsByRegion.getDouble(tpsByRegion.size() - 1);
 
-            final int middle = allTps.size() >> 1;
-            if ((allTps.size() & 1) == 0) {
-                medianTps = (allTps.getDouble(middle - 1) + allTps.getDouble(middle)) / 2.0;
+            final int middle = tpsByRegion.size() >> 1;
+            if ((tpsByRegion.size() & 1) == 0) {
+                medianTps = (tpsByRegion.getDouble(middle - 1) + tpsByRegion.getDouble(middle)) / 2.0;
             } else {
-                medianTps = allTps.getDouble(middle);
+                medianTps = tpsByRegion.getDouble(middle);
             }
         } else {
             minTps = medianTps = maxTps = 20.0;
         }
 
+        List<ObjectObjectImmutablePair<TickScheduler.FullTick<?>, Double/*utilization*/>> regionsBellowThreshold = new ArrayList<>();
+        taskUtilization.forEach((tick, util) -> regionsBellowThreshold.add(new ObjectObjectImmutablePair<>(tick, util))); // add all tick tasks
+
+        regionsBellowThreshold.sort((p1, p2) -> {
+            final double util1 = p1.right();
+            final double util2 = p2.right();
+
+            // we want the largest first
+            return Double.compare(util2, util1);
+        });
+
+        final double genRate = ChunkFullTask.genRate(currTime);
+        final double loadRate = ChunkFullTask.loadRate(currTime);
+
         TextComponent.@NotNull Builder root = text();
         final boolean experimental = ServerBuildInfoImpl.IS_EXPERIMENTAL;
         root.append(
             text()
-                .append(text("Server Tick Report", HEADER, TextDecoration.BOLD))
+                .append(text("Server Health Report", HEADER, TextDecoration.BOLD))
+                .append(NEW_LINE)
+                .append(text(" - ", LIST, TextDecoration.BOLD))
+                .append(text("Online Players: ", PRIMARY))
+                .append(text(Bukkit.getOnlinePlayers().size(), INFORMATION))
                 .append(NEW_LINE)
                 .append(text(" - ", LIST, TextDecoration.BOLD))
                 .append(text("Build Info: ", PRIMARY))
@@ -85,27 +118,17 @@ public class ThreadedServerHealthDump {
                 )
                 .append(NEW_LINE)
                 .append(text(" - ", LIST, TextDecoration.BOLD))
-                .append(text("Git Info: ", PRIMARY))
-                .append(text(ServerBuildInfo.buildInfo().gitBranch().orElse("unknown-branch") + ":" + ServerBuildInfo.buildInfo().gitCommit().orElse("unknown-commit"), INFORMATION))
-                .append(NEW_LINE)
-                .append(text(" - ", LIST, TextDecoration.BOLD))
                 .append(text("Utilization: ", PRIMARY))
-                .append(text(ONE_DECIMAL_PLACES.get().format(utilization.values().doubleStream().sum()), getColorForMSPT((utilization.values().doubleStream().sum() / ((double) (maxThreadCount * 100))) * 50.0)))
+                .append(text(ONE_DECIMAL_PLACES.get().format(taskUtilization.values().doubleStream().sum()), getColorForMSPT((taskUtilization.values().doubleStream().sum() / ((double) (maxThreadCount * 100))) * 50.0)))
                 .append(text("% / ", PRIMARY))
                 .append(text(ONE_DECIMAL_PLACES.get().format(maxThreadCount * 100.0), INFORMATION))
                 .append(text("%", PRIMARY))
                 .append(NEW_LINE)
                 .append(text(" - ", LIST, TextDecoration.BOLD))
-                .append(text("Current Memory Usage: ", PRIMARY))
-                .append(text(((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024)) + "/" + (Runtime.getRuntime().totalMemory() / (1024 * 1024)) + " mb (Max: " + (Runtime.getRuntime().maxMemory() / (1024 * 1024)) + " mb)", SECONDARY))
-                .append(NEW_LINE)
-                .append(text(" - ", LIST, TextDecoration.BOLD))
-                .append(text("Online Players: ", PRIMARY))
-                .append(text(Bukkit.getOnlinePlayers().size(), INFORMATION))
-                .append(NEW_LINE)
-                .append(text(" - ", LIST, TextDecoration.BOLD))
-                .append(text("Total FullTicks: ", PRIMARY))
-                .append(text(allTps.size(), INFORMATION))
+                .append(text("Load rate: ", PRIMARY))
+                .append(text(TWO_DECIMAL_PLACES.get().format(loadRate) + ", ", INFORMATION))
+                .append(text("Gen rate: ", PRIMARY))
+                .append(text(TWO_DECIMAL_PLACES.get().format(genRate), INFORMATION))
                 .append(NEW_LINE)
                 .append(text(" - ", LIST, TextDecoration.BOLD))
                 .append(text("Lowest Loop TPS: ", PRIMARY))
@@ -120,20 +143,18 @@ public class ThreadedServerHealthDump {
                 .append(text(TWO_DECIMAL_PLACES.get().format(maxTps), getColorForTPS(maxTps)))
                 .append(NEW_LINE)
         );
+        int len = Math.min(lowestRegionsCount, regionsBellowThreshold.size());
         root.append(text()
-            .append(text("All " + (regionDump ? "Regions" : "TickLoops"), HEADER, TextDecoration.BOLD))
+            .append(text("Highest " + len + " utilization regions", HEADER, TextDecoration.BOLD))
             .append(NEW_LINE)
         );
-        for (final TickScheduler.FullTick<?> tickTask : TickScheduler.FullTick.ALL_REGISTERED.stream().sorted(TickScheduler.FullTick::compareTo).toList()) {
-            if (regionDump && !(tickTask instanceof ChunkRegion)) {
-                continue; // region dump and the tick task is not a region
-            } else if (!regionDump && (tickTask instanceof ChunkRegion)) {
-                continue; // not a region dump and the tick task is a region
-            }
-            String location = "[" + tickTask.toString() + "]";
+        for (int i = 0; i < len; ++i) {
+            final ObjectObjectImmutablePair<TickScheduler.FullTick<?>, Double> pair = regionsBellowThreshold.get(i);
+            final TickScheduler.FullTick<?> tickTask = pair.left();
+            String location = tickTask.toString();
             double mspt5s = Math.min(tickTask.tickTimes5s.getAverage(), ThreadedBukkitServer.getInstance().getScheduler().getTimeBetweenTicks());
             double tps5s = Math.min(tickTask.tps5s.getAverage(), ThreadedBukkitServer.getInstance().getScheduler().getTickRate());
-            double util = utilization.getDouble(tickTask);
+            double util = taskUtilization.getDouble(tickTask);
             Component namedClickable = text(location, INFORMATION);
             if (!tickTask.debugInfo().children().isEmpty()) {
                 // don't add a click/hover event if the debug info is empty
@@ -162,13 +183,10 @@ public class ThreadedServerHealthDump {
                     .append(text(TWO_DECIMAL_PLACES.get().format(mspt5s), getColorForMSPT(mspt5s)))
                     .append(text(" MSPT at ", PRIMARY))
                     .append(text(TWO_DECIMAL_PLACES.get().format(tps5s), getColorForTPS(tps5s)))
-                    .append(text(" TPS", PRIMARY)))
-                .append(NEW_LINE);
-
-            if ((Util.getNanos() - tickTask.lastRespondedNanos) > TimeUnit.SECONDS.toNanos(5)) {
-                // hasn't responded in 5 seconds, warn.
-                head.append(text("    Hasn't responded in over 5 seconds! Next scheduled start in " + (tickTask.getNextScheduledStart() - Util.getNanos()) + " nanos", TextColor.color(200, 52, 34)))
-                    .append(NEW_LINE);
+                    .append(text(" TPS", PRIMARY)));
+            if (i != len - 1) {
+                // last one, don't append
+                head.append(NEW_LINE);
             }
             root.append(head.build());
         }

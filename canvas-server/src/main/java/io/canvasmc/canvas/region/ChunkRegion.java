@@ -25,6 +25,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.TickRateManager;
+import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,8 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
 
     @Override
     public String toString() {
-        return "Region at " + this.world.getDebugLocation() + " surrounding chunk " + this.region.getCenterChunk();
+        ChunkPos pos = this.region.getCenterChunk();
+        return "Region [" + this.world.toString() + "," + (pos == null ? "null" : pos.x + "," + pos.z) + "]";
     }
 
     @Override
