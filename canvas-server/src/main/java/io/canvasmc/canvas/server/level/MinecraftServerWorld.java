@@ -6,6 +6,7 @@ import io.canvasmc.canvas.LevelAccess;
 import io.canvasmc.canvas.command.ThreadedServerHealthDump;
 import io.canvasmc.canvas.entity.SleepingBlockEntity;
 import io.canvasmc.canvas.region.Region;
+import io.canvasmc.canvas.region.RegionizedTaskQueue;
 import io.canvasmc.canvas.region.ServerRegions;
 import io.canvasmc.canvas.scheduler.TickScheduler;
 import io.canvasmc.canvas.scheduler.WrappedTickLoop;
@@ -16,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -42,8 +42,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.World;
-import org.bukkit.craftbukkit.scheduler.CraftScheduler;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -52,8 +50,6 @@ import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
 
 public abstract class MinecraftServerWorld extends TickScheduler.FullTick<MinecraftServerWorld.TickHandle> implements LevelAccess {
-    protected final ConcurrentLinkedQueue<Runnable> queuedForNextTickPost = new ConcurrentLinkedQueue<>();
-    protected final ConcurrentLinkedQueue<Runnable> queuedForNextTickPre = new ConcurrentLinkedQueue<>();
     public long emptyTicks = 0L;
     protected boolean hasTasks = true;
 
@@ -75,12 +71,34 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
 
             // we cannot poll distance manager updates during task polls, this deadlocks the server
             worldserver.getChunkSource().mainThreadProcessor.pollTask(!this.server.isRegionized());
+            runRegionTasks(canContinue);
             hasTasks = false;
             return super.runTasks(canContinue);
         } finally {
             TickScheduler.setTickingData(null);
             MultiWatchdogThread.WATCHDOG.undock(watchdogEntry);
         }
+    }
+
+    public boolean runRegionTasks(final BooleanSupplier canContinue) {
+        final RegionizedTaskQueue.RegionTaskQueueData queue = this.level().regionTaskQueueData;
+
+        boolean processedChunkTask = false;
+
+        boolean executeChunkTask;
+        boolean executeTickTask;
+        do {
+            executeTickTask = queue.executeTickTask();
+            executeChunkTask = queue.executeChunkTask();
+
+            processedChunkTask |= executeChunkTask;
+        } while ((executeChunkTask | executeTickTask) && canContinue.getAsBoolean());
+
+        if (processedChunkTask) {
+            // if we processed any chunk tasks, try to process ticket level updates for full status changes
+            this.level().moonrise$getChunkTaskScheduler().chunkHolderManager.processTicketUpdates();
+        }
+        return true;
     }
 
     public ServerLevel level() {
@@ -95,21 +113,6 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
     @Override
     public boolean hasTasks() {
         return (this.hasTasks || super.hasTasks()) && (!this.isSleeping());
-    }
-
-    @Override
-    public void scheduleOnThread(final @NotNull Runnable runnable) {
-        this.pushTask(runnable);
-    }
-
-    @Override
-    public void scheduleForPostNextTick(@NotNull Runnable run) {
-        queuedForNextTickPost.add(run);
-    }
-
-    @Override
-    public void scheduleForPreNextTick(@NotNull Runnable run) {
-        queuedForNextTickPre.add(run);
     }
 
     @Override

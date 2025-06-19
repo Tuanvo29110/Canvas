@@ -24,7 +24,7 @@
  import org.slf4j.Logger;
  
  public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketListenerImpl implements ServerConfigurationPacketListener, TickablePacketListener {
-@@ -159,8 +_,49 @@
+@@ -159,8 +_,44 @@
                  return;
              }
  
@@ -60,15 +60,10 @@
 +                (_) -> {
 +                    world.getChunkSource().updateRegionTicket(chunkX, chunkZ, true, TicketType.LOGIN);
 +                    // queue tick task
-+                    if (this.server.isRegionized()) {
-+                        // regionize
-+                        MinecraftServer.getThreadedServer().taskQueue.queueTickTaskQueue(
-+                            world, chunkX, chunkZ,
-+                            placementTask, Priority.HIGHER
-+                        );
-+                    } else {
-+                        world.pushTask(placementTask);
-+                    }
++                    MinecraftServer.getThreadedServer().taskQueue.queueTickTaskQueue(
++                        world, chunkX, chunkZ,
++                        placementTask, Priority.HIGHER
++                    );
 +                }
 +            );
 +            // Canvas end

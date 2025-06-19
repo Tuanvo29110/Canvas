@@ -70,13 +70,9 @@ public class AsyncPathProcessor {
                 Runnable task = () -> afterProcessing.accept(path);
                 int chunkX = blockPos.getX() >> 4;
                 int chunkZ = blockPos.getZ() >> 4;
-                if (world.server.isRegionized()) {
-                    world.server.threadedServer().taskQueue.queueTickTaskQueue(
-                        world, chunkX, chunkZ, task
-                    );
-                } else {
-                    world.pushTask(task);
-                }
+                world.server.threadedServer().taskQueue.queueTickTaskQueue(
+                    world, chunkX, chunkZ, task
+                );
             });
         } else {
             afterProcessing.accept(path);

@@ -380,7 +380,7 @@
                  NaturalSpawner.spawnForChunk(this.level, chunk, spawnState, spawnCategories);
              }
          }
-@@ -666,19 +_,26 @@
+@@ -666,17 +_,17 @@
          int sectionPosX = SectionPos.blockToSectionCoord(pos.getX());
          int sectionPosZ = SectionPos.blockToSectionCoord(pos.getZ());
          ChunkHolder visibleChunkIfPresent = this.getVisibleChunkIfPresent(ChunkPos.asLong(sectionPosX, sectionPosZ));
@@ -394,24 +394,14 @@
      @Override
      public void onLightUpdate(LightLayer type, SectionPos pos) {
 -        this.mainThreadProcessor.execute(() -> {
-+        Runnable run = () -> { // Canvas - Threaded Regions
++        MinecraftServer.getThreadedServer().taskQueue.queueChunkTask(this.level, pos.getX(), pos.getZ(), () -> { // Canvas - Threaded Regions
              ChunkHolder visibleChunkIfPresent = this.getVisibleChunkIfPresent(pos.chunk().toLong());
              if (visibleChunkIfPresent != null && visibleChunkIfPresent.sectionLightChanged(type, pos.y())) {
 -                this.chunkHoldersToBroadcast.add(visibleChunkIfPresent);
 +                ServerRegions.getTickData(this.level).getChunkHoldersToBroadcast().add(visibleChunkIfPresent);
              }
--        });
-+        // Canvas start - Threaded Regions
-+        };
-+        if (this.level.server.isRegionized()) {
-+            MinecraftServer.getThreadedServer().taskQueue.queueChunkTask(
-+                this.level, pos.getX(), pos.getZ(), run
-+            );
-+        } else this.mainThreadProcessor.execute(run);
-+        // Canvas end
+         });
      }
- 
-     public void addTicket(Ticket ticket, ChunkPos chunkPos) {
 @@ -698,6 +_,21 @@
          return this.ticketStorage.updateChunkForced(chunkPos, add);
      }
@@ -460,25 +450,64 @@
          MainThreadExecutor(final Level level) {
              super("Chunk source main thread executor for " + level.dimension().location());
          }
-@@ -814,20 +_,110 @@
+@@ -814,20 +_,148 @@
  
          @Override
          protected void doRunTask(Runnable task) {
 -            Profiler.get().incrementCounter("runTask");
-             super.doRunTask(task);
-         }
- 
+-            super.doRunTask(task);
 +        // Canvas start - Threaded Dimensions && Regions
-+        @Override
-+        public void execute(final Runnable task) {
-+            ServerLevel level = ServerChunkCache.this.level;
-+            if (level.isTicking()) {
-+                level.pushTask(task);
-+            } else {
-+                this.schedule(this.wrapRunnable(task));
-+            }
++            throw new UnsupportedOperationException("Cannot schedule through MainThreadExecutor, use region scheduler");
 +        }
 +
++        @Override
++        public <V> CompletableFuture<V> submit(Supplier<V> task) {
++            if (true) {
++                throw new UnsupportedOperationException();
++            }
++            return super.submit(task);
++        }
++
++        @Override
++        public CompletableFuture<Void> submit(Runnable task) {
++            if (true) {
++                throw new UnsupportedOperationException();
++            }
++            return super.submit(task);
++        }
++
++        @Override
++        public void schedule(Runnable runnable) {
++            if (true) {
++                throw new UnsupportedOperationException();
++            }
++            super.schedule(runnable);
++        }
++
++        @Override
++        public void executeBlocking(Runnable runnable) {
++            if (true) {
++                throw new UnsupportedOperationException();
++            }
++            super.executeBlocking(runnable);
++        }
++
++        @Override
++        public void execute(Runnable runnable) {
++            if (true) {
++                throw new UnsupportedOperationException();
++            }
++            super.execute(runnable);
++        }
++
++        @Override
++        public void executeIfPossible(Runnable runnable) {
++            if (true) {
++                throw new UnsupportedOperationException();
++            }
++            super.executeIfPossible(runnable);
+         }
+ 
          @Override
          public boolean pollTask() {
 -            // Paper start - rewrite chunk system
@@ -556,7 +585,7 @@
 +                        }
 +                        // not regionized OR we are on global
 +                        serverLevel.taskQueueRegionData.drainGlobalChunkTasks();
-+                        final BooleanSupplier poll = () -> ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel) serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask() | super.pollTask();
++                        final BooleanSupplier poll = () -> ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel) serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask() | serverLevel.regionTaskQueueData.executeChunkTask();
 +                        return locked ? poll.getAsBoolean() : tryWake(poll);
 +                    } finally {
 +                        ENTITY_OVERRIDE.remove(current);

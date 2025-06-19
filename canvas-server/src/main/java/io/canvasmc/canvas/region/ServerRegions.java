@@ -396,11 +396,13 @@ public class ServerRegions {
                 final WorldTickData into = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
                 if (into == null) {
                     // most likely teleported out
-                    player.level().scheduleOnThread(() -> {
-                        player.serverLevel().getChunk(pos.x, pos.z, ChunkStatus.FULL, true);
-                        ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> threadedRegion = player.serverLevel().regioniser.getRegionAtUnsynchronised(pos.x, pos.z);
-                        threadedRegion.getData().tickData.addEntity(player);
-                    });
+                    player.serverLevel().server.threadedServer().taskQueue.queueTickTaskQueue(
+                        player.serverLevel(), pos.x, pos.z, () -> {
+                            player.serverLevel().getChunk(pos.x, pos.z, ChunkStatus.FULL, true);
+                            ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> threadedRegion = player.serverLevel().regioniser.getRegionAtUnsynchronised(pos.x, pos.z);
+                            threadedRegion.getData().tickData.addEntity(player);
+                        }
+                    );
                     continue;
                 }
                 into.localPlayers.add(player);

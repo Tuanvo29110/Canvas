@@ -95,13 +95,18 @@ public final class RegionizedTaskQueue {
         }
 
         private PrioritisedQueue getQueue(final boolean synchronise, final int chunkX, final int chunkZ, final boolean isChunkTask) {
-            final ThreadedRegionizer<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> regioniser = this.world.regioniser;
-            final ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region
-                = regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
-            if (region == null) {
-                return null;
+            RegionTaskQueueData taskQueueData;
+            if (this.world.server.isRegionized()) {
+                final ThreadedRegionizer<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> regioniser = this.world.regioniser;
+                final ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region
+                    = regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
+                if (region == null) {
+                    return null;
+                }
+                taskQueueData = region.getData().tickData.getTaskQueueData();
+            } else {
+                taskQueueData = this.world.regionTaskQueueData;
             }
-            final RegionTaskQueueData taskQueueData = region.getData().tickData.getTaskQueueData();
             return (isChunkTask ? taskQueueData.chunkQueue : taskQueueData.tickTaskQueue);
         }
 

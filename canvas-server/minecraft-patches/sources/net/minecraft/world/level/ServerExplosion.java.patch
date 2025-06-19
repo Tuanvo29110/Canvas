@@ -44,22 +44,26 @@
      private final ExplosionDamageCalculator damageCalculator;
      private final Map<Player, Vec3> hitPlayers = new HashMap<>();
      // CraftBukkit - add field
-@@ -518,6 +_,19 @@
+@@ -518,6 +_,23 @@
                                          dragonPart.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, dragonPart, f1));
                                      }
                                  }
 +                            // Canvas start
 +                            } else if (Config.INSTANCE.blocks.chainEndCrystalExplosions && entity instanceof EndCrystal endCrystal) {
-+                                this.level.scheduleForPostNextTick(() -> {
-+                                    DamageSource damageSource1 = damageSource.getEntity() != null ? endCrystal.damageSources().explosion(endCrystal, damageSource.getEntity()) : null;
-+                                    ExplosionPrimeEvent event = CraftEventFactory.callExplosionPrimeEvent(endCrystal, endCrystal.getExplosionPower(), endCrystal.hasExplosionFire());
-+                                    if (event.isCancelled()) {
-+                                        return;
-+                                    }
++                                int chunkX = endCrystal.blockPosition().getX() >> 4;
++                                int chunkZ = endCrystal.blockPosition().getZ() >> 4;
++                                this.level.server.threadedServer().taskQueue.queueTickTaskQueue(
++                                    this.level, chunkX, chunkZ, () -> {
++                                        DamageSource damageSource1 = damageSource.getEntity() != null ? endCrystal.damageSources().explosion(endCrystal, damageSource.getEntity()) : null;
++                                        ExplosionPrimeEvent event = CraftEventFactory.callExplosionPrimeEvent(endCrystal, endCrystal.getExplosionPower(), endCrystal.hasExplosionFire());
++                                        if (event.isCancelled()) {
++                                            return;
++                                        }
 +
-+                                    endCrystal.remove(Entity.RemovalReason.KILLED, EntityRemoveEvent.Cause.EXPLODE);
-+                                    level.explode(endCrystal, damageSource1, null, endCrystal.getX(), endCrystal.getY(), endCrystal.getZ(), event.getRadius(), event.getFire(), endCrystal.getExplosionEffect());
-+                                });
++                                        endCrystal.remove(Entity.RemovalReason.KILLED, EntityRemoveEvent.Cause.EXPLODE);
++                                        level.explode(endCrystal, damageSource1, null, endCrystal.getX(), endCrystal.getY(), endCrystal.getZ(), event.getRadius(), event.getFire(), endCrystal.getExplosionEffect());
++                                    }
++                                );
 +                            // Canvas end
                              } else {
                                  entity.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, entity, f1));

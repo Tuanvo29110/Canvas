@@ -20,27 +20,6 @@ public interface LevelAccess extends WrappedTickLoop {
     World getWorld();
 
     /**
-     * Schedules a task to the level thread
-     *
-     * @param runnable the tick task
-     */
-    void scheduleOnThread(@NotNull Runnable runnable);
-
-    /**
-     * Schedules a task to be ran before the next tick
-     *
-     * @param runnable the tick task
-     */
-    void scheduleForPreNextTick(@NotNull Runnable runnable);
-
-    /**
-     * Schedules a task to be ran after the next tick, or once the current tick is complete
-     *
-     * @param runnable the tick task
-     */
-    void scheduleForPostNextTick(@NotNull Runnable runnable);
-
-    /**
      * If the level is actively ticking
      *
      * @return true if the level is processing ticks

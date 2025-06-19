@@ -128,7 +128,7 @@
  import org.slf4j.Logger;
  
  public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLevel, ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel, ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevelReader, ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel { // Paper - rewrite chunk system // Paper - chunk tick iteration
-@@ -175,31 +_,57 @@
+@@ -175,31 +_,59 @@
      private static final Logger LOGGER = LogUtils.getLogger();
      private static final int EMPTY_TIME_NO_TICK = 300;
      private static final int MAX_SCHEDULED_TICKS_PER_TICK = 65536;
@@ -159,6 +159,8 @@
 +    );
 +    public final ServerRegions.WorldTickData levelTickData;
 +    public final RegionizedTaskQueue.WorldRegionTaskData taskQueueRegionData = new RegionizedTaskQueue.WorldRegionTaskData(this);
++    // Note: only to be used when non-regionized.
++    public final RegionizedTaskQueue.RegionTaskQueueData regionTaskQueueData = new RegionizedTaskQueue.RegionTaskQueueData(this.taskQueueRegionData);
 +    // Canvas end
 +    // private final MinecraftServer server; // Canvas - clashes with super
      public final net.minecraft.world.level.storage.PrimaryLevelData serverLevelData; // CraftBukkit - type
@@ -337,7 +339,7 @@
      }
  
      // Paper start
-@@ -723,18 +_,153 @@
+@@ -723,18 +_,148 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -480,11 +482,6 @@
 +        // net.minecraft.world.level.block.entity.HopperBlockEntity.skipHopperEvents = paperConfig().hopper.disableMoveEvent || org.bukkit.event.inventory.InventoryMoveItemEvent.getHandlerList().getRegisteredListeners().length == 0;
 +        updateLagCompensationTick();
 +        hasRidableMoveEvent = org.purpurmc.purpur.event.entity.RidableMoveEvent.getHandlerList().getRegisteredListeners().length > 0;
-+        Queue<Runnable> copyOf = new ConcurrentLinkedQueue<>(this.queuedForNextTickPre);
-+        this.queuedForNextTickPre.clear();
-+        for (final Runnable runnable : copyOf) {
-+            runnable.run();
-+        }
 +    // Canvas end
 +        // Canvas - Threaded Regions
          TickRateManager tickRateManager = this.tickRateManager();
@@ -506,7 +503,7 @@
 -        profilerFiller.push("tickPending");
 +    // Canvas start - Threaded Regions
 +        if (!this.server.isRegionized()) this.regionTick2(runsNormally, tickData);
-+        this.worldtick2(runsNormally, hasTimeLeft, copyOf, tickData);
++        this.worldtick2(runsNormally, hasTimeLeft, tickData);
 +    }
 +
 +    public void regionTick2(boolean runsNormally, ServerRegions.WorldTickData tickData) {
@@ -549,7 +546,7 @@
 +    // Canvas start - Threaded Regions
 +    }
 +
-+    public void worldtick2(boolean runsNormally, BooleanSupplier hasTimeLeft, Queue<Runnable> copyOf, ServerRegions.WorldTickData tickData) {
++    public void worldtick2(boolean runsNormally, BooleanSupplier hasTimeLeft, ServerRegions.WorldTickData tickData) {
 +        this.raids.globalTick();
 +    // Canvas end
 +        if (!this.server.isRegionized()) this.getChunkSource().tick(hasTimeLeft, true); // Canvas - Threaded Regions
@@ -614,7 +611,7 @@
                                  if (true) { // Paper - rewrite chunk system
                                      Entity vehicle = entity.getVehicle();
                                      if (vehicle != null) {
-@@ -824,39 +_,61 @@
+@@ -824,39 +_,56 @@
                                          entity.stopRiding();
                                      }
  
@@ -639,11 +636,6 @@
          // Paper - rewrite chunk system
 -        profilerFiller.pop();
 +        // Canvas start - Threaded Dimensions
-+        Queue<Runnable> copyOf = new ConcurrentLinkedQueue<>(this.queuedForNextTickPost);
-+        this.queuedForNextTickPost.clear();
-+        for (final Runnable runnable : copyOf) {
-+            runnable.run();
-+        }
 +        // tickPlayerList(); // Canvas - Threaded Regions
 +        for (ServerPlayer player : this.getLocalPlayers()) { // Canvas - Threaded Regions
 +            player.connection.chunkSender.sendNextChunks(player);

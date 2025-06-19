@@ -33,11 +33,9 @@ public class ChunkSendingExecutor {
                         MinecraftServer.LOGGER.error("Failed 2nd attempt for chunk data sending, logging stacktrace.", failed);
                     }
                 };
-                if (runnable.world.server.isRegionized()) {
-                    runnable.world.server.threadedServer().taskQueue.queueChunkTask(runnable.world, runnable.chunkX, runnable.chunkZ, retry);
-                } else {
-                    runnable.world.pushTask(retry);
-                }
+                runnable.world.server.threadedServer().taskQueue.queueChunkTask(
+                    runnable.world, runnable.chunkX, runnable.chunkZ, retry
+                );
             }
         });
     }
