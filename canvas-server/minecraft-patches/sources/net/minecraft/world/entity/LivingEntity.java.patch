@@ -9,6 +9,15 @@
  import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
  import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
  import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
+@@ -70,8 +_,6 @@
+ import net.minecraft.tags.ItemTags;
+ import net.minecraft.tags.TagKey;
+ import net.minecraft.util.Mth;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.Difficulty;
+ import net.minecraft.world.InteractionHand;
+ import net.minecraft.world.damagesource.CombatRules;
 @@ -198,7 +_,7 @@
      };
      private final AttributeMap attributes;
@@ -27,7 +36,7 @@
      public final org.bukkit.craftbukkit.attribute.CraftAttributeMap craftAttributes;
      public boolean collides = true;
      public Set<UUID> collidableExemptions = new java.util.HashSet<>();
-@@ -415,7 +_,7 @@
+@@ -415,20 +_,21 @@
              this.getSleepingPos().ifPresent(this::setPosToBed);
          }
  
@@ -36,7 +45,12 @@
              EnchantmentHelper.tickEffects(serverLevel, this);
          }
  
-@@ -428,7 +_,10 @@
+         super.baseTick();
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("livingEntityBaseTick");
+         if (this.fireImmune() || this.level().isClientSide) {
+             this.clearFire();
+         }
  
          if (this.isAlive() && this.level() instanceof ServerLevel serverLevel1) {
              boolean flag = this instanceof Player;
@@ -48,7 +62,7 @@
                  this.hurtServer(serverLevel1, this.damageSources().inWall(), 1.0F);
              } else if (flag && !serverLevel1.getWorldBorder().isWithinBounds(this.getBoundingBox())) {
                  double d = serverLevel1.getWorldBorder().getDistanceToBorder(this) + serverLevel1.getWorldBorder().getDamageSafeZone();
-@@ -507,6 +_,7 @@
+@@ -507,13 +_,24 @@
              }
          }
  
@@ -56,10 +70,11 @@
          this.tickEffects();
          this.yHeadRotO = this.yHeadRot;
          this.yBodyRotO = this.yBodyRot;
-@@ -514,6 +_,17 @@
+         this.yRotO = this.getYRot();
          this.xRotO = this.getXRot();
-         profilerFiller.pop();
-     }
+-        profilerFiller.pop();
+-    }
++    }
 +    // Canvas start
 +
 +    private void lagCompensation() {
@@ -184,6 +199,26 @@
                  f += (0.54600006F - f) * f2;
                  f1 += (this.getSpeed() - f1) * f2;
              }
+@@ -3298,11 +_,7 @@
+             f1 = this.getYRot();
+         }
+ 
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("headTurn");
+         this.tickHeadTurn(f1);
+-        profilerFiller.pop();
+-        profilerFiller.push("rangeChecks");
+ 
+         // Paper start - stop large pitch and yaw changes from crashing the server
+         this.yRotO += Math.round((this.getYRot() - this.yRotO) / 360.0F) * 360.0F;
+@@ -3314,7 +_,6 @@
+         this.yHeadRotO += Math.round((this.yHeadRot - this.yHeadRotO) / 360.0F) * 360.0F;
+         // Paper end - stop large pitch and yaw changes from crashing the server
+ 
+-        profilerFiller.pop();
+         if (this.isFallFlying()) {
+             this.fallFlyTicks++;
+         } else {
 @@ -3332,6 +_,7 @@
      public void detectEquipmentUpdates() {
          Map<EquipmentSlot, ItemStack> map = this.collectEquipmentChanges();
@@ -203,6 +238,66 @@
          Map<EquipmentSlot, ItemStack> map = null;
          // Paper start - EntityEquipmentChangedEvent
          record EquipmentChangeImpl(org.bukkit.inventory.ItemStack oldItem, org.bukkit.inventory.ItemStack newItem) implements io.papermc.paper.event.entity.EntityEquipmentChangedEvent.EquipmentChange {
+@@ -3490,21 +_,15 @@
+         }
+ 
+         this.setDeltaMovement(d, d1, d2);
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("ai");
+         this.applyInput();
+         if (this.isImmobile()) {
+             this.jumping = false;
+             this.xxa = 0.0F;
+             this.zza = 0.0F;
+         } else if (this.isEffectiveAi() && !this.level().isClientSide) {
+-            profilerFiller.push("newAi");
+             this.serverAiStep();
+-            profilerFiller.pop();
+         }
+ 
+-        profilerFiller.pop();
+-        profilerFiller.push("jump");
+         if (this.jumping && this.isAffectedByFluids()) {
+             double fluidHeight;
+             if (this.isInLava()) {
+@@ -3533,8 +_,6 @@
+             this.noJumpDelay = 0;
+         }
+ 
+-        profilerFiller.pop();
+-        profilerFiller.push("travel");
+         if (this.isFallFlying()) {
+             this.updateFallFlying();
+         }
+@@ -3559,9 +_,7 @@
+             this.calculateEntityAnimation(this instanceof FlyingAnimal);
+         }
+ 
+-        profilerFiller.pop();
+         if (this.level() instanceof ServerLevel serverLevel) {
+-            profilerFiller.push("freezing");
+             if ((!this.isInPowderSnow || !this.canFreeze()) && !this.freezeLocked) { // Paper - Freeze Tick Lock API
+                 this.setTicksFrozen(Math.max(0, this.getTicksFrozen() - 2));
+             }
+@@ -3571,18 +_,14 @@
+             if (this.tickCount % 40 == 0 && this.isFullyFrozen() && this.canFreeze()) {
+                 this.hurtServer(serverLevel, this.damageSources().freeze(), 1.0F);
+             }
+-
+-            profilerFiller.pop();
+         }
+ 
+-        profilerFiller.push("push");
+         if (this.autoSpinAttackTicks > 0) {
+             this.autoSpinAttackTicks--;
+             this.checkAutoSpinAttack(boundingBox, this.getBoundingBox());
+         }
+ 
+         this.pushEntities();
+-        profilerFiller.pop();
+         // Paper start - Add EntityMoveEvent
+         // Purpur start - Ridables
+         if (this.xo != this.getX() || this.yo != this.getY() || this.zo != this.getZ() || this.yRotO != this.getYRot() || this.xRotO != this.getXRot()) {
 @@ -3657,6 +_,7 @@
      protected void updateFallFlying() {
          this.checkSlowFallDistance();

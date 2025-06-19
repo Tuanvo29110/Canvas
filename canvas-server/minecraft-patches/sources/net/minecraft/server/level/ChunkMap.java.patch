@@ -40,7 +40,7 @@
  import java.util.function.BooleanSupplier;
  import java.util.function.Consumer;
  import java.util.function.IntConsumer;
-@@ -56,6 +_,7 @@
+@@ -56,14 +_,13 @@
  import net.minecraft.network.protocol.Packet;
  import net.minecraft.network.protocol.game.ClientboundChunksBiomesPacket;
  import net.minecraft.network.protocol.game.ClientboundSetChunkCacheCenterPacket;
@@ -48,6 +48,14 @@
  import net.minecraft.server.level.progress.ChunkProgressListener;
  import net.minecraft.server.network.ServerPlayerConnection;
  import net.minecraft.util.CsvOutput;
+ import net.minecraft.util.Mth;
+ import net.minecraft.util.StaticCache2D;
+ import net.minecraft.util.TriState;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.util.thread.BlockableEventLoop;
+ import net.minecraft.util.thread.ConsecutiveExecutor;
+ import net.minecraft.world.entity.Entity;
 @@ -133,9 +_,11 @@
      public final ChunkMap.DistanceManager distanceManager;
      public final AtomicInteger tickingGenerated = new AtomicInteger();  // Paper - public
@@ -122,15 +130,24 @@
          // Paper start - rewrite chunk system
          final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder holder = ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(chunkPos);
          return holder == null ? null : holder.vanillaChunkHolder;
-@@ -408,7 +_,7 @@
+@@ -408,16 +_,11 @@
          // Paper end - rewrite chunk system
      }
  
 -    protected void tick(BooleanSupplier hasMoreTime) {
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("poi");
 +    public void tick(BooleanSupplier hasMoreTime) { // Canvas - protected -> public
-         ProfilerFiller profilerFiller = Profiler.get();
-         profilerFiller.push("poi");
          this.poiManager.tick(hasMoreTime);
+-        profilerFiller.popPush("chunk_unload");
+         if (!this.level.noSave()) {
+             this.processUnloads(hasMoreTime);
+         }
+-
+-        profilerFiller.pop();
+     }
+ 
+     public boolean hasWork() {
 @@ -689,58 +_,25 @@
  
      // Paper start - optimise chunk tick iteration

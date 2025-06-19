@@ -10,6 +10,15 @@
  import com.google.common.cache.CacheBuilder;
  import com.google.common.cache.CacheLoader;
  import com.google.common.cache.LoadingCache;
+@@ -103,8 +_,6 @@
+ import net.minecraft.util.Mth;
+ import net.minecraft.util.RandomSource;
+ import net.minecraft.util.Unit;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.Container;
+ import net.minecraft.world.Difficulty;
+ import net.minecraft.world.InteractionHand;
 @@ -257,6 +_,7 @@
      private Vec3 lastKnownClientMovement = Vec3.ZERO;
      private Input lastClientInput = Input.EMPTY;
@@ -83,6 +92,29 @@
      }
  
      private void tellNeutralMobsThatIDied() {
+@@ -1408,14 +_,10 @@
+                 this.unsetRemoved();
+                 */
+                 // CraftBukkit end
+-                ProfilerFiller profilerFiller = Profiler.get();
+-                profilerFiller.push("moving");
+                 if (level != null && resourceKey == net.minecraft.world.level.dimension.LevelStem.OVERWORLD && level.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER) { // CraftBukkit - empty to fall through to null to event
+                     this.enteredNetherPosition = this.position();
+                 }
+ 
+-                profilerFiller.pop();
+-                profilerFiller.push("placing");
+                 // CraftBukkit start
+                 this.isChangingDimension = true; // CraftBukkit - Set teleport invulnerability only if player changing worlds
+                 LevelData worlddata = level.getLevelData();
+@@ -1433,7 +_,6 @@
+                 this.connection.internalTeleport(PositionMoveRotation.of(teleportTransition), teleportTransition.relatives()); // CraftBukkit - use internal teleport without event
+                 this.connection.resetPosition();
+                 level.addDuringTeleport(this);
+-                profilerFiller.pop();
+                 this.triggerDimensionChangeTriggers(serverLevel);
+                 this.stopUsingItem();
+                 this.connection.send(new ClientboundPlayerAbilitiesPacket(this.getAbilities()));
 @@ -1520,6 +_,13 @@
          super.take(entity, quantity);
          this.containerMenu.broadcastChanges();

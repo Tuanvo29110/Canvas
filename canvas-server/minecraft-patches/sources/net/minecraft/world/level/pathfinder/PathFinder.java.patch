@@ -1,5 +1,15 @@
 --- a/net/minecraft/world/level/pathfinder/PathFinder.java
 +++ b/net/minecraft/world/level/pathfinder/PathFinder.java
+@@ -12,9 +_,6 @@
+ import java.util.stream.Collectors;
+ import javax.annotation.Nullable;
+ import net.minecraft.core.BlockPos;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+-import net.minecraft.util.profiling.metrics.MetricCategory;
+ import net.minecraft.world.entity.Mob;
+ import net.minecraft.world.level.PathNavigationRegion;
+ 
 @@ -25,10 +_,18 @@
      public final NodeEvaluator nodeEvaluator;
      private static final boolean DEBUG = false;
@@ -20,7 +30,7 @@
      }
  
      public void setMaxVisitedNodes(int maxVisitedNodes) {
-@@ -37,26 +_,63 @@
+@@ -37,29 +_,63 @@
  
      @Nullable
      public Path findPath(PathNavigationRegion region, Mob mob, Set<BlockPos> targetPositions, float maxRange, int accuracy, float searchDepthMultiplier) {
@@ -74,6 +84,9 @@
  
      @Nullable
      private Path findPath(Node node, List<Map.Entry<Target, BlockPos>> positions, float maxRange, int accuracy, float searchDepthMultiplier) { // Paper - optimize collection
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("find_path");
+-        profilerFiller.markForCharting(MetricCategory.PATH_FINDING);
 +    // Canvas start - split pathfinding into the original sync method for compat and processing for delaying
 +        try {
 +            return this.processPath(this.nodeEvaluator, node, positions, maxRange, accuracy, searchDepthMultiplier);
@@ -88,9 +101,9 @@
 +    private synchronized @org.jetbrains.annotations.NotNull Path processPath(NodeEvaluator nodeEvaluator, Node node, List<Map.Entry<Target, BlockPos>> positions, float maxRange, int accuracy, float searchDepthMultiplier) { // sync to only use the caching functions in this class on a single thread
 +        org.apache.commons.lang3.Validate.isTrue(!positions.isEmpty()); // ensure that we have at least one position, which means we'll always return a path
 +    // Canvas end
-         ProfilerFiller profilerFiller = Profiler.get();
-         profilerFiller.push("find_path");
-         profilerFiller.markForCharting(MetricCategory.PATH_FINDING);
+         // Set<Target> set = targetPositions.keySet(); // Paper
+         node.g = 0.0F;
+         node.h = this.getBestH(node, positions); // Paper - optimize collection
 @@ -95,7 +_,7 @@
              }
  
@@ -100,3 +113,11 @@
  
                  for (int i2 = 0; i2 < neighbors; i2++) {
                      Node node2 = this.neighbors[i2];
+@@ -129,7 +_,6 @@
+                 best = path;
+             }
+         }
+-        profilerFiller.pop();
+         return best;
+         // Paper end - Perf: remove streams and optimize collection
+     }

@@ -27,6 +27,15 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportedException;
+@@ -23,8 +_,6 @@
+ import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
+ import net.minecraft.server.level.FullChunkStatus;
+ import net.minecraft.server.level.ServerLevel;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.level.ChunkPos;
+ import net.minecraft.world.level.Level;
 @@ -59,6 +_,13 @@
          @Override
          public void tick() {
@@ -223,6 +232,19 @@
                  Block block = state.getBlock();
                  this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING).update(i, y, i2, state);
                  this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES).update(i, y, i2, state);
+@@ -383,12 +_,8 @@
+                 }
+ 
+                 if (LightEngine.hasDifferentLightProperties(blockState, state)) {
+-                    ProfilerFiller profilerFiller = Profiler.get();
+-                    profilerFiller.push("updateSkyLightSources");
+                     // Paper - rewrite chunk system
+-                    profilerFiller.popPush("queueCheckLight");
+                     this.level.getChunkSource().getLightEngine().checkBlock(pos);
+-                    profilerFiller.pop();
+                 }
+ 
+                 boolean flag = !blockState.is(block);
 @@ -412,7 +_,7 @@
                  if (!section.getBlockState(i, i1, i2).is(block)) {
                      return null;
@@ -385,8 +407,12 @@
  
          @Override
          public void tick() {
-@@ -919,7 +_,11 @@
-                         profilerFiller.push(this::getType);
+@@ -915,11 +_,13 @@
+                 BlockPos blockPos = this.blockEntity.getBlockPos();
+                 if (LevelChunk.this.isTicking(blockPos)) {
+                     try {
+-                        ProfilerFiller profilerFiller = Profiler.get();
+-                        profilerFiller.push(this::getType);
                          BlockState blockState = LevelChunk.this.getBlockState(blockPos);
                          if (this.blockEntity.getType().isValid(blockState)) {
 -                            this.ticker.tick(LevelChunk.this.level, this.blockEntity.getBlockPos(), blockState, this.blockEntity);
@@ -398,6 +424,15 @@
                              this.loggedInvalidBlockState = false;
                          // Paper start - Remove the Block Entity if it's invalid
                          } else {
+@@ -930,8 +_,6 @@
+                             }
+                             // Paper end - Remove the Block Entity if it's invalid
+                         }
+-
+-                        profilerFiller.pop();
+                     } catch (Throwable var5) {
+                         // Paper start - Prevent block entity and entity crashes
+                         final String msg = String.format("BlockEntity threw exception at %s:%s,%s,%s", LevelChunk.this.getLevel().getWorld().getName(), this.getPos().getX(), this.getPos().getY(), this.getPos().getZ());
 @@ -951,7 +_,7 @@
  
          @Override

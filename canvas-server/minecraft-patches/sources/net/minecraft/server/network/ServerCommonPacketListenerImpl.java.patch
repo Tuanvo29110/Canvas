@@ -8,7 +8,7 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportedException;
-@@ -21,6 +_,8 @@
+@@ -21,10 +_,11 @@
  import net.minecraft.network.protocol.common.ServerboundPongPacket;
  import net.minecraft.network.protocol.common.ServerboundResourcePackPacket;
  import net.minecraft.network.protocol.cookie.ServerboundCookieResponsePacket;
@@ -17,6 +17,10 @@
  import net.minecraft.server.MinecraftServer;
  import net.minecraft.server.level.ClientInformation;
  import net.minecraft.util.VisibleForDebug;
+-import net.minecraft.util.profiling.Profiler;
+ import org.slf4j.Logger;
+ 
+ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPacketListener, org.bukkit.craftbukkit.entity.CraftPlayer.TransferCookieConnection { // CraftBukkit
 @@ -45,7 +_,7 @@
      private int latency;
      private volatile boolean suspendFlushingOnServerThread = false;
@@ -52,6 +56,14 @@
          if (this.player.getBukkitEntity().handleCookieResponse(packet)) {
              return;
          }
+@@ -255,7 +_,6 @@
+     }
+ 
+     protected void keepConnectionAlive() {
+-        Profiler.get().push("keepAlive");
+         long millis = Util.getMillis();
+         // Paper start - give clients a longer time to respond to pings as per pre 1.12.2 timings
+         // This should effectively place the keepalive handling back to "as it was" before 1.12.2
 @@ -265,6 +_,7 @@
          if (org.purpurmc.purpur.PurpurConfig.useAlternateKeepAlive) {
              if (elapsedTime >= 1000L) { // 1 second
@@ -68,7 +80,14 @@
                      this.disconnect(TIMEOUT_DISCONNECTION_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT); // Paper - kick event cause
                  }
                  // Paper end - give clients a longer time to respond to pings as per pre 1.12.2 timings
-@@ -296,6 +_,7 @@
+@@ -289,13 +_,12 @@
+                 this.send(new ClientboundKeepAlivePacket(this.keepAliveChallenge));
+             }
+         }
+-
+-        Profiler.get().pop();
+     }
+ 
      private boolean checkIfClosed(long time) {
          if (this.closed) {
              if (time - this.closedListenerTime >= 15000L) {

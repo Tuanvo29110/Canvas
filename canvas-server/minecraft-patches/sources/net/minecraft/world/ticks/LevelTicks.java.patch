@@ -15,6 +15,15 @@
  import java.util.function.BiConsumer;
  import java.util.function.LongPredicate;
  import java.util.function.Predicate;
+@@ -23,8 +_,6 @@
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.SectionPos;
+ import net.minecraft.core.Vec3i;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.level.ChunkPos;
+ import net.minecraft.world.level.levelgen.structure.BoundingBox;
+ 
 @@ -43,12 +_,78 @@
              this.updateContainerScheduling(scheduledTick);
          }
@@ -131,7 +140,7 @@
          long packedChunkPos = ChunkPos.asLong(tick.pos());
          LevelChunkTicks<T> levelChunkTicks = this.allContainers.get(packedChunkPos);
          if (levelChunkTicks == null) {
-@@ -77,9 +_,11 @@
+@@ -77,23 +_,19 @@
          } else {
              levelChunkTicks.schedule(tick);
          }
@@ -139,18 +148,27 @@
      }
  
      public void tick(long gameTime, int maxAllowedTicks, BiConsumer<BlockPos, T> ticker) {
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("collect");
+-        this.collectTicks(gameTime, maxAllowedTicks, profilerFiller);
+-        profilerFiller.popPush("run");
+-        profilerFiller.incrementCounter("ticksToRun", this.toRunThisTick.size());
 +        try { lock.lock(); // Canvas - lock
-         ProfilerFiller profilerFiller = Profiler.get();
-         profilerFiller.push("collect");
-         this.collectTicks(gameTime, maxAllowedTicks, profilerFiller);
-@@ -89,6 +_,7 @@
-         profilerFiller.popPush("cleanup");
++        this.collectTicks(gameTime, maxAllowedTicks);
+         this.runCollectedTicks(ticker);
+-        profilerFiller.popPush("cleanup");
          this.cleanupAfterTick();
-         profilerFiller.pop();
+-        profilerFiller.pop();
 +        } finally { lock.unlock(); } // Canvas - lock
      }
  
-     private void collectTicks(long gameTime, int maxAllowedTicks, ProfilerFiller profiler) {
+-    private void collectTicks(long gameTime, int maxAllowedTicks, ProfilerFiller profiler) {
++    private void collectTicks(long gameTime, int maxAllowedTicks) {
+         this.sortContainersToTick(gameTime);
+-        profiler.incrementCounter("containersToTick", this.containersToTick.size());
+         this.drainContainers(gameTime, maxAllowedTicks);
+         this.rescheduleLeftoverContainers();
+     }
 @@ -148,7 +_,9 @@
      }
  

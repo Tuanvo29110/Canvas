@@ -82,6 +82,15 @@
  import net.minecraft.network.protocol.game.ClientboundSoundEntityPacket;
  import net.minecraft.network.protocol.game.ClientboundSoundPacket;
  import net.minecraft.network.protocol.game.DebugPackets;
+@@ -74,8 +_,6 @@
+ import net.minecraft.util.ProgressListener;
+ import net.minecraft.util.RandomSource;
+ import net.minecraft.util.datafix.DataFixTypes;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.util.valueproviders.IntProvider;
+ import net.minecraft.util.valueproviders.UniformInt;
+ import net.minecraft.world.DifficultyInstance;
 @@ -98,10 +_,12 @@
  import net.minecraft.world.entity.animal.horse.SkeletonHorse;
  import net.minecraft.world.entity.boss.EnderDragonPart;
@@ -103,6 +112,14 @@
  import net.minecraft.world.level.block.entity.FuelValues;
  import net.minecraft.world.level.block.entity.TickingBlockEntity;
  import net.minecraft.world.level.block.state.BlockState;
+@@ -142,6 +_,7 @@
+ import net.minecraft.world.level.gameevent.GameEvent;
+ import net.minecraft.world.level.gameevent.GameEventDispatcher;
+ import net.minecraft.world.level.levelgen.Heightmap;
++import net.minecraft.world.level.levelgen.WorldOptions;
+ import net.minecraft.world.level.levelgen.structure.BoundingBox;
+ import net.minecraft.world.level.levelgen.structure.Structure;
+ import net.minecraft.world.level.levelgen.structure.StructureCheck;
 @@ -164,6 +_,7 @@
  import net.minecraft.world.phys.shapes.Shapes;
  import net.minecraft.world.phys.shapes.VoxelShape;
@@ -320,12 +337,14 @@
      }
  
      // Paper start
-@@ -723,10 +_,150 @@
+@@ -723,18 +_,154 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
 -
 -    public void tick(BooleanSupplier hasTimeLeft) {
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        this.handlingTick = true;
 +    // Canvas start - Threaded Dimensions
 +
 +    public final io.canvasmc.canvas.server.NetworkRouter networkRouter; // connection threading
@@ -468,46 +487,53 @@
 +            runnable.run();
 +        }
 +    // Canvas end
-         ProfilerFiller profilerFiller = Profiler.get();
--        this.handlingTick = true;
 +        // Canvas - Threaded Regions
          TickRateManager tickRateManager = this.tickRateManager();
          boolean runsNormally = tickRateManager.runsNormally();
          if (runsNormally) {
-@@ -767,36 +_,75 @@
+-            profilerFiller.push("world border");
+             this.getWorldBorder().tick();
+-            profilerFiller.popPush("weather");
+             this.advanceWeatherCycle();
+-            profilerFiller.pop();
+         }
+ 
+         int _int = this.getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
+@@ -767,53 +_,92 @@
          if (runsNormally) {
              this.tickTime();
          }
+-
+-        profilerFiller.push("tickPending");
 +    // Canvas start - Threaded Regions
-+        if (!this.server.isRegionized()) this.regionTick2(profilerFiller, runsNormally, tickData);
-+        this.worldtick2(profilerFiller, runsNormally, hasTimeLeft, copyOf, tickData);
++        if (!this.server.isRegionized()) this.regionTick2(runsNormally, tickData);
++        this.worldtick2(runsNormally, hasTimeLeft, copyOf, tickData);
 +    }
 +
-+    public void regionTick2(ProfilerFiller profilerFiller, boolean runsNormally, ServerRegions.WorldTickData tickData) {
++    public void regionTick2(boolean runsNormally, ServerRegions.WorldTickData tickData) {
 +    // Canvas end
- 
-         profilerFiller.push("tickPending");
++
          if (!this.isDebug() && runsNormally) {
 -            long l = this.getGameTime();
+-            profilerFiller.push("blockTicks");
+-            this.blockTicks.tick(l, paperConfig().environment.maxBlockTicks, this::tickBlock); // Paper - configurable max block ticks
+-            profilerFiller.popPush("fluidTicks");
+-            this.fluidTicks.tick(l, paperConfig().environment.maxFluidTicks, this::tickFluid); // Paper - configurable max fluid ticks
+-            profilerFiller.pop();
 +            // Canvas start - ticks_since config - Threaded Regions
 +            long l = tickData.getRedstoneGameTime();
 +            if (tickData.getBlockLevelTicks().ticksSinceLastBlockTickCall++ > Config.INSTANCE.ticksBetweenBlockTicking) {
-             profilerFiller.push("blockTicks");
--            this.blockTicks.tick(l, paperConfig().environment.maxBlockTicks, this::tickBlock); // Paper - configurable max block ticks
 +            tickData.getBlockLevelTicks().tick(l, paperConfig().environment.maxBlockTicks, this::tickBlock); // Paper - configurable max block ticks
 +            tickData.getBlockLevelTicks().ticksSinceLastBlockTickCall = 0;
 +            }
 +            if (tickData.getFluidLevelTicks().ticksSinceLastFluidTickCall++ > Config.INSTANCE.ticksBetweenFluidTicking) {
-             profilerFiller.popPush("fluidTicks");
--            this.fluidTicks.tick(l, paperConfig().environment.maxFluidTicks, this::tickFluid); // Paper - configurable max fluid ticks
 +            tickData.getFluidLevelTicks().tick(l, paperConfig().environment.maxFluidTicks, this::tickFluid); // Paper - configurable max fluid ticks
 +            tickData.getFluidLevelTicks().ticksSinceLastFluidTickCall = 0;
 +            }
 +            // Canvas end
-             profilerFiller.pop();
          }
  
-         profilerFiller.popPush("raid");
+-        profilerFiller.popPush("raid");
          if (runsNormally) {
 +            // Canvas start
 +            if (this.ticksSinceLastRaidTickCall++ > Config.INSTANCE.ticksBetweenRaidTicking) {
@@ -517,17 +543,17 @@
 +            // Canvas end
          }
  
+-        profilerFiller.popPush("chunkSource");
+-        this.getChunkSource().tick(hasTimeLeft, true);
+-        profilerFiller.popPush("blockEvents");
+-        if (runsNormally) {
 +    // Canvas start - Threaded Regions
 +    }
 +
-+    public void worldtick2(ProfilerFiller profilerFiller, boolean runsNormally, BooleanSupplier hasTimeLeft, Queue<Runnable> copyOf, ServerRegions.WorldTickData tickData) {
++    public void worldtick2(boolean runsNormally, BooleanSupplier hasTimeLeft, Queue<Runnable> copyOf, ServerRegions.WorldTickData tickData) {
 +        this.raids.globalTick();
 +    // Canvas end
-         profilerFiller.popPush("chunkSource");
--        this.getChunkSource().tick(hasTimeLeft, true);
 +        if (!this.server.isRegionized()) this.getChunkSource().tick(hasTimeLeft, true); // Canvas - Threaded Regions
-         profilerFiller.popPush("blockEvents");
--        if (runsNormally) {
 +        if (runsNormally && !this.server.isRegionized()) { // Canvas - Threaded Regions - ensure regionized
 +            // Canvas start
 +            if (this.ticksSinceLastBlockEventsTickCall++ > Config.INSTANCE.ticksBetweenBlockEvents) {
@@ -538,26 +564,28 @@
          }
  
 -        this.handlingTick = false;
-+        tickData.setHandlingTick(false); // Canvas - Threaded Regions
-         profilerFiller.pop();
+-        profilerFiller.pop();
 -        boolean flag = !paperConfig().unsupportedSettings.disableWorldTickingWhenEmpty || !this.players.isEmpty() || !this.getForceLoadedChunks().isEmpty(); // CraftBukkit - this prevents entity cleanup, other issues on servers with no players // Paper - restore this
++        tickData.setHandlingTick(false); // Canvas - Threaded Regions
 +        boolean flag = true || !this.players.isEmpty() || !this.getForceLoadedChunks().isEmpty(); // CraftBukkit - this prevents entity cleanup, other issues on servers with no players // Paper - restore this // Canvas - unrestore this
          if (flag) {
              this.resetEmptyTime();
          }
  
 +    // Canvas start - Threaded Regions
-+        if (!this.server.isRegionized()) this.regiontick3(profilerFiller, flag, runsNormally, tickData);
-+        worldtick3(profilerFiller, tickData);
++        if (!this.server.isRegionized()) this.regiontick3(flag, runsNormally, tickData);
++        worldtick3(tickData);
 +    }
 +
-+    public void regiontick3(ProfilerFiller profilerFiller, boolean flag, boolean runsNormally, ServerRegions.WorldTickData tickData) {
++    public void regiontick3(boolean flag, boolean runsNormally, ServerRegions.WorldTickData tickData) {
 +        TickRateManager tickRateManager = this.tickRateManager();
 +    // Canvas end
          if (flag || this.emptyTime++ < 300) {
-             profilerFiller.push("entities");
+-            profilerFiller.push("entities");
              if (this.dragonFight != null && runsNormally) {
-@@ -806,12 +_,25 @@
+-                profilerFiller.push("dragonFight");
+                 this.dragonFight.tick();
+-                profilerFiller.pop();
              }
  
              io.papermc.paper.entity.activation.ActivationRange.activateEntities(this); // Paper - EAR
@@ -580,27 +608,37 @@
 +                        entity.activatedPriorityReset = false; // Canvas - DAB
                          if (!entity.isRemoved()) {
                              if (!tickRateManager.isEntityFrozen(entity)) {
-                                 profilerFiller.push("checkDespawn");
+-                                profilerFiller.push("checkDespawn");
 +                                if (entity instanceof Mob mob && !(mob instanceof WitherBoss) && !(mob instanceof EnderDragon)) mob.temporaryRegionizedData = tickData; // Canvas - check eligible players for despawn checks
                                  entity.checkDespawn();
-                                 profilerFiller.pop();
+-                                profilerFiller.pop();
                                  if (true) { // Paper - rewrite chunk system
-@@ -833,30 +_,59 @@
+                                     Entity vehicle = entity.getVehicle();
+                                     if (vehicle != null) {
+@@ -824,39 +_,61 @@
+                                         entity.stopRiding();
+                                     }
+ 
+-                                    profilerFiller.push("tick");
+                                     this.guardEntityTick(this::tickNonPassenger, entity);
+-                                    profilerFiller.pop();
+                                 }
+                             }
+                         }
                      }
                  );
-             profilerFiller.pop();
--            this.tickBlockEntities();
-+            this.tickBlockEntities(profilerFiller); // Canvas
+-            profilerFiller.pop();
+             this.tickBlockEntities();
          }
  
+-        profilerFiller.push("entityManagement");
 +    // Canvas start - Threaded Regions
 +        tickPlayerList(tickData); // Canvas - Threaded Regions
 +    }
-+    public void worldtick3(ProfilerFiller profilerFiller, ServerRegions.WorldTickData tickData) {
++    public void worldtick3(ServerRegions.WorldTickData tickData) {
 +    // Canvas end
-         profilerFiller.push("entityManagement");
          // Paper - rewrite chunk system
-         profilerFiller.pop();
+-        profilerFiller.pop();
 +        // Canvas start - Threaded Dimensions
 +        Queue<Runnable> copyOf = new ConcurrentLinkedQueue<>(this.queuedForNextTickPost);
 +        this.queuedForNextTickPost.clear();
@@ -632,11 +670,11 @@
 +            tickData.incrementRedstoneTime(); // Canvas - Threaded Regions
              long l = this.levelData.getGameTime() + 1L;
              this.serverLevelData.setGameTime(l);
-             Profiler.get().push("scheduledFunctions");
+-            Profiler.get().push("scheduledFunctions");
 -            this.serverLevelData.getScheduledEvents().tick(this.server, l);
-+            if (!this.server.isRegionized()) this.serverLevelData.getScheduledEvents().tick(this.server, l); // Canvas - Threaded Regions
-             Profiler.get().pop();
+-            Profiler.get().pop();
 -            if (this.serverLevelData.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
++            if (!this.server.isRegionized()) this.serverLevelData.getScheduledEvents().tick(this.server, l); // Canvas - Threaded Regions
 +            // Canvas start - Threaded Regions
 +            boolean canTickDaylight = false;
 +            if (this.server.isRegionized() && tickData.region == null/*regions enabled, and we are ticking on a world*/) {
@@ -702,7 +740,7 @@
          final boolean doubleTickFluids = !ca.spottedleaf.moonrise.common.PlatformHooks.get().configFixMC224294();
  
          final ChunkPos cpos = chunk.getPos();
-@@ -950,15 +_,15 @@
+@@ -950,15 +_,13 @@
      }
      // Paper end - optimise random ticking
  
@@ -713,18 +751,19 @@
          ChunkPos pos = chunk.getPos();
          int minBlockX = pos.getMinBlockX();
          int minBlockZ = pos.getMinBlockZ();
-         ProfilerFiller profilerFiller = Profiler.get();
-         profilerFiller.push("iceandsnow");
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("iceandsnow");
  
 -        if (!this.paperConfig().environment.disableIceAndSnow) { // Paper - Option to disable ice and snow
 +        if (!this.paperConfig().environment.disableIceAndSnow && chunk.ticksSinceLastPrecipitationCall++ > Config.INSTANCE.ticksBetweenPrecipitationUpdates) { chunk.ticksSinceLastPrecipitationCall = 0; // Paper - Option to disable ice and snow // Canvas - precipitation intervals
          for (int i = 0; i < randomTickSpeed; i++) {
              if (simpleRandom.nextInt(48) == 0) {  // Paper - optimise random ticking
                  this.tickPrecipitation(this.getBlockRandomPos(minBlockX, 0, minBlockZ, 15));
-@@ -967,8 +_,11 @@
+@@ -966,12 +_,12 @@
+         }
          } // Paper - Option to disable ice and snow
  
-         profilerFiller.popPush("tickBlocks");
+-        profilerFiller.popPush("tickBlocks");
 -        if (randomTickSpeed > 0) {
 -            this.optimiseRandomTick(chunk, randomTickSpeed); // Paper - optimise random ticking
 +        if (randomTickSpeed > 0 && (chunk.ticksSinceLastRandomTickCall++ > Config.INSTANCE.ticksBetweenRandomTickUpdates && randomTickSpeed > 0)) { chunk.ticksSinceLastRandomTickCall = 0; // Canvas - random tick intervals
@@ -733,8 +772,29 @@
 +            else this.optimiseRandomTick(chunk, randomTickSpeed); // Paper - optimise random ticking
 +            // Canvas end
          }
+-
+-        profilerFiller.pop();
+     }
  
-         profilerFiller.pop();
+     public void tickThunder(LevelChunk chunk) {
+@@ -979,8 +_,6 @@
+         boolean isRaining = this.isRaining();
+         int minBlockX = pos.getMinBlockX();
+         int minBlockZ = pos.getMinBlockZ();
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("thunder");
+         if (!this.paperConfig().environment.disableThunder && isRaining && this.isThundering() && this.spigotConfig.thunderChance > 0 && this.random.nextInt(this.spigotConfig.thunderChance) == 0) { // Spigot // Paper - Option to disable thunder
+             BlockPos blockPos = this.findLightningTargetAround(this.getBlockRandomPos(minBlockX, 0, minBlockZ, 15));
+             if (this.isRainingAt(blockPos)) {
+@@ -1014,8 +_,6 @@
+                 }
+             }
+         }
+-
+-        profilerFiller.pop();
+     }
+ 
+     @VisibleForTesting
 @@ -1119,7 +_,7 @@
      }
  
@@ -778,7 +838,7 @@
          }
          // Paper end - rewrite chunk system
  
-@@ -1336,24 +_,25 @@
+@@ -1336,59 +_,53 @@
  
      // Paper start - log detailed entity tick information
      // TODO replace with varhandle
@@ -806,9 +866,19 @@
 -            // Paper end - log detailed entity tick information
 +            // Paper end - log detailed entity tick information */ // Canvas end
          entity.setOldPosAndRot();
-         ProfilerFiller profilerFiller = Profiler.get();
+-        ProfilerFiller profilerFiller = Profiler.get();
          entity.tickCount++;
-@@ -1371,18 +_,18 @@
+         entity.totalEntityAge++; // Paper - age-like counter for all entities
+-        profilerFiller.push(() -> BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
+-        profilerFiller.incrementCounter("tickNonPassenger");
+         final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
+         if (isActive) { // Paper - EAR 2
+         entity.tick();
+         entity.postTick(); // CraftBukkit
+         } else {entity.inactiveTick();} // Paper - EAR 2
+-        profilerFiller.pop();
+ 
+         for (Entity entity1 : entity.getPassengers()) {
              this.tickPassenger(entity, entity1, isActive); // Paper - EAR 2
          }
          // Paper start - log detailed entity tick information
@@ -830,6 +900,20 @@
              passengerEntity.setOldPosAndRot();
              passengerEntity.tickCount++;
              passengerEntity.totalEntityAge++; // Paper - age-like counter for all entities
+-            ProfilerFiller profilerFiller = Profiler.get();
+-            profilerFiller.push(() -> BuiltInRegistries.ENTITY_TYPE.getKey(passengerEntity.getType()).toString());
+-            profilerFiller.incrementCounter("tickPassenger");
+             // Paper start - EAR 2
+             if (isActive) {
+             passengerEntity.rideTick();
+@@ -1400,7 +_,6 @@
+                 ridingEntity.positionRider(passengerEntity);
+             }
+             // Paper end - EAR 2
+-            profilerFiller.pop();
+ 
+             for (Entity entity : passengerEntity.getPassengers()) {
+                 this.tickPassenger(passengerEntity, entity, isActive); // Paper - EAR 2
 @@ -1534,6 +_,19 @@
          return list;
      }

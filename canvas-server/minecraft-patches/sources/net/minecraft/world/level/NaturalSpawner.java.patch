@@ -9,7 +9,7 @@
  import it.unimi.dsi.fastutil.objects.Object2IntMap;
  import it.unimi.dsi.fastutil.objects.Object2IntMaps;
  import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-@@ -18,6 +_,7 @@
+@@ -18,13 +_,12 @@
  import net.minecraft.core.registries.BuiltInRegistries;
  import net.minecraft.core.registries.Registries;
  import net.minecraft.server.level.ServerLevel;
@@ -17,6 +17,13 @@
  import net.minecraft.tags.BiomeTags;
  import net.minecraft.tags.BlockTags;
  import net.minecraft.util.Mth;
+ import net.minecraft.util.RandomSource;
+ import net.minecraft.util.VisibleForDebug;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.util.random.WeightedList;
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.entity.EntitySpawnReason;
 @@ -131,7 +_,7 @@
              int limit = mobCategory.getMaxInstancesPerChunk();
              org.bukkit.entity.SpawnCategory spawnCategory = org.bukkit.craftbukkit.util.CraftSpawnCategory.toBukkit(mobCategory);
@@ -26,8 +33,13 @@
                  limit = level.getWorld().getSpawnLimit(spawnCategory);
              }
  
-@@ -157,7 +_,7 @@
+@@ -152,12 +_,9 @@
+     }
  
+     public static void spawnForChunk(ServerLevel level, LevelChunk chunk, NaturalSpawner.SpawnState spawnState, List<MobCategory> categories) {
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("spawner");
+-
          for (MobCategory mobCategory : categories) {
              // Paper start - Optional per player mob spawns
 -            final boolean canSpawn;
@@ -44,7 +56,7 @@
                          minDiff = Math.min(limit - level.getChunkSource().chunkMap.getMobCountNear(backingSet[k], mobCategory), minDiff);
                      }
                  }
-@@ -184,8 +_,16 @@
+@@ -184,13 +_,19 @@
                  canSpawn = spawnState.canSpawnForCategoryLocal(mobCategory, chunk.getPos());
              }
              if (canSpawn) {
@@ -62,3 +74,8 @@
                  // Paper end - Optional per player mob spawns
              }
          }
+-
+-        profilerFiller.pop();
+     }
+ 
+     // Paper start - Add mobcaps commands

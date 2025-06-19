@@ -1,12 +1,19 @@
 --- a/net/minecraft/world/entity/ai/sensing/Sensing.java
 +++ b/net/minecraft/world/entity/ai/sensing/Sensing.java
-@@ -9,23 +_,25 @@
+@@ -2,40 +_,37 @@
+ 
+ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+ import it.unimi.dsi.fastutil.ints.IntSet;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.entity.Mob;
  
  public class Sensing {
      private final Mob mob;
 -    private final IntSet seen = new IntOpenHashSet();
 -    private final IntSet unseen = new IntOpenHashSet();
-+    private final it.unimi.dsi.fastutil.ints.Int2IntMap seen = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap(2); // Canvas end - initialize line of sight cache with low capacity // Gale - reduce line of sight cache lookups - merge sets
++    private final it.unimi.dsi.fastutil.ints.Int2IntMap seen = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap(2); // Canvas end - initialize line of sight cache with low capacity
  
      public Sensing(Mob mob) {
          this.mob = mob;
@@ -31,10 +38,10 @@
 +        } else if (cached == 2) { // Canvas - reduce line of sight cache lookups - merge sets
              return false;
          } else {
-             ProfilerFiller profilerFiller = Profiler.get();
-@@ -33,9 +_,9 @@
+-            ProfilerFiller profilerFiller = Profiler.get();
+-            profilerFiller.push("hasLineOfSight");
              boolean hasLineOfSight = this.mob.hasLineOfSight(entity);
-             profilerFiller.pop();
+-            profilerFiller.pop();
              if (hasLineOfSight) {
 -                this.seen.add(id);
 +                this.seen.put(id, 1); // Canvas - reduce line of sight cache lookups - merge sets

@@ -24,6 +24,15 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportedException;
+@@ -35,8 +_,6 @@
+ import net.minecraft.util.Mth;
+ import net.minecraft.util.RandomSource;
+ import net.minecraft.util.StringRepresentable;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.DifficultyInstance;
+ import net.minecraft.world.TickRateManager;
+ import net.minecraft.world.damagesource.DamageSource;
 @@ -92,9 +_,10 @@
  import org.bukkit.craftbukkit.block.CraftBlockState;
  import org.bukkit.craftbukkit.block.data.CraftBlockData;
@@ -122,6 +131,22 @@
          return this.world;
      }
  
+@@ -253,7 +_,6 @@
+ 
+     @Override
+     public final <T extends Entity> List<T> getEntitiesOfClass(final Class<T> entityClass, final AABB boundingBox, final Predicate<? super T> predicate) {
+-        Profiler.get().incrementCounter("getEntities");
+         final List<T> ret = new java.util.ArrayList<>();
+ 
+         ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities(entityClass, null, boundingBox, ret, predicate);
+@@ -263,7 +_,6 @@
+ 
+     @Override
+     public final List<Entity> moonrise$getHardCollidingEntities(final Entity entity, final AABB box, final Predicate<? super Entity> predicate) {
+-        Profiler.get().incrementCounter("getEntities");
+         final List<Entity> ret = new java.util.ArrayList<>();
+ 
+         ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel)this).moonrise$getEntityLookup().getHardCollidingEntities(entity, box, ret, predicate);
 @@ -466,7 +_,11 @@
  
              if ((chunkDiff | chunkYDiff) != 0) {
@@ -266,7 +291,7 @@
              if (previous != null) {
                  return previous.getHandle();
              }
-@@ -1485,17 +_,17 @@
+@@ -1485,17 +_,16 @@
      }
  
      public void addBlockEntityTicker(TickingBlockEntity ticker) {
@@ -274,10 +299,9 @@
 +        ServerRegions.getTickData((ServerLevel) this).addBlockEntityTicker(ticker); // Canvas - Threaded Regions
      }
  
--    protected void tickBlockEntities() {
+     protected void tickBlockEntities() {
 -        ProfilerFiller profilerFiller = Profiler.get();
-+    protected void tickBlockEntities(ProfilerFiller profilerFiller) { // Canvas - reduce the amt of times we run Profiler.get for no reason
-         profilerFiller.push("blockEntities");
+-        profilerFiller.push("blockEntities");
 -        this.tickingBlockEntities = true;
 -        if (!this.pendingBlockEntityTickers.isEmpty()) {
 -            this.blockEntityTickers.addAll(this.pendingBlockEntityTickers);
@@ -309,18 +333,19 @@
                  tickingBlockEntity.tick();
                  // Paper start - rewrite chunk system
                  if ((++tickedEntities & 7) == 0) {
-@@ -1517,12 +_,21 @@
+@@ -1517,12 +_,20 @@
                  // Paper end - rewrite chunk system
              }
          }
 -        this.blockEntityTickers.removeAll(toRemove); // Paper - Fix MC-117075
-+        blockEntityTickers.removeAll(toRemove); // Paper - Fix MC-117075 // Canvas - Threaded Regions
- 
+-
 -        this.tickingBlockEntities = false;
-+        worldTickData.setTickingBlockEntities(false); // Canvas - Threaded Regions
-         profilerFiller.pop();
+-        profilerFiller.pop();
 -        this.spigotConfig.currentPrimedTnt = 0; // Spigot
 -    }
++        blockEntityTickers.removeAll(toRemove); // Paper - Fix MC-117075 // Canvas - Threaded Regions
++
++        worldTickData.setTickingBlockEntities(false); // Canvas - Threaded Regions
 +        worldTickData.currentPrimedTnt = 0; // Spigot // Canvas - Threaded Regions
 +    }
 +    // Canvas start
@@ -372,6 +397,23 @@
      }
  
      @Nullable
+@@ -1779,7 +_,6 @@
+ 
+     @Override
+     public List<Entity> getEntities(@Nullable Entity entity, AABB boundingBox, Predicate<? super Entity> predicate) {
+-        Profiler.get().incrementCounter("getEntities");
+         List<Entity> list = Lists.newArrayList();
+ 
+         // Paper start - rewrite chunk system
+@@ -1808,8 +_,6 @@
+     public <T extends Entity> void getEntities(final EntityTypeTest<Entity, T> entityTypeTest,
+                                                final AABB boundingBox, final Predicate<? super T> predicate,
+                                                final List<? super T> into, final int maxCount) {
+-        Profiler.get().incrementCounter("getEntities");
+-
+         if (entityTypeTest instanceof net.minecraft.world.entity.EntityType<T> byType) {
+             if (maxCount != Integer.MAX_VALUE) {
+                 ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities(byType, boundingBox, into, predicate, maxCount);
 @@ -1917,6 +_,12 @@
      public void disconnect() {
      }

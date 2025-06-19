@@ -17,6 +17,30 @@
  import net.minecraft.ChatFormatting;
  import net.minecraft.SharedConstants;
  import net.minecraft.Util;
+@@ -55,7 +_,6 @@
+ import net.minecraft.server.commands.DamageCommand;
+ import net.minecraft.server.commands.DataPackCommand;
+ import net.minecraft.server.commands.DeOpCommands;
+-import net.minecraft.server.commands.DebugCommand;
+ import net.minecraft.server.commands.DebugConfigCommand;
+ import net.minecraft.server.commands.DebugMobSpawningCommand;
+ import net.minecraft.server.commands.DebugPathCommand;
+@@ -132,7 +_,6 @@
+ import net.minecraft.server.commands.data.DataCommands;
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.tags.TagKey;
+-import net.minecraft.util.profiling.Profiler;
+ import net.minecraft.util.profiling.jfr.JvmProfiler;
+ import net.minecraft.world.flag.FeatureFlagSet;
+ import net.minecraft.world.flag.FeatureFlags;
+@@ -164,7 +_,6 @@
+         DamageCommand.register(this.dispatcher, context);
+         DataCommands.register(this.dispatcher);
+         DataPackCommand.register(this.dispatcher);
+-        DebugCommand.register(this.dispatcher);
+         DefaultGameModeCommands.register(this.dispatcher);
+         DifficultyCommand.register(this.dispatcher);
+         EffectCommands.register(this.dispatcher, context);
 @@ -222,7 +_,7 @@
              JfrCommand.register(this.dispatcher);
          }
@@ -34,7 +58,15 @@
      }
  
      public static <S> ParseResults<S> mapSource(ParseResults<S> parseResults, UnaryOperator<S> mapper) {
-@@ -389,7 +_,7 @@
+@@ -357,7 +_,6 @@
+     public void performCommand(ParseResults<CommandSourceStack> parseResults, String command, String label, boolean throwCommandError) {
+         // Paper end
+         CommandSourceStack commandSourceStack = parseResults.getContext().getSource();
+-        Profiler.get().push(() -> "/" + command);
+         ContextChain contextChain = this.finishParsing(parseResults, command, commandSourceStack, label); // CraftBukkit // Paper - Add UnknownCommandEvent
+ 
+         try {
+@@ -389,12 +_,10 @@
              commandSourceStack.sendFailure(
                  Component.translatable("command.failed").withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(mutableComponent)))
              );
@@ -43,6 +75,20 @@
                  commandSourceStack.sendFailure(Component.literal(Util.describeError(var12)));
                  LOGGER.error("'/{}' threw an exception", command, var12);
              }
+-        } finally {
+-            Profiler.get().pop();
+         }
+     }
+ 
+@@ -451,7 +_,7 @@
+             int max = Math.max(1, server.getGameRules().getInt(GameRules.RULE_MAX_COMMAND_CHAIN_LENGTH));
+             int _int = server.getGameRules().getInt(GameRules.RULE_MAX_COMMAND_FORK_COUNT);
+ 
+-            try (ExecutionContext<CommandSourceStack> executionContext1 = new ExecutionContext<>(max, _int, Profiler.get())) {
++            try (ExecutionContext<CommandSourceStack> executionContext1 = new ExecutionContext<>(max, _int)) {
+                 CURRENT_EXECUTION_CONTEXT.set(executionContext1);
+                 contextConsumer.accept(executionContext1);
+                 executionContext1.runCommandQueue();
 @@ -479,7 +_,7 @@
      }
  

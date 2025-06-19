@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/ai/goal/GoalSelector.java
 +++ b/net/minecraft/world/entity/ai/goal/GoalSelector.java
-@@ -1,6 +_,8 @@
+@@ -1,14 +_,14 @@
  package net.minecraft.world.entity.ai.goal;
  
  import com.google.common.annotations.VisibleForTesting;
@@ -9,6 +9,14 @@
  import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
  import java.util.EnumMap;
  import java.util.EnumSet;
+ import java.util.Map;
+ import java.util.Set;
+ import java.util.function.Predicate;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ 
+ public class GoalSelector {
+     private static final WrappedGoal NO_GOAL = new WrappedGoal(Integer.MAX_VALUE, new Goal() {
 @@ -23,7 +_,7 @@
          }
      };
@@ -35,3 +43,44 @@
      }
  
      public boolean hasTasks() {
+@@ -84,9 +_,6 @@
+     }
+ 
+     public void tick() {
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("goalCleanup");
+-
+         for (WrappedGoal wrappedGoal : this.availableGoals) {
+             if (wrappedGoal.isRunning() && (goalContainsAnyFlags(wrappedGoal, this.goalTypes) || !wrappedGoal.canContinueToUse())) { // Paper - Perf: optimize goal types by removing streams
+                 wrappedGoal.stop();
+@@ -94,8 +_,6 @@
+         }
+ 
+         this.lockedFlags.entrySet().removeIf(entry -> !entry.getValue().isRunning());
+-        profilerFiller.pop();
+-        profilerFiller.push("goalUpdate");
+ 
+         for (WrappedGoal wrappedGoalx : this.availableGoals) {
+             // Paper start
+@@ -115,21 +_,15 @@
+             }
+         }
+ 
+-        profilerFiller.pop();
+         this.tickRunningGoals(true);
+     }
+ 
+     public void tickRunningGoals(boolean tickAllRunning) {
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("goalTick");
+-
+         for (WrappedGoal wrappedGoal : this.availableGoals) {
+             if (wrappedGoal.isRunning() && (tickAllRunning || wrappedGoal.requiresUpdateEveryTick())) {
+                 wrappedGoal.tick();
+             }
+         }
+-
+-        profilerFiller.pop();
+     }
+ 
+     public Set<WrappedGoal> getAvailableGoals() {

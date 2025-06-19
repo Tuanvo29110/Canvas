@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/ai/navigation/PathNavigation.java
 +++ b/net/minecraft/world/entity/ai/navigation/PathNavigation.java
-@@ -5,9 +_,11 @@
+@@ -5,13 +_,13 @@
  import java.util.stream.Collectors;
  import java.util.stream.Stream;
  import javax.annotation.Nullable;
@@ -11,7 +11,11 @@
 +import net.minecraft.server.level.ServerLevel;
  import net.minecraft.tags.BlockTags;
  import net.minecraft.util.Mth;
- import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.entity.Mob;
+ import net.minecraft.world.entity.ai.attributes.Attributes;
 @@ -96,11 +_,18 @@
      }
  
@@ -44,10 +48,17 @@
          } else if (this.path != null && !this.path.isDone() && targets.contains(this.targetPos)) {
              return this.path;
          } else {
-@@ -195,12 +_,30 @@
+@@ -189,18 +_,33 @@
+                 }
+             }
+             // Paper end - EntityPathfindEvent
+-            ProfilerFiller profilerFiller = Profiler.get();
+-            profilerFiller.push("pathfind");
+             BlockPos blockPos = offsetUpward ? this.mob.blockPosition().above() : this.mob.blockPosition();
              int i = (int)(followRange + regionOffset);
              PathNavigationRegion pathNavigationRegion = new PathNavigationRegion(this.level, blockPos.offset(-i, -i, -i), blockPos.offset(i, i, i));
              Path path = this.pathFinder.findPath(pathNavigationRegion, this.mob, targets, followRange, accuracy, this.maxVisitedNodesMultiplier);
+-            profilerFiller.pop();
 +            // Canvas start async path processing
 +            if (Config.INSTANCE.entities.pathfinding.enableThreadedPathfinding) {
 +                // assign early a target position. most calls will only have 1 position
@@ -65,7 +76,6 @@
 +                });
 +            } else {
 +            // Canvas end
-             profilerFiller.pop();
              if (path != null && path.getTarget() != null) {
                  this.targetPos = path.getTarget();
                  this.reachRange = accuracy;

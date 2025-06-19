@@ -22,8 +22,6 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.profiling.Profiler;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.TickRateManager;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Contract;
@@ -202,7 +200,6 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
                 ServerRegions.WorldTickData data = this.region.getData().tickData;
                 data.popTick();
                 data.setHandlingTick(true);
-                ProfilerFiller profilerFiller = Profiler.get();
                 TickRateManager tickRateManager = this.world.tickRateManager();
                 tickHandle.runRegionTasks(hasTimeLeft); // run region tasks before ticking just in case
                 // bench this block, as technically this is the actual tick
@@ -215,7 +212,7 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
                     if (runsNormally) {
                         data.incrementRedstoneTime();
                     }
-                    this.world.regionTick2(profilerFiller, runsNormally, data);
+                    this.world.regionTick2(runsNormally, data);
                     final ServerChunkCache chunkSource = this.world.getChunkSource();
                     chunkSource.tick(hasTimeLeft, true);
                     if (runsNormally) {
@@ -225,7 +222,7 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
                         }
                     }
                     data.setHandlingTick(false);
-                    this.world.regiontick3(profilerFiller, true, runsNormally, data);
+                    this.world.regiontick3(true, runsNormally, data);
                     data.explosionDensityCache.clear();
                     for (final ServerPlayer localPlayer : data.getLocalPlayers()) {
                         localPlayer.connection.chunkSender.sendNextChunks(localPlayer);

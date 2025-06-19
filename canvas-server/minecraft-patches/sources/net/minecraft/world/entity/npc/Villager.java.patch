@@ -8,6 +8,15 @@
  import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
  import java.util.List;
  import java.util.Map;
+@@ -36,8 +_,6 @@
+ import net.minecraft.tags.ItemTags;
+ import net.minecraft.util.Mth;
+ import net.minecraft.util.SpawnUtil;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.Difficulty;
+ import net.minecraft.world.DifficultyInstance;
+ import net.minecraft.world.InteractionHand;
 @@ -181,6 +_,8 @@
      private boolean isLobotomized = false; public boolean isLobotomized() { return this.isLobotomized; } // Purpur - Lobotomize stuck villagers
      private int notLobotomizedCount = 0; // Purpur - Lobotomize stuck villagers
@@ -34,7 +43,16 @@
      @Override
      protected void customServerAiStep(ServerLevel level) {
          // Paper start - EAR 2
-@@ -405,7 +_,11 @@
+@@ -393,8 +_,6 @@
+     }
+     protected void customServerAiStep(ServerLevel level, boolean inactive) { // Purpur - Lobotomize stuck villagers - not final
+         // Paper end - EAR 2
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("villagerBrain");
+         // Purpur start - Lobotomize stuck villagers
+         if (this.level().purpurConfig.villagerLobotomizeEnabled) {
+             // treat as inactive if lobotomized
+@@ -405,11 +_,14 @@
          // Purpur end - Lobotomize stuck villagers
          // Pufferfish start
          if (!inactive && (getRider() == null || !this.isControllable()) /*&& this.behaviorTick++ % this.activatedPriority == 0*/) { // Purpur - Ridables
@@ -46,6 +64,10 @@
          }
          else if (this.isLobotomized && shouldRestock()) restock(); // Purpur - Lobotomize stuck villagers
          // Pufferfish end
+-        profilerFiller.pop();
+         if (this.assignProfessionWhenSpawned) {
+             this.assignProfessionWhenSpawned = false;
+         }
 @@ -975,7 +_,17 @@
  
      private int countFoodPointsInInventory() {

@@ -32,6 +32,15 @@
  import net.minecraft.BlockUtil;
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
+@@ -82,8 +_,6 @@
+ import net.minecraft.tags.TagKey;
+ import net.minecraft.util.Mth;
+ import net.minecraft.util.RandomSource;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.InteractionHand;
+ import net.minecraft.world.InteractionResult;
+ import net.minecraft.world.Nameable;
 @@ -115,6 +_,7 @@
  import net.minecraft.world.level.block.SoundType;
  import net.minecraft.world.level.block.state.BlockState;
@@ -187,9 +196,12 @@
              if (tracker == null) {
                  return;
              }
-@@ -851,7 +_,9 @@
-         ProfilerFiller profilerFiller = Profiler.get();
-         profilerFiller.push("entityBaseTick");
+@@ -848,10 +_,10 @@
+     // CraftBukkit end
+ 
+     public void baseTick() {
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("entityBaseTick");
          if (firstTick && this instanceof net.minecraft.world.entity.NeutralMob neutralMob) neutralMob.tickInitialPersistentAnger(level); // Paper - Prevent entity loading causing async lookups
 +        this.inBlockAndMovementLock.acquire(); // Canvas - Threaded Regions
          this.inBlockState = null;
@@ -197,7 +209,7 @@
          if (this.isPassenger() && this.getVehicle().isRemoved()) {
              this.stopRiding();
          }
-@@ -899,7 +_,13 @@
+@@ -899,15 +_,19 @@
  
          this.checkBelowWorld();
          if (!this.level().isClientSide) {
@@ -211,6 +223,14 @@
          }
  
          this.firstTick = false;
+         if (this.level() instanceof ServerLevel serverLevelx && this instanceof Leashable) {
+             Leashable.tickLeash(serverLevelx, (Entity & Leashable)this);
+         }
+-
+-        profilerFiller.pop();
+     }
+ 
+     public void setSharedFlagOnFire(boolean isOnFire) {
 @@ -1066,12 +_,34 @@
          return this.mainSupportingBlockPos.isPresent() && this.mainSupportingBlockPos.get().equals(pos);
      }
@@ -284,7 +304,21 @@
                  // Paper end - EAR 2
                  movement = this.limitPistonMovement(movement);
                  if (movement.equals(Vec3.ZERO)) {
-@@ -1143,7 +_,7 @@
+@@ -1128,8 +_,6 @@
+                 }
+             }
+ 
+-            ProfilerFiller profilerFiller = Profiler.get();
+-            profilerFiller.push("move");
+             if (this.stuckSpeedMultiplier.lengthSqr() > 1.0E-7) {
+                 movement = movement.multiply(this.stuckSpeedMultiplier);
+                 this.stuckSpeedMultiplier = Vec3.ZERO;
+@@ -1138,12 +_,11 @@
+             // Paper start - ignore movement changes while inactive.
+             if (isTemporarilyActive && !(this instanceof ItemEntity) && movement == getDeltaMovement() && type == MoverType.SELF) {
+                 setDeltaMovement(Vec3.ZERO);
+-                profilerFiller.pop();
+                 return;
              }
              // Paper end
  
@@ -293,7 +327,24 @@
              Vec3 vec3 = this.collide(movement);
              double d = vec3.lengthSqr();
              if (d > 1.0E-7 || movement.lengthSqr() - d < 1.0E-7) {
-@@ -1239,18 +_,20 @@
+@@ -1173,8 +_,6 @@
+                 this.setPos(vec31);
+             }
+ 
+-            profilerFiller.pop();
+-            profilerFiller.push("rest");
+             boolean flag = !Mth.equal(movement.x, vec3.x);
+             boolean flag1 = !Mth.equal(movement.z, vec3.z);
+             this.horizontalCollision = flag || flag1;
+@@ -1197,7 +_,6 @@
+             }
+ 
+             if (this.isRemoved()) {
+-                profilerFiller.pop();
+             } else {
+                 if (this.horizontalCollision) {
+                     Vec3 deltaMovement = this.getDeltaMovement();
+@@ -1239,18 +_,19 @@
                      }
                  }
  
@@ -303,13 +354,13 @@
 +                // Canvas end
                  float blockSpeedFactor = this.getBlockSpeedFactor();
 -                this.setDeltaMovement(this.getDeltaMovement().multiply(blockSpeedFactor, 1.0, blockSpeedFactor));
+-                profilerFiller.pop();
 +                // Canvas start
 +                    if (blockSpeedFactor < 1 - 1e-6 || blockSpeedFactor > 1 + 1e-6) {
 +                        this.setDeltaMovement(oldDeltaMovement.multiply(blockSpeedFactor, 1.0, blockSpeedFactor));
 +                    }
 +                }
 +                // Canvas end
-                 profilerFiller.pop();
              }
          }
 -        // Paper start - detailed watchdog information
@@ -496,7 +547,13 @@
  
                  for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
                      final int sectionIdx = currChunkY - minSection;
-@@ -3284,6 +_,7 @@
+@@ -3278,19 +_,17 @@
+             this.processPortalCooldown();
+             if (this.portalProcess != null) {
+                 if (this.portalProcess.processPortalTeleportation(serverLevel, this, this.canUsePortal(false))) {
+-                    ProfilerFiller profilerFiller = Profiler.get();
+-                    profilerFiller.push("portal");
+                     this.setPortalCooldown();
                      TeleportTransition portalDestination = this.portalProcess.getPortalDestination(serverLevel, this);
                      if (portalDestination != null) {
                          ServerLevel level = portalDestination.newLevel();
@@ -504,6 +561,13 @@
                          if (this instanceof ServerPlayer // CraftBukkit - always call event for players
                              || (level != null && (level.dimension() == serverLevel.dimension() || this.canTeleport(serverLevel, level)))) { // CraftBukkit
                              this.teleport(portalDestination);
+                         }
+                     }
+ 
+-                    profilerFiller.pop();
+                 } else if (this.portalProcess.hasExpired()) {
+                     this.portalProcess = null;
+                 }
 @@ -3778,8 +_,10 @@
  
      @Nullable
@@ -529,7 +593,20 @@
      }
  
      private Entity teleportSameDimension(ServerLevel level, TeleportTransition teleportTransition) {
-@@ -3858,6 +_,7 @@
+@@ -3845,19 +_,17 @@
+             entity.teleport(this.calculatePassengerTransition(teleportTransition, entity));
+         }
+ 
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("teleportSameDimension");
+         this.teleportSetPosition(PositionMoveRotation.of(teleportTransition), teleportTransition.relatives());
+         if (!teleportTransition.asPassenger()) {
+             this.sendTeleportTransitionToRidingPlayers(teleportTransition);
+         }
+ 
+         teleportTransition.postTeleportTransition().onTransition(this);
+-        profilerFiller.pop();
+         return this;
      }
  
      private Entity teleportCrossDimension(ServerLevel level, TeleportTransition teleportTransition) {
@@ -537,6 +614,26 @@
          List<Entity> passengers = this.getPassengers();
          List<Entity> list = new ArrayList<>(passengers.size());
          this.ejectPassengers();
+@@ -3869,11 +_,8 @@
+             }
+         }
+ 
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("teleportCrossDimension");
+         Entity entityx = this.getType().create(level, EntitySpawnReason.DIMENSION_TRAVEL);
+         if (entityx == null) {
+-            profilerFiller.pop();
+             return null;
+         } else {
+             // Paper start - Fix item duplication and teleport issues
+@@ -3892,7 +_,6 @@
+ 
+             level.resetEmptyTime();
+             teleportTransition.postTeleportTransition().onTransition(entityx);
+-            profilerFiller.pop();
+             return entityx;
+         }
+     }
 @@ -3930,9 +_,77 @@
          }
      }

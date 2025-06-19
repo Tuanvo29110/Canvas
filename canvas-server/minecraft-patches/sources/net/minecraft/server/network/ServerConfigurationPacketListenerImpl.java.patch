@@ -24,7 +24,7 @@
  import org.slf4j.Logger;
  
  public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketListenerImpl implements ServerConfigurationPacketListener, TickablePacketListener {
-@@ -159,8 +_,53 @@
+@@ -159,8 +_,49 @@
                  return;
              }
  
@@ -34,14 +34,11 @@
 +            final ServerLevel world = this.player.serverLevel();
 +            // place ticket
 +            LOGGER.info("Placing ticket for login and queuing placement task for player '{}'", this.player.getName().getString());
-+            world.getChunkSource().updateRegionTicket(player.chunkPosition(), true, TicketType.LOGIN);
 +            this.player.dontPlaceTeleportTicket = true;
              ServerPlayer playerForLogin = playerList.getPlayerForLogin(this.gameProfile, this.clientInformation, this.player); // CraftBukkit
 -            playerList.placeNewPlayer(this.connection, playerForLogin, this.createCookie(this.clientInformation));
 +            Runnable placementTask = () -> {
 +                try {
-+                    world.getChunkSource().updateRegionTicket(player.chunkPosition(), true, TicketType.LOGIN);
-+                    world.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, true); // syncload
 +                    playerList.placeNewPlayer(this.connection, playerForLogin, this.createCookie(this.clientInformation));
 +                } catch (Exception e) {
 +                    this.player.getBukkitEntity().taskScheduler.schedule((_) -> {
@@ -58,11 +55,10 @@
 +                }
 +            };
 +            world.loadChunksForMoveAsync(
-+                playerForLogin.getBoundingBox(),
++                playerForLogin.getBoundingBox().inflate(5),
 +                Priority.HIGHER,
 +                (_) -> {
-+                    // place ticket AGAIN
-+                    world.getChunkSource().updateRegionTicket(player.chunkPosition(), true, TicketType.LOGIN);
++                    world.getChunkSource().updateRegionTicket(chunkX, chunkZ, true, TicketType.LOGIN);
 +                    // queue tick task
 +                    if (this.server.isRegionized()) {
 +                        // regionize
