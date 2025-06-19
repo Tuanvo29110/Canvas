@@ -18,6 +18,15 @@
  
          private final AtomicInteger count = new AtomicInteger();
  
+@@ -138,7 +_,7 @@
+     }
+ 
+     public static <T> Collector<T, ?, List<T>> toMutableList() {
+-        return Collectors.toCollection(Lists::newArrayList);
++        return Collectors.toCollection(it.unimi.dsi.fastutil.objects.ObjectArrayList::new); // Canvas - optimized collection
+     }
+ 
+     public static <T extends Comparable<T>> String getPropertyName(Property<T> property, Object value) {
 @@ -620,17 +_,39 @@
          return Maps.transformValues(map, mapper);
      }

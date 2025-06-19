@@ -337,7 +337,7 @@
      }
  
      // Paper start
-@@ -723,18 +_,154 @@
+@@ -723,18 +_,153 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -459,7 +459,6 @@
 +        this.tickConnection(tickData); // Canvas - Threaded Regions
 +
 +        tickData.tpsCalculator.doTick(); // Canvas - Threaded Regions
-+        this.bukkitScheduler.mainThreadHeartbeat();
 +
 +        // tick the "region" scheduler
 +        // moved to region tick

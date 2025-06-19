@@ -54,13 +54,11 @@ import static net.kyori.adventure.text.format.NamedTextColor.RED;
 public abstract class MinecraftServerWorld extends TickScheduler.FullTick<MinecraftServerWorld.TickHandle> implements LevelAccess {
     protected final ConcurrentLinkedQueue<Runnable> queuedForNextTickPost = new ConcurrentLinkedQueue<>();
     protected final ConcurrentLinkedQueue<Runnable> queuedForNextTickPre = new ConcurrentLinkedQueue<>();
-    protected final CraftScheduler bukkitScheduler;
     public long emptyTicks = 0L;
     protected boolean hasTasks = true;
 
     public MinecraftServerWorld(final ResourceLocation worldIdentifier) {
         super((DedicatedServer) MinecraftServer.getServer(), worldIdentifier, new TickHandle(), true);
-        this.bukkitScheduler = new CraftScheduler();
     }
 
     @Override
@@ -134,11 +132,6 @@ public abstract class MinecraftServerWorld extends TickScheduler.FullTick<Minecr
         // if it doesn't then why wake it...?
         this.emptyTicks = 0L;
         super.wake();
-    }
-
-    @Override
-    public @NotNull BukkitScheduler getBukkitScheduler() {
-        return bukkitScheduler;
     }
 
     public String getDebugLocation() {

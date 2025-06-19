@@ -47,12 +47,6 @@ public interface LevelAccess extends WrappedTickLoop {
      */
     boolean isTicking();
 
-    /**
-     * Gets the scheduler impl for the level thread
-     */
-    @NotNull
-    BukkitScheduler getBukkitScheduler();
-
     // threaded regions
 
     /**

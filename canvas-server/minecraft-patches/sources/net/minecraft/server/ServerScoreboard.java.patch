@@ -1,0 +1,13 @@
+--- a/net/minecraft/server/ServerScoreboard.java
++++ b/net/minecraft/server/ServerScoreboard.java
+@@ -32,8 +_,8 @@
+         }, DataFixTypes.SAVED_DATA_SCOREBOARD
+     );
+     private final MinecraftServer server;
+-    private final Set<Objective> trackedObjectives = Sets.newHashSet();
+-    private final List<Runnable> dirtyListeners = Lists.newArrayList();
++    private final Set<Objective> trackedObjectives = new it.unimi.dsi.fastutil.objects.ObjectArraySet<>(); // Canvas - optimized collection
++    private final List<Runnable> dirtyListeners = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(); // Canvas - optimized collection
+ 
+     public ServerScoreboard(MinecraftServer server) {
+         this.server = server;
