@@ -194,6 +194,9 @@ public class Config {
 
             @Comment("Disables fluid ticking on chunk generation")
             public boolean disableFluidTickingInPostProcessGenerationStep = false;
+
+            @Comment("Disables spawning mobs in the chunk generation step SPAWN which can bypass the mob cap")
+            public boolean disableSpawnChunkStep = false;
         }
 
         public RateLimiters rateLimiters = new RateLimiters();

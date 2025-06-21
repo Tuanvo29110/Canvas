@@ -80,14 +80,14 @@ public final class RandomTickSystem {
             final LevelChunk chunk2 = packed1 != packed2 ? getChunk(world, packed2) : chunk1;
             final LevelChunk chunk3 = packed2 != packed3 ? getChunk(world, packed3) : chunk2;
             final LevelChunk chunk4 = packed3 != packed4 ? getChunk(world, packed4) : chunk3;
-            if (chunk1 != null && chunk1.leaf$tickingBlocksCount() > 0) tickBlock(world, chunk1, random);
-            if (chunk2 != null && chunk2.leaf$tickingBlocksCount() > 0) tickBlock(world, chunk2, random);
-            if (chunk3 != null && chunk3.leaf$tickingBlocksCount() > 0) tickBlock(world, chunk3, random);
-            if (chunk4 != null && chunk4.leaf$tickingBlocksCount() > 0) tickBlock(world, chunk4, random);
+            if (chunk1 != null) tickBlock(world, chunk1, random);
+            if (chunk2 != null) tickBlock(world, chunk2, random);
+            if (chunk3 != null) tickBlock(world, chunk3, random);
+            if (chunk4 != null) tickBlock(world, chunk4, random);
         }
         for (k = queue.size(); j < k; j++) {
             LevelChunk chunk = getChunk(world, queueRaw[j]);
-            if (chunk != null && chunk.leaf$tickingBlocksCount() > 0) tickBlock(world, chunk, random);
+            if (chunk != null) tickBlock(world, chunk, random);
         }
 
         weightsSum = 0L;
@@ -101,7 +101,12 @@ public final class RandomTickSystem {
     }
 
     private static void tickBlock(ServerLevel world, @NotNull LevelChunk chunk, @NotNull RandomSource random) {
-        OptionalLong optionalPos = chunk.leaf$getTickingPos(random.nextInt(chunk.leaf$tickingBlocksCount()));
+        int count = chunk.leaf$tickingBlocksCount();
+        if (count == 0) {
+            return;
+        }
+
+        OptionalLong optionalPos = chunk.leaf$getTickingPos(random.nextInt(count));
         if (optionalPos.isEmpty()) {
             return;
         }

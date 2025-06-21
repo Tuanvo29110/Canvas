@@ -683,6 +683,11 @@ public class ServerRegions {
         }
 
         @Override
+        public int getPlayerCount() {
+            return this.tickData.localPlayers.size();
+        }
+
+        @Override
         public String toString() {
             return "TickRegionData{" +
                 "tickHandle=" + tickHandle +

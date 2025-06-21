@@ -73,7 +73,7 @@
 +    private float getBossBarProgress(double tps, double mspt) { // Canvas - Threaded Server
          if (PurpurConfig.commandTPSBarProgressFillMode == FillMode.MSPT) {
 -            return Math.max(Math.min((float) mspt / 50.0F, 1.0F), 0.0F);
-+            return Math.max(Math.min((float) mspt / io.canvasmc.canvas.ThreadedBukkitServer.getInstance().getScheduler().getTimeBetweenTicks(), 1.0F), 0.0F); // Canvas - Threaded Server
++            return Math.max(Math.min((float) mspt / ((float) io.canvasmc.canvas.ThreadedBukkitServer.getInstance().getScheduler().getTimeBetweenTicks() / 1_000_000), 1.0F), 0.0F); // Canvas - Threaded Server
          } else {
 -            return Math.max(Math.min((float) tps / 20.0F, 1.0F), 0.0F);
 +            return Math.max(Math.min((float) tps / io.canvasmc.canvas.ThreadedBukkitServer.getInstance().getScheduler().getTickRate(), 1.0F), 0.0F); // Canvas - Threaded Server

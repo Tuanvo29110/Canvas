@@ -40,7 +40,7 @@ public interface MultithreadedTickScheduler {
      *       public Component debugInfo() {
      *            return Component.text("Hello World!", TextColor.color(200, 20, 100), TextDecoration.OBFUSCATED);
      *       }
-     * }, "TestLoop", "test loop");
+     * }, NamespacedKey.fromString("canvas:example"));
      * }</pre>
      *
      * @param tick       the tick

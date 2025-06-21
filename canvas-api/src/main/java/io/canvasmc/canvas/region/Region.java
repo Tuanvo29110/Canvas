@@ -49,4 +49,10 @@ public interface Region {
      * @return the tick task impl for the region
      */
     @NotNull WrappedTickLoop getTickHandle();
+
+    /**
+     * Retrieves the amount of players in this region
+     * @return the player count
+     */
+    int getPlayerCount();
 }

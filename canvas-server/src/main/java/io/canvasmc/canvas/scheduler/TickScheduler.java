@@ -432,8 +432,8 @@ public class TickScheduler implements MultithreadedTickScheduler {
         public final boolean runFullTickTasks(BooleanSupplier canContinue) {
             Runnable run;
             while ((run = this.tasks.poll()) != null) {
-                if (!canContinue.getAsBoolean()) break;
                 run.run();
+                if (!canContinue.getAsBoolean()) break;
             }
             return !cancelled.get();
         }

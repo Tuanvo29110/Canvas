@@ -634,7 +634,7 @@
              return entityx;
          }
      }
-@@ -3930,9 +_,77 @@
+@@ -3930,9 +_,82 @@
          }
      }
  
@@ -649,6 +649,11 @@
 +        //       2 sets of tick data holding this entity. if this happens, we encounter crashes and undiagnosable issues
 +        ServerLevel destinationWorld = this.level.level();
 +        MinecraftServer minecraftServer = this.getServer();
++        boolean isSameRegion = this.level == this.oldLevel && ServerRegions.isSameRegion(
++            this.blockPosition, BlockPos.containing(positionMoveRotation1.position()), destinationWorld
++        ); // if the destination && origin same, then compare regions, if not, it's not same region
++        // we compute this so that we can determine if we need to run a full teleport of
++        // the entity because if it is the same region, we don't need to re-regionize
 +        if (minecraftServer == null) {
 +            throw new IllegalStateException("MinecraftServer for entity was null!");
 +        }
@@ -707,64 +712,66 @@
 +                }
 +            }
 +        };
-+        if (minecraftServer.isRegionized()) removeFromAllTickData.run();
++        if (!isSameRegion && minecraftServer.isRegionized()) removeFromAllTickData.run();
 +        // Canvas end
          this.setPosRaw(positionMoveRotation1.position().x, positionMoveRotation1.position().y, positionMoveRotation1.position().z);
          this.setYRot(positionMoveRotation1.yRot());
          this.setYHeadRot(positionMoveRotation1.yRot());
-@@ -3940,6 +_,59 @@
+@@ -3940,6 +_,61 @@
          this.reapplyPosition();
          this.setOldPosAndRot();
          this.setDeltaMovement(positionMoveRotation1.deltaMovement());
 +        // Canvas start
-+        // new position has been set in the destination world, begin adding the entity back to the server
-+        // at this point, nothing in the server should contain the entity, we are safe to assume that we
-+        // will not have multiple sets of tick data owning this entity
-+        final int chunkX = this.getBlockX() >> 4;
-+        final int chunkZ = this.getBlockZ() >> 4;
-+        destinationWorld.getChunkSource().updateRegionTicket(chunkX, chunkZ, true, TicketType.TELEPORT);
-+        // load the chunk we need. this will ensure the region we grab will not be null
-+        destinationWorld.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
-+        // add to destination data
-+        Runnable wrap = () -> {
-+            removeFromAllTickData.run(); // run a second time to ensure we are fully removed
-+            // run any packets we might have
-+            if (this instanceof ServerPlayer serverPlayer) {
-+                serverPlayer.connection.connection.tickPackets();
-+            }
-+            ServerRegions.WorldTickData destinationData = minecraftServer.isRegionized() ?
-+                Objects.requireNonNull(destinationWorld.regioniser.getRegionAtUnsynchronised(chunkX, chunkZ), "region shouldn't be null").getData().tickData :
-+                destinationWorld.levelTickData;
-+            destinationData.addEntity(this, false);
-+            if (loadedEntities.get()) {
-+                destinationData.loadedEntities.add(this);
-+            }
-+            if (entityTickList.get()) {
-+                destinationData.entityTickList.add(this);
-+            }
-+            if (navigatingMobs.get()) {
-+                // we know we are an instanceof Mob already, since we checked this prior
-+                destinationData.navigatingMobs.add((Mob) this);
-+            }
-+            if (trackerEntities.get()) {
-+                destinationData.trackerEntities.add(this);
++        if (!isSameRegion) {
++            // new position has been set in the destination world, begin adding the entity back to the server
++            // at this point, nothing in the server should contain the entity, we are safe to assume that we
++            // will not have multiple sets of tick data owning this entity
++            final int chunkX = this.getBlockX() >> 4;
++            final int chunkZ = this.getBlockZ() >> 4;
++            destinationWorld.getChunkSource().updateRegionTicket(chunkX, chunkZ, true, TicketType.TELEPORT);
++            // load the chunk we need. this will ensure the region we grab will not be null
++            destinationWorld.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
++            // add to destination data
++            Runnable wrap = () -> {
++                removeFromAllTickData.run(); // run a second time to ensure we are fully removed
++                // run any packets we might have
++                if (this instanceof ServerPlayer serverPlayer) {
++                    serverPlayer.connection.connection.tickPackets();
++                }
++                ServerRegions.WorldTickData destinationData = minecraftServer.isRegionized() ?
++                    Objects.requireNonNull(destinationWorld.regioniser.getRegionAtUnsynchronised(chunkX, chunkZ), "region shouldn't be null").getData().tickData :
++                    destinationWorld.levelTickData;
++                destinationData.addEntity(this, false);
++                if (loadedEntities.get()) {
++                    destinationData.loadedEntities.add(this);
++                }
++                if (entityTickList.get()) {
++                    destinationData.entityTickList.add(this);
++                }
++                if (navigatingMobs.get()) {
++                    // we know we are an instanceof Mob already, since we checked this prior
++                    destinationData.navigatingMobs.add((Mob) this);
++                }
++                if (trackerEntities.get()) {
++                    destinationData.trackerEntities.add(this);
++                }
++                if (this instanceof ServerPlayer serverPlayer) {
++                    destinationWorld.networkRouter.connectToWorld(serverPlayer.connection.connection);
++                }
++            };
++            if (minecraftServer.isRegionized()) {
++                // add to regionized task queue
++                minecraftServer.threadedServer().taskQueue.queueTickTaskQueue(
++                    destinationWorld, chunkX, chunkZ, wrap, Priority.BLOCKING
++                );
 +            }
 +            if (this instanceof ServerPlayer serverPlayer) {
 +                destinationWorld.networkRouter.connectToWorld(serverPlayer.connection.connection);
 +            }
-+        };
-+        if (minecraftServer.isRegionized()) {
-+            // add to regionized task queue
-+            minecraftServer.threadedServer().taskQueue.queueTickTaskQueue(
-+                destinationWorld, chunkX, chunkZ, wrap, Priority.BLOCKING
-+            );
++            this.getBukkitEntity().taskScheduler.schedule((_) -> {
++                destinationWorld.getChunkSource().updateRegionTicket(chunkX, chunkZ, false, TicketType.TELEPORT);
++            }, null, 0);
 +        }
-+        if (this instanceof ServerPlayer serverPlayer) {
-+            destinationWorld.networkRouter.connectToWorld(serverPlayer.connection.connection);
-+        }
-+        this.getBukkitEntity().taskScheduler.schedule((_) -> {
-+            destinationWorld.getChunkSource().updateRegionTicket(chunkX, chunkZ, false, TicketType.TELEPORT);
-+        }, null, 0);
 +        // now we are added to the new data as a replica of what we were prior
 +        // it is safe to assume we are only held by 1 single set of tick data
 +        // we can now remove the teleport ticket, as we have finished teleporting
@@ -926,3 +933,13 @@
      // Paper end - Folia schedulers
  
      @Override
+@@ -5036,7 +_,9 @@
+         return this.level;
+     }
+ 
++    private Level oldLevel = this.level; // Canvas - cache old level
+     public void setLevel(Level level) {
++        this.oldLevel = this.level; // Canvas - cache old level
+         this.level = level;
+     }
+ 
