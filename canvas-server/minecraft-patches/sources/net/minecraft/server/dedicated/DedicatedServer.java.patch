@@ -74,16 +74,25 @@
          DedicatedServerProperties properties = this.getProperties();
          // Paper start - Add setting for proxy online mode status
          return properties.enforceSecureProfile
-@@ -787,12 +_,6 @@
+@@ -790,12 +_,6 @@
+     }
+ 
      @Override
-     public Optional<MinecraftServer.ServerResourcePackInfo> getServerResourcePack() {
-         return this.settings.getProperties().serverResourcePackInfo;
--    }
--
--    @Override
 -    public void endMetricsRecordingTick() {
 -        super.endMetricsRecordingTick();
 -        this.debugSampleSubscriptionTracker.tick(this.getTickCount());
+-    }
+-
+-    @Override
+     public SampleLogger getTickTimeLogger() {
+         return this.tickTimeLogger;
+     }
+@@ -846,7 +_,7 @@
+ 
+     // CraftBukkit start
+     public boolean isDebugging() {
+-        return this.getProperties().debug;
++        return this.getProperties().debug || io.canvasmc.canvas.CanvasBootstrap.RUNNING_IN_IDE; // Canvas - ide
      }
  
      @Override
