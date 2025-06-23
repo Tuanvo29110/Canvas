@@ -1,11 +1,13 @@
 --- a/net/minecraft/server/network/ServerConnectionListener.java
 +++ b/net/minecraft/server/network/ServerConnectionListener.java
-@@ -250,6 +_,14 @@
+@@ -250,6 +_,16 @@
  
              while (iterator.hasNext()) {
                  Connection connection = iterator.next();
 +                // Canvas start - connection threading
-+                if (connection.packetListener != null && connection.packetListener instanceof net.minecraft.server.network.ServerConfigurationPacketListenerImpl) {
++                if (connection.packetListener != null &&
++                    (connection.packetListener instanceof net.minecraft.server.network.ServerConfigurationPacketListenerImpl || connection.packetListener instanceof net.minecraft.server.network.ServerGamePacketListenerImpl)
++                ) {
 +                    // on configuration phase, move to network router
 +                    connection.getPlayer().serverLevel().networkRouter.connectToWorld(connection);
 +                    iterator.remove();
@@ -15,11 +17,3 @@
                  if (!connection.isConnecting()) {
                      if (connection.isConnected()) {
                          try {
-@@ -268,6 +_,7 @@
-                         if (connection.preparing) continue; // Spigot - Fix a race condition where a NetworkManager could be unregistered just before connection
-                         iterator.remove();
-                         connection.handleDisconnection();
-+                        connection.removeFromAll(); // Canvas - connection threading
-                     }
-                 }
-             }

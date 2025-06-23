@@ -160,12 +160,53 @@
          // CraftBukkit start
          if (packet == null || this.processedDisconnect) { // Spigot
              return;
-@@ -330,7 +_,7 @@
-             this.close();
+@@ -368,24 +_,8 @@
+         if (this.processedDisconnect) {
+             return;
+         }
+-        if (!this.cserver.isPrimaryThread()) {
+-            org.bukkit.craftbukkit.util.Waitable waitable = new org.bukkit.craftbukkit.util.Waitable() {
+-                @Override
+-                protected Object evaluate() {
+-                    ServerCommonPacketListenerImpl.this.disconnect(disconnectionDetails, cause); // Paper - kick event causes
+-                    return null;
+-                }
+-            };
+-
+-            this.server.processQueue.add(waitable);
+-
+-            try {
+-                waitable.get();
+-            } catch (InterruptedException e) {
+-                Thread.currentThread().interrupt();
+-            } catch (java.util.concurrent.ExecutionException e) {
+-                throw new RuntimeException(e);
+-            }
++        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.player)) { // Canvas - connection threading
++            this.disconnectAsync(disconnectionDetails, cause); // Canvas - connection threading
+             return;
          }
  
--        boolean flag = !this.suspendFlushingOnServerThread || !this.server.isSameThread();
-+        boolean flag = true; // Canvas
+@@ -436,19 +_,19 @@
+     }
  
-         try {
-             this.connection.send(packet, listener, flag);
+     public void disconnectAsync(DisconnectionDetails disconnectionInfo, org.bukkit.event.player.PlayerKickEvent.Cause cause) {
+-        if (this.cserver.isPrimaryThread()) {
++        if (io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.player)) { // Canvas - connection threading
+             this.disconnect(disconnectionInfo, cause);
+             return;
+         }
+ 
+         this.connection.setReadOnly();
+-        this.server.scheduleOnMain(() -> {
++        this.player.getBukkitEntity().taskScheduler.schedule((_) -> { // Canvas - connection threading
+             ServerCommonPacketListenerImpl.this.disconnect(disconnectionInfo, cause);
+             if (ServerCommonPacketListenerImpl.this.player.quitReason == null) {
+                 // cancelled
+                 ServerCommonPacketListenerImpl.this.connection.enableAutoRead();
+             }
+-        });
++        }, null, 0); // Canvas - connection threading
+     }
+     // Paper end - add proper async disconnect
+ 

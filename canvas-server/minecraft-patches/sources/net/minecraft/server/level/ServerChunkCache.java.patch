@@ -359,8 +359,8 @@
 -        this.iterateTickingChunksFaster(); // Paper - chunk tick iteration optimisations
 -        profiler.pop();
 -        profiler.popPush("customSpawners");
-+        tickData.randomTickSystem.tick(this.level); // Canvas - optimize random tick
 +        this.iterateTickingChunksFaster(tickData); // Paper - chunk tick iteration optimisations // Canvas - Threaded Regions
++        tickData.randomTickSystem.tick(this.level); // Canvas - optimize random tick
          if (_boolean) {
              this.level.tickCustomSpawners(this.spawnEnemies, this.spawnFriendlies);
          }

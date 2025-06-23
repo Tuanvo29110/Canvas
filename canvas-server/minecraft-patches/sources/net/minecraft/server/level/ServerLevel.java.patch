@@ -339,7 +339,7 @@
      }
  
      // Paper start
-@@ -723,18 +_,148 @@
+@@ -723,18 +_,147 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -378,7 +378,6 @@
 +        for (final Connection conn : connections) {
 +            if (!conn.isConnected()) {
 +                conn.handleDisconnection();
-+                conn.removeFromAll();
 +                continue;
 +            }
 +            if (!data.connections.contains(conn)) {
