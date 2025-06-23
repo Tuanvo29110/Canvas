@@ -193,14 +193,6 @@
      testImplementation("org.ow2.asm:asm-tree:9.8")
      testImplementation("org.junit-pioneer:junit-pioneer:2.2.0") // CartesianTest
  
-@@ -222,6 +_,7 @@
-     // Spark
-     implementation("me.lucko:spark-api:0.1-20240720.200737-2")
-     implementation("me.lucko:spark-paper:1.10.133-20250413.112336-1")
-+    implementation("io.netty:netty-all:4.2.2.Final")
- }
- 
- tasks.jar {
 @@ -235,19 +_,20 @@
          val date = git.exec(providers, "show", "-s", "--format=%ci", gitHash).get().trim()
          val gitBranch = git.exec(providers, "rev-parse", "--abbrev-ref", "HEAD").get().trim()
