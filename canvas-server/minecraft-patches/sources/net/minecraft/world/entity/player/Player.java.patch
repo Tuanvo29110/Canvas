@@ -59,6 +59,35 @@
                  this.sleepCounter = 0;
              }
          }
+@@ -348,19 +_,23 @@
+         this.moveCloak();
+         if (this instanceof ServerPlayer serverPlayer) {
+             this.foodData.tick(serverPlayer);
+-            this.awardStat(Stats.PLAY_TIME);
+-            this.awardStat(Stats.TOTAL_WORLD_TIME);
++            // Canvas start - increase time statistics in intervals
++            if (Config.INSTANCE.increaseTimeStatistics == 1 || this.tickCount % Config.INSTANCE.increaseTimeStatistics == 0) {
++                this.awardStat(Stats.PLAY_TIME, Config.INSTANCE.increaseTimeStatistics);
++                this.awardStat(Stats.TOTAL_WORLD_TIME, Config.INSTANCE.increaseTimeStatistics);
++            // Canvas end
+             if (this.isAlive()) {
+-                this.awardStat(Stats.TIME_SINCE_DEATH);
++                this.awardStat(Stats.TIME_SINCE_DEATH, Config.INSTANCE.increaseTimeStatistics); // Canvas - increase time statistics in intervals
+             }
+ 
+             if (this.isDiscrete()) {
+-                this.awardStat(Stats.CROUCH_TIME);
++                this.awardStat(Stats.CROUCH_TIME, Config.INSTANCE.increaseTimeStatistics); // Canvas - increase time statistics in intervals
+             }
+ 
+             if (!this.isSleeping()) {
+-                this.awardStat(Stats.TIME_SINCE_REST);
++                this.awardStat(Stats.TIME_SINCE_REST, Config.INSTANCE.increaseTimeStatistics); // Canvas - increase time statistics in intervals
+             }
++            } // Canvas - increase time statistics in intervals
+         }
+ 
+         int i = 29999999;
 @@ -630,7 +_,14 @@
          }
  

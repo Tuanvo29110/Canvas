@@ -144,6 +144,15 @@
          if ((entity.activationType != ActivationType.WATER && entity.isInWater() && entity.isPushedByFluid())) {
              return 100;
          }
+@@ -217,7 +_,7 @@
+         }
+         // special cases.
+         if (entity instanceof final LivingEntity living) {
+-            if (living.onClimbable() || living.jumping || living.hurtTime > 0 || !living.activeEffects.isEmpty() || living.isFreezing()) {
++            if (living.onClimbableCached() || living.jumping || living.hurtTime > 0 || !living.activeEffects.isEmpty() || living.isFreezing()) { // Canvas - cache on climbable check
+                 return 1;
+             }
+             if (entity instanceof final Mob mob && mob.getTarget() != null) {
 @@ -299,16 +_,17 @@
              return true;
          }

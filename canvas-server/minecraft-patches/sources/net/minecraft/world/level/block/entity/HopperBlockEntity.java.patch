@@ -381,8 +381,15 @@
      private static boolean ejectItems(Level level, BlockPos pos, HopperBlockEntity blockEntity) {
          Container attachedContainer = getAttachedContainer(level, pos, blockEntity);
          if (attachedContainer == null) {
-@@ -425,60 +_,57 @@
+@@ -423,62 +_,64 @@
+         } else {
+             Direction opposite = blockEntity.facing.getOpposite();
              if (isFullContainer(attachedContainer, opposite)) {
++                // Canvas start - Throttle hopper when full
++                if (io.canvasmc.canvas.Config.INSTANCE.blocks.throttleHopperWhenFull.enabled && io.canvasmc.canvas.Config.INSTANCE.blocks.throttleHopperWhenFull.skipTicks > 0) {
++                    blockEntity.setCooldown(io.canvasmc.canvas.Config.INSTANCE.blocks.throttleHopperWhenFull.skipTicks);
++                }
++                // Canvas end
                  return false;
              } else {
 -                // Paper start - Perf: Optimize Hoppers

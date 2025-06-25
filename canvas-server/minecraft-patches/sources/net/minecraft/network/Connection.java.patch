@@ -51,8 +51,11 @@
      private int receivedPackets;
      private int sentPackets;
      private float averageReceivedPackets;
-@@ -149,6 +_,27 @@
+@@ -147,8 +_,30 @@
+     @Nullable public SocketAddress haProxyAddress; // Paper - Add API to get player's proxy address
+     // Paper start - Optimize network
      public boolean isPending = true;
++    private io.netty.channel.SingleThreadEventLoop eventLoop; // Canvas - optimise packets that are not flushed
      public boolean queueImmunity;
      // Paper end - Optimize network
 +    // Canvas start - packet processor
@@ -79,6 +82,14 @@
  
      public Connection(PacketFlow receiving) {
          this.receiving = receiving;
+@@ -158,6 +_,7 @@
+     public void channelActive(ChannelHandlerContext context) throws Exception {
+         super.channelActive(context);
+         this.channel = context.channel();
++        this.eventLoop = (io.netty.channel.SingleThreadEventLoop) this.channel.eventLoop(); // Canvas - optimise packets that are not flushed
+         this.address = this.channel.remoteAddress();
+         this.preparing = false; // Spigot
+         if (this.delayedDisconnect != null) {
 @@ -434,7 +_,7 @@
          }
  
@@ -102,6 +113,18 @@
          }
      }
  
+@@ -476,6 +_,11 @@
+         if (this.channel.eventLoop().inEventLoop()) {
+             this.doSendPacket(packet, sendListener, flush);
+         } else {
++            // Canvas start - optimise packets that are not flushed
++            if (!flush && io.canvasmc.canvas.Config.INSTANCE.networking.optimizeNonFlushPacketSending) {
++                this.eventLoop.lazyExecute(() -> this.doSendPacket(packet, sendListener, flush));
++            } else
++            // Canvas end
+             this.channel.eventLoop().execute(() -> this.doSendPacket(packet, sendListener, flush));
+         }
+     }
 @@ -518,10 +_,11 @@
      }
  
@@ -257,11 +280,26 @@
                  PacketListener packetListener = this.getPacketListener();
                  PacketListener packetListener1 = packetListener != null ? packetListener : this.disconnectListener;
                  if (packetListener1 != null) {
-@@ -893,6 +_,7 @@
+@@ -893,6 +_,22 @@
                                  ((InetSocketAddress) this.address).getAddress(), false).callEvent();
                      }
                  }
-+                this.removeFromAll(); // Canvas - connection threading
++                // Canvas start - connection threading
++                if (packetListener instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl commonPacketListener) {
++                    net.minecraft.server.MinecraftServer.getServer().getPlayerList().removeConnection(
++                        commonPacketListener.getOwner().getName(),
++                        commonPacketListener.getOwner().getId(), this
++                    );
++                } else if (packetListener instanceof net.minecraft.server.network.ServerLoginPacketListenerImpl loginPacketListener) {
++                    if (loginPacketListener.state.ordinal() >= net.minecraft.server.network.ServerLoginPacketListenerImpl.State.VERIFYING.ordinal()) {
++                        net.minecraft.server.MinecraftServer.getServer().getPlayerList().removeConnection(
++                            loginPacketListener.authenticatedProfile.getName(),
++                            loginPacketListener.authenticatedProfile.getId(), this
++                        );
++                    }
++                }
++                this.removeFromAll();
++                // Canvas end
                  // Paper end - Add PlayerConnectionCloseEvent
              }
          }

@@ -803,7 +803,7 @@
  
                  // bound y
                  for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
-@@ -4726,11 +_,18 @@
+@@ -4726,12 +_,34 @@
      }
  
      public BlockState getInBlockState() {
@@ -815,13 +815,30 @@
 +        // Canvas start - Threaded Regions
 +        try {
          return this.inBlockState;
+-    }
 +        } finally {
 +            this.inBlockAndMovementLock.release();
 +        }
 +        // Canvas end
-     }
++    }
++    // Canvas start
++
++    public @Nullable BlockState getInBlockStateIfLoaded() {
++        this.inBlockAndMovementLock.acquire();
++        if (this.inBlockState == null) {
++            this.inBlockState = this.level.getBlockStateIfLoaded(this.blockPosition());
++        }
++
++        try {
++            return this.inBlockState;
++        } finally {
++            this.inBlockAndMovementLock.release();
++        }
++    }
++    // Canvas end
  
      public ChunkPos chunkPosition() {
+         return this.chunkPosition;
 @@ -4742,9 +_,7 @@
      }
  

@@ -27,6 +27,22 @@
      private static final int MAX_TICKS_BEFORE_LOGIN = 600;
      private final byte[] challenge;
      final MinecraftServer server;
+@@ -110,9 +_,13 @@
+         // Paper end - Do not allow logins while the server is shutting down
+ 
+         if (this.state == ServerLoginPacketListenerImpl.State.VERIFYING) {
+-            if (this.connection.isConnected()) { // Paper - prevent logins to be processed even though disconnect was called
++            // Canvas start - connection threading
++            String name = this.authenticatedProfile.getName();
++            java.util.UUID uniqueId = this.authenticatedProfile.getId();
++            if (this.server.getPlayerList().pushPendingJoin(name, uniqueId, this.connection)) {
++            // Canvas end
+             this.verifyLoginAndFinishConnectionSetup(Objects.requireNonNull(this.authenticatedProfile));
+-            } // Paper - prevent logins to be processed even though disconnect was called
++            } else { --this.tick; } // Paper - prevent logins to be processed even though disconnect was called // Canvas - max concurrent logins
+         }
+ 
+         // CraftBukkit start
 @@ -459,7 +_,7 @@
      @Override
      public void handleCookieResponse(ServerboundCookieResponsePacket packet) {

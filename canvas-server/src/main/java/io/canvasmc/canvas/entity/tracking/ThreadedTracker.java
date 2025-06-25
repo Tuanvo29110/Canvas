@@ -65,7 +65,7 @@ public class ThreadedTracker {
         return false;
     }
 
-    public static class TrackerThread extends TickThread {
+    public static class TrackerThread extends Thread {
         public TrackerThread(final ThreadGroup group, final Runnable runnable, final String name) {
             super(group, runnable, name);
         }

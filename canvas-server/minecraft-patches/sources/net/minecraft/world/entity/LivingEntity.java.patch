@@ -173,6 +173,38 @@
      }
  
      protected void createWitherRose(@Nullable LivingEntity entitySource) {
+@@ -2151,13 +_,30 @@
+     public Optional<BlockPos> getLastClimbablePos() {
+         return this.lastClimbablePos;
+     }
++    // Canvas start - cache on climbable check
++
++    private boolean cachedOnClimbable = false;
++    private BlockPos lastClimbingPosition = null;
++
++    public boolean onClimbableCached() {
++        if (!this.blockPosition().equals(this.lastClimbingPosition)) {
++            this.cachedOnClimbable = this.onClimbable();
++            this.lastClimbingPosition = this.blockPosition();
++        }
++
++        return this.cachedOnClimbable;
++    }
++    // Canvas end
+ 
+     public boolean onClimbable() {
+         if (this.isSpectator()) {
+             return false;
+         } else {
+             BlockPos blockPos = this.blockPosition();
+-            BlockState inBlockState = this.getInBlockState();
++            // Canvas start - don't load chunks to check if on climbable
++            BlockState inBlockState = this.getInBlockStateIfLoaded();
++            if (inBlockState == null) return false;
++            // Canvas end
+             if (inBlockState.is(BlockTags.CLIMBABLE)) {
+                 this.lastClimbablePos = Optional.of(blockPos);
+                 return true;
 @@ -2623,7 +_,7 @@
          }
  

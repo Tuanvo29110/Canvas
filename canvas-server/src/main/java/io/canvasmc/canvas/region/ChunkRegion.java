@@ -223,11 +223,6 @@ public class ChunkRegion extends TickScheduler.FullTick<ChunkRegion.TickHandle> 
                     }
                     data.setHandlingTick(false);
                     this.world.regiontick3(true, runsNormally, data);
-                    data.explosionDensityCache.clear();
-                    for (final ServerPlayer localPlayer : data.getLocalPlayers()) {
-                        localPlayer.connection.chunkSender.sendNextChunks(localPlayer);
-                        localPlayer.connection.resumeFlushing();
-                    }
                     if (this.region.getData().tickHandle.cancelled.get()) {
                         this.isActive = false;
                     }

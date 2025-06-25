@@ -11,7 +11,7 @@
  import io.papermc.paper.math.BlockPosition;
  import io.papermc.paper.math.FinePosition;
  import io.papermc.paper.math.Position;
-@@ -37,9 +_,14 @@
+@@ -37,7 +_,11 @@
              run.run();
          }
      };
@@ -23,7 +23,4 @@
 +    // Canvas end
          .setNameFormat("Paper Async Task Handler Thread - %1$d")
          .setUncaughtExceptionHandler(new net.minecraft.DefaultUncaughtExceptionHandlerWithName(MinecraftServer.LOGGER))
-+            .setThreadFactory(TickThread::new) // Canvas
          .build()
-     );
- 

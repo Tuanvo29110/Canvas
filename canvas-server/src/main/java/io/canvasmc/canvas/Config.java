@@ -321,6 +321,14 @@ public class Config {
             "Enabling this can result in dramatic improvement in performance of cacti farms"
         })
         public boolean cactusCheckSurvivalBeforeGrowth = false;
+
+        public ThrottleHopperWhenFull throttleHopperWhenFull = new ThrottleHopperWhenFull();
+        public static class ThrottleHopperWhenFull {
+            @Comment("Throttles the hopper if target container is full")
+            public boolean enabled = false;
+            @Comment("How many ticks to throttle when teh Hopper is throttled")
+            public int skipTicks = 8;
+        }
     }
 
     @Comment(value = {
@@ -526,6 +534,20 @@ public class Config {
 
         @Comment("Reduces useless entity movement packets")
         public boolean reduceUselessEntityMovePackets = false;
+
+        public AsyncTargetFinding asyncTargetFinding = new AsyncTargetFinding();
+        public static class AsyncTargetFinding {
+            @Comment(value = {
+                "This moves the expensive entity and block search calculations to background thread while",
+                "keeping the actual validation on the owning thread"
+            })
+            public boolean enabled = false;
+            public boolean alertOther = true;
+            public boolean searchBlock = true;
+            public boolean searchEntity = true;
+            public int queueSize = 4096;
+            private boolean asyncTargetFindingInitialized;
+        }
     }
 
     @Comment("Use faster sin/cos math operations")
@@ -580,6 +602,15 @@ public class Config {
             @Comment("The message that will disconnect the client if they dont have the mod. 'demandOnClient' must be true to take effect")
             public String disconnectDemandOnClientMessage = "You do not have No Chat Reports, and this server is configured to require it on client!";
         }
+
+        @Comment(value = {
+            "WARNING: This option is NOT compatible with ProtocolLib and may cause",
+            "issues with other plugins that modify packet handling.",
+            "",
+            "Optimizes non-flush packet sending by using Netty's lazyExecute method to avoid",
+            "expensive thread wakeup calls when scheduling packet operations."
+        })
+        public boolean optimizeNonFlushPacketSending = false;
     }
 
     @Comment(value = {
@@ -729,6 +760,31 @@ public class Config {
         public int asyncLocatorThreads = 1;
         public int asyncLocatorKeepalive = 60;
     }
+
+    @Comment("Determines the amount of joins that can be processed per tick, can help buffer joins to the server with lots of players joining at once")
+    public int maxJoinsPerTick = 5;
+
+    @Comment("Connection message, using MiniMessage format, set to \"default\" to use vanilla join message.")
+    public String joinMessage = "default";
+
+    @Comment("Connection message, using MiniMessage format, set to \"default\" to use vanilla quit message.")
+    public String quitMessage = "default";
+
+    @Comment(value = {
+        "The max distance of a UseItem for players",
+        "Set to -1 to disable max-distance-check",
+        "NOTE: If set to -1, players are able to use",
+        "some packet modules of hack clients and NoCom Exploit!"
+    })
+    public double maxUseItemDistance = 1.0000001;
+
+    @Comment(value = {
+        "In vanilla, statistics that count time spent for an action (i.e. time played or sneak time)",
+        "are incremented every tick. This is stupid. With this patch and a configured interval of 20, the",
+        "statistics are only ticked every 20th tick and are incremented by 20 ticks at a time.",
+        "This means a lot less ticking with the same accurate counting."
+    })
+    public int increaseTimeStatistics = 20;
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);

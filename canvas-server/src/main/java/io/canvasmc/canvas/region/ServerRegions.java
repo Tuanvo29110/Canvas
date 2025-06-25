@@ -10,6 +10,7 @@ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManage
 import com.google.common.collect.Sets;
 import io.canvasmc.canvas.CanvasBootstrap;
 import io.canvasmc.canvas.Config;
+import io.canvasmc.canvas.entity.ai.AsyncGoalExecutor;
 import io.canvasmc.canvas.event.region.RegionCreateEvent;
 import io.canvasmc.canvas.event.region.RegionDestroyEvent;
 import io.canvasmc.canvas.event.region.RegionMergeEvent;
@@ -849,6 +850,8 @@ public class ServerRegions {
         private long redstoneTime = 1L;
         // tnt merging
         public final AtomicInteger tntCount = new AtomicInteger();
+        // async target finding
+        public final @Nullable AsyncGoalExecutor asyncGoalExecutor;
         @Nullable
         @VisibleForDebug
         private NaturalSpawner.SpawnState lastSpawnState;
@@ -861,6 +864,11 @@ public class ServerRegions {
             this.wireHandler = new WireHandler(world);
             this.turbo = new RedstoneWireTurbo((RedStoneWireBlock) Blocks.REDSTONE_WIRE);
             this.taskQueueData = new RegionizedTaskQueue.RegionTaskQueueData(this.world.taskQueueRegionData);
+            if (Config.INSTANCE.entities.asyncTargetFinding.enabled) {
+                this.asyncGoalExecutor = new io.canvasmc.canvas.entity.ai.AsyncGoalExecutor(this.world);
+            } else {
+                this.asyncGoalExecutor = null;
+            }
         }
 
         public RegionizedTaskQueue.RegionTaskQueueData getTaskQueueData() {
@@ -1250,6 +1258,13 @@ public class ServerRegions {
 
         public ReferenceList<LevelChunk> getChunks() {
             return this.chunks;
+        }
+
+        public Thread getThreadOwner() {
+            if (this.region == null) {
+                return this.world.owner;
+            }
+            return this.region.getData().tickHandle.owner;
         }
 
         public static final class VillageSiegeState {

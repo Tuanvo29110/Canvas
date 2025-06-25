@@ -1,10 +1,11 @@
 --- a/net/minecraft/world/entity/Mob.java
 +++ b/net/minecraft/world/entity/Mob.java
-@@ -2,6 +_,7 @@
+@@ -2,6 +_,8 @@
  
  import com.google.common.annotations.VisibleForTesting;
  import com.google.common.collect.Maps;
 +import io.canvasmc.canvas.Config;
++import io.canvasmc.canvas.region.ServerRegions;
  import it.unimi.dsi.fastutil.objects.Object2IntMap.Entry;
  import java.util.HashSet;
  import java.util.List;
@@ -17,7 +18,7 @@
  import net.minecraft.world.Container;
  import net.minecraft.world.Difficulty;
  import net.minecraft.world.DifficultyInstance;
-@@ -136,6 +_,35 @@
+@@ -136,7 +_,42 @@
      private BlockPos restrictCenter = BlockPos.ZERO;
      private float restrictRadius = -1.0F;
      public boolean aware = true; // CraftBukkit
@@ -51,9 +52,16 @@
 +    }
 +    // Canvas end
      public int ticksSinceLastInteraction; // Purpur - Entity lifespan
++    // Canvas start - Async target finding
++    public boolean tickingTarget;
++    public final io.canvasmc.canvas.entity.ai.Waker getGoalCtx() {
++        return tickingTarget ? this.targetSelector.ctx : this.goalSelector.ctx;
++    }
++    // Canvas end - Async target finding
  
      protected Mob(EntityType<? extends Mob> entityType, Level level) {
-@@ -204,14 +_,17 @@
+         super(entityType, level);
+@@ -204,16 +_,24 @@
          return this.lookControl;
      }
  
@@ -72,7 +80,14 @@
 +        if (this.targetSelector.inactiveTick(this.activatedPriority, true)) { // Canvas - pass activated priority
              this.targetSelector.tick();
          }
++        // Canvas start - Async target finding
++        if (io.canvasmc.canvas.Config.INSTANCE.entities.asyncTargetFinding.enabled) {
++            ServerRegions.getTickData(this.level().level()).asyncGoalExecutor.tickMob(this);
++        }
++        // Canvas end - Async target finding
      }
+     // Paper end
+ 
 @@ -318,14 +_,11 @@
      @Override
      public void baseTick() {
@@ -138,7 +153,7 @@
              if (nearestPlayer != null) {
                  // Paper start - Configurable despawn distances
                  final io.papermc.paper.configuration.WorldConfiguration.Entities.Spawning.DespawnRangePair despawnRangePair = this.level().paperConfig().entities.spawning.despawnRanges.get(this.getType().getCategory());
-@@ -748,42 +_,25 @@
+@@ -748,42 +_,30 @@
              return;
          }
          // Paper end - Allow nerfed mobs to jump and float
@@ -165,7 +180,13 @@
 +            if (this.goalSelector.inactiveTick(this.activatedPriority, false)) // Canvas - use this to alternate ticking
              this.goalSelector.tick();
 -            profilerFiller.pop();
-         }
+-        }
++        }
++        // Canvas start - Async target finding
++        if (io.canvasmc.canvas.Config.INSTANCE.entities.asyncTargetFinding.enabled) {
++            ServerRegions.getTickData(this.level().level()).asyncGoalExecutor.tickMob(this);
++        }
++        // Canvas end - Async target finding
  
 -        profilerFiller.push("navigation");
          this.navigation.tick();

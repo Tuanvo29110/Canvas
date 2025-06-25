@@ -150,11 +150,11 @@
          }
          CacheKey key = new CacheKey(this, entity.getBoundingBox());
 -        Float blockDensity = this.level.explosionDensityCache.get(key);
-+        Float blockDensity = ServerRegions.getTickData(level).explosionDensityCache.get(key); // Canvas - Threaded Regions
++        Float blockDensity = ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, this.level).explosionDensityCache.get(key); // Canvas - Threaded Regions
          if (blockDensity == null) {
              blockDensity = this.getSeenFraction(vec3d, entity, this.directMappedBlockCache, this.mutablePos); // Paper - collision optimisations
 -            this.level.explosionDensityCache.put(key, blockDensity);
-+            ServerRegions.getTickData(level).explosionDensityCache.put(key, blockDensity); // Canvas - Threaded Regions
++            ServerRegions.getRegionizedTickData(entity.chunkPosition().x, entity.chunkPosition().z, this.level).explosionDensityCache.put(key, blockDensity); // Canvas - Threaded Regions
          }
  
          return blockDensity;

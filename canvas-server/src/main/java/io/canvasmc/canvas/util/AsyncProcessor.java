@@ -71,7 +71,11 @@ public class AsyncProcessor {
         return isRunning;
     }
 
-    public static class ProcessingThread extends TickThread {
+	public Thread getThread() {
+        return this.workerThread;
+	}
+
+	public static class ProcessingThread extends TickThread {
         public ProcessingThread(final Runnable run, final String name) {
             super(run, name);
         }

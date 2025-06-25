@@ -28,6 +28,19 @@
  import net.minecraft.ChatFormatting;
  import net.minecraft.FileUtil;
  import net.minecraft.commands.CommandSourceStack;
+@@ -110,10 +_,10 @@
+     public static final Component DUPLICATE_LOGIN_DISCONNECT_MESSAGE = Component.translatable("multiplayer.disconnect.duplicate_login");
+     private static final Logger LOGGER = LogUtils.getLogger();
+     private static final int SEND_PLAYER_INFO_INTERVAL = 600;
+-    private static final SimpleDateFormat BAN_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
++    private static final ThreadLocal<SimpleDateFormat> BAN_DATE_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z")); // Canvas - SDF is not threadsafe
+     private final MinecraftServer server;
+     public final List<ServerPlayer> players = new java.util.concurrent.CopyOnWriteArrayList(); // CraftBukkit - ArrayList -> CopyOnWriteArrayList: Iterator safety
+-    private final Map<UUID, ServerPlayer> playersByUUID = Maps.newHashMap();
++    private final Map<UUID, ServerPlayer> playersByUUID = Maps.newConcurrentMap(); // Canvas - concurrent
+     private final UserBanList bans = new UserBanList(USERBANLIST_FILE);
+     private final IpBanList ipBans = new IpBanList(IPBANLIST_FILE);
+     private final ServerOpList ops = new ServerOpList(OPLIST_FILE);
 @@ -234,6 +_,11 @@
          org.spigotmc.event.player.PlayerSpawnLocationEvent ev = new org.spigotmc.event.player.PlayerSpawnLocationEvent(spawnPlayer, spawnPlayer.getLocation());
          this.cserver.getPluginManager().callEvent(ev);
@@ -49,6 +62,15 @@
              )
          );
          player.getBukkitEntity().sendSupportedChannels(); // CraftBukkit
+@@ -327,7 +_,7 @@
+         // Ensure that player inventory is populated with its viewer
+         player.containerMenu.transferTo(player.containerMenu, bukkitPlayer);
+ 
+-        org.bukkit.event.player.PlayerJoinEvent playerJoinEvent = new org.bukkit.event.player.PlayerJoinEvent(bukkitPlayer, io.papermc.paper.adventure.PaperAdventure.asAdventure(mutableComponent)); // Paper - Adventure
++        org.bukkit.event.player.PlayerJoinEvent playerJoinEvent = new org.bukkit.event.player.PlayerJoinEvent(bukkitPlayer, getJoinMsg(mutableComponent, bukkitPlayer)); // Paper - Adventure // Canvas - Configurable connection message - join message
+         this.cserver.getPluginManager().callEvent(playerJoinEvent);
+ 
+         if (!player.connection.isAcceptingMessages()) {
 @@ -345,7 +_,7 @@
          // CraftBukkit start - sendAll above replaced with this loop
          ClientboundPlayerInfoUpdatePacket packet = ClientboundPlayerInfoUpdatePacket.createPlayerInitializing(List.of(player)); // Paper - Add Listing API for Player
@@ -67,6 +89,60 @@
          if (!player.getBukkitEntity().isPersistent()) return; // CraftBukkit
          player.lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
          this.playerIo.save(player);
+@@ -515,7 +_,7 @@
+             player.closeContainer(org.bukkit.event.inventory.InventoryCloseEvent.Reason.DISCONNECT); // Paper - Inventory close reason
+         }
+ 
+-        org.bukkit.event.player.PlayerQuitEvent playerQuitEvent = new org.bukkit.event.player.PlayerQuitEvent(player.getBukkitEntity(), leaveMessage, player.quitReason); // Paper - Adventure & Add API for quit reason
++        org.bukkit.event.player.PlayerQuitEvent playerQuitEvent = new org.bukkit.event.player.PlayerQuitEvent(player.getBukkitEntity(),  getQuitMsg(leaveMessage, player.getBukkitEntity()), player.quitReason); // Paper - Adventure & Add API for quit reason // Canvas - Configurable connection message - quit message
+         this.cserver.getPluginManager().callEvent(playerQuitEvent);
+         player.getBukkitEntity().disconnect(playerQuitEvent.getQuitMessage());
+ 
+@@ -613,16 +_,7 @@
+         UUID uuid = gameProfile.getId();
+         List<ServerPlayer> list = Lists.newArrayList();
+ 
+-        for (net.minecraft.server.level.ServerPlayer serverPlayer : this.players) {
+-            if (serverPlayer.getUUID().equals(uuid) || (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() && serverPlayer.getGameProfile().getName().equalsIgnoreCase(gameProfile.getName()))) { // Paper - validate usernames
+-                list.add(serverPlayer);
+-            }
+-        }
+-
+-        for (final net.minecraft.server.level.ServerPlayer serverPlayer : list) {
+-            this.save(serverPlayer); // CraftBukkit - Force the player's inventory to be saved
+-            serverPlayer.connection.disconnect(DUPLICATE_LOGIN_DISCONNECT_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.DUPLICATE_LOGIN); // Paper - kick event cause
+-        }
++        // Canvas - moved to pushPendingLogin
+ 
+         // Instead of kicking then returning, we need to store the kick reason
+         // in the event, check with plugins to see if it's ok, and THEN kick
+@@ -641,7 +_,7 @@
+             MutableComponent mutableComponent = Component.translatable("multiplayer.disconnect.banned.reason", userBanListEntry.getReason());
+             if (userBanListEntry.getExpires() != null) {
+                 mutableComponent.append(
+-                    Component.translatable("multiplayer.disconnect.banned.expiration", BAN_DATE_FORMAT.format(userBanListEntry.getExpires()))
++                    Component.translatable("multiplayer.disconnect.banned.expiration", BAN_DATE_FORMAT.get().format(userBanListEntry.getExpires())) // Canvas - SDF is not threadsafe
+                 );
+             }
+ 
+@@ -655,7 +_,7 @@
+             MutableComponent mutableComponent = Component.translatable("multiplayer.disconnect.banned_ip.reason", ipBanListEntry.getReason());
+             if (ipBanListEntry.getExpires() != null) {
+                 mutableComponent.append(
+-                    Component.translatable("multiplayer.disconnect.banned_ip.expiration", BAN_DATE_FORMAT.format(ipBanListEntry.getExpires()))
++                    Component.translatable("multiplayer.disconnect.banned_ip.expiration", BAN_DATE_FORMAT.get().format(ipBanListEntry.getExpires())) // Canvas - SDF is not threadsafe
+                 );
+             }
+ 
+@@ -665,7 +_,7 @@
+             // return this.players.size() >= this.maxPlayers && !this.canBypassPlayerLimit(gameProfile)
+             //     ? Component.translatable("multiplayer.disconnect.server_full")
+             //     : null;
+-            if (this.players.size() >= this.maxPlayers && !(player.hasPermission("purpur.joinfullserver") || this.canBypassPlayerLimit(gameProfile))) { // Purpur - Allow player join full server by permission
++            if (!this.countConnection(loginlistener.connection, this.maxPlayers) && !(player.hasPermission("purpur.joinfullserver") || this.canBypassPlayerLimit(gameProfile))) { // Purpur - Allow player join full server by permission // Canvas - count connection
+                 event.disallow(org.bukkit.event.player.PlayerLoginEvent.Result.KICK_FULL, net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(org.spigotmc.SpigotConfig.serverFullMessage)); // Spigot // Paper - Adventure
+             }
+         }
 @@ -898,6 +_,7 @@
      }
  
@@ -75,6 +151,45 @@
          if (++this.sendAllPlayerInfoIn > 600) {
              // CraftBukkit start
              for (int i = 0; i < this.players.size(); ++i) {
+@@ -1004,7 +_,9 @@
+         this.ops.add(new ServerOpListEntry(profile, this.server.getOperatorUserPermissionLevel(), this.ops.canBypassPlayerLimit(profile)));
+         ServerPlayer player = this.getPlayer(profile.getId());
+         if (player != null) {
++            player.getBukkitEntity().taskScheduler.schedule((ServerPlayer _) -> { // Canvas - Threaded Regions
+             this.sendPlayerPermissionLevel(player);
++            }, null, 1L); // Canvas - Threaded Regions
+         }
+     }
+ 
+@@ -1012,7 +_,9 @@
+         this.ops.remove(profile);
+         ServerPlayer player = this.getPlayer(profile.getId());
+         if (player != null) {
++            player.getBukkitEntity().taskScheduler.schedule((ServerPlayer _) -> { // Canvas - Threaded Regions
+             this.sendPlayerPermissionLevel(player);
++            }, null, 1L); // Canvas - Threaded Regions
+         }
+     }
+ 
+@@ -1125,10 +_,16 @@
+     public void saveAll(final int interval) {
+         io.papermc.paper.util.MCUtil.ensureMain("Save Players" , () -> { // Paper - Ensure main
+         int numSaved = 0;
+-        final long now = MinecraftServer.currentTick;
++        final long now = System.nanoTime(); // Canvas - Threaded Regions
++        long timeInterval = (long)interval * io.canvasmc.canvas.scheduler.TickScheduler.getScheduler().getTimeBetweenTicks(); // Canvas - Threaded Regions
+         for (int i = 0; i < this.players.size(); i++) {
+             final ServerPlayer player = this.players.get(i);
+-            if (interval == -1 || now - player.lastSave >= interval) {
++            // Canvas start - Threaded Regions
++            if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(player)) {
++                continue;
++            }
++            // Canvas end
++            if (interval == -1 || now - player.lastSave >= timeInterval) { // Canvas - Threaded Regions
+                 this.save(player);
+                 if (interval != -1 && ++numSaved >= io.papermc.paper.configuration.GlobalConfiguration.get().playerAutoSave.maxPerTick()) {
+                     break;
 @@ -1339,6 +_,11 @@
      }
  
@@ -125,3 +240,99 @@
      }
  
      public List<ServerPlayer> getPlayers() {
+@@ -1461,4 +_,95 @@
+     public boolean isAllowCommandsForAllPlayers() {
+         return this.allowCommandsForAllPlayers;
+     }
++    // Canvas start - Configurable connection message
++
++    private net.kyori.adventure.text.Component getJoinMsg(MutableComponent defaultJoinMsg, org.bukkit.craftbukkit.entity.CraftPlayer craftPlayer) {
++        if ("default".equals(io.canvasmc.canvas.Config.INSTANCE.joinMessage)) {
++            return io.papermc.paper.adventure.PaperAdventure.asAdventure(defaultJoinMsg);
++        }
++
++        final String joinMessage = io.canvasmc.canvas.Config.INSTANCE.joinMessage
++            .replace("<player_name>", craftPlayer.getName());
++
++        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(joinMessage)
++            .replaceText(net.kyori.adventure.text.TextReplacementConfig.builder().matchLiteral("<player_name>").replacement(craftPlayer.getName()).build())
++            .replaceText(net.kyori.adventure.text.TextReplacementConfig.builder().matchLiteral("<player_displayname>").replacement(craftPlayer.displayName()).build());
++    }
++
++    private net.kyori.adventure.text.Component getQuitMsg(net.kyori.adventure.text.Component defaultJoinMsg, org.bukkit.craftbukkit.entity.CraftPlayer craftPlayer) {
++        if ("default".equals(io.canvasmc.canvas.Config.INSTANCE.quitMessage)) {
++            return defaultJoinMsg;
++        }
++
++        final String quitMessage = io.canvasmc.canvas.Config.INSTANCE.quitMessage
++            .replace("<player_name>", craftPlayer.getName());
++
++        return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(quitMessage)
++            .replaceText(net.kyori.adventure.text.TextReplacementConfig.builder().matchLiteral("<player_name>").replacement(craftPlayer.getName()).build())
++            .replaceText(net.kyori.adventure.text.TextReplacementConfig.builder().matchLiteral("<player_displayname>").replacement(craftPlayer.displayName()).build());
++    }
++
++    // Canvas end
++    // Canvas start - Threaded Server
++    private final Object connectionsStateLock = new Object();
++    private final Map<String, Connection> connectionByName = new java.util.HashMap<>();
++    private final Map<UUID, Connection> connectionById = new java.util.HashMap<>();
++    private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<Connection> usersCountedAgainstLimit = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
++
++    public boolean pushPendingJoin(String userName, UUID byId, Connection conn) {
++        userName = userName.toLowerCase(java.util.Locale.ROOT);
++        Connection conflictingName, conflictingId;
++        synchronized (this.connectionsStateLock) {
++            conflictingName = this.connectionByName.get(userName);
++            conflictingId = this.connectionById.get(byId);
++
++            if (conflictingName == null && conflictingId == null) {
++                int loggedInCount = 0;
++                for (Connection value : this.connectionById.values()) {
++                    if (value.getPacketListener() instanceof ServerGamePacketListenerImpl) {
++                        ++loggedInCount;
++                    }
++                }
++                if ((this.connectionById.size() - loggedInCount) >= io.canvasmc.canvas.Config.INSTANCE.maxJoinsPerTick) {
++                    return false;
++                }
++                this.connectionByName.put(userName, conn);
++                this.connectionById.put(byId, conn);
++            }
++        }
++
++        Component message = Component.translatable("multiplayer.disconnect.duplicate_login", new Object[0]);
++
++        if (conflictingId != null || conflictingName != null) {
++            if (conflictingName != null && conflictingName.packetListener instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl) {
++                ((net.minecraft.server.network.ServerCommonPacketListenerImpl) conflictingName.packetListener).disconnectAsync(message, org.bukkit.event.player.PlayerKickEvent.Cause.DUPLICATE_LOGIN);
++            }
++            if (conflictingName != conflictingId && conflictingId != null && conflictingId.packetListener instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl) {
++                ((net.minecraft.server.network.ServerCommonPacketListenerImpl) conflictingId.packetListener).disconnectAsync(message, org.bukkit.event.player.PlayerKickEvent.Cause.DUPLICATE_LOGIN);
++            }
++        }
++
++        return conflictingName == null && conflictingId == null;
++    }
++
++    public void removeConnection(String userName, UUID byId, Connection conn) {
++        userName = userName.toLowerCase(java.util.Locale.ROOT);
++        synchronized (this.connectionsStateLock) {
++            this.connectionByName.remove(userName, conn);
++            this.connectionById.remove(byId, conn);
++            this.usersCountedAgainstLimit.remove(conn);
++        }
++    }
++
++    private boolean countConnection(Connection conn, int limit) {
++        synchronized (this.connectionsStateLock) {
++            int count = this.usersCountedAgainstLimit.size();
++            if (count >= limit) {
++                return false;
++            }
++            this.usersCountedAgainstLimit.add(conn);
++            return true;
++        }
++    }
++    // Canvas end
+ }
