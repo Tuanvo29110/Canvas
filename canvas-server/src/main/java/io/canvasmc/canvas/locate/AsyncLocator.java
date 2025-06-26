@@ -67,11 +67,11 @@ public class AsyncLocator {
         int searchRadius,
         boolean skipKnownStructures
     ) {
-        CompletableFuture<BlockPos> completableFuture = new CompletableFuture<>();
+        CompletableFuture<BlockPosInstance<BlockPos>> completableFuture = new CompletableFuture<>();
         Future<?> future = LOCATING_EXECUTOR_SERVICE.submit(
             () -> doLocateLevel(completableFuture, level, structureTag, pos, searchRadius, skipKnownStructures)
         );
-        return new LocateTask<>(level.getServer(), completableFuture, future);
+        return new LocateTask<>(level, completableFuture, future);
     }
 
     /**
@@ -86,15 +86,15 @@ public class AsyncLocator {
         int searchRadius,
         boolean skipKnownStructures
     ) {
-        CompletableFuture<Pair<BlockPos, Holder<Structure>>> completableFuture = new CompletableFuture<>();
+        CompletableFuture<BlockPosInstance<Pair<BlockPos, Holder<Structure>>>> completableFuture = new CompletableFuture<>();
         Future<?> future = LOCATING_EXECUTOR_SERVICE.submit(
             () -> doLocateChunkGenerator(completableFuture, level, structureSet, pos, searchRadius, skipKnownStructures)
         );
-        return new LocateTask<>(level.getServer(), completableFuture, future);
+        return new LocateTask<>(level, completableFuture, future);
     }
 
     private static void doLocateLevel(
-        CompletableFuture<BlockPos> completableFuture,
+        CompletableFuture<BlockPosInstance<BlockPos>> completableFuture,
         ServerLevel level,
         TagKey<Structure> structureTag,
         BlockPos pos,
@@ -102,11 +102,21 @@ public class AsyncLocator {
         boolean skipExistingChunks
     ) {
         BlockPos foundPos = level.findNearestMapStructure(structureTag, pos, searchRadius, skipExistingChunks);
-        completableFuture.complete(foundPos);
+        completableFuture.complete(new BlockPosInstance<BlockPos>() {
+            @Override
+            public BlockPos getBlockPos() {
+                return get();
+            }
+
+            @Override
+            public BlockPos get() {
+                return foundPos;
+            }
+        });
     }
 
     private static void doLocateChunkGenerator(
-        CompletableFuture<Pair<BlockPos, Holder<Structure>>> completableFuture,
+        CompletableFuture<BlockPosInstance<Pair<BlockPos, Holder<Structure>>>> completableFuture,
         ServerLevel level,
         HolderSet<Structure> structureSet,
         BlockPos pos,
@@ -115,7 +125,17 @@ public class AsyncLocator {
     ) {
         Pair<BlockPos, Holder<Structure>> foundPair = level.getChunkSource().getGenerator()
             .findNearestMapStructure(level, structureSet, pos, searchRadius, skipExistingChunks);
-        completableFuture.complete(foundPair);
+        completableFuture.complete(new BlockPosInstance<>() {
+            @Override
+            public BlockPos getBlockPos() {
+                return get().getFirst();
+            }
+
+            @Override
+            public Pair<BlockPos, Holder<Structure>> get() {
+                return foundPair;
+            }
+        });
     }
 
     public static class AsyncLocatorThread extends TickThread {
@@ -138,14 +158,14 @@ public class AsyncLocator {
      * result of it.
      * The taskFuture is the future for the {@link Runnable} itself in the executor service.
      */
-    public record LocateTask<T>(MinecraftServer server, CompletableFuture<T> completableFuture, Future<?> taskFuture) {
+    public record LocateTask<T>(ServerLevel world, CompletableFuture<BlockPosInstance<T>> completableFuture, Future<?> taskFuture) {
         /**
          * Helper function that calls {@link CompletableFuture#thenAccept(Consumer)} with the given action.
          * Bear in mind that the action will be executed from the task's thread. If you intend to change any game data,
          * it's strongly advised you use {@link #thenOnServerThread(Consumer)} instead so that it's queued and executed
          * on the main server thread instead.
          */
-        public LocateTask<T> then(Consumer<T> action) {
+        public LocateTask<T> then(Consumer<BlockPosInstance<T>> action) {
             completableFuture.thenAccept(action);
             return this;
         }
@@ -154,8 +174,15 @@ public class AsyncLocator {
          * Helper function that calls {@link CompletableFuture#thenAccept(Consumer)} with the given action on the server
          * thread.
          */
-        public LocateTask<T> thenOnServerThread(Consumer<T> action) {
-            completableFuture.thenAccept(pos -> server.scheduleOnMain(() -> action.accept(pos)));
+        public LocateTask<T> thenOnServerThread(Consumer<BlockPosInstance<T>> action) {
+            completableFuture.thenAccept(posInstance -> {
+                BlockPos pos = posInstance.getBlockPos();
+                int chunkX = pos.getX() >> 4;
+                int chunkZ = pos.getZ() >> 4;
+                MinecraftServer.getThreadedServer().taskQueue.queueTickTaskQueue(
+                    this.world, chunkX, chunkZ, () -> action.accept(posInstance)
+                );
+            });
             return this;
         }
 
@@ -166,5 +193,10 @@ public class AsyncLocator {
             taskFuture.cancel(true);
             completableFuture.cancel(false);
         }
+    }
+
+    public interface BlockPosInstance<T> {
+        BlockPos getBlockPos();
+        T get();
     }
 }

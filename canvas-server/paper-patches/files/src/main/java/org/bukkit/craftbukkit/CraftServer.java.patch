@@ -1,11 +1,12 @@
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -12,6 +_,13 @@
+@@ -12,6 +_,14 @@
  import com.mojang.brigadier.exceptions.CommandSyntaxException;
  import com.mojang.serialization.Dynamic;
  import com.mojang.serialization.Lifecycle;
 +import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.ThreadedBukkitServer;
++import io.canvasmc.canvas.region.ServerRegions;
 +import io.canvasmc.canvas.scheduler.CanvasPerWorldScheduler;
 +import io.canvasmc.canvas.scheduler.CanvasRegionScheduler;
 +import io.canvasmc.canvas.scheduler.TickScheduler;
@@ -154,3 +155,16 @@
      }
  
      // Paper start - Wait for Async Tasks during shutdown
+@@ -3256,7 +_,11 @@
+ 
+     @Override
+     public int getCurrentTick() {
+-        return net.minecraft.server.MinecraftServer.currentTick;
++        // Canvas start - Threaded Server
++        ServerRegions.WorldTickData tickData = ServerRegions.pullLocalTickDataSoft();
++        if (tickData == null) return net.minecraft.server.MinecraftServer.currentTick;
++        else return (int) tickData.peekTick();
++        // Canvas end
+     }
+ 
+     @Override

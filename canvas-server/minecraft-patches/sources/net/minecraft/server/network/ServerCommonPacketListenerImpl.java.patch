@@ -187,6 +187,21 @@
              return;
          }
  
+@@ -423,7 +_,13 @@
+         this.onDisconnect(disconnectionDetails, leaveMessage); // CraftBukkit - fire quit instantly // Paper - use kick event leave message
+         this.connection.setReadOnly();
+         // CraftBukkit - Don't wait
+-        this.server.scheduleOnMain(this.connection::handleDisconnection); // Paper
++        // Canvas start - Threaded Regions
++        int chunkX = this.player.chunkPosition().x;
++        int chunkZ = this.player.chunkPosition().z;
++        this.server.threadedServer().taskQueue.queueTickTaskQueue(
++            this.player.serverLevel(), chunkX, chunkZ, this.connection::handleDisconnection
++        );
++        // Canvas end
+     }
+ 
+     // Paper start - add proper async disconnect
 @@ -436,19 +_,19 @@
      }
  

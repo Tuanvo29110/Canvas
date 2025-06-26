@@ -16,7 +16,7 @@
  import net.minecraft.world.entity.Entity;
  import net.minecraft.world.entity.Mob;
  import net.minecraft.world.entity.ai.attributes.Attributes;
-@@ -96,11 +_,18 @@
+@@ -96,11 +_,20 @@
      }
  
      public void recomputePath() {
@@ -26,6 +26,7 @@
                  this.path = null;
                  this.path = this.createPath(this.targetPos, this.reachRange);
 -                this.timeLastRecompute = this.level.getGameTime();
++                // Canvas start
 +                if ((this.mob).lithium$isRegisteredToWorld()) {
 +                    if (this.path == null) {
 +                        ((ServerLevel) this.level).lithium$setNavigationInactive(this.mob);
@@ -33,6 +34,7 @@
 +                        ((ServerLevel) this.level).lithium$setNavigationActive(this.mob);
 +                    }
 +                }
++                // Canvas end
 +                this.timeLastRecompute = this.tick; // Canvas - use tick for path recomputing
                  this.hasDelayedRecomputation = false;
              }
@@ -85,6 +87,24 @@
  
              return path;
          }
+@@ -221,7 +_,7 @@
+ 
+     public boolean moveTo(Entity entity, double speed) {
+         // Paper start - Perf: Optimise pathfinding
+-        if (this.pathfindFailures > 10 && this.path == null && net.minecraft.server.MinecraftServer.currentTick < this.lastFailure + 40) {
++        if (this.pathfindFailures > 10 && this.path == null && this.tick < this.lastFailure + 40) { // Canvas - Threaded Regions
+             return false;
+         }
+         // Paper end - Perf: Optimise pathfinding
+@@ -233,7 +_,7 @@
+             return true;
+         } else {
+             this.pathfindFailures++;
+-            this.lastFailure = net.minecraft.server.MinecraftServer.currentTick;
++            this.lastFailure = this.tick; // Canvas - Threaded Regions
+             return false;
+         }
+         // Paper end - Perf: Optimise pathfinding
 @@ -242,6 +_,7 @@
      public boolean moveTo(@Nullable Path pathentity, double speed) {
          if (pathentity == null) {

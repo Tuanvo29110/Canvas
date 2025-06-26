@@ -19,6 +19,18 @@
  import net.minecraft.world.Container;
  import net.minecraft.world.Difficulty;
  import net.minecraft.world.InteractionHand;
+@@ -188,7 +_,10 @@
+ 
+ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer { // Paper - rewrite chunk system
+     private static final Logger LOGGER = LogUtils.getLogger();
+-    public long lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
++    // Canvas start - Threaded Regions
++    public static final long LAST_SAVE_ABSENT = Long.MIN_VALUE;
++    public long lastSave = LAST_SAVE_ABSENT; // Paper - Incremental chunk and player saving
++    // Canvas end
+     private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_XZ = 32;
+     private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_Y = 10;
+     private static final int FLY_STAT_RECORDING_SPEED = 25;
 @@ -257,6 +_,7 @@
      private Vec3 lastKnownClientMovement = Vec3.ZERO;
      private Input lastClientInput = Input.EMPTY;

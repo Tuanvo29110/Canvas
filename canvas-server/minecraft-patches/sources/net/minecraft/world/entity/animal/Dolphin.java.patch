@@ -33,7 +33,7 @@
 +                        .thenOnServerThread(pos -> {
 +                            asyncLocator$locateTask = null;
 +                            if (pos != null) {
-+                                this.dolphin.treasurePos = pos;
++                                this.dolphin.treasurePos = pos.getBlockPos();
 +                                serverLevel.broadcastEntityEvent(this.dolphin, (byte) 38);
 +                            } else {
 +                                this.stuck = true;

@@ -41,6 +41,14 @@
      private final UserBanList bans = new UserBanList(USERBANLIST_FILE);
      private final IpBanList ipBans = new IpBanList(IPBANLIST_FILE);
      private final ServerOpList ops = new ServerOpList(OPLIST_FILE);
+@@ -152,6 +_,7 @@
+     public void placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie) {
+         player.isRealPlayer = true; // Paper
+         player.loginTime = System.currentTimeMillis(); // Paper - Replace OfflinePlayer#getLastPlayed
++        player.lastSave = System.nanoTime(); // Canvas - changed to nanoTime
+         GameProfile gameProfile = player.getGameProfile();
+         GameProfileCache profileCache = this.server.getProfileCache();
+         String string;
 @@ -234,6 +_,11 @@
          org.spigotmc.event.player.PlayerSpawnLocationEvent ev = new org.spigotmc.event.player.PlayerSpawnLocationEvent(spawnPlayer, spawnPlayer.getLocation());
          this.cserver.getPluginManager().callEvent(ev);
@@ -80,15 +88,18 @@
          for (int i = 0; i < this.players.size(); ++i) {
              ServerPlayer entityplayer1 = (ServerPlayer) this.players.get(i);
  
-@@ -485,7 +_,7 @@
+@@ -485,9 +_,9 @@
          return optional;
      }
  
 -    protected void save(ServerPlayer player) {
 +    public void save(ServerPlayer player) { // Canvas - protected -> public
          if (!player.getBukkitEntity().isPersistent()) return; // CraftBukkit
-         player.lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
+-        player.lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
++        player.lastSave = System.nanoTime(); // Paper - Incremental chunk and player saving // Canvas - changed to nanoTime
          this.playerIo.save(player);
+         ServerStatsCounter serverStatsCounter = player.getStats(); // CraftBukkit
+         if (serverStatsCounter != null) {
 @@ -515,7 +_,7 @@
              player.closeContainer(org.bukkit.event.inventory.InventoryCloseEvent.Reason.DISCONNECT); // Paper - Inventory close reason
          }

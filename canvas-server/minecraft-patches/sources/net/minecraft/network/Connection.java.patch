@@ -236,8 +236,25 @@
      }
      // Paper end - Optimize network
  
-@@ -607,20 +_,12 @@
-         // Paper end - Buffer joins to world
+@@ -591,36 +_,15 @@
+     private static int tickSecond; // Purpur - Max joins per second
+     public void tick() {
+         this.flushQueue();
+-        // Paper start - Buffer joins to world
+-        if (Connection.currTick != net.minecraft.server.MinecraftServer.currentTick) {
+-            Connection.currTick = net.minecraft.server.MinecraftServer.currentTick;
+-            // Purpur start - Max joins per second
+-            if (org.purpurmc.purpur.PurpurConfig.maxJoinsPerSecond) {
+-                if (++Connection.tickSecond > 20) {
+-                    Connection.tickSecond = 0;
+-                    Connection.joinAttemptsThisTick = 0;
+-                }
+-            } else
+-            // Purpur end - Max joins per second
+-            Connection.joinAttemptsThisTick = 0;
+-        }
+-        // Paper end - Buffer joins to world
++        // Canvas - this is broken
          if (this.packetListener instanceof TickablePacketListener tickablePacketListener) {
              // Paper start - Buffer joins to world
 -            if (!(this.packetListener instanceof net.minecraft.server.network.ServerLoginPacketListenerImpl loginPacketListener)

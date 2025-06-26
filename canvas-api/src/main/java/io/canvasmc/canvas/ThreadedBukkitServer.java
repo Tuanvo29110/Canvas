@@ -52,6 +52,7 @@ public interface ThreadedBukkitServer {
      *
      * @param runnable task
      */
+    @Deprecated(forRemoval = true)
     void scheduleOnMain(@NotNull Runnable runnable);
 
     /**
