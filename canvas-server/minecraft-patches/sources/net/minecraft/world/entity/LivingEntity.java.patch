@@ -128,6 +128,25 @@
      }
  
      private void updateGlowingStatus() {
+@@ -1315,13 +_,13 @@
+     }
+ 
+     private void refreshDirtyAttributes() {
+-        Set<AttributeInstance> attributesToUpdate = this.getAttributes().getAttributesToUpdate();
++        // Canvas start - threaded tracker
++        int[] attributesToUpdate = this.getAttributes().getAttributesToUpdateIds();
+ 
+-        for (AttributeInstance attributeInstance : attributesToUpdate) {
+-            this.onAttributeUpdated(attributeInstance.getAttribute());
++        for (int attribute : attributesToUpdate) {
++            this.onAttributeUpdated(net.minecraft.core.registries.BuiltInRegistries.ATTRIBUTE.get(attribute).orElseThrow());
+         }
+-
+-        attributesToUpdate.clear();
++        // Canvas end - threaded tracker
+     }
+ 
+     protected void onAttributeUpdated(Holder<Attribute> attribute) {
 @@ -1393,7 +_,7 @@
                  player.setRealHealth(health);
              }

@@ -1501,7 +1501,8 @@
  
 +                        synchronized (map) { // Canvas - make map data thread-safe
                          map.carriedByPlayers.remove(player);
-                         if (map.carriedBy.removeIf(holdingPlayer -> holdingPlayer.player == player)) {
+-                        if (map.carriedBy.removeIf(holdingPlayer -> holdingPlayer.player == player)) {
++                        if (map.carriedBy.removeIf(holdingPlayer -> holdingPlayer != null && holdingPlayer.player == player)) { // Canvas - threaded tracker
                              map.decorations.remove(player.getName().getString());
                          }
 +                        } // Canvas - make map data thread-safe

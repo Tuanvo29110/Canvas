@@ -27,7 +27,6 @@ public class SenderInfoCommand implements CommandInstance {
                 .executes(context -> {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
                         player.sendSystemMessage(Component.literal("== Debug Information, for development purposes only, can change at any time =="));
-                        player.sendSystemMessage(Component.literal("Owned by NearbyPlayers of level " + player.npr.get().world));
                         player.sendSystemMessage(Component.literal("tick count " + player.tickCount));
                         ChunkHolder holder = player.serverLevel().getChunk(player.chunkPosition().x, player.chunkPosition().z).chunkAndHolder.vanillaChunkHolder;
                         for (final ShortSet shorts : holder.changedBlocksPerSection) {

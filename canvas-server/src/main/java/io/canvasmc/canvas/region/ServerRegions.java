@@ -162,7 +162,9 @@ public class ServerRegions {
         return getTickData(level).currentTick;
     }
 
+    // Note for all isTickThreadFor checks, if the server is in shutdown, the shutdown thread is a valid thread owner.
     public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull AABB aabb) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         return isTickThreadFor(
             world,
@@ -172,11 +174,13 @@ public class ServerRegions {
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final double blockX, final double blockZ) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         return isTickThreadFor(world, CoordinateUtils.getChunkCoordinate(blockX), CoordinateUtils.getChunkCoordinate(blockZ));
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final Vec3 position, final @NotNull Vec3 deltaMovement, final int buffer) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         final int fromChunkX = CoordinateUtils.getChunkX(position);
         final int fromChunkZ = CoordinateUtils.getChunkZ(position);
@@ -195,11 +199,13 @@ public class ServerRegions {
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull BlockPos pos) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         return isTickThreadFor(world, pos.getX() >> 4, pos.getZ() >> 4);
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull BlockPos pos, final int blockRadius) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         return isTickThreadFor(
             world,
@@ -209,16 +215,19 @@ public class ServerRegions {
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull ChunkPos pos) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         return isTickThreadFor(world, pos.x, pos.z);
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final @NotNull Vec3 pos) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         return isTickThreadFor(world, net.minecraft.util.Mth.floor(pos.x) >> 4, net.minecraft.util.Mth.floor(pos.z) >> 4);
     }
 
     public static boolean isTickThreadFor(final @NotNull Entity entity) {
+        if (entity.level().server.hasStopped() && Thread.currentThread().equals(entity.level().server.shutdownThread)) return true;
         if (!entity.level().server.isRegionized()) return isTickThreadNonRegionized(entity.level());
         if (ServerRegions.getTickData(entity.level().level()).hasEntity(entity)) {
             return true;
@@ -227,6 +236,7 @@ public class ServerRegions {
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final int chunkX, final int chunkZ) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region =
             ServerRegions.getTickData((ServerLevel) world).region;
@@ -237,11 +247,13 @@ public class ServerRegions {
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final int chunkX, final int chunkZ, final int radius) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         return isTickThreadFor(world, chunkX - radius, chunkZ - radius, chunkX + radius, chunkZ + radius);
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final int fromChunkX, final int fromChunkZ, final int toChunkX, final int toChunkZ) {
+        if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
         final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region =
             ServerRegions.getTickData((ServerLevel) world).region;
@@ -582,7 +594,7 @@ public class ServerRegions {
             // entities
             for (final ServerPlayer player : from.localPlayers) {
                 into.localPlayers.add(player);
-                if (!into.nearbyPlayers.players.containsKey(player)) {
+                if (!into.nearbyPlayers.hasPlayer(player)) {
                     into.nearbyPlayers.addPlayer(player);
                 }
             }
@@ -783,7 +795,7 @@ public class ServerRegions {
 
         public final ReferenceList<Entity> trackerEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
         // shouldSignal is threadlocal, don't need to isolate
-        public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(64, 0.25f);
+        public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap<>(64, 0.25f);
         public final PathTypeCache pathTypesByPosCache = new PathTypeCache();
         // public final List<LevelChunk> temporaryChunkTickList = new ObjectArrayList<>(); // Canvas - optimize chunk collect
         // mob spawning
@@ -804,8 +816,8 @@ public class ServerRegions {
         private final LevelTicks<Block> blockLevelTicks;
         private final LevelTicks<Fluid> fluidLevelTicks;
         // tile entity ticking
-        private final List<TickingBlockEntity> pendingBlockEntityTickers = new ArrayList<>();
-        private final List<TickingBlockEntity> blockEntityTickers = new ArrayList<>();
+        private final List<TickingBlockEntity> pendingBlockEntityTickers = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>();
+        private final List<TickingBlockEntity> blockEntityTickers = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>();
         private final ReferenceList<LevelChunk> entityTickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
         private final ReferenceList<LevelChunk> tickingChunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
         private final ReferenceList<LevelChunk> chunks = new ReferenceList<>(EMPTY_CHUNK_AND_HOLDER_ARRAY);
@@ -1096,7 +1108,7 @@ public class ServerRegions {
             this.allEntities.add(entity);
             if (entity instanceof ServerPlayer player) {
                 this.localPlayers.add(player);
-                if (!this.getNearbyPlayers(player.chunkPosition()).players.containsKey(player)) {
+                if (!this.getNearbyPlayers(player.chunkPosition()).hasPlayer(player)) {
                     this.getNearbyPlayers(player.chunkPosition()).addPlayer(player); // moved from entity callback, required or else we might add to the world by mistake
                 }
             }

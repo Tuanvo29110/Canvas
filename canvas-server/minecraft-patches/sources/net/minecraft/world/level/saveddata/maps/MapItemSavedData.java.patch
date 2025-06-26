@@ -35,6 +35,14 @@
          if (!this.carriedByPlayers.containsKey(player)) {
              MapItemSavedData.HoldingPlayer holdingPlayer = new MapItemSavedData.HoldingPlayer(player);
              this.carriedByPlayers.put(player, holdingPlayer);
+@@ -211,6 +_,7 @@
+ 
+         for (int i = 0; i < this.carriedBy.size(); i++) {
+             MapItemSavedData.HoldingPlayer holdingPlayer1 = this.carriedBy.get(i);
++            if (holdingPlayer1 == null) continue; // Canvas - threaded tracker
+             Player player1 = holdingPlayer1.player;
+             String string = player1.getName().getString();
+             if (!player1.isRemoved() && (player1.getInventory().contains(predicate) || mapStack.isFramed())) {
 @@ -383,7 +_,7 @@
      }
  

@@ -142,10 +142,10 @@
 -            }
 -        };
 +// Canvas start - rewrite
-+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
-+import it.unimi.dsi.fastutil.objects.ReferenceLists;
++import it.unimi.dsi.fastutil.objects.ObjectArrayList;
++import it.unimi.dsi.fastutil.objects.ObjectLists;
 +
-+public class ReferenceList<E> extends ReferenceLists.SynchronizedList<E> {
++public class ReferenceList<E> extends ObjectLists.SynchronizedList<E> {
 +
 +    public ReferenceList(E[] elements) {
 +        super(new RefListInner<>(elements));
@@ -155,7 +155,7 @@
 +        return ((RefListInner<E>) this.list).getRawDataUnchecked();
 +    }
 +
-+    public static class RefListInner<A> extends ReferenceArrayList<A> {
++    public static class RefListInner<A> extends ObjectArrayList<A> {
 +        public RefListInner(A[] elements) {
 +            super(elements, true);
 +        }

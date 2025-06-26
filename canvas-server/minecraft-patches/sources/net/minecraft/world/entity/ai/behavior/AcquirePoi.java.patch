@@ -1,5 +1,34 @@
 --- a/net/minecraft/world/entity/ai/behavior/AcquirePoi.java
 +++ b/net/minecraft/world/entity/ai/behavior/AcquirePoi.java
+@@ -28,6 +_,13 @@
+ public class AcquirePoi {
+     public static final int SCAN_RANGE = 48;
+ 
++    // Canvas start - reduce acquire POI for stuck entities
++    private static void addAdditionalTimeToMutableLongIfMobIsStuck(MutableLong mutableLong, net.minecraft.server.level.ServerLevel level, PathfinderMob mob) {
++        long stuckEntityAdditionalWaitTime = io.canvasmc.canvas.Config.INSTANCE.entities.acquirePoiForStuckEntity;
++        mutableLong.add(stuckEntityAdditionalWaitTime <= 0L ? 0L : mob.getNavigation().isStuck() ? stuckEntityAdditionalWaitTime : 0L);
++    }
++    // Canvas end
++
+     public static BehaviorControl<PathfinderMob> create(
+         Predicate<Holder<PoiType>> acquirablePois,
+         MemoryModuleType<GlobalPos> acquiringMemory,
+@@ -65,12 +_,13 @@
+                             return false;
+                         } else if (mutableLong.getValue() == 0L) {
+                             mutableLong.setValue(level.getGameTime() + level.random.nextInt(20));
++                            addAdditionalTimeToMutableLongIfMobIsStuck(mutableLong, level, mob); // Canvas - reduce acquire POI for stuck entities
+                             return false;
+                         } else if (level.getGameTime() < mutableLong.getValue()) {
+                             return false;
+                         } else {
+                             mutableLong.setValue(time + 20L + level.getRandom().nextInt(20));
+-                            if (mob.getNavigation().isStuck()) mutableLong.add(200); // Paper - Perf: Wait an additional 10s to check again if they're stuck // TODO Modifies Vanilla behavior, add config option
++                            addAdditionalTimeToMutableLongIfMobIsStuck(mutableLong, level, mob); // Paper - Perf: Wait an additional 10s to check again if they're stuck // TODO Modifies Vanilla behavior, add config option // Canvas - reduce acquire POI for stuck entities
+                             PoiManager poiManager = level.getPoiManager();
+                             map.long2ObjectEntrySet().removeIf(entry -> !entry.getValue().isStillValid(time));
+                             Predicate<BlockPos> predicate1 = pos -> {
 @@ -94,21 +_,20 @@
                                  }
                              }

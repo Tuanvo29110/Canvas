@@ -15,6 +15,7 @@ import io.canvasmc.canvas.config.annotation.numeric.PositiveNumericValue;
 import io.canvasmc.canvas.config.annotation.numeric.Range;
 import io.canvasmc.canvas.config.impl.ConfigAccess;
 import io.canvasmc.canvas.config.internal.ConfigurationManager;
+import io.canvasmc.canvas.entity.MultithreadedTracker;
 import io.canvasmc.canvas.entity.pathfinding.PathfindTaskRejectPolicy;
 import io.canvasmc.canvas.util.YamlTextFormatter;
 import java.util.ArrayList;
@@ -391,14 +392,20 @@ public class Config {
 
         public EntityTracking entityTracking = new EntityTracking();
         public static class EntityTracking {
-            @AlwaysAtTop
-            public boolean enableThreadedTracking = true;
-
-            @PositiveNumericValue
-            public int maxProcessors = 1;
-
-            @PositiveNumericValue
-            public int keepAlive = 60;
+            @Comment(value = {
+                "Make entity tracking saving asynchronously, can improve performance significantly,",
+                "especially in some massive entities in small area situations."
+            })
+            public boolean enabled = false;
+            @Comment(value = {
+                "Enable compat mode ONLY if Citizens or NPC plugins using real entity has installed,",
+                "Compat mode fixed visible issue with player type NPCs of Citizens,",
+                "But still recommend to use packet based / virtual entity NPC plugin, e.g. ZNPC Plus, Adyeshach, Fancy NPC or else."
+            })
+            public boolean compatModeEnabled = false;
+            public int asyncEntityTrackerMaxThreads = 0;
+            public int asyncEntityTrackerKeepalive = 60;
+            public int asyncEntityTrackerQueueSize = 0;
         }
 
         @Comment("Enables a modified version of Pufferfish's async mob spawning patch")
@@ -546,8 +553,18 @@ public class Config {
             public boolean searchBlock = true;
             public boolean searchEntity = true;
             public int queueSize = 4096;
-            private boolean asyncTargetFindingInitialized;
         }
+
+        @Comment(value = {
+            "The extra interval (on top of the regular interval) for entities that are stuck (e.g. in a vehicle)",
+            "to attempt to acquire a POI (such as a villager job block).",
+            "(Unit: tick)",
+            "If they become unstuck during this time, they will immediately be free to acquire a POI again.",
+            "For example, if set to 100, stuck entities will try to find a POI every 5 seconds.",
+            "",
+            "If a value < 0 is given, it will default to the same as Paper's behavior."
+        })
+        public int acquirePoiForStuckEntity = 60;
     }
 
     @Comment("Use faster sin/cos math operations")
@@ -819,9 +836,24 @@ public class Config {
                     CanvasBootstrap.LOGGER.error(Component.text("Allocating 1 or less scheduler threads can result in multiple issues with the chunk system, please allocate more to use Canvas more efficiently."));
                 }
                 Event.SHORTCUT_CALL = INSTANCE.optimizePluginEventManager;
+                if (INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads < 0)
+                    INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads = Math.max(Runtime.getRuntime().availableProcessors() + INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads, 1);
+                else if (INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads == 0)
+                    INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads = Math.max(Runtime.getRuntime().availableProcessors() / 4, 1);
+
+                if (INSTANCE.entities.entityTracking.asyncEntityTrackerQueueSize <= 0)
+                    INSTANCE.entities.entityTracking.asyncEntityTrackerQueueSize = INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads * 384;
+
+                if (INSTANCE.entities.entityTracking.enabled) {
+                    MultithreadedTracker.init();
+                }
                 for (final String change : changes) {
                     CanvasBootstrap.LOGGER.info(change);
                 }
+                if (!INSTANCE.entities.entityTracking.enabled)
+                    INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads = 0;
+                else
+                    CanvasBootstrap.LOGGER.info("Using {} threads for Async Entity Tracker", INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads);
             })
             .build(config, configClass), changes::add
         );

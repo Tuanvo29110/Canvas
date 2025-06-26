@@ -12,7 +12,6 @@ import io.canvasmc.canvas.command.debug.ResendChunksCommand;
 import io.canvasmc.canvas.command.debug.SenderInfoCommand;
 import io.canvasmc.canvas.command.debug.SyncloadCommand;
 import io.canvasmc.canvas.command.debug.TasksCommand;
-import io.canvasmc.canvas.command.debug.TrackingControlCommand;
 import java.util.Set;
 import java.util.function.Supplier;
 import net.minecraft.commands.CommandBuildContext;
@@ -42,7 +41,6 @@ public final class CanvasCommands {
         }
         register(ResendChunksCommand::new);
         register(SenderInfoCommand::new);
-        register(TrackingControlCommand::new);
         register(SyncloadCommand::new);
         register(PriorityCommand::new);
         register(FlySpeedCommand::new);

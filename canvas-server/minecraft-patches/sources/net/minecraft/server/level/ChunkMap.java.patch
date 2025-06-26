@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/ChunkMap.java
 +++ b/net/minecraft/server/level/ChunkMap.java
-@@ -1,15 +_,26 @@
+@@ -1,15 +_,25 @@
  package net.minecraft.server.level;
  
 +import ca.spottedleaf.concurrentutil.util.Priority;
@@ -14,7 +14,6 @@
  import com.mojang.datafixers.DataFixer;
  import com.mojang.logging.LogUtils;
 +import io.canvasmc.canvas.Config;
-+import io.canvasmc.canvas.entity.tracking.ThreadedTracker;
 +import io.canvasmc.canvas.region.ServerRegions;
 +import io.canvasmc.canvas.util.ConcurrentRegionizedEntityMap;
 +import io.canvasmc.canvas.util.fastutil.Int2ObjectConcurrentHashMap;
@@ -79,7 +78,7 @@
      }
  
      private void setChunkUnsaved(ChunkPos chunkPos) {
-@@ -251,14 +_,19 @@
+@@ -251,14 +_,28 @@
  
          final int index = entity.getType().getCategory().ordinal();
          final ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> inRange =
@@ -91,6 +90,15 @@
          }
  
          final ServerPlayer[] backingSet = inRange.getRawDataUnchecked();
++        // Canvas start - threaded tracker
++        if (io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.enabled)
++            for (int i = 0, len = inRange.size(); i < len; i++) {
++                final ServerPlayer player = backingSet[i];
++                if (player == null) continue;
++                ++(player.mobCounts[index]);
++            }
++        else
++            // Canvas end - threaded tracker
          for (int i = 0, len = inRange.size(); i < len; i++) {
 -            ++(backingSet[i].mobCounts[index]);
 +            // Canvas start - caution ref lists
@@ -409,11 +417,8 @@
          if (trackedEntity1 != null) {
              trackedEntity1.broadcastRemoved();
          }
-@@ -1000,33 +_,39 @@
- 
-     // Paper start - optimise entity tracker
+@@ -1002,31 +_,43 @@
      private void newTrackerTick() {
-+        if (ThreadedTracker.INSTANCE.tick(this.level)) return; // Canvas - threaded tracker
          final ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup entityLookup = (ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup)((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getEntityLookup();;
  
 -        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.entity.Entity> trackerEntities = entityLookup.trackerEntities;
@@ -443,6 +448,13 @@
  
 -    protected void tick() {
 +    public void tick() { // Canvas - protected -> public
++        // Canvas start - threaded tracker
++        if (io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.enabled) {
++            final ServerLevel level = this.level;
++            io.canvasmc.canvas.entity.MultithreadedTracker.tick(level);
++            return;
++        }
++        // Canvas end - threaded tracker
          // Paper start - optimise entity tracker
          if (true) {
              this.newTrackerTick();
@@ -476,7 +488,7 @@
          if (trackedEntity != null) {
              trackedEntity.broadcastAndSend(packet);
          }
-@@ -1139,10 +_,10 @@
+@@ -1139,10 +_,45 @@
  
      public class TrackedEntity implements ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerTrackedEntity { // Paper - optimise entity tracker
          public final ServerEntity serverEntity;
@@ -485,37 +497,232 @@
          private final int range;
          SectionPos lastSectionPos;
 -        public final Set<ServerPlayerConnection> seenBy = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(); // Paper - Perf: optimise map impl
-+        public final Set<ServerPlayerConnection> seenBy = Sets.newConcurrentHashSet(); // Paper - Perf: optimise map impl // Canvas - threaded tracker, and make this concurrent-compatible for threaded dimensions
++        // Canvas start - threaded tracker
++        public static final ServerPlayerConnection[] EMPTY_OBJECT_ARRAY = new ServerPlayerConnection[0];
++        private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<ServerPlayerConnection> nonSyncSeenBy = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>() {
++            @Override
++            public boolean add(ServerPlayerConnection serverPlayerConnection) {
++                seenByUpdated = true;
++                return super.add(serverPlayerConnection);
++            }
++
++            @Override
++            public boolean remove(Object k) {
++                seenByUpdated = true;
++                return super.remove(k);
++            }
++
++            @Override
++            public void clear() {
++                seenByUpdated = true;
++                super.clear();
++            }
++        };
++        public final Set<ServerPlayerConnection> seenBy = io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.enabled ? it.unimi.dsi.fastutil.objects.ReferenceSets.synchronize(nonSyncSeenBy) : nonSyncSeenBy; // Paper - Perf: optimise map impl
++        private volatile boolean seenByUpdated = true;
++        private volatile ServerPlayerConnection[] seenByArray = EMPTY_OBJECT_ARRAY;
++        public ServerPlayerConnection[] seenBy() {
++            if (!seenByUpdated) {
++                return seenByArray;
++            } else {
++                return seenBy.toArray(EMPTY_OBJECT_ARRAY);
++            }
++        }
++        public void seenByUpdated() {
++            this.seenByArray = this.seenBy.toArray(EMPTY_OBJECT_ARRAY);
++            seenByUpdated = false;
++        }
++        // Canvas end - threaded tracker
  
          // Paper start - optimise entity tracker
          private long lastChunkUpdate = -1L;
-@@ -1172,6 +_,7 @@
+@@ -1169,28 +_,97 @@
+             this.lastTrackedChunk = chunk;
  
-             for (int i = 0, len = players.size(); i < len; ++i) {
+             final ServerPlayer[] playersRaw = players.getRawDataUnchecked();
+-
+-            for (int i = 0, len = players.size(); i < len; ++i) {
++            final int playersLength = Math.min(playersRaw.length, players.size()); // Canvas - threaded tracker
++            for (int i = 0; i < playersLength; ++i) { // Canvas - threaded tracker
                  final ServerPlayer player = playersRaw[i];
 +                if (player == null) continue; // Canvas - caution ref lists
                  this.updatePlayer(player);
              }
  
-@@ -1190,7 +_,7 @@
+             if (lastChunkUpdate != currChunkUpdate || lastTrackedChunk != chunk) {
+                 // need to purge any players possible not in the chunk list
+-                for (final ServerPlayerConnection conn : new java.util.ArrayList<>(this.seenBy)) {
++                // Canvas start - threaded tracker
++                boolean removed = false;
++                for (final ServerPlayerConnection conn : this.seenBy()) {
+                     final ServerPlayer player = conn.getPlayer();
+                     if (!players.contains(player)) {
+-                        this.removePlayer(player);
+-                    }
+-                }
+-            }
+-        }
++                        removed |= this.removePlayerMulti(player);
++                    }
++                }
++                if (removed) {
++                    this.seenByUpdated();
++                }
++            }
++        }
++        // Canvas end - threaded tracker
++
++        // Canvas start - threaded tracker
++        public final @Nullable Runnable leafTickCompact(final ca.spottedleaf.moonrise.common.misc.NearbyPlayers.TrackedChunk chunk) {
++            if (chunk == null) {
++                this.moonrise$clearPlayers();
++                return null;
++            }
++
++            final ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> players = chunk.getPlayers(ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.VIEW_DISTANCE);
++
++            if (players == null) {
++                this.moonrise$clearPlayers();
++                return null;
++            }
++
++            final long lastChunkUpdate = this.lastChunkUpdate;
++            final long currChunkUpdate = chunk.getUpdateCount();
++            final ca.spottedleaf.moonrise.common.misc.NearbyPlayers.TrackedChunk lastTrackedChunk = this.lastTrackedChunk;
++            this.lastChunkUpdate = currChunkUpdate;
++            this.lastTrackedChunk = chunk;
++
++            final ServerPlayer[] playersRaw = players.getRawDataUnchecked();
++            final int playersLen = players.size(); // Ensure length won't change in the future tasks
++
++            if (!io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.enabled || !io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.compatModeEnabled) {
++                throw new IllegalStateException();
++            }
++            final boolean isServerPlayer = this.entity instanceof ServerPlayer;
++            final boolean isRealPlayer = isServerPlayer && ((ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer) this.entity).moonrise$isRealPlayer();
++            Runnable updatePlayerTasks = () -> {
++                for (int i = 0; i < playersLen; ++i) {
++                    final ServerPlayer player = playersRaw[i];
++                    this.updatePlayer(player);
++                }
++
++                if (lastChunkUpdate != currChunkUpdate || lastTrackedChunk != chunk) {
++                    // need to purge any players possible not in the chunk list
++                    boolean removed = false;
++                    for (final ServerPlayerConnection conn : this.seenBy()) {
++                        final ServerPlayer player = conn.getPlayer();
++                        if (!players.contains(player)) {
++                            removed |= this.removePlayerMulti(player);
++                        }
++                    }
++                    if (removed) {
++                        this.seenByUpdated();
++                    }
++                }
++            };
++
++            // Only update asynchronously for real player, and sync update for fake players
++            // This can fix compatibility issue with NPC plugins using real entity type, like Citizens
++            // To prevent visible issue with player type NPCs
++            // btw, still recommend to use packet based NPC plugins, like ZNPC Plus, Adyeshach, Fancy NPC, etc.
++            if (isRealPlayer || !isServerPlayer) {
++                return updatePlayerTasks;
++            } else {
++                updatePlayerTasks.run();
++                return null;
++            }
++        }
++        // Canvas end - threaded tracker
+ 
+         @Override
          public final void moonrise$removeNonTickThreadPlayers() {
              boolean foundToRemove = false;
-             for (final ServerPlayerConnection conn : this.seenBy) {
+-            for (final ServerPlayerConnection conn : this.seenBy) {
 -                if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(conn.getPlayer())) {
++            for (final ServerPlayerConnection conn : this.seenBy()) { // Canvas - threaded tracker
 +                if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(conn.getPlayer())) { // Canvas - Threaded Regions
                      foundToRemove = true;
                      break;
                  }
-@@ -1202,7 +_,7 @@
+@@ -1200,12 +_,13 @@
+                 return;
+             }
  
-             for (final ServerPlayerConnection conn : new java.util.ArrayList<>(this.seenBy)) {
+-            for (final ServerPlayerConnection conn : new java.util.ArrayList<>(this.seenBy)) {
++            for (final ServerPlayerConnection conn : this.seenBy()) { // Canvas - threaded tracker
                  ServerPlayer player = conn.getPlayer();
 -                if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(player)) {
+-                    this.removePlayer(player);
 +                if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(player)) { // Canvas - Threaded Regions
-                     this.removePlayer(player);
++                    this.removePlayerMulti(player); // Canvas - threaded tracker
                  }
              }
-@@ -1302,7 +_,7 @@
++            this.seenByUpdated(); // Canvas - threaded tracker
+         }
+ 
+         @Override
+@@ -1215,10 +_,11 @@
+             if (this.seenBy.isEmpty()) {
+                 return;
+             }
+-            for (final ServerPlayerConnection conn : new java.util.ArrayList<>(this.seenBy)) {
++            for (final ServerPlayerConnection conn : this.seenBy()) { // Canvas - threaded tracker
+                 ServerPlayer player = conn.getPlayer();
+-                this.removePlayer(player);
++                this.removePlayerMulti(player); // Canvas - threaded tracker
+             }
++            this.seenByUpdated(); // Canvas - threaded tracker
+         }
+ 
+         @Override
+@@ -1245,7 +_,7 @@
+         }
+ 
+         public void broadcast(Packet<?> packet) {
+-            for (ServerPlayerConnection serverPlayerConnection : this.seenBy) {
++            for (ServerPlayerConnection serverPlayerConnection : this.seenBy()) { // Canvas - threaded tracker
+                 serverPlayerConnection.send(packet);
+             }
+         }
+@@ -1266,21 +_,34 @@
+         }
+ 
+         public void broadcastRemoved() {
+-            for (ServerPlayerConnection serverPlayerConnection : this.seenBy) {
++            for (ServerPlayerConnection serverPlayerConnection : this.seenBy()) { // Canvas - threaded tracker
+                 this.serverEntity.removePairing(serverPlayerConnection.getPlayer());
+             }
+         }
+ 
++        // Canvas start - threaded tracker
++        public boolean removePlayerMulti(ServerPlayer player) {
++            if (this.seenBy.remove(player.connection)) {
++                this.serverEntity.removePairing(player);
++                return true;
++            } else {
++                return false;
++            }
++        }
++        // Canvas end - threaded tracker
++
+         public void removePlayer(ServerPlayer player) {
+-            org.spigotmc.AsyncCatcher.catchOp("player tracker clear"); // Spigot
++            //org.spigotmc.AsyncCatcher.catchOp("player tracker clear"); // Spigot // Canvas - threaded tracker - We can remove async too
+             if (this.seenBy.remove(player.connection)) {
+                 this.serverEntity.removePairing(player);
+             }
++            this.seenByUpdated(); // Canvas - threaded tracker
+         }
+ 
+         public void updatePlayer(ServerPlayer player) {
+-            org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot
++            //org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot // Canvas - threaded tracker - We can update async
+             if (player != this.entity) {
++                if (io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.enabled && player == null) return; // Canvas - threaded tracker
+                 // Paper start - remove allocation of Vec3D here
+                 // Vec3 vec3 = player.position().subtract(this.entity.position());
+                 double vec3_dx = player.getX() - this.entity.getX();
+@@ -1302,12 +_,13 @@
                  flag = flag && this.entity.broadcastToPlayer(player) && ChunkMap.this.isChunkTracked(player, this.entity.chunkPosition().x, this.entity.chunkPosition().z);
                  // Paper end - Configurable entity tracking range by Y
                  // CraftBukkit start - respect vanish API
@@ -524,3 +731,17 @@
                      flag = false;
                  }
                  // CraftBukkit end
+                 if (flag) {
+                     if (this.seenBy.add(player.connection)) {
++                        this.seenByUpdated(); // Canvas - threaded tracker
+                         // Paper start - entity tracking events
+                         if (io.papermc.paper.event.player.PlayerTrackEntityEvent.getHandlerList().getRegisteredListeners().length == 0 || new io.papermc.paper.event.player.PlayerTrackEntityEvent(player.getBukkitEntity(), this.entity.getBukkitEntity()).callEvent()) {
+                         this.serverEntity.addPairing(player);
+@@ -1316,6 +_,7 @@
+                         this.serverEntity.onPlayerAdd(); // Paper - fix desync when a player is added to the tracker
+                     }
+                 } else if (this.seenBy.remove(player.connection)) {
++                    this.seenByUpdated(); // Canvas - threaded tracker
+                     this.serverEntity.removePairing(player);
+                 }
+             }
