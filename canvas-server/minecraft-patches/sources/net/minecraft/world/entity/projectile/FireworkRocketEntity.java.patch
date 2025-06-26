@@ -7,6 +7,18 @@
  import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
  import java.util.List;
  import java.util.OptionalInt;
+@@ -137,6 +_,11 @@
+                     }
+                 });
+             }
++            // Canvas start - Threaded Regions
++            if (this.attachedToEntity != null && !io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.attachedToEntity)) {
++                this.attachedToEntity = null;
++            }
++            // Canvas end
+ 
+             if (this.attachedToEntity != null) {
+                 Vec3 handHoldingItemAngle;
 @@ -354,4 +_,14 @@
          double d1 = entity.position().z - this.position().z;
          return DoubleDoubleImmutablePair.of(d, d1);

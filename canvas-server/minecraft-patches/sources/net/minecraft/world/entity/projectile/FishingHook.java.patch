@@ -17,3 +17,15 @@
      }
  
      public FishingHook(EntityType<? extends FishingHook> entityType, Level level) {
+@@ -259,6 +_,11 @@
+     }
+ 
+     private boolean shouldStopFishing(Player player) {
++        // Canvas start - Threaded Regions
++        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(player)) {
++            return true;
++        }
++        // Canvas end
+         ItemStack mainHandItem = player.getMainHandItem();
+         ItemStack offhandItem = player.getOffhandItem();
+         boolean isFishingRod = mainHandItem.is(Items.FISHING_ROD);

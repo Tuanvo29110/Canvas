@@ -436,6 +436,15 @@
  
      public float getThunderLevel(float partialTick) {
          return Mth.lerp(partialTick, this.oThunderLevel, this.thunderLevel) * this.getRainLevel(partialTick);
+@@ -2025,7 +_,7 @@
+     public void updateNeighbourForOutputSignal(BlockPos pos, Block block) {
+         for (Direction direction : Direction.Plane.HORIZONTAL) {
+             BlockPos blockPos = pos.relative(direction);
+-            if (this.hasChunkAt(blockPos)) {
++            if (io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this, blockPos, 16) && this.hasChunkAt(blockPos)) { // Canvas - block updates in unloaded chunks
+                 BlockState blockState = this.getBlockState(blockPos);
+                 if (blockState.is(Blocks.COMPARATOR)) {
+                     this.neighborChanged(blockState, blockPos, block, null, false);
 @@ -2183,4 +_,17 @@
          return getWorld().getEnvironment() == org.bukkit.World.Environment.THE_END;
      }

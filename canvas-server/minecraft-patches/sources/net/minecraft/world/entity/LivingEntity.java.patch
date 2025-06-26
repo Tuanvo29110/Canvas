@@ -224,6 +224,19 @@
              if (inBlockState.is(BlockTags.CLIMBABLE)) {
                  this.lastClimbablePos = Optional.of(blockPos);
                  return true;
+@@ -2541,10 +_,10 @@
+ 
+     @Nullable
+     public LivingEntity getKillCredit() {
+-        if (this.lastHurtByPlayer != null) {
++        if (this.lastHurtByPlayer != null && io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.lastHurtByPlayer.getEntity(this.level(), Player.class))) { // Canvas - Threaded Regions
+             return this.lastHurtByPlayer.getEntity(this.level(), Player.class);
+         } else {
+-            return this.lastHurtByMob != null ? this.lastHurtByMob.getEntity(this.level(), LivingEntity.class) : null;
++            return this.lastHurtByMob != null && io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.lastHurtByMob.getEntity(this.level(), LivingEntity.class)) ? this.lastHurtByMob.getEntity(this.level(), LivingEntity.class) : null; // Canvas - Threaded Regions
+         }
+     }
+ 
 @@ -2623,7 +_,7 @@
          }
  
@@ -396,3 +409,12 @@
              return itemEntity;
          }
      }
+@@ -4323,7 +_,7 @@
+         boolean flag = false;
+         BlockPos blockPos = BlockPos.containing(x, y, z);
+         Level level = this.level();
+-        if (level.hasChunkAt(blockPos)) {
++        if (io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(level, blockPos) && level.hasChunkAt(blockPos)) { // Canvas - Threaded Regions
+             boolean flag1 = false;
+ 
+             while (!flag1 && blockPos.getY() > level.getMinY()) {

@@ -1,5 +1,18 @@
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
+@@ -396,10 +_,10 @@
+     @Override
+     public boolean isChunkGenerated(int x, int z) {
+         // Paper start - Fix this method
+-        if (!Bukkit.isPrimaryThread()) {
++        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.getHandle(), x, z)) { // Canvas - Threaded Regions
+             return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                 return CraftWorld.this.isChunkGenerated(x, z);
+-            }, world.getChunkSource().mainThreadProcessor).join();
++            }, (run) -> { this.server.getServer().threadedServer().taskQueue.queueChunkTask(this.getHandle(), x, z, run);}).join(); // Canvas - Threaded Regions
+         }
+         ChunkAccess chunk = world.getChunkSource().getChunkAtImmediately(x, z);
+         if (chunk != null) {
 @@ -407,7 +_,7 @@
          }
          final java.util.concurrent.CompletableFuture<ChunkAccess> future = new java.util.concurrent.CompletableFuture<>();

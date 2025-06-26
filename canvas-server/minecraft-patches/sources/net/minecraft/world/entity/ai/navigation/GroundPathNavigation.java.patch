@@ -26,3 +26,15 @@
          return new PathFinder(this.nodeEvaluator, maxVisitedNodes);
      }
  
+@@ -42,6 +_,11 @@
+ 
+     @Override
+     public Path createPath(BlockPos pos, @javax.annotation.Nullable Entity entity, int accuracy) { // Paper - EntityPathfindEvent
++        // Canvas start - Threaded Regions
++        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.level, pos)) {
++            return null;
++        }
++        // Canvas end
+         LevelChunk chunkNow = this.level.getChunkSource().getChunkNow(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
+         if (chunkNow == null) {
+             return null;

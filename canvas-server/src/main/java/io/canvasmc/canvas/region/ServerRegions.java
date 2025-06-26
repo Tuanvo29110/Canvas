@@ -1,6 +1,7 @@
 package io.canvasmc.canvas.region;
 
 import alternate.current.wire.WireHandler;
+import ca.spottedleaf.concurrentutil.completable.CallbackCompletable;
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
 import ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap;
@@ -29,10 +30,8 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +81,7 @@ import net.minecraft.world.ticks.LevelTicks;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -235,7 +235,10 @@ public class ServerRegions {
         return isTickThreadFor(world, net.minecraft.util.Mth.floor(pos.x) >> 4, net.minecraft.util.Mth.floor(pos.z) >> 4);
     }
 
-    public static boolean isTickThreadFor(final @NotNull Entity entity) {
+    public static boolean isTickThreadFor(final @Nullable Entity entity) {
+        if (entity == null) {
+            return true;
+        }
         if (entity.level().server.hasStopped() && Thread.currentThread().equals(entity.level().server.shutdownThread)) return true;
         if (!entity.level().server.isRegionized()) return isTickThreadNonRegionized(entity.level());
         WorldTickData tickData = pullLocalTickDataSoft();
@@ -334,6 +337,68 @@ public class ServerRegions {
             return false;
         }
         return regionAt1 == regionAt2;
+    }
+
+    public static <T extends Entity> void teleport(final T from, final boolean useFromRootVehicle, final Entity to, final Float yaw, final Float pitch,
+                                                   final PlayerTeleportEvent.TeleportCause cause, final Consumer<Entity> onComplete,
+                                                   final java.util.function.Predicate<T> preTeleport) {
+        // retrieve coordinates
+        final CallbackCompletable<Location> positionCompletable = new CallbackCompletable<>();
+
+        positionCompletable.addWaiter(
+            (final Location loc, final Throwable thr) -> {
+                if (loc == null) {
+                    if (onComplete != null) {
+                        onComplete.accept(null);
+                    }
+                    return;
+                }
+                final boolean scheduled = from.getBukkitEntity().taskScheduler.schedule(
+                    (final T realFrom) -> {
+                        final Vec3 pos = new Vec3(
+                            loc.getX(), loc.getY(), loc.getZ()
+                        );
+                        if (preTeleport != null && !preTeleport.test(realFrom)) {
+                            if (onComplete != null) {
+                                onComplete.accept(null);
+                            }
+                            return;
+                        }
+                        (useFromRootVehicle ? realFrom.getRootVehicle() : realFrom).getBukkitEntity().teleportAsync(
+                            loc, cause
+                        ).thenAccept((_) -> onComplete.accept((useFromRootVehicle ? realFrom.getRootVehicle() : realFrom)));
+                    },
+                    (final Entity retired) -> {
+                        if (onComplete != null) {
+                            onComplete.accept(null);
+                        }
+                    },
+                    1L
+                );
+                if (!scheduled) {
+                    if (onComplete != null) {
+                        onComplete.accept(null);
+                    }
+                }
+            }
+        );
+
+        final boolean scheduled = to.getBukkitEntity().taskScheduler.schedule(
+            (final Entity target) -> {
+                positionCompletable.complete(target.getBukkitEntity().getLocation());
+            },
+            (final Entity retired) -> {
+                if (onComplete != null) {
+                    onComplete.accept(null);
+                }
+            },
+            1L
+        );
+        if (!scheduled) {
+            if (onComplete != null) {
+                onComplete.accept(null);
+            }
+        }
     }
 
     public static final class TickRegionSectionData implements ThreadedRegionizer.ThreadedRegionSectionData {

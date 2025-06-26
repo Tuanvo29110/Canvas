@@ -1,0 +1,20 @@
+--- a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
++++ b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
+@@ -1940,6 +_,17 @@
+ 
+         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
+             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
++                // Canvas start - Threaded Regions
++                if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(world, currChunkX, currChunkZ, 4)) {
++                    if (checkOnly) {
++                        return true;
++                    } else {
++                        intoAABB.add(getBoxForChunk(currChunkX, currChunkZ));
++                        ret = true;
++                        continue;
++                    }
++                }
++                // Canvas end
+                 final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, loadChunks);
+ 
+                 if (chunk == null) {

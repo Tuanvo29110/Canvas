@@ -133,7 +133,7 @@
  
      @Override
      public final boolean moonrise$isHardColliding() {
-@@ -526,23 +_,45 @@
+@@ -526,23 +_,48 @@
      // Purpur end - Add canSaveToDisk to Entity
  
      // Purpur start - copied from Mob - API for any mob to burn daylight
@@ -183,6 +183,9 @@
 +        }
 +    }
 +
++    public boolean canBeSpectated() {
++        return !this.getBukkitEntity().taskScheduler.isRetired();
++    }
 +    // Canvas end
      public Entity(EntityType<?> entityType, Level level) {
          this.type = entityType;
@@ -937,7 +940,7 @@
 +        try {
 +            final org.bukkit.craftbukkit.entity.CraftEntity bukkit = this.getBukkitEntityRaw();
 +            if (bukkit != null) {
-+                if (this.isRemoved()) {
++                if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this) || this.isRemoved()) {
 +                    return; // already removed, return.
 +                }
 +                bukkit.taskScheduler.executeTick();

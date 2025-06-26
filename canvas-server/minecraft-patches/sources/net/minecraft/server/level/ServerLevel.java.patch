@@ -200,6 +200,18 @@
      private final StructureManager structureManager;
      private final StructureCheck structureCheck;
      private final boolean tickTime;
+@@ -242,6 +_,11 @@
+         int minChunkZ = minBlockZ >> 4;
+         int maxChunkZ = maxBlockZ >> 4;
+ 
++        // Canvas start - Threaded Regions
++        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this, minChunkX, minChunkZ, maxChunkX, maxChunkZ)) {
++            return false;
++        }
++        // Canvas end
+         ServerChunkCache chunkProvider = this.getChunkSource();
+ 
+         for (int cx = minChunkX; cx <= maxChunkX; ++cx) {
 @@ -289,6 +_,7 @@
      }
      // Paper end - optimise getPlayerByUUID
@@ -494,7 +506,7 @@
          }
  
          int _int = this.getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
-@@ -767,53 +_,92 @@
+@@ -767,53 +_,103 @@
          if (runsNormally) {
              this.tickTime();
          }
@@ -579,8 +591,19 @@
 -            profilerFiller.push("entities");
              if (this.dragonFight != null && runsNormally) {
 -                profilerFiller.push("dragonFight");
++                // Canvas start - Threaded Regions
++                if (io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this, this.dragonFight.origin)) {
                  this.dragonFight.tick();
 -                profilerFiller.pop();
++                } else {
++                    // try to load dragon fight
++                    ChunkPos fightCenter = new ChunkPos(this.dragonFight.origin);
++                    this.moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(
++                        TicketType.UNKNOWN, fightCenter, ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL,
++                        null
++                    );
++                }
++                // Canvas end
              }
  
              io.papermc.paper.entity.activation.ActivationRange.activateEntities(this); // Paper - EAR
@@ -878,7 +901,7 @@
          }
          // Paper end - rewrite chunk system
  
-@@ -1336,59 +_,53 @@
+@@ -1336,62 +_,68 @@
  
      // Paper start - log detailed entity tick information
      // TODO replace with varhandle
@@ -914,6 +937,12 @@
          final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
          if (isActive) { // Paper - EAR 2
          entity.tick();
++        // Canvas start - Threaded Regions
++        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(entity)) {
++            // removed from region while ticking
++            return;
++        }
++        // Canvas end
          entity.postTick(); // CraftBukkit
          } else {entity.inactiveTick();} // Paper - EAR 2
 -        profilerFiller.pop();
@@ -946,6 +975,15 @@
              // Paper start - EAR 2
              if (isActive) {
              passengerEntity.rideTick();
++            // Canvas start - Threaded Regions
++            if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(passengerEntity)) {
++                // removed from region while ticking
++                return;
++            }
++            // Canvas end
+             passengerEntity.postTick(); // CraftBukkit
+             } else {
+                 passengerEntity.setDeltaMovement(Vec3.ZERO);
 @@ -1400,7 +_,6 @@
                  ridingEntity.positionRider(passengerEntity);
              }

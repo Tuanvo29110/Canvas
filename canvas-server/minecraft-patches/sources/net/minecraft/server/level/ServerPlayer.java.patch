@@ -56,6 +56,57 @@
  
              for (int i1 = 0; i1 < i; i1++) {
                  int i2 = (randomInt + coprime * i1) % i;
+@@ -772,12 +_,24 @@
+ 
+         Entity camera = this.getCamera();
+         if (camera != this) {
+-            if (camera.isAlive()) {
++            if (camera.canBeSpectated()) { // Canvas - Threaded Regions - replace removed check
++                if (io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(camera) && !camera.isRemoved()) { // Canvas - Threaded Regions
+                 this.absSnapTo(camera.getX(), camera.getY(), camera.getZ(), camera.getYRot(), camera.getXRot());
+                 this.serverLevel().getChunkSource().move(this);
+                 if (this.wantsToStopRiding()) {
+                     this.setCamera(this);
+                 }
++                // Canvas start - Threaded Regions
++                } else {
++                    Entity realCamera = camera.getBukkitEntity().getHandleRaw();
++                    if (realCamera != camera) {
++                        this.setCamera(this);
++                        this.setCamera(realCamera);
++                    } else {
++                        this.teleportToCameraOffRegion();
++                    }
++                }
++                // Canvas end
+             } else {
+                 this.setCamera(this);
+             }
+@@ -802,6 +_,24 @@
+         }
+         // Purpur end - Ridables
+     }
++    // Canvas start - Threaded Regions
++
++    private void teleportToCameraOffRegion() {
++        Entity cameraFinal = this.getCamera();
++        // use the task scheduler, as we don't know where the caller is invoking from
++        if (this != cameraFinal) {
++            this.getBukkitEntity().taskScheduler.schedule((final ServerPlayer newPlayer) -> {
++                io.canvasmc.canvas.region.ServerRegions.teleport(
++                    newPlayer, false, cameraFinal, null, null,
++                    org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.SPECTATE, null,
++                    (final ServerPlayer newerPlayer) -> {
++                        return newerPlayer.camera == cameraFinal;
++                    }
++                );
++            }, null, 1L);
++        } // else: do not bother teleporting to self
++    }
++    // Canvas end
+ 
+     private void updatePlayerAttributes() {
+         AttributeInstance attribute = this.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
 @@ -826,15 +_,22 @@
      public void doTick() {
          try {
@@ -170,3 +221,42 @@
                  this.stopRiding();
                  EnchantmentHelper.stopLocationBasedEffects(this);
              } else {
+@@ -2464,6 +_,11 @@
+     }
+ 
+     public void setCamera(@Nullable Entity entityToSpectate) {
++        // Canvas start - Threaded Regions
++        if (entityToSpectate != null && (entityToSpectate != this && !entityToSpectate.canBeSpectated())) {
++            return;
++        }
++        // Canvas end
+         Entity camera = this.getCamera();
+         this.camera = (Entity)(entityToSpectate == null ? this : entityToSpectate);
+         if (camera != this.camera) {
+@@ -2482,16 +_,17 @@
+                 }
+             }
+             // Paper end - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
+-            if (this.camera.level() instanceof ServerLevel serverLevel) {
+-                this.teleportTo(serverLevel, this.camera.getX(), this.camera.getY(), this.camera.getZ(), Set.of(), this.getYRot(), this.getXRot(), false, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.SPECTATE); // CraftBukkit
+-            }
+-
+-            if (entityToSpectate != null) {
+-                this.serverLevel().getChunkSource().move(this);
+-            }
+-
++            // Canvas - Threaded Regions - move down && not needed
++
++            // Canvas start - Threaded Regions - handle camera setting better
++            if (this.camera == this
++                || (io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.camera) && this.camera.moonrise$getTrackedEntity() != null
++                && this.camera.moonrise$getTrackedEntity().seenBy.contains(this.connection))) {
+             this.connection.send(new ClientboundSetCameraPacket(this.camera));
+-            this.connection.resetPosition();
++            }
++            // this.connection.resetPosition();
++            this.teleportToCameraOffRegion();
++            // Canvas end
+         }
+     }
+ 

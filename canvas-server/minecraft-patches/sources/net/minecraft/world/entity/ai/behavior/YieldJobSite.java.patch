@@ -1,6 +1,18 @@
 --- a/net/minecraft/world/entity/ai/behavior/YieldJobSite.java
 +++ b/net/minecraft/world/entity/ai/behavior/YieldJobSite.java
-@@ -38,23 +_,26 @@
+@@ -33,28 +_,37 @@
+                         } else if (!villager.getVillagerData().profession().is(VillagerProfession.NONE)) {
+                             return false;
+                         } else {
+-                            BlockPos blockPos = instance.<GlobalPos>get(potentialJobSite).pos();
++                            // Canvas start - Threaded Regions
++                            GlobalPos globalPos = instance.get(potentialJobSite);
++                            BlockPos blockPos = globalPos.pos();
++                            if (globalPos.dimension() != level.dimension() || !io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(level, blockPos)) {
++                                return true;
++                            }
++                            // Canvas end
+                             Optional<Holder<PoiType>> type = level.getPoiManager().getType(blockPos);
                              if (type.isEmpty()) {
                                  return true;
                              } else {
