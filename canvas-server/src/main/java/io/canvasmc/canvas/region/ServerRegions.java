@@ -52,6 +52,7 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.VisibleForDebug;
 import net.minecraft.world.entity.Entity;
@@ -146,6 +147,14 @@ public class ServerRegions {
         throw new NullPointerException("cannot locate local world data when not on tick runner");
     }
 
+    public static @Nullable ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> pullLocalRegionSoft() {
+        Thread current = Thread.currentThread();
+        if (current instanceof TickScheduler.TickRunner runner) {
+            return runner.threadLocalRegion;
+        }
+        return null;
+    }
+
     public static @NotNull ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> pullLocalRegion() {
         Thread current = Thread.currentThread();
         if (current instanceof TickScheduler.TickRunner runner) {
@@ -229,21 +238,32 @@ public class ServerRegions {
     public static boolean isTickThreadFor(final @NotNull Entity entity) {
         if (entity.level().server.hasStopped() && Thread.currentThread().equals(entity.level().server.shutdownThread)) return true;
         if (!entity.level().server.isRegionized()) return isTickThreadNonRegionized(entity.level());
-        if (ServerRegions.getTickData(entity.level().level()).hasEntity(entity)) {
+        WorldTickData tickData = pullLocalTickDataSoft();
+        if (tickData == null) {
+            // not running on a thread runner
+            return false;
+        }
+
+        if (tickData.hasEntity(entity)) {
             return true;
         }
-        return isTickThreadFor(entity.level(), entity.chunkPosition().x, entity.chunkPosition().z);
+
+        if (entity instanceof ServerPlayer serverPlayer) {
+            ServerGamePacketListenerImpl conn = serverPlayer.connection;
+            return tickData.connections.contains(conn.connection);
+        } else {
+            return isTickThreadFor(entity.level(), entity.chunkPosition().x, entity.chunkPosition().z);
+        }
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final int chunkX, final int chunkZ) {
         if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
-        final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region =
-            ServerRegions.getTickData((ServerLevel) world).region;
+        final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region = pullLocalRegionSoft();
         if (region == null) {
             return false;
         }
-        return ((net.minecraft.server.level.ServerLevel) world).regioniser.getRegionAtUnsynchronised(chunkX, chunkZ) == region;
+        return ((ServerLevel) world).regioniser.getRegionAtUnsynchronised(chunkX, chunkZ) == region;
     }
 
     public static boolean isTickThreadFor(final @NotNull Level world, final int chunkX, final int chunkZ, final int radius) {
@@ -255,8 +275,7 @@ public class ServerRegions {
     public static boolean isTickThreadFor(final @NotNull Level world, final int fromChunkX, final int fromChunkZ, final int toChunkX, final int toChunkZ) {
         if (world.server.hasStopped() && Thread.currentThread().equals(world.server.shutdownThread)) return true;
         if (!world.server.isRegionized()) return isTickThreadNonRegionized(world);
-        final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region =
-            ServerRegions.getTickData((ServerLevel) world).region;
+        final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region = pullLocalRegionSoft();
         if (region == null) {
             return false;
         }

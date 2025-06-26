@@ -35,9 +35,18 @@ import net.minecraft.Util;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.AABB;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.craftbukkit.entity.CraftEntity;
+import org.bukkit.craftbukkit.util.CraftLocation;
+import org.bukkit.craftbukkit.util.CraftVector;
+import org.bukkit.entity.Entity;
+import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -77,6 +86,71 @@ public class ThreadedServer implements ThreadedBukkitServer {
     public @Nullable Region getRegionAtChunk(final @NotNull World world, final int chunkX, final int chunkZ) {
         ThreadedRegionizer.ThreadedRegion<ServerRegions.TickRegionData, ServerRegions.TickRegionSectionData> region = ((CraftWorld) world).getHandle().regioniser.getRegionAtUnsynchronised(chunkX, chunkZ);
         return region == null ? null : region.getData();
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull World world, final @NotNull BoundingBox aabb) {
+        ServerLevel level = ((CraftWorld) world).getHandle();
+        return ServerRegions.isTickThreadFor(level,
+            new AABB(CraftVector.toVec3(aabb.getMax()), CraftVector.toVec3(aabb.getMin()))
+        );
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull World world, final double blockX, final double blockZ) {
+        ServerLevel level = ((CraftWorld) world).getHandle();
+        return ServerRegions.isTickThreadFor(level, blockX, blockZ);
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull World world, final Location position, final @NotNull Vector deltaMovement, final int buffer) {
+        ServerLevel level = ((CraftWorld) world).getHandle();
+        return ServerRegions.isTickThreadFor(level, CraftLocation.toVec3(position), CraftVector.toVec3(deltaMovement), buffer);
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull World world, final @NotNull Location pos) {
+        ServerLevel level = ((CraftWorld) world).getHandle();
+        return ServerRegions.isTickThreadFor(level, CraftLocation.toBlockPosition(pos));
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull World world, final @NotNull Location pos, final int blockRadius) {
+        ServerLevel level = ((CraftWorld) world).getHandle();
+        return ServerRegions.isTickThreadFor(level, CraftLocation.toBlockPosition(pos), blockRadius);
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull World world, final @NotNull Chunk chunk) {
+        return isTickThreadFor(world, chunk.getX(), chunk.getZ());
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull Entity entity) {
+        return ServerRegions.isTickThreadFor(((CraftEntity) entity).getHandle());
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull World world, final int chunkX, final int chunkZ) {
+        ServerLevel level = ((CraftWorld) world).getHandle();
+        return ServerRegions.isTickThreadFor(level, chunkX, chunkZ);
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull World world, final int chunkX, final int chunkZ, final int radius) {
+        ServerLevel level = ((CraftWorld) world).getHandle();
+        return ServerRegions.isTickThreadFor(level, chunkX, chunkZ, radius);
+    }
+
+    @Override
+    public boolean isTickThreadFor(final @NotNull World world, final int fromChunkX, final int fromChunkZ, final int toChunkX, final int toChunkZ) {
+        ServerLevel level = ((CraftWorld) world).getHandle();
+        return ServerRegions.isTickThreadFor(level, fromChunkX, fromChunkZ, toChunkX, toChunkZ);
+    }
+
+    @Override
+    public boolean isSameRegion(@NotNull final Location location1, @NotNull final Location location2) {
+        return ServerRegions.isSameRegion(location1, location2);
     }
 
     public boolean hasStarted() {
