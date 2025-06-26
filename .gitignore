@@ -31,7 +31,6 @@ build.xml
 
 # Maven
 log/
-target/
 dependency-reduced-pom.xml
 
 # various other potential build files
