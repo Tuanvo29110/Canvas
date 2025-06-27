@@ -24,7 +24,7 @@
  import org.slf4j.Logger;
  
  public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketListenerImpl implements ServerConfigurationPacketListener, TickablePacketListener {
-@@ -159,8 +_,44 @@
+@@ -159,8 +_,41 @@
                  return;
              }
  
@@ -34,7 +34,6 @@
 +            final ServerLevel world = this.player.serverLevel();
 +            // place ticket
 +            LOGGER.info("Placing ticket for login and queuing placement task for player '{}'", this.player.getName().getString());
-+            this.player.dontPlaceTeleportTicket = true;
              ServerPlayer playerForLogin = playerList.getPlayerForLogin(this.gameProfile, this.clientInformation, this.player); // CraftBukkit
 -            playerList.placeNewPlayer(this.connection, playerForLogin, this.createCookie(this.clientInformation));
 +            Runnable placementTask = () -> {
@@ -44,13 +43,11 @@
 +                    this.player.getBukkitEntity().taskScheduler.schedule((_) -> {
 +                        LOGGER.error("Unable to load new player, removing login ticket", e);
 +                        world.getChunkSource().updateRegionTicket(player.chunkPosition(), false, TicketType.LOGIN);
-+                        this.player.dontPlaceTeleportTicket = false;
 +                    }, null, 0);
 +                } finally {
 +                    this.player.getBukkitEntity().taskScheduler.schedule((_) -> {
 +                        LOGGER.info("Finished placing new player, removing login ticket");
 +                        world.getChunkSource().updateRegionTicket(player.chunkPosition(), false, TicketType.LOGIN);
-+                        this.player.dontPlaceTeleportTicket = false;
 +                    }, null, 0);
 +                }
 +            };
