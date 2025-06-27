@@ -29,15 +29,6 @@
              this.broadcastWithIgnore.accept(new ClientboundSetPassengersPacket(this.entity), list);
              // Paper start - Allow riding players
              if (this.entity instanceof ServerPlayer player) {
-@@ -134,7 +_,7 @@
-                 MapId mapId = itemFrame.cachedMapId; // Paper - Perf: Cache map ids on item frames
-                 MapItemSavedData savedData = MapItem.getSavedData(mapId, this.level);
-                 if (savedData != null) {
--                    for (final net.minecraft.server.network.ServerPlayerConnection connection : this.trackedPlayers) { // Paper
-+                    for (final net.minecraft.server.network.ServerPlayerConnection connection : this.trackedPlayers.toArray(ChunkMap.TrackedEntity.EMPTY_OBJECT_ARRAY)) { // Paper // Canvas - threaded tracker
-                         final ServerPlayer serverPlayer = connection.getPlayer(); // Paper
-                         savedData.tickCarriedBy(serverPlayer, item);
-                         Packet<?> updatePacket = savedData.getUpdatePacket(mapId, serverPlayer);
 @@ -189,22 +_,45 @@
                      packet = ClientboundEntityPositionSyncPacket.of(this.entity);
                      flag3 = true;

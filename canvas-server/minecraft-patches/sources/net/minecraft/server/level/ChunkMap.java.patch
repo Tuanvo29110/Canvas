@@ -78,7 +78,7 @@
      }
  
      private void setChunkUnsaved(ChunkPos chunkPos) {
-@@ -251,14 +_,28 @@
+@@ -251,14 +_,19 @@
  
          final int index = entity.getType().getCategory().ordinal();
          final ca.spottedleaf.moonrise.common.list.ReferenceList<ServerPlayer> inRange =
@@ -90,15 +90,6 @@
          }
  
          final ServerPlayer[] backingSet = inRange.getRawDataUnchecked();
-+        // Canvas start - threaded tracker
-+        if (io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.enabled)
-+            for (int i = 0, len = inRange.size(); i < len; i++) {
-+                final ServerPlayer player = backingSet[i];
-+                if (player == null) continue;
-+                ++(player.mobCounts[index]);
-+            }
-+        else
-+            // Canvas end - threaded tracker
          for (int i = 0, len = inRange.size(); i < len; i++) {
 -            ++(backingSet[i].mobCounts[index]);
 +            // Canvas start - caution ref lists
@@ -706,8 +697,7 @@
 +        // Canvas end - threaded tracker
 +
          public void removePlayer(ServerPlayer player) {
--            org.spigotmc.AsyncCatcher.catchOp("player tracker clear"); // Spigot
-+            //org.spigotmc.AsyncCatcher.catchOp("player tracker clear"); // Spigot // Canvas - threaded tracker - We can remove async too
+             org.spigotmc.AsyncCatcher.catchOp("player tracker clear"); // Spigot
              if (this.seenBy.remove(player.connection)) {
                  this.serverEntity.removePairing(player);
              }
@@ -715,10 +705,9 @@
          }
  
          public void updatePlayer(ServerPlayer player) {
--            org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot
-+            //org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot // Canvas - threaded tracker - We can update async
+             org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot
              if (player != this.entity) {
-+                if (io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.enabled && player == null) return; // Canvas - threaded tracker
++                if (player == null) return; // Canvas - threaded tracker
                  // Paper start - remove allocation of Vec3D here
                  // Vec3 vec3 = player.position().subtract(this.entity.position());
                  double vec3_dx = player.getX() - this.entity.getX();

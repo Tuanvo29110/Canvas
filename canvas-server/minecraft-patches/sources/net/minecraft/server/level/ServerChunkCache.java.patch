@@ -585,7 +585,7 @@
 +                        }
 +                        // not regionized OR we are on global
 +                        serverLevel.taskQueueRegionData.drainGlobalChunkTasks();
-+                        final BooleanSupplier poll = () -> ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel) serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask() | serverLevel.regionTaskQueueData.executeChunkTask();
++                        final BooleanSupplier poll = () -> ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel) serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask() | serverLevel.regionTaskQueueData.executeChunkTask() | super.pollTask();
 +                        return locked ? poll.getAsBoolean() : tryWake(poll);
 +                    } finally {
 +                        ENTITY_OVERRIDE.remove(current);

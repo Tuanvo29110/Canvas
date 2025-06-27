@@ -2,21 +2,20 @@ package io.canvasmc.canvas.entity;
 
 import ca.spottedleaf.moonrise.common.list.ReferenceList;
 import ca.spottedleaf.moonrise.common.misc.NearbyPlayers;
-import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup;
+import ca.spottedleaf.moonrise.common.util.TickThread;
 import ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.canvasmc.canvas.Config;
 import io.canvasmc.canvas.region.ServerRegions;
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.Util;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.FullChunkStatus;
-import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,26 +64,27 @@ public class MultithreadedTracker {
         }
     }
 
-    private static void tickAsync(ServerLevel level) {
-        ServerRegions.WorldTickData tickData = ServerRegions.getTickData(level);
-        final NearbyPlayers nearbyPlayers = tickData.getNearbyPlayers();
-
-        final ReferenceList<Entity> trackerEntities = tickData.trackerEntities;
-        final Entity[] trackerEntitiesRaw = trackerEntities.getRawDataUnchecked();
+    private static void tickAsync(ServerLevel world) {
+        final NearbyPlayers nearbyPlayers = world.moonrise$getNearbyPlayers();
+        final Entity[] trackerEntitiesRaw = ServerRegions.getTickData(world).trackerEntities.getRawDataUnchecked();
 
         // Move tracking to off-main
         TRACKER_EXECUTOR.execute(() -> {
             for (final Entity entity : trackerEntitiesRaw) {
                 if (entity == null) continue;
 
-                final ChunkMap.TrackedEntity tracker = ((EntityTrackerEntity) entity).moonrise$getTrackedEntity();
+                final ChunkMap.TrackedEntity trackedInstance = ((EntityTrackerEntity) entity).moonrise$getTrackedEntity();
+                if (trackedInstance == null) {
+                    continue;
+                }
 
-                if (tracker == null) continue;
-
-                synchronized (tracker) {
-                    var trackedChunk = nearbyPlayers.getChunk(entity.chunkPosition());
-                    tracker.moonrise$tick(trackedChunk);
-                    tracker.serverEntity.sendChanges();
+                synchronized (trackedInstance) {
+                    trackedInstance.moonrise$tick(nearbyPlayers.getChunk(entity.chunkPosition()));
+                    @Nullable FullChunkStatus chunkStatus = ((ca.spottedleaf.moonrise.patches.chunk_system.entity.ChunkSystemEntity) entity).moonrise$getChunkStatus();
+                    if ((trackedInstance).moonrise$hasPlayers()
+                        || (chunkStatus == null || chunkStatus.isOrAfter(FullChunkStatus.ENTITY_TICKING))) {
+                        trackedInstance.serverEntity.sendChanges();
+                    }
                 }
             }
         });
@@ -181,7 +181,7 @@ public class MultithreadedTracker {
         };
     }
 
-    public static class MultithreadedTrackerThread extends Thread {
+    public static class MultithreadedTrackerThread extends TickThread {
 
         public MultithreadedTrackerThread(Runnable runnable) {
             super(runnable);
