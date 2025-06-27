@@ -5,6 +5,8 @@ import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
+import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
 import io.papermc.paper.threadedregions.ThreadedRegionizer;
 import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
@@ -17,8 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
+import net.minecraft.util.Unit;
 
 public final class RegionizedTaskQueue {
+
+    private static final TicketType<Unit> TASK_QUEUE_TICKET = ChunkSystemTicketType.create("task_queue_ticket", (a, b) -> 0);
 
     public PrioritisedExecutor.PrioritisedTask createChunkTask(final ServerLevel world, final int chunkX, final int chunkZ,
                                                                final Runnable run) {
@@ -111,11 +117,15 @@ public final class RegionizedTaskQueue {
         }
 
         private void removeTicket(final long coord) {
-            // removed
+            this.world.moonrise$getChunkTaskScheduler().chunkHolderManager.removeTicketAtLevel(
+                TASK_QUEUE_TICKET, coord, ChunkHolderManager.MAX_TICKET_LEVEL, Unit.INSTANCE
+            );
         }
 
         private void addTicket(final long coord) {
-            // removed
+            this.world.moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(
+                TASK_QUEUE_TICKET, coord, ChunkHolderManager.MAX_TICKET_LEVEL, Unit.INSTANCE
+            );
         }
 
         private void processTicketUpdates(final long coord) {
