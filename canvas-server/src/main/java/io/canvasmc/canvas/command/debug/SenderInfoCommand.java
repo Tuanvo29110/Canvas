@@ -51,16 +51,6 @@ public class SenderInfoCommand implements CommandInstance {
                                     LOGGER.error("{} has {} tasks pending in its main thread processor", fullTick, level.getChunkSource().mainThreadProcessor.getPendingTasksCount());
                                 }
                                 queuedTasks += level.getChunkSource().mainThreadProcessor.getPendingTasksCount();
-                                // public boolean hasNoScheduledTasks() {
-                                //         final long executedTasks = this.executedTasks.get();
-                                //         final long scheduledTasks = this.scheduledTasks.get();
-                                //
-                                //         return executedTasks == scheduledTasks;
-                                //     }
-                                if (((int) (level.moonrise$getChunkTaskScheduler().mainThreadExecutor.getTotalTasksScheduled() - level.moonrise$getChunkTaskScheduler().mainThreadExecutor.getTotalTasksExecuted())) > 0) {
-                                    LOGGER.error("{} has {} tasks pending in its chunk task scheduler", fullTick, (int) (level.moonrise$getChunkTaskScheduler().mainThreadExecutor.getTotalTasksScheduled() - level.moonrise$getChunkTaskScheduler().mainThreadExecutor.getTotalTasksExecuted()));
-                                }
-                                queuedTasks += (int) (level.moonrise$getChunkTaskScheduler().mainThreadExecutor.getTotalTasksScheduled() - level.moonrise$getChunkTaskScheduler().mainThreadExecutor.getTotalTasksExecuted());
                             }
                             if (fullTick instanceof ChunkRegion region) {
                                 if (region.region.getData().tickData.taskQueueData.size() > 0) {

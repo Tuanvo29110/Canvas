@@ -716,7 +716,7 @@
          this.setPosRaw(positionMoveRotation1.position().x, positionMoveRotation1.position().y, positionMoveRotation1.position().z);
          this.setYRot(positionMoveRotation1.yRot());
          this.setYHeadRot(positionMoveRotation1.yRot());
-@@ -3940,6 +_,59 @@
+@@ -3940,6 +_,61 @@
          this.reapplyPosition();
          this.setOldPosAndRot();
          this.setDeltaMovement(positionMoveRotation1.deltaMovement());
@@ -728,6 +728,8 @@
 +            final int chunkX = this.getBlockX() >> 4;
 +            final int chunkZ = this.getBlockZ() >> 4;
 +            destinationWorld.getChunkSource().updateRegionTicket(chunkX, chunkZ, true, TicketType.TELEPORT);
++            // load the chunk we need. this will ensure the region we grab will not be null
++            destinationWorld.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
 +            // add to destination data
 +            Runnable wrap = () -> {
 +                removeFromAllTickData.run(); // run a second time to ensure we are fully removed

@@ -5,7 +5,7 @@
      public static final TicketType PORTAL = register("portal", 300L, true, TicketType.TicketUse.LOADING_AND_SIMULATION);
      public static final TicketType ENDER_PEARL = register("ender_pearl", 40L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
 -    public static final TicketType UNKNOWN = register("unknown", 1L, false, TicketType.TicketUse.LOADING);
-+    public static final TicketType UNKNOWN = register("unknown", 5L, false, TicketType.TicketUse.LOADING); // Canvas - Threaded Regions
++    public static final TicketType UNKNOWN = register("unknown", 20L, false, TicketType.TicketUse.LOADING); // Canvas - Threaded Regions
      public static final TicketType PLUGIN = register("plugin", 0L, false, TicketType.TicketUse.LOADING_AND_SIMULATION); // CraftBukkit
      public static final TicketType POST_TELEPORT = register("post_teleport", 5L, false, TicketType.TicketUse.LOADING_AND_SIMULATION); // Paper
      public static final TicketType PLUGIN_TICKET = register("plugin_ticket", TicketType.NO_TIMEOUT, false, TicketType.TicketUse.LOADING_AND_SIMULATION); static { ((TicketType<org.bukkit.plugin.Plugin>)PLUGIN_TICKET).moonrise$setIdentifierComparator((org.bukkit.plugin.Plugin p1, org.bukkit.plugin.Plugin p2) -> p1.getName().compareTo(p2.getName())); } // Paper // Paper - rewrite chunk system

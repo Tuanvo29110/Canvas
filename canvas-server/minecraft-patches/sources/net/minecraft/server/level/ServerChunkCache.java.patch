@@ -450,7 +450,7 @@
          MainThreadExecutor(final Level level) {
              super("Chunk source main thread executor for " + level.dimension().location());
          }
-@@ -814,20 +_,148 @@
+@@ -814,20 +_,150 @@
  
          @Override
          protected void doRunTask(Runnable task) {
@@ -579,13 +579,15 @@
 +                                // we are on a region, execute our chunk task.
 +                                // unlike Folia, we still can have tasks be submitted to the
 +                                // main thread executor, so we run 'super' poll aswell.
-+                                final BooleanSupplier poll = () -> super.pollTask() | thisData.getTaskQueueData().executeChunkTask();
++                                final BooleanSupplier poll = () -> thisData.getTaskQueueData().executeChunkTask();
 +                                return locked ? poll.getAsBoolean() : tryWake(poll);
 +                            }
 +                        }
 +                        // not regionized OR we are on global
-+                        serverLevel.taskQueueRegionData.drainGlobalChunkTasks();
-+                        final BooleanSupplier poll = () -> ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel) serverChunkCache.level).moonrise$getChunkTaskScheduler().executeMainThreadTask() | serverLevel.regionTaskQueueData.executeChunkTask() | super.pollTask();
++                        serverLevel.runFullTickTasks(() -> false); // run outside 'poll' because this returns if the tick task was canceled, not if it has more tasks
++                        final BooleanSupplier poll = () ->
++                                serverLevel.regionTaskQueueData.executeChunkTask() |
++                                serverLevel.taskQueueRegionData.executeGlobalChunkTask();
 +                        return locked ? poll.getAsBoolean() : tryWake(poll);
 +                    } finally {
 +                        ENTITY_OVERRIDE.remove(current);

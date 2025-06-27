@@ -25,11 +25,6 @@ public class TasksCommand implements CommandInstance {
                         // level data
                         stack.sendSystemMessage(Component.literal("Level - " + level.toString()));
                         stack.sendSystemMessage(Component.literal("Global Tasks: " + level.taskQueueRegionData.globalChunkTask.size()));
-                        final PrioritisedTaskQueue mainThreadExecutor = level.moonrise$getChunkTaskScheduler().mainThreadExecutor;
-                        final long executedTasks = mainThreadExecutor.getTotalTasksExecuted();
-                        final long scheduledTasks = mainThreadExecutor.getTotalTasksScheduled();
-
-                        stack.sendSystemMessage(Component.literal("Main-Thread Tasks: " + (executedTasks - scheduledTasks)));
                         // region data
                         if (level.server.isRegionized()) {
                             stack.sendSystemMessage(Component.literal("Regions:"));
