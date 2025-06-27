@@ -716,7 +716,7 @@
                  // Paper end - Configurable entity tracking range by Y
                  // CraftBukkit start - respect vanish API
 -                if (flag && !player.getBukkitEntity().canSee(this.entity.getBukkitEntity())) { // Paper - only consider hits
-+                if (flag && (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(player) || !player.getBukkitEntity().canSeeChunkMapUpdatePlayer(this.entity.getBukkitEntity()))) { // Paper - only consider hits // Canvas - optimize canSee checks - Threaded Regions
++                if (flag && !player.getBukkitEntity().canSeeChunkMapUpdatePlayer(this.entity.getBukkitEntity())) { // Paper - only consider hits // Canvas - optimize canSee checks
                      flag = false;
                  }
                  // CraftBukkit end
