@@ -1,18 +1,6 @@
 --- a/src/main/java/ca/spottedleaf/moonrise/common/util/MoonriseCommon.java
 +++ b/src/main/java/ca/spottedleaf/moonrise/common/util/MoonriseCommon.java
-@@ -3,6 +_,11 @@
- import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
- import ca.spottedleaf.moonrise.common.PlatformHooks;
- import com.mojang.logging.LogUtils;
-+import io.canvasmc.canvas.ChunkSystemAlgorithm;
-+import io.canvasmc.canvas.Config;
-+import io.canvasmc.canvas.server.chunk.TheChunkSystem;
-+import io.canvasmc.canvas.util.ThreadBuilder;
-+import org.jetbrains.annotations.NotNull;
- import org.slf4j.Logger;
- import java.util.concurrent.TimeUnit;
- import java.util.concurrent.atomic.AtomicInteger;
-@@ -12,83 +_,69 @@
+@@ -12,83 +_,75 @@
  
      private static final Logger LOGGER = LogUtils.getClassLogger();
  
@@ -50,25 +38,33 @@
 -        }
 -        defaultWorkerThreads = Integer.getInteger(PlatformHooks.get().getBrand() + ".WorkerThreadCount", Integer.valueOf(defaultWorkerThreads));
 -
--        int workerThreads = configWorkerThreads;
++    // Canvas start - rewrite moonrise executor
++    public static io.canvasmc.canvas.server.chunk.TheChunkSystem WORKER_POOL;
++    public static io.canvasmc.canvas.server.chunk.TheChunkSystem.ExecutorGroup PARALLEL_GEN_GROUP;
++    public static io.canvasmc.canvas.server.chunk.TheChunkSystem.ExecutorGroup RADIUS_AWARE_GROUP;
++    public static io.canvasmc.canvas.server.chunk.TheChunkSystem.ExecutorGroup LOAD_GROUP;
++
++    public static void init(final int configWorkerThreads, final int configIoThreads) {
+         int workerThreads = configWorkerThreads;
 -
 -        if (workerThreads <= 0) {
 -            workerThreads = defaultWorkerThreads;
--        }
++        if (configWorkerThreads <= 0) {
++            // evaluate default
++            boolean isWindows = io.netty.util.internal.PlatformDependent.isWindows();
++            int cpus = Runtime.getRuntime().availableProcessors();
++            double memGb = Runtime.getRuntime().maxMemory() / 1024.0 / 1024.0 / 1024.0;
++
++            double cpuBased = isWindows ? (cpus / 1.6) : (cpus / 1.3);
++            double memBased = (memGb - 0.5) / 0.6;
++
++            workerThreads = (int) Math.max(1, Math.min(cpuBased, memBased));
+         }
 -
 -        final int ioThreads = Math.max(1, configIoThreads);
 -
 -        WORKER_POOL.adjustThreadCount(workerThreads);
-+    // Canvas start - rewrite moonrise executor
-+    public static TheChunkSystem WORKER_POOL;
-+    public static TheChunkSystem.ExecutorGroup PARALLEL_GEN_GROUP;
-+    public static TheChunkSystem.ExecutorGroup RADIUS_AWARE_GROUP;
-+    public static TheChunkSystem.ExecutorGroup LOAD_GROUP;
-+
-+    public static void init(final int configWorkerThreads, final int configIoThreads) {
-+        ChunkSystemAlgorithm algorithm = Config.INSTANCE.chunks.defaultThreadAlgorithm;
-+        int workerThreads = algorithm.evalWorkers(configWorkerThreads, configIoThreads);
-+        int ioThreads = algorithm.evalIO(configWorkerThreads, configIoThreads);
++        int ioThreads = Math.max(1, configIoThreads);
 +
 +        WORKER_POOL = buildChunkSystem(workerThreads);
 +
@@ -78,18 +74,14 @@
 +
          IO_POOL.adjustThreadCount(ioThreads);
 +        LOGGER.info("Running LS ChunkSystem with {} worker threads and {} io threads", workerThreads, ioThreads);
-+        if ((workerThreads + ioThreads + Config.INSTANCE.ticking.allocatedSchedulerThreadCount) > Runtime.getRuntime().availableProcessors()) {
-+            LOGGER.warn("Your configuration is not optimal for Canvas to use your CPU efficiently. It should meet this requirement: '(worker count + io count + scheduler count) < max threads'");
-+            LOGGER.warn("This is due to Canvas' chunk system being much more aggressive compared to other server forks, leading to not meeting this requirement causing major performance issues.");
-+        }
 +    }
  
 -        LOGGER.info(PlatformHooks.get().getBrand() + " is using " + workerThreads + " worker threads, " + ioThreads + " I/O threads");
-+    private static @NotNull TheChunkSystem buildChunkSystem(int workerThreads) {
-+        return new TheChunkSystem(workerThreads, new ThreadBuilder() {
++    private static @org.jetbrains.annotations.NotNull io.canvasmc.canvas.server.chunk.TheChunkSystem buildChunkSystem(int workerThreads) {
++        return new io.canvasmc.canvas.server.chunk.TheChunkSystem(workerThreads, new io.canvasmc.canvas.util.ThreadBuilder() {
 +            @Override
 +            public void accept(final Thread thread) {
-+                thread.setPriority(Config.INSTANCE.chunks.threadPoolPriority);
++                thread.setPriority(io.canvasmc.canvas.Config.INSTANCE.chunks.threadPoolPriority);
 +                thread.setDaemon(true);
 +                thread.setUncaughtExceptionHandler((thread1, throwable) -> LOGGER.error("Uncaught exception in thread {}", thread1.getName(), throwable));
 +                thread.setName("ls_wg worker #" + getAndIncrementId());

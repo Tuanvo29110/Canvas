@@ -124,28 +124,12 @@ public class Config {
         }
 
         @Comment(value = {
-            "Modifies what algorithm the chunk system will use to define thread counts. Internally, the chunk system does not change.",
-            "Valid options(lowercase or uppercase):",
-            " - MOONRISE [Paper default thread count]",
-            " - C2ME [Old algorithm from C2ME, less aggressive than the modern one]",
-            " - C2ME_AGGRESSIVE [Modern algorithm from C2ME, more aggressive than the previous]"
-        })
-        public ChunkSystemAlgorithm defaultThreadAlgorithm = ChunkSystemAlgorithm.C2ME;
-
-        @Comment(value = {
             "Sets the thread priority for worker threads. Default is NORMAL+1",
             "",
             "References:",
             "- https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#setPriority(int)"
         })
         public int threadPoolPriority = Thread.NORM_PRIORITY + 1;
-
-        @Comment(value = {
-            "Uses an alternative priority manager, making it more dynamic with the player",
-            "position and improving efficiency with the new chunk system. Disabling this",
-            "restores Purpur/Paper priority management"
-        })
-        public boolean useAlternativeChunkSystemPriorityManagement = false;
 
         public ChunkSending chunkSending = new ChunkSending();
         public static class ChunkSending {
@@ -186,28 +170,11 @@ public class Config {
             @Comment("Enables a port of the mod StructureLayoutOptimizer, which optimizes general Jigsaw structure generation")
             public boolean enableStructureLayoutOptimizer = true;
 
-            @Comment(value = {
-                "Uses euclidean distance squared algorithm for determining chunk task priorities(like generation, loading, etc).",
-                "If true: chunk priorities will be ordered in a circle pattern",
-                "If false: chunk priorities will be ordered in a diamond pattern"
-            })
-            public boolean useEuclideanDistanceSquaredChunkPriorities = true;
-
             @Comment("Disables fluid ticking on chunk generation")
             public boolean disableFluidTickingInPostProcessGenerationStep = false;
 
             @Comment("Disables spawning mobs in the chunk generation step SPAWN which can bypass the mob cap")
             public boolean disableSpawnChunkStep = false;
-        }
-
-        public RateLimiters rateLimiters = new RateLimiters();
-        public static class RateLimiters {
-            @Comment("Disables the rate-limiter for the chunk sender. The limit only affects players")
-            public boolean disableChunkSendRateLimiter = false;
-            @Comment("Disables the rate-limiter for the chunk loader. The limit only affects players")
-            public boolean disableChunkLoadRateLimiter = false;
-            @Comment("Disables the rate-limiter for the chunk generator. The limit only affects players")
-            public boolean disableChunkGenRateLimiter = false;
         }
 
         public Biomes biomes = new Biomes();
@@ -587,9 +554,6 @@ public class Config {
         public boolean randomTickSpeedAcceleration = true;
     }
 
-    @Comment("Disables being disconnected from 'multiplayer.disconnect.invalid_player_movement', and just silently declines the packet handling.")
-    public boolean gracefulTeleportHandling = true;
-
     public Networking networking = new Networking();
     public static class Networking {
         @Comment("Prevents players being disconnected by disconnect.spam")
@@ -832,8 +796,8 @@ public class Config {
                     YamlTextFormatter formatter = new YamlTextFormatter(4);
                     CanvasBootstrap.LOGGER.info(Component.text("Printing configuration tree:").appendNewline().append(formatter.apply(context.contents())));
                 }
-                if (INSTANCE.ticking.allocatedSchedulerThreadCount <= 1) {
-                    CanvasBootstrap.LOGGER.error(Component.text("Allocating 1 or less scheduler threads can result in multiple issues with the chunk system, please allocate more to use Canvas more efficiently."));
+                for (final String change : changes) {
+                    CanvasBootstrap.LOGGER.info(change);
                 }
                 Event.SHORTCUT_CALL = INSTANCE.optimizePluginEventManager;
                 if (INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads < 0)
@@ -846,14 +810,19 @@ public class Config {
 
                 if (INSTANCE.entities.entityTracking.enabled) {
                     MultithreadedTracker.init();
-                }
-                for (final String change : changes) {
-                    CanvasBootstrap.LOGGER.info(change);
-                }
-                if (!INSTANCE.entities.entityTracking.enabled)
-                    INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads = 0;
-                else
                     CanvasBootstrap.LOGGER.info("Using {} threads for Async Entity Tracker", INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads);
+                } else {
+                    INSTANCE.entities.entityTracking.asyncEntityTrackerMaxThreads = 0;
+                }
+                System.setProperty("com.ishland.c2me.opts.natives_math.duringGameInit", "true");
+                if (INSTANCE.chunks.nativeAcceleration.nativeAccelerationEnabled) {
+                    try {
+                        //noinspection ResultOfMethodCallIgnored
+                        Class.forName("io.canvasmc.canvas.util.NativeLoader").getField("lookup").get(null);
+                    } catch (Throwable t) {
+                        CanvasBootstrap.LOGGER.error("Couldn't load NativeLoader", t);
+                    }
+                }
             })
             .build(config, configClass), changes::add
         );
@@ -862,15 +831,6 @@ public class Config {
     public static Config init() {
         long startNanos = Util.getNanos();
         ConfigurationManager.register(Config.class, Config::buildSerializer);
-        System.setProperty("com.ishland.c2me.opts.natives_math.duringGameInit", "true");
-        if (INSTANCE.chunks.nativeAcceleration.nativeAccelerationEnabled) {
-            try {
-                //noinspection ResultOfMethodCallIgnored
-                Class.forName("io.canvasmc.canvas.util.NativeLoader").getField("lookup").get(null);
-            } catch (Throwable t) {
-                CanvasBootstrap.LOGGER.error("Couldn't load NativeLoader", t);
-            }
-        }
         CanvasBootstrap.LOGGER.info("Finished Canvas config init in {}ms", TimeUnit.MILLISECONDS.convert(Util.getNanos() - startNanos, TimeUnit.NANOSECONDS));
         return INSTANCE;
     }
