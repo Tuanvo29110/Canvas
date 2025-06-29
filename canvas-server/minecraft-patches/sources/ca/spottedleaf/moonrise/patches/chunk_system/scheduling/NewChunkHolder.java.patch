@@ -1,22 +1,5 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
-@@ -28,6 +_,7 @@
- import com.google.gson.JsonNull;
- import com.google.gson.JsonObject;
- import com.google.gson.JsonPrimitive;
-+import io.canvasmc.canvas.server.chunk.ChunkRunnable;
- import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
- import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
- import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-@@ -53,6 +_,8 @@
- import java.util.List;
- import java.util.Map;
- import java.util.Objects;
-+import java.util.concurrent.ConcurrentHashMap;
-+import java.util.concurrent.CopyOnWriteArrayList;
- import java.util.concurrent.atomic.AtomicBoolean;
- import java.util.function.Consumer;
- 
 @@ -644,11 +_,19 @@
      }
  
@@ -37,24 +20,6 @@
          this.scheduler = scheduler;
          this.vanillaChunkHolder = new ChunkHolder(
                  new ChunkPos(chunkX, chunkZ), ChunkHolderManager.MAX_TICKET_LEVEL, world,
-@@ -795,7 +_,7 @@
-     private UnloadTask poiDataUnload;
- 
-     public static final record UnloadTask(CallbackCompletable<CompoundTag> completable, PrioritisedExecutor.PrioritisedTask task,
--                                          LazyRunnable toRun) {}
-+                                          ChunkRunnable toRun) {} // Canvas - rewrite chunk system
- 
-     public UnloadTask getUnloadTask(final MoonriseRegionFileIO.RegionFileType type) {
-         switch (type) {
-@@ -858,7 +_,7 @@
-         this.priorityLocked = false;
- 
-         if (chunk != null) {
--            final LazyRunnable toRun = new LazyRunnable();
-+            final ChunkRunnable toRun = new ChunkRunnable(this.chunkX, this.chunkZ, this.world, null); // Canvas - rewrite chunk system
-             this.chunkDataUnload = new UnloadTask(new CallbackCompletable<>(), this.scheduler.saveExecutor.createTask(toRun), toRun);
-         }
-         if (poiChunk != null) {
 @@ -1190,6 +_,7 @@
              for (int dz = -NEIGHBOUR_RADIUS; dz <= NEIGHBOUR_RADIUS; ++dz) {
                  for (int dx = -NEIGHBOUR_RADIUS; dx <= NEIGHBOUR_RADIUS; ++dx) {
@@ -82,20 +47,16 @@
      }
  
      // only to be called on the main thread, no locks need to be held
-@@ -1348,18 +_,18 @@
+@@ -1348,7 +_,7 @@
          return this.requestedGenStatus;
      }
  
 -    private final Reference2ObjectOpenHashMap<ChunkStatus, List<Consumer<ChunkAccess>>> statusWaiters = new Reference2ObjectOpenHashMap<>();
-+    private final Map<ChunkStatus, List<Consumer<ChunkAccess>>> statusWaiters = new ConcurrentHashMap<>(); // Canvas
++    private final Reference2ObjectMap<ChunkStatus, List<Consumer<ChunkAccess>>> statusWaiters = it.unimi.dsi.fastutil.objects.Reference2ObjectMaps.synchronize(new Reference2ObjectOpenHashMap<>()); // Canvas - synchronized
  
      void addStatusConsumer(final ChunkStatus status, final Consumer<ChunkAccess> consumer) {
          this.statusWaiters.computeIfAbsent(status, (final ChunkStatus keyInMap) -> {
--            return new ArrayList<>(4);
-+            return new CopyOnWriteArrayList<>(); // Canvas
-         }).add(consumer);
-     }
- 
+@@ -1359,7 +_,7 @@
      private void completeStatusConsumers(ChunkStatus status, final ChunkAccess chunk) {
          // Update progress listener for LevelLoadingScreen
          if (chunk != null) {
@@ -113,20 +74,15 @@
              for (final Consumer<ChunkAccess> consumer : consumers) {
                  try {
                      consumer.accept(chunk);
-@@ -1394,11 +_,11 @@
+@@ -1394,7 +_,7 @@
          }, Priority.HIGHEST);
      }
  
 -    private final Reference2ObjectOpenHashMap<FullChunkStatus, List<Consumer<LevelChunk>>> fullStatusWaiters = new Reference2ObjectOpenHashMap<>();
-+    private final Map<FullChunkStatus, List<Consumer<LevelChunk>>> fullStatusWaiters = new ConcurrentHashMap<>(); // Canvas
++    private final Reference2ObjectMap<FullChunkStatus, List<Consumer<LevelChunk>>> fullStatusWaiters = it.unimi.dsi.fastutil.objects.Reference2ObjectMaps.synchronize(new Reference2ObjectOpenHashMap<>()); // Canvas - synchronized
  
      void addFullStatusConsumer(final FullChunkStatus status, final Consumer<LevelChunk> consumer) {
          this.fullStatusWaiters.computeIfAbsent(status, (final FullChunkStatus keyInMap) -> {
--            return new ArrayList<>(4);
-+            return new CopyOnWriteArrayList<>(); // Canvas
-         }).add(consumer);
-     }
- 
 @@ -1411,7 +_,7 @@
          }
  

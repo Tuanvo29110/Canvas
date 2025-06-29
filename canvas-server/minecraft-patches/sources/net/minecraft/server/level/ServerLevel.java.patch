@@ -1,20 +1,14 @@
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -5,8 +_,25 @@
+@@ -5,8 +_,19 @@
  import com.mojang.datafixers.DataFixer;
  import com.mojang.datafixers.util.Pair;
  import com.mojang.logging.LogUtils;
-+import io.canvasmc.canvas.entity.EntityStatusLock;
 +import io.canvasmc.canvas.entity.tnt.TNTMergeManager;
 +import io.canvasmc.canvas.Config;
-+import io.canvasmc.canvas.region.ChunkRegion;
 +import io.canvasmc.canvas.region.RegionizedTaskQueue;
 +import io.canvasmc.canvas.region.ServerRegions;
-+import io.canvasmc.canvas.scheduler.CanvasPerWorldScheduler;
-+import io.canvasmc.canvas.scheduler.CanvasRegionScheduler;
-+import io.canvasmc.canvas.scheduler.TickScheduler;
 +import io.canvasmc.canvas.scheduler.TickableScheduler;
-+import io.canvasmc.canvas.server.chunk.PriorityHandler;
 +import io.canvasmc.canvas.server.level.distance.command.DistanceUtils;
 +import io.canvasmc.canvas.util.SimpleThreadLocalRandomSource;
 +import io.netty.util.internal.ConcurrentSet;
@@ -26,11 +20,10 @@
  import it.unimi.dsi.fastutil.longs.LongSet;
  import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
  import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-@@ -18,13 +_,20 @@
+@@ -18,13 +_,17 @@
  import java.nio.file.Files;
  import java.nio.file.Path;
  import java.util.ArrayList;
-+import java.util.Arrays;
 +import java.util.EnumSet;
 +import java.util.Iterator;
  import java.util.Collection;
@@ -40,9 +33,7 @@
  import java.util.Locale;
  import java.util.Objects;
  import java.util.Optional;
-+import java.util.Queue;
  import java.util.Set;
-+import java.util.concurrent.ConcurrentLinkedQueue;
 +import java.util.concurrent.CopyOnWriteArrayList;
  import java.util.concurrent.Executor;
  import java.util.function.BooleanSupplier;
@@ -212,14 +203,6 @@
          ServerChunkCache chunkProvider = this.getChunkSource();
  
          for (int cx = minChunkX; cx <= maxChunkX; ++cx) {
-@@ -289,6 +_,7 @@
-     }
-     // Paper end - optimise getPlayerByUUID
-     // Paper start - rewrite chunk system
-+    public final PriorityHandler chunkSystemPriorities;
-     private final ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.ViewDistanceHolder viewDistanceHolder = new ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.ViewDistanceHolder();
-     private final ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader chunkLoader = new ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader((ServerLevel)(Object)this);
-     private final ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.EntityDataController entityDataController;
 @@ -297,11 +_,11 @@
      private final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler chunkTaskScheduler;
      private long lastMidTickFailure;
@@ -328,7 +311,7 @@
          // Purpur start - Allow toggling special MobSpawners per world
          this.customSpawners = new ArrayList<>();
          if (purpurConfig.phantomSpawning) {
-@@ -692,6 +_,22 @@
+@@ -692,6 +_,21 @@
          // Paper end - rewrite chunk system
          this.getCraftServer().addWorld(this.getWorld()); // CraftBukkit
          this.preciseTime = this.serverLevelData.getDayTime(); // Purpur - Configurable daylight cycle
@@ -342,7 +325,6 @@
 +        int simulationDistance = DistanceUtils.resolveSimulationDistance(this);
 +        cmgr.setSimulationDistance(simulationDistance - 1);
 +
-+        this.chunkSystemPriorities = new PriorityHandler(this);
 +        this.scheduleTo(MinecraftServer.getThreadedServer().scheduler.scheduler);
 +        this.networkRouter = new io.canvasmc.canvas.server.NetworkRouter(this); // connection threading
 +        this.levelTickData = new ServerRegions.WorldTickData(this, null); // Threaded Regions

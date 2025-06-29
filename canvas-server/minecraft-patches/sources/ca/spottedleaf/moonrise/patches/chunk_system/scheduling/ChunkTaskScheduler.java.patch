@@ -95,20 +95,6 @@
              this.scheduleChunkTask(chunkX, chunkZ, () -> {
                  ChunkTaskScheduler.this.scheduleTickingState(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
              }, priority);
-@@ -373,7 +_,12 @@
-         }
-         final int accessRadius = getAccessRadius(toStatus);
-         if (this.chunkHolderManager.ticketLockArea.isHeldByCurrentThread(chunkX, chunkZ, accessRadius)) {
--            throw new IllegalStateException("Cannot schedule chunk load during ticket level update");
-+            // Canvas start
-+            this.scheduleChunkTask(chunkX, chunkZ, () -> {
-+                ChunkTaskScheduler.this.scheduleTickingState(chunkX, chunkZ, toStatus, addTicket, priority, onComplete);
-+            }, priority);
-+            return;
-+            // Canvas end
-         }
-         if (this.schedulingLockArea.isHeldByCurrentThread(chunkX, chunkZ, accessRadius)) {
-             throw new IllegalStateException("Cannot schedule chunk loading recursively");
 @@ -569,7 +_,7 @@
  
      public void scheduleChunkLoad(final int chunkX, final int chunkZ, final ChunkStatus toStatus, final boolean addTicket,
@@ -132,7 +118,7 @@
      @Deprecated
      public PrioritisedExecutor.PrioritisedTask scheduleChunkTask(final Runnable run, final Priority priority) {
 -        return this.mainThreadExecutor.queueTask(run, priority);
-+        throw new UnsupportedOperationException(); // Cnavas - Threaded Regions
++        throw new UnsupportedOperationException(); // Canvas - Threaded Regions
      }
  
      public PrioritisedExecutor.PrioritisedTask createChunkTask(final int chunkX, final int chunkZ, final Runnable run) {

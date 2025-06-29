@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * <ul>
  *     <li><h6>Quadratic Probing</h6> If a collision occurs, the algorithm searches using
  *         <code>index = (index + probe * probe) & mask</code>, minimizing clustering.</li>
- *     <li><h6>Resizing Strategy</h6> If the load factor exceeds 50%, the table size is doubled.</li>
+ *     <li><h6>Resizing Strategy</h6> If the load factor exceeds 88%, the table size is doubled.</li>
  *     <li><h6>Cache Mechanism</h6> The last checked key is stored for faster consecutive queries.</li>
  *     <li><h6>Open Addressing</h6> No linked structures; all data is stored directly in an array.</li>
  * </ul>
@@ -39,6 +39,10 @@ public class DynamicChunkPosLongSet implements Set<Long> {
     private int threshold;
     private long lastChecked = EMPTY_KEY;
     private boolean lastReturn = false;
+
+    public DynamicChunkPosLongSet() {
+        this(10);
+    }
 
     public DynamicChunkPosLongSet(int initialCapacity) {
         int capacity = Integer.highestOneBit(Math.max(2, initialCapacity)) << 1;
@@ -78,7 +82,7 @@ public class DynamicChunkPosLongSet implements Set<Long> {
         }
     }
 
-    public synchronized void add(long key) {
+    public void add(long key) {
         if (size >= threshold) {
             resize(table.length << 1);
         }
@@ -106,7 +110,7 @@ public class DynamicChunkPosLongSet implements Set<Long> {
         }
     }
 
-    public synchronized void remove(long key) {
+    public void remove(long key) {
         int index = indexFor(key);
         int probe = 0;
 

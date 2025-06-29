@@ -21,11 +21,10 @@
  import net.minecraft.nbt.CompoundTag;
  import net.minecraft.server.level.ChunkHolder;
  import net.minecraft.server.level.ChunkLevel;
-@@ -42,16 +_,22 @@
+@@ -42,16 +_,21 @@
  import net.minecraft.util.Unit;
  import net.minecraft.world.level.ChunkPos;
  import net.minecraft.world.level.chunk.LevelChunk;
-+import org.agrona.collections.ObjectHashSet;
 +import org.jetbrains.annotations.NotNull;
  import org.slf4j.Logger;
  import java.io.IOException;
@@ -193,15 +192,6 @@
              }
          }
      }
-@@ -319,7 +_,7 @@
-             }
-             if (logProgress) {
-                 final long currTime = System.nanoTime();
--                if ((currTime - lastLog) > TimeUnit.SECONDS.toNanos(10L)) {
-+                if ((currTime - lastLog) > TimeUnit.SECONDS.toNanos(5L)) { // Canvas - log progress a bit more
-                     lastLog = currTime;
-                     LOGGER.info(
-                             "Saved " + savedChunk + " block chunks, " + savedEntity + " entity chunks, " + savedPoi
 @@ -540,7 +_,7 @@
  
      public <T> boolean addTicketAtLevel(final TicketType type, final ChunkPos chunkPos, final int level,
@@ -288,32 +278,20 @@
          int unloadCountTentative = 0;
          for (final ChunkUnloadQueue.SectionToUnload sectionRef : unloadSectionsForRegion) {
              final ChunkUnloadQueue.UnloadSection section
-@@ -1228,10 +_,7 @@
-                     for (int i = 0, len = stage1.size(); i < len; ++i) {
-                         final NewChunkHolder chunkHolder = stage1.get(i);
-                         chunkHolder.removeFromUnloadQueue();
--                        if (chunkHolder.isSafeToUnload() != null) {
--                            LOGGER.error("Chunkholder " + chunkHolder + " is not safe to unload but is inside the unload queue?");
--                            continue;
--                        }
-+                        // Canvas - trust us.
-                         final NewChunkHolder.UnloadState state = chunkHolder.unloadStage1();
-                         if (state == null) {
-                             // can unload immediately
 @@ -1292,6 +_,33 @@
              }
          }
      }
 +    // Canvas start
-+    // if there's lots of chunks loaded, we don't
-+    // want to search through that map to find block
-+    // ticking holders or entity ticking holders,
-+    // so we cache the ones that are valid to limit
-+    // the search. we also configure the set to not
-+    // cache the iterator, as we never use the iterator.
-+    // if we don't use it, why tf do we allocate it...?
-+    public final Set<Long> blockTickingChunkHolders = Collections.synchronizedSet(new ObjectHashSet<>(10, 0.88f, true));
-+    public final Set<Long> entityTickingChunkHolders = Collections.synchronizedSet(new ObjectHashSet<>(10, 0.88f, true));
++    // if there's lots of chunks loaded, we don't want to search through that map to find block
++    // ticking holders or entity ticking holders, so we cache the ones that are valid to limit the search.
++    // Due to performance benchmarks conducted in io.canvasmc.canvas.benchmark.SetBenchmark,
++    // the DynamicChunkPosLongSet is the fastest option for 'contains' operations, which is
++    // what we need. We synchronize this for thread-safety, as this is NON REGIONIZED, which
++    // leaves a lot of room for threading issues
++    // TODO: regionizing?
++    public final Set<Long> blockTickingChunkHolders = Collections.synchronizedSet(new io.canvasmc.canvas.server.chunk.DynamicChunkPosLongSet());
++    public final Set<Long> entityTickingChunkHolders = Collections.synchronizedSet(new io.canvasmc.canvas.server.chunk.DynamicChunkPosLongSet());
 +
 +    public void markBlockTicking(@NotNull NewChunkHolder newChunkHolder) {
 +        this.blockTickingChunkHolders.add(newChunkHolder.getCachedLongPos());

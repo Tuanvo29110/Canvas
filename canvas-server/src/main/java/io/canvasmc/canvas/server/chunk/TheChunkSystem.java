@@ -22,7 +22,7 @@ public class TheChunkSystem extends ExecutorManager {
         super(workerThreadCount, threadInitializer);
         LOGGER = LoggerFactory.getLogger("TheChunkSystem/" + name);
         this.name = name;
-        LOGGER.info("Initialized new ChunkSystem '{}' with {} allocated threads", name, workerThreadCount);
+        LOGGER.info("Initialized new LS ChunkSystem '{}' with {} allocated threads", name, workerThreadCount);
     }
 
     @Override
