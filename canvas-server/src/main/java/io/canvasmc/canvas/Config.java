@@ -124,12 +124,12 @@ public class Config {
         }
 
         @Comment(value = {
-            "Sets the thread priority for worker threads. Default is NORMAL+1",
+            "Sets the thread priority for worker threads. Default is NORMAL-1 (4)",
             "",
             "References:",
             "- https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#setPriority(int)"
         })
-        public int threadPoolPriority = Thread.NORM_PRIORITY + 1;
+        public int threadPoolPriority = Thread.NORM_PRIORITY - 1;
 
         public ChunkSending chunkSending = new ChunkSending();
         public static class ChunkSending {
