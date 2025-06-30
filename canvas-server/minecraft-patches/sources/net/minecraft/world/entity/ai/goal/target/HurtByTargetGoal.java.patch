@@ -54,9 +54,9 @@
 +
 +    // Canvas start - Async target finding
 +    public void poll() {
-+        if (!(this.mob.getGoalCtx().result() instanceof List toAlert)) return;
++        if (!(this.mob.getGoalCtx().result() instanceof List<?> toAlert)) return;
 +        LivingEntity lastHurtByMob = this.mob.getLastHurtByMob();
-+        if (lastHurtByMob.getType() == EntityType.PLAYER && getServerLevel(this.mob).getGameRules().getBoolean(GameRules.RULE_UNIVERSAL_ANGER)) {
++        if (lastHurtByMob == null || (lastHurtByMob.getType() == EntityType.PLAYER && getServerLevel(this.mob).getGameRules().getBoolean(GameRules.RULE_UNIVERSAL_ANGER))) {
 +            return;
 +        }
 +        for (Class<?> clazz : this.toIgnoreDamage) {
