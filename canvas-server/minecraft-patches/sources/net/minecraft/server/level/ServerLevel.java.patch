@@ -191,18 +191,6 @@
      private final StructureManager structureManager;
      private final StructureCheck structureCheck;
      private final boolean tickTime;
-@@ -242,6 +_,11 @@
-         int minChunkZ = minBlockZ >> 4;
-         int maxChunkZ = maxBlockZ >> 4;
- 
-+        // Canvas start - Threaded Regions
-+        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this, minChunkX, minChunkZ, maxChunkX, maxChunkZ)) {
-+            return false;
-+        }
-+        // Canvas end
-         ServerChunkCache chunkProvider = this.getChunkSource();
- 
-         for (int cx = minChunkX; cx <= maxChunkX; ++cx) {
 @@ -297,11 +_,11 @@
      private final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler chunkTaskScheduler;
      private long lastMidTickFailure;
@@ -883,7 +871,7 @@
          }
          // Paper end - rewrite chunk system
  
-@@ -1336,62 +_,68 @@
+@@ -1336,59 +_,53 @@
  
      // Paper start - log detailed entity tick information
      // TODO replace with varhandle
@@ -919,12 +907,6 @@
          final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
          if (isActive) { // Paper - EAR 2
          entity.tick();
-+        // Canvas start - Threaded Regions
-+        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(entity)) {
-+            // removed from region while ticking
-+            return;
-+        }
-+        // Canvas end
          entity.postTick(); // CraftBukkit
          } else {entity.inactiveTick();} // Paper - EAR 2
 -        profilerFiller.pop();
@@ -957,15 +939,6 @@
              // Paper start - EAR 2
              if (isActive) {
              passengerEntity.rideTick();
-+            // Canvas start - Threaded Regions
-+            if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(passengerEntity)) {
-+                // removed from region while ticking
-+                return;
-+            }
-+            // Canvas end
-             passengerEntity.postTick(); // CraftBukkit
-             } else {
-                 passengerEntity.setDeltaMovement(Vec3.ZERO);
 @@ -1400,7 +_,6 @@
                  ridingEntity.positionRider(passengerEntity);
              }
