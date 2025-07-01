@@ -1,23 +1,21 @@
 --- a/net/minecraft/world/level/block/entity/HopperBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/HopperBlockEntity.java
-@@ -3,6 +_,8 @@
+@@ -3,6 +_,9 @@
  import java.util.List;
  import java.util.function.BooleanSupplier;
  import javax.annotation.Nullable;
 +import io.canvasmc.canvas.Config;
 +import io.canvasmc.canvas.entity.SleepingBlockEntity;
++import net.minecraft.world.level.chunk.LevelChunk;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
- import net.minecraft.core.HolderLookup;
-@@ -26,9 +_,10 @@
- import net.minecraft.world.level.block.ChestBlock;
- import net.minecraft.world.level.block.HopperBlock;
- import net.minecraft.world.level.block.state.BlockState;
-+import net.minecraft.world.level.chunk.LevelChunk;
+ import net.minecraft.core.NonNullList;
+@@ -28,7 +_,7 @@
+ import net.minecraft.world.level.storage.ValueOutput;
  import net.minecraft.world.phys.AABB;
  
 -public class HopperBlockEntity extends RandomizableContainerBlockEntity implements Hopper {
-+public class HopperBlockEntity extends RandomizableContainerBlockEntity implements Hopper, SleepingBlockEntity { // Canvas
++public class HopperBlockEntity extends RandomizableContainerBlockEntity implements Hopper, SleepingBlockEntity { // Canvas - block entity sleeping
      public static final int MOVE_ITEM_SPEED = 8;
      public static final int HOPPER_CONTAINER_SIZE = 5;
      private static final int[][] CACHED_SLOTS = new int[54][];

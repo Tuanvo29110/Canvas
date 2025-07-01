@@ -1,6 +1,6 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java
-@@ -21,6 +_,8 @@
+@@ -22,6 +_,8 @@
  import com.google.gson.JsonArray;
  import com.google.gson.JsonObject;
  import com.mojang.logging.LogUtils;
@@ -9,7 +9,7 @@
  import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
  import it.unimi.dsi.fastutil.longs.Long2ByteLinkedOpenHashMap;
  import it.unimi.dsi.fastutil.longs.Long2ByteMap;
-@@ -28,9 +_,11 @@
+@@ -29,9 +_,11 @@
  import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
  import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
  import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -21,7 +21,7 @@
  import net.minecraft.nbt.CompoundTag;
  import net.minecraft.server.level.ChunkHolder;
  import net.minecraft.server.level.ChunkLevel;
-@@ -42,16 +_,21 @@
+@@ -43,16 +_,21 @@
  import net.minecraft.util.Unit;
  import net.minecraft.world.level.ChunkPos;
  import net.minecraft.world.level.chunk.LevelChunk;
@@ -43,23 +43,12 @@
  import java.util.concurrent.TimeUnit;
  import java.util.concurrent.atomic.AtomicBoolean;
  import java.util.concurrent.atomic.AtomicReference;
-@@ -72,36 +_,80 @@
-     private static final long NO_TIMEOUT_MARKER = Long.MIN_VALUE;
-     public final ReentrantAreaLock ticketLockArea;
- 
--    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket>> tickets = new ConcurrentLong2ReferenceChainedHashTable<>();
--    private final ConcurrentLong2ReferenceChainedHashTable<Long2IntOpenHashMap> sectionToChunkToExpireCount = new ConcurrentLong2ReferenceChainedHashTable<>();
-+    private final ConcurrentLong2ReferenceChainedHashTable<SortedArraySet<Ticket>> tickets = ConcurrentLong2ReferenceChainedHashTable.createWithCapacity(20, 0.9F); // Canvas - improve
-+    private final ConcurrentLong2ReferenceChainedHashTable<Long2IntOpenHashMap> sectionToChunkToExpireCount = ConcurrentLong2ReferenceChainedHashTable.createWithCapacity(20, 0.9F); // Canvas - improve
-     final ChunkUnloadQueue unloadQueue;
- 
--    private final ConcurrentLong2ReferenceChainedHashTable<NewChunkHolder> chunkHolders = ConcurrentLong2ReferenceChainedHashTable.createWithCapacity(16384, 0.25f);
-+    private final ConcurrentLong2ReferenceChainedHashTable<NewChunkHolder> chunkHolders = ConcurrentLong2ReferenceChainedHashTable.createWithCapacity(20, 0.9F); // Canvas - improve
-     private final ServerLevel world;
+@@ -82,28 +_,71 @@
      private final ChunkTaskScheduler taskScheduler;
      private long currentTick;
  
 -    private final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = new ArrayDeque<>();
+-    private final MultiThreadedQueue<NewChunkHolder> offThreadPendingFullLoadUpdate = new MultiThreadedQueue<>();
 -    private final ObjectRBTreeSet<NewChunkHolder> autoSaveQueue = new ObjectRBTreeSet<>((final NewChunkHolder c1, final NewChunkHolder c2) -> {
 -        if (c1 == c2) {
 -            return 0;
@@ -148,7 +137,7 @@
  
      private final ConcurrentLong2ReferenceChainedHashTable<Long2IntOpenHashMap> ticketCounters = new ConcurrentLong2ReferenceChainedHashTable<>();
  
-@@ -225,25 +_,27 @@
+@@ -227,25 +_,27 @@
      }
  
      void ensureInAutosave(final NewChunkHolder holder) {
@@ -183,7 +172,7 @@
  
              holder.lastAutoSave = currentTick;
              if (holder.save(false) != null) {
-@@ -257,7 +_,7 @@
+@@ -259,7 +_,7 @@
  
          for (final NewChunkHolder holder : reschedule) {
              if (holder.getChunkStatus().isOrAfter(FullChunkStatus.FULL)) {
@@ -192,7 +181,7 @@
              }
          }
      }
-@@ -540,7 +_,7 @@
+@@ -542,7 +_,7 @@
  
      public <T> boolean addTicketAtLevel(final TicketType type, final ChunkPos chunkPos, final int level,
                                          final T identifier) {
@@ -201,7 +190,7 @@
      }
  
      public <T> boolean addTicketAtLevel(final TicketType type, final int chunkX, final int chunkZ, final int level,
-@@ -557,7 +_,7 @@
+@@ -559,7 +_,7 @@
              chunkZ >> sectionShift
          );
  
@@ -210,7 +199,7 @@
              return new Long2IntOpenHashMap();
          }).addTo(chunkKey, 1);
      }
-@@ -601,7 +_,7 @@
+@@ -603,7 +_,7 @@
  
          final ReentrantAreaLock.Node ticketLock = lock ? this.ticketLockArea.lock(chunkX, chunkZ) : null;
          try {
@@ -219,7 +208,7 @@
                  return (SortedArraySet)SortedArraySet.create(4);
              });
  
-@@ -687,7 +_,7 @@
+@@ -689,7 +_,7 @@
      }
  
      public <T> boolean removeTicketAtLevel(final TicketType type, final ChunkPos chunkPos, final int level, final T identifier) {
@@ -228,20 +217,15 @@
      }
  
      public <T> boolean removeTicketAtLevel(final TicketType type, final int chunkX, final int chunkZ, final int level, final T identifier) {
-@@ -1116,17 +_,22 @@
+@@ -1142,12 +_,23 @@
          if (changedFullStatus.isEmpty()) {
              return;
          }
 +        final Deque<NewChunkHolder> pendingFullLoadUpdate = ChunkHolderManager.this.getCurrentRegionData().pendingFullLoadUpdate; // Canvas - Threaded Regions
          if (!TickThread.isTickThread()) {
--            this.taskScheduler.scheduleChunkTask(() -> {
--                final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = ChunkHolderManager.this.pendingFullLoadUpdate;
--                for (int i = 0, len = changedFullStatus.size(); i < len; ++i) {
--                    pendingFullLoadUpdate.add(changedFullStatus.get(i));
--                }
--
--                ChunkHolderManager.this.processPendingFullUpdate();
--            }, Priority.HIGHEST);
+-            // These will be handled on the next ServerChunkCache$MainThreadExecutor#pollTask, as it runs the distance manager update
+-            // which will invoke processTicketUpdates
+-            this.offThreadPendingFullLoadUpdate.addAll(changedFullStatus);
 +            // Canvas start - Threaded Regions
 +            for (final NewChunkHolder fullStatus : changedFullStatus) {
 +                int chunkX = fullStatus.chunkX;
@@ -252,15 +236,16 @@
 +                    ChunkHolderManager thisManager = ChunkHolderManager.this;
 +                    thisManager.getCurrentRegionData().pendingFullLoadUpdate.add(fullStatus);
 +                    thisManager.processPendingFullUpdate();
-+                }, Priority.HIGHEST);
++                    }, Priority.HIGHEST);
 +            }
 +            // Canvas end
          } else {
 -            final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = this.pendingFullLoadUpdate;
++            // final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = this.pendingFullLoadUpdate; // Canvas - Threaded Regions
              for (int i = 0, len = changedFullStatus.size(); i < len; ++i) {
                  pendingFullLoadUpdate.add(changedFullStatus.get(i));
              }
-@@ -1135,7 +_,7 @@
+@@ -1156,7 +_,7 @@
  
      private void removeChunkHolder(final NewChunkHolder holder) {
          holder.onUnload();
@@ -269,7 +254,7 @@
          PlatformHooks.get().onChunkHolderDelete(this.world, holder.vanillaChunkHolder);
          this.chunkHolders.remove(CoordinateUtils.getChunkKey(holder.chunkX, holder.chunkZ));
      }
-@@ -1148,7 +_,7 @@
+@@ -1169,7 +_,7 @@
              throw new IllegalStateException("Cannot unload chunks recursively");
          }
          final int sectionShift = this.unloadQueue.coordinateShift; // sectionShift <= lock shift
@@ -278,7 +263,7 @@
          int unloadCountTentative = 0;
          for (final ChunkUnloadQueue.SectionToUnload sectionRef : unloadSectionsForRegion) {
              final ChunkUnloadQueue.UnloadSection section
-@@ -1292,6 +_,33 @@
+@@ -1313,6 +_,33 @@
              }
          }
      }
@@ -312,7 +297,7 @@
  
      public enum TicketOperationType {
          ADD, REMOVE, ADD_IF_REMOVED, ADD_AND_REMOVE
-@@ -1309,7 +_,7 @@
+@@ -1330,7 +_,7 @@
          }
  
          public static <T> TicketOperation<T, T> addOp(final ChunkPos chunk, final TicketType type, final int ticketLevel, final T identifier) {
@@ -321,7 +306,7 @@
          }
  
          public static <T> TicketOperation<T, T> addOp(final int chunkX, final int chunkZ, final TicketType type, final int ticketLevel, final T identifier) {
-@@ -1321,7 +_,7 @@
+@@ -1342,7 +_,7 @@
          }
  
          public static <T> TicketOperation<T, T> removeOp(final ChunkPos chunk, final TicketType type, final int ticketLevel, final T identifier) {
@@ -330,19 +315,19 @@
          }
  
          public static <T> TicketOperation<T, T> removeOp(final int chunkX, final int chunkZ, final TicketType type, final int ticketLevel, final T identifier) {
-@@ -1457,7 +_,7 @@
+@@ -1458,7 +_,7 @@
              }
          }
  
--        if (canProcessFullUpdates) {
-+        if (canProcessFullUpdates && (!Thread.currentThread().equals(this.world.server.serverThread))) { // Canvas - cannot run full updates on main
+-        if (isTickThread) {
++        if (isTickThread && (!Thread.currentThread().equals(this.world.server.serverThread))) { // Canvas - cannot run full updates on main
              ret |= this.processPendingFullUpdate();
          }
  
-@@ -1466,14 +_,48 @@
- 
-     // only call on tick thread
+@@ -1486,14 +_,48 @@
      private boolean processPendingFullUpdate() {
+         this.processOffThreadFullUpdates();
+ 
 -        final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = this.pendingFullLoadUpdate;
 +        // Canvas start - Threaded Regions
 +        final HolderManagerRegionData data = this.getCurrentRegionData();
@@ -389,7 +374,7 @@
              ret |= holder.handleFullStatusChange(changedFullStatus);
  
              if (!changedFullStatus.isEmpty()) {
-@@ -1483,6 +_,7 @@
+@@ -1503,6 +_,7 @@
                  changedFullStatus.clear();
              }
          }

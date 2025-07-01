@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/animal/Panda.java
 +++ b/net/minecraft/world/entity/animal/Panda.java
-@@ -988,9 +_,18 @@
+@@ -989,9 +_,18 @@
  
          @Override
          public boolean canUse() {

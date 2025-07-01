@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/block/entity/BeehiveBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/BeehiveBlockEntity.java
-@@ -4,9 +_,13 @@
+@@ -5,9 +_,13 @@
  import com.mojang.serialization.Codec;
  import com.mojang.serialization.codecs.RecordCodecBuilder;
  import io.netty.buffer.ByteBuf;
@@ -14,7 +14,7 @@
  import javax.annotation.Nullable;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
-@@ -76,7 +_,7 @@
+@@ -79,7 +_,7 @@
      private static final int MIN_TICKS_BEFORE_REENTERING_HIVE = 400;
      private static final int MIN_OCCUPATION_TICKS_NECTAR = 2400;
      public static final int MIN_OCCUPATION_TICKS_NECTARLESS = 600;
@@ -23,7 +23,7 @@
      @Nullable
      public BlockPos savedFlowerPos;
      public int maxBees = MAX_OCCUPANTS; // CraftBukkit - allow setting max amount of bees a hive can hold
-@@ -170,7 +_,7 @@
+@@ -173,7 +_,7 @@
  
      // Purpur start - Stored Bee API
      public List<BeeData> getStored() {
@@ -32,7 +32,7 @@
      }
      // Purpur end - Stored Bee API
  
-@@ -331,7 +_,7 @@
+@@ -334,7 +_,7 @@
          return this.savedFlowerPos != null;
      }
  
@@ -41,16 +41,16 @@
          boolean flag = false;
          Iterator<BeehiveBlockEntity.BeeData> iterator = data.iterator();
  
-@@ -373,7 +_,7 @@
+@@ -376,7 +_,7 @@
      @Override
-     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-         super.loadAdditional(tag, registries);
+     protected void loadAdditional(ValueInput input) {
+         super.loadAdditional(input);
 -        this.stored = Lists.newArrayList(); // CraftBukkit - SPIGOT-7790: create new copy (may be modified in physics event triggered by honey change)
 +        this.stored = new ConcurrentLinkedQueue<>(); // CraftBukkit - SPIGOT-7790: create new copy (may be modified in physics event triggered by honey change) // Canvas - concurrent
-         tag.read("bees", BeehiveBlockEntity.Occupant.LIST_CODEC).orElse(List.of()).forEach(this::storeBee);
-         this.savedFlowerPos = tag.read("flower_pos", BlockPos.CODEC).orElse(null);
-         this.maxBees = tag.getIntOr("Bukkit.MaxEntities", MAX_OCCUPANTS); // Paper - persist max bukkit occupants
-@@ -390,7 +_,7 @@
+         input.read("bees", BeehiveBlockEntity.Occupant.LIST_CODEC).orElse(List.of()).forEach(this::storeBee);
+         this.savedFlowerPos = input.read("flower_pos", BlockPos.CODEC).orElse(null);
+         this.maxBees = input.getIntOr("Bukkit.MaxEntities", MAX_OCCUPANTS); // Paper - persist max bukkit occupants
+@@ -393,7 +_,7 @@
      @Override
      protected void applyImplicitComponents(DataComponentGetter componentGetter) {
          super.applyImplicitComponents(componentGetter);

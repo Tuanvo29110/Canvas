@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/animal/Fox.java
 +++ b/net/minecraft/world/entity/animal/Fox.java
-@@ -870,6 +_,11 @@
+@@ -867,6 +_,11 @@
                  return false;
              } else {
                  ServerLevel serverLevel = getServerLevel(Fox.this.level());
@@ -12,7 +12,7 @@
  
                  for (EntityReference<LivingEntity> entityReference : Fox.this.getTrustedEntities().toList()) {
                      LivingEntity livingEntity = entityReference.getEntity(serverLevel, LivingEntity.class);
-@@ -877,7 +_,7 @@
+@@ -874,7 +_,7 @@
                          this.trustedLastHurt = livingEntity;
                          this.trustedLastHurtBy = livingEntity.getLastHurtByMob();
                          int lastHurtByMobTimestamp = livingEntity.getLastHurtByMobTimestamp();
@@ -21,7 +21,7 @@
                      }
                  }
  
-@@ -1120,6 +_,13 @@
+@@ -1117,6 +_,13 @@
              Fox.this.setSitting(false);
              super.start();
          }

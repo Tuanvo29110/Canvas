@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/projectile/AbstractHurtingProjectile.java
 +++ b/net/minecraft/world/entity/projectile/AbstractHurtingProjectile.java
-@@ -80,6 +_,11 @@
+@@ -81,6 +_,11 @@
              this.setPos(location);
              this.applyEffectsFromBlocks();
              super.tick();

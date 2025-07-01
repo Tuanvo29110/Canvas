@@ -1,15 +1,15 @@
 --- a/net/minecraft/world/entity/LivingEntity.java
 +++ b/net/minecraft/world/entity/LivingEntity.java
-@@ -10,6 +_,8 @@
- import com.mojang.logging.LogUtils;
+@@ -11,6 +_,8 @@
  import com.mojang.serialization.DataResult;
  import com.mojang.serialization.Dynamic;
-+import io.canvasmc.canvas.Config;
+ import com.mojang.serialization.JavaOps;
 +import io.canvasmc.canvas.region.ServerRegions;
++import io.canvasmc.canvas.Config;
  import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
  import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
  import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-@@ -70,8 +_,6 @@
+@@ -69,8 +_,6 @@
  import net.minecraft.tags.ItemTags;
  import net.minecraft.tags.TagKey;
  import net.minecraft.util.Mth;
@@ -18,8 +18,8 @@
  import net.minecraft.world.Difficulty;
  import net.minecraft.world.InteractionHand;
  import net.minecraft.world.damagesource.CombatRules;
-@@ -198,7 +_,7 @@
-     };
+@@ -210,7 +_,7 @@
+     private static final Dynamic<?> EMPTY_BRAIN = new Dynamic<>(JavaOps.INSTANCE, Map.of("memories", Map.of()));
      private final AttributeMap attributes;
      public CombatTracker combatTracker = new CombatTracker(this);
 -    public final Map<Holder<MobEffect>, MobEffectInstance> activeEffects = Maps.newHashMap();
@@ -27,8 +27,8 @@
      private final Map<EquipmentSlot, ItemStack> lastEquipmentItems = Util.makeEnumMap(EquipmentSlot.class, slot -> ItemStack.EMPTY);
      public boolean swinging;
      private boolean discardFriction = false;
-@@ -264,7 +_,7 @@
-     protected final EntityEquipment equipment;
+@@ -277,7 +_,7 @@
+     private Waypoint.Icon locatorBarIcon = new Waypoint.Icon();
      // CraftBukkit start
      public int expToDrop;
 -    public List<DefaultDrop> drops = new java.util.ArrayList<>(); // Paper - Restore vanilla drops behavior
@@ -36,7 +36,7 @@
      public final org.bukkit.craftbukkit.attribute.CraftAttributeMap craftAttributes;
      public boolean collides = true;
      public Set<UUID> collidableExemptions = new java.util.HashSet<>();
-@@ -415,20 +_,21 @@
+@@ -429,20 +_,21 @@
              this.getSleepingPos().ifPresent(this::setPosToBed);
          }
  
@@ -62,7 +62,7 @@
                  this.hurtServer(serverLevel1, this.damageSources().inWall(), 1.0F);
              } else if (flag && !serverLevel1.getWorldBorder().isWithinBounds(this.getBoundingBox())) {
                  double d = serverLevel1.getWorldBorder().getDistanceToBorder(this) + serverLevel1.getWorldBorder().getDamageSafeZone();
-@@ -507,13 +_,24 @@
+@@ -521,13 +_,24 @@
              }
          }
  
@@ -89,7 +89,7 @@
  
      @Override
      protected float getBlockSpeedFactor() {
-@@ -534,10 +_,10 @@
+@@ -548,10 +_,10 @@
      }
  
      protected void tryAddFrost() {
@@ -102,7 +102,7 @@
                  if (attribute == null) {
                      return;
                  }
-@@ -992,14 +_,18 @@
+@@ -1017,14 +_,18 @@
      }
  
      private void updateSynchronizedMobEffectParticles() {
@@ -128,7 +128,7 @@
      }
  
      private void updateGlowingStatus() {
-@@ -1315,13 +_,13 @@
+@@ -1340,13 +_,13 @@
      }
  
      private void refreshDirtyAttributes() {
@@ -147,7 +147,7 @@
      }
  
      protected void onAttributeUpdated(Holder<Attribute> attribute) {
-@@ -1393,7 +_,7 @@
+@@ -1425,7 +_,7 @@
                  player.setRealHealth(health);
              }
  
@@ -156,7 +156,7 @@
              return;
          }
          // CraftBukkit end
-@@ -1555,7 +_,7 @@
+@@ -1587,7 +_,7 @@
              boolean flag2 = !flag; // CraftBukkit - Ensure to return false if damage is blocked
              if (flag2) {
                  this.lastDamageSource = damageSource;
@@ -165,7 +165,7 @@
  
                  for (MobEffectInstance mobEffectInstance : this.getActiveEffects()) {
                      mobEffectInstance.onMobHurt(level, this, damageSource, amount);
-@@ -1797,7 +_,7 @@
+@@ -1829,7 +_,7 @@
  
      @Nullable
      public DamageSource getLastDamageSource() {
@@ -174,7 +174,7 @@
              this.lastDamageSource = null;
          }
  
-@@ -1835,7 +_,9 @@
+@@ -1867,7 +_,9 @@
          }
      }
  
@@ -184,7 +184,7 @@
          if (!this.isRemoved() && !this.dead) {
              Entity entity = damageSource.getEntity();
              LivingEntity killCredit = this.getKillCredit();
-@@ -1901,6 +_,7 @@
+@@ -1933,6 +_,7 @@
              }
              // Paper end
          }
@@ -192,7 +192,7 @@
      }
  
      protected void createWitherRose(@Nullable LivingEntity entitySource) {
-@@ -2151,13 +_,30 @@
+@@ -2183,13 +_,30 @@
      public Optional<BlockPos> getLastClimbablePos() {
          return this.lastClimbablePos;
      }
@@ -224,7 +224,7 @@
              if (inBlockState.is(BlockTags.CLIMBABLE)) {
                  this.lastClimbablePos = Optional.of(blockPos);
                  return true;
-@@ -2541,10 +_,10 @@
+@@ -2573,10 +_,10 @@
  
      @Nullable
      public LivingEntity getKillCredit() {
@@ -237,7 +237,7 @@
          }
      }
  
-@@ -2623,7 +_,7 @@
+@@ -2655,7 +_,7 @@
          }
  
          this.lastDamageSource = damageSource;
@@ -246,7 +246,7 @@
      }
  
      @Override
-@@ -2730,6 +_,7 @@
+@@ -2762,6 +_,7 @@
      }
  
      protected void updateSwingTime() {
@@ -254,7 +254,7 @@
          int currentSwingDuration = this.getCurrentSwingDuration();
          if (this.swinging) {
              this.swingTime++;
-@@ -3024,7 +_,7 @@
+@@ -3090,7 +_,7 @@
                  f2 *= 0.5F;
              }
  
@@ -263,7 +263,7 @@
                  f += (0.54600006F - f) * f2;
                  f1 += (this.getSpeed() - f1) * f2;
              }
-@@ -3298,11 +_,7 @@
+@@ -3364,11 +_,7 @@
              f1 = this.getYRot();
          }
  
@@ -275,7 +275,7 @@
  
          // Paper start - stop large pitch and yaw changes from crashing the server
          this.yRotO += Math.round((this.getYRot() - this.yRotO) / 360.0F) * 360.0F;
-@@ -3314,7 +_,6 @@
+@@ -3380,7 +_,6 @@
          this.yHeadRotO += Math.round((this.yHeadRot - this.yHeadRotO) / 360.0F) * 360.0F;
          // Paper end - stop large pitch and yaw changes from crashing the server
  
@@ -283,7 +283,7 @@
          if (this.isFallFlying()) {
              this.fallFlyTicks++;
          } else {
-@@ -3332,6 +_,7 @@
+@@ -3398,6 +_,7 @@
      public void detectEquipmentUpdates() {
          Map<EquipmentSlot, ItemStack> map = this.collectEquipmentChanges();
          if (map != null) {
@@ -291,7 +291,7 @@
              this.handleHandSwap(map);
              if (!map.isEmpty()) {
                  this.handleEquipmentChanges(map);
-@@ -3341,6 +_,10 @@
+@@ -3407,6 +_,10 @@
  
      @Nullable
      private Map<EquipmentSlot, ItemStack> collectEquipmentChanges() {
@@ -302,7 +302,7 @@
          Map<EquipmentSlot, ItemStack> map = null;
          // Paper start - EntityEquipmentChangedEvent
          record EquipmentChangeImpl(org.bukkit.inventory.ItemStack oldItem, org.bukkit.inventory.ItemStack newItem) implements io.papermc.paper.event.entity.EntityEquipmentChangedEvent.EquipmentChange {
-@@ -3490,21 +_,15 @@
+@@ -3556,21 +_,15 @@
          }
  
          this.setDeltaMovement(d, d1, d2);
@@ -324,7 +324,7 @@
          if (this.jumping && this.isAffectedByFluids()) {
              double fluidHeight;
              if (this.isInLava()) {
-@@ -3533,8 +_,6 @@
+@@ -3599,8 +_,6 @@
              this.noJumpDelay = 0;
          }
  
@@ -333,7 +333,7 @@
          if (this.isFallFlying()) {
              this.updateFallFlying();
          }
-@@ -3559,9 +_,7 @@
+@@ -3625,9 +_,7 @@
              this.calculateEntityAnimation(this instanceof FlyingAnimal);
          }
  
@@ -343,7 +343,7 @@
              if ((!this.isInPowderSnow || !this.canFreeze()) && !this.freezeLocked) { // Paper - Freeze Tick Lock API
                  this.setTicksFrozen(Math.max(0, this.getTicksFrozen() - 2));
              }
-@@ -3571,18 +_,14 @@
+@@ -3637,18 +_,14 @@
              if (this.tickCount % 40 == 0 && this.isFullyFrozen() && this.canFreeze()) {
                  this.hurtServer(serverLevel, this.damageSources().freeze(), 1.0F);
              }
@@ -362,15 +362,15 @@
          // Paper start - Add EntityMoveEvent
          // Purpur start - Ridables
          if (this.xo != this.getX() || this.yo != this.getY() || this.zo != this.getZ() || this.yRotO != this.getYRot() || this.xRotO != this.getXRot()) {
-@@ -3657,6 +_,7 @@
+@@ -3727,6 +_,7 @@
      protected void updateFallFlying() {
-         this.checkSlowFallDistance();
+         this.checkFallDistanceAccumulation();
          if (!this.level().isClientSide) {
 +            if (!this.isFallFlying() && this.fallFlyTicks == 0) return; // Canvas - skip unnecessary calculations if player is not flying or swing
              if (!this.canGlide()) {
                  if (this.getSharedFlag(7) != false && !CraftEventFactory.callToggleGlideEvent(this, false).isCancelled()) // CraftBukkit
                  this.setSharedFlag(7, false);
-@@ -3709,6 +_,7 @@
+@@ -3779,6 +_,7 @@
      }
  
      protected void pushEntities() {
@@ -378,7 +378,7 @@
          // Paper start - don't run getEntities if we're not going to use its result
          if (!this.isPushable()) {
              return;
-@@ -3796,6 +_,11 @@
+@@ -3866,6 +_,11 @@
      public void stopRiding() {
          // Paper start - Force entity dismount during teleportation
          this.stopRiding(false);
@@ -390,7 +390,7 @@
      }
  
      @Override
-@@ -4009,6 +_,18 @@
+@@ -4079,6 +_,18 @@
                  );
              }
  
@@ -409,7 +409,7 @@
              return itemEntity;
          }
      }
-@@ -4323,7 +_,7 @@
+@@ -4393,7 +_,7 @@
          boolean flag = false;
          BlockPos blockPos = BlockPos.containing(x, y, z);
          Level level = this.level();

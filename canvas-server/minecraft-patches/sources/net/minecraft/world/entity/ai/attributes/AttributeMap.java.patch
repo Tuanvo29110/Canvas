@@ -1,19 +1,11 @@
 --- a/net/minecraft/world/entity/ai/attributes/AttributeMap.java
 +++ b/net/minecraft/world/entity/ai/attributes/AttributeMap.java
-@@ -2,21 +_,21 @@
- 
- import com.google.common.collect.Multimap;
- import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
--import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
- import java.util.Collection;
- import java.util.Map;
+@@ -10,13 +_,14 @@
  import java.util.Set;
  import java.util.stream.Collectors;
  import javax.annotation.Nullable;
 +import it.unimi.dsi.fastutil.objects.ReferenceSets;
  import net.minecraft.core.Holder;
- import net.minecraft.nbt.CompoundTag;
- import net.minecraft.nbt.ListTag;
  import net.minecraft.resources.ResourceLocation;
  
  public class AttributeMap {
@@ -87,17 +79,3 @@
      }
  
      public boolean hasAttribute(Holder<Attribute> attribute) {
-@@ -140,9 +_,11 @@
-     public ListTag save() {
-         ListTag listTag = new ListTag();
- 
--        for (AttributeInstance attributeInstance : this.attributes.values()) {
-+        // Canvas start
-+        this.attributes.forEach((_, attributeInstance) -> {
-             listTag.add(attributeInstance.save());
--        }
-+        });
-+        // Canvas end
- 
-         return listTag;
-     }

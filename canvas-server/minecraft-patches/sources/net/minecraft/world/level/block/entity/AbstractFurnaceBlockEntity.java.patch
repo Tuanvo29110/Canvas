@@ -1,9 +1,9 @@
 --- a/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity.java
 @@ -37,9 +_,10 @@
- import net.minecraft.world.level.block.AbstractFurnaceBlock;
- import net.minecraft.world.level.block.Blocks;
  import net.minecraft.world.level.block.state.BlockState;
+ import net.minecraft.world.level.storage.ValueInput;
+ import net.minecraft.world.level.storage.ValueOutput;
 +import net.minecraft.world.level.chunk.LevelChunk;
  import net.minecraft.world.phys.Vec3;
  
@@ -53,8 +53,8 @@
          super(type, pos, blockState);
 @@ -164,6 +_,11 @@
          this.recipesUsed.clear();
-         this.recipesUsed.putAll(tag.read("RecipesUsed", RECIPES_USED_CODEC).orElse(Map.of()));
-         this.cookSpeedMultiplier = tag.getDoubleOr("Paper.CookSpeedMultiplier", 1); // Paper - cook speed multiplier API
+         this.recipesUsed.putAll(input.read("RecipesUsed", RECIPES_USED_CODEC).orElse(Map.of()));
+         this.cookSpeedMultiplier = input.getDoubleOr("Paper.CookSpeedMultiplier", 1); // Paper - cook speed multiplier API
 +        // Canvas start - block entity sleeping
 +        if (this.isSleeping() && this.level != null && !this.level.isClientSide) {
 +            this.wakeUpNow();

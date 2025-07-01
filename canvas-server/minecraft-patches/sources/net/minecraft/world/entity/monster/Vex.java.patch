@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/monster/Vex.java
 +++ b/net/minecraft/world/entity/monster/Vex.java
-@@ -407,7 +_,7 @@
+@@ -414,7 +_,7 @@
          @Override
          public void tick() {
              BlockPos boundOrigin = Vex.this.getBoundOrigin();

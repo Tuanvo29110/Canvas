@@ -8,7 +8,7 @@
  import net.minecraft.util.Mth;
  import net.minecraft.util.RandomSource;
  import net.minecraft.world.level.BlockGetter;
-@@ -157,7 +_,7 @@
+@@ -159,7 +_,7 @@
          BlockPos blockPos = findValidSpawnInChunk(chunk);
          if (blockPos == null) {
              BlockPos blockPos1 = BlockPos.containing(vec3.x + 0.5, 75.0, vec3.z + 0.5);
@@ -17,7 +17,7 @@
              level.registryAccess()
                  .lookup(Registries.CONFIGURED_FEATURE)
                  .flatMap(registry -> registry.get(EndFeatures.END_ISLAND))
-@@ -166,7 +_,7 @@
+@@ -168,7 +_,7 @@
                  );
              blockPos = blockPos1;
          } else {
@@ -26,7 +26,7 @@
          }
  
          return findTallestBlock(level, blockPos, 16, true);
-@@ -185,12 +_,21 @@
+@@ -187,12 +_,21 @@
              LOGGER.debug("Skipping forward past empty chunk at {}", vec31);
          }
  
@@ -50,7 +50,7 @@
      }
  
      private static BlockPos findTallestBlock(BlockGetter level, BlockPos pos, int radius, boolean allowBedrock) {
-@@ -201,7 +_,20 @@
+@@ -203,7 +_,20 @@
                  if (i != 0 || i1 != 0 || allowBedrock) {
                      for (int y = level.getMaxY(); y > (blockPos == null ? level.getMinY() : blockPos.getY()); y--) {
                          BlockPos blockPos1 = new BlockPos(pos.getX() + i, y, pos.getZ() + i1);
@@ -72,7 +72,7 @@
                          if (blockState.isCollisionShapeFullBlock(level, blockPos1) && (allowBedrock || !blockState.is(Blocks.BEDROCK))) {
                              blockPos = blockPos1;
                              break;
-@@ -246,7 +_,7 @@
+@@ -248,7 +_,7 @@
      }
  
      private static void spawnGatewayPortal(ServerLevel level, BlockPos pos, EndGatewayConfiguration config) {

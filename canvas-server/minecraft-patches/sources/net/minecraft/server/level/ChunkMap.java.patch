@@ -124,7 +124,7 @@
      }
  
      @Nullable
--    protected ChunkHolder getUpdatingChunkIfPresent(long chunkPos) {
+-    public ChunkHolder getUpdatingChunkIfPresent(long chunkPos) {
 +    public ChunkHolder getUpdatingChunkIfPresent(long chunkPos) { // Canvas - protected -> public
          // Paper start - rewrite chunk system
          final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder holder = ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(chunkPos);

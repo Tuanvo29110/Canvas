@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/ServerScoreboard.java
 +++ b/net/minecraft/server/ServerScoreboard.java
-@@ -32,8 +_,8 @@
+@@ -34,8 +_,8 @@
          }, DataFixTypes.SAVED_DATA_SCOREBOARD
      );
      private final MinecraftServer server;

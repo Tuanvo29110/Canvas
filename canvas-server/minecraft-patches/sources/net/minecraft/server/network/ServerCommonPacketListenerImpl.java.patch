@@ -1,14 +1,14 @@
 --- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
-@@ -3,6 +_,7 @@
- import com.mojang.authlib.GameProfile;
+@@ -4,6 +_,7 @@
  import com.mojang.logging.LogUtils;
+ import io.netty.channel.ChannelFutureListener;
  import javax.annotation.Nullable;
 +import io.canvasmc.canvas.Config;
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportedException;
-@@ -21,10 +_,11 @@
+@@ -23,10 +_,11 @@
  import net.minecraft.network.protocol.common.ServerboundPongPacket;
  import net.minecraft.network.protocol.common.ServerboundResourcePackPacket;
  import net.minecraft.network.protocol.cookie.ServerboundCookieResponsePacket;
@@ -20,68 +20,17 @@
 -import net.minecraft.util.profiling.Profiler;
  import org.slf4j.Logger;
  
- public abstract class ServerCommonPacketListenerImpl implements ServerCommonPacketListener, org.bukkit.craftbukkit.entity.CraftPlayer.TransferCookieConnection { // CraftBukkit
-@@ -45,7 +_,7 @@
-     private int latency;
-     private volatile boolean suspendFlushingOnServerThread = false;
-     // CraftBukkit start
--    protected final net.minecraft.server.level.ServerPlayer player;
-+    public final net.minecraft.server.level.ServerPlayer player; // Canvas - protected -> public
-     protected final org.bukkit.craftbukkit.CraftServer cserver;
-     public boolean processedDisconnect;
-     // CraftBukkit end
-@@ -135,6 +_,7 @@
-             this.latency = (this.latency * 3 + i) / 4;
-             this.keepAlivePending = false;
-         } else if (!this.isSingleplayerOwner()) {
-+            LOGGER.info("Disconnecting {} asynchronously from timeout in serverbound keep alive", this.player.getDisplayName().getString()); // Canvas - debug timeout
-             this.disconnectAsync(TIMEOUT_DISCONNECTION_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT); // Paper - add proper async disconnect
-         }
-     }
-@@ -219,7 +_,7 @@
- 
-     @Override
-     public void handleResourcePackResponse(ServerboundResourcePackPacket packet) {
--        PacketUtils.ensureRunningOnSameThread(packet, this, this.server);
-+        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.serverLevel()); // Canvas
-         if (packet.action() == ServerboundResourcePackPacket.Action.DECLINED && this.server.isResourcePackRequired()) {
-             LOGGER.info("Disconnecting {} due to resource pack {} rejection", this.playerProfile().getName(), packet.id());
-             this.disconnect(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"), org.bukkit.event.player.PlayerKickEvent.Cause.RESOURCE_PACK_REJECTION); // Paper - kick event cause
-@@ -246,7 +_,7 @@
-     @Override
-     public void handleCookieResponse(ServerboundCookieResponsePacket packet) {
-         // CraftBukkit start
--        PacketUtils.ensureRunningOnSameThread(packet, this, this.server);
-+        PacketUtils.ensureRunningOnSameThread(packet, this, this.player.serverLevel()); // Canvas
-         if (this.player.getBukkitEntity().handleCookieResponse(packet)) {
-             return;
-         }
-@@ -255,7 +_,6 @@
+ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPacketListener {
+@@ -190,7 +_,6 @@
      }
  
      protected void keepConnectionAlive() {
 -        Profiler.get().push("keepAlive");
          long millis = Util.getMillis();
-         // Paper start - give clients a longer time to respond to pings as per pre 1.12.2 timings
-         // This should effectively place the keepalive handling back to "as it was" before 1.12.2
-@@ -265,6 +_,7 @@
-         if (org.purpurmc.purpur.PurpurConfig.useAlternateKeepAlive) {
-             if (elapsedTime >= 1000L) { // 1 second
-                 if (this.keepAlivePending && !this.processedDisconnect && keepAlives.size() * 1000L >= KEEPALIVE_LIMIT) {
-+                    LOGGER.warn("Player {} failed to respond to keep alive via Purpur alternative keep alive", this.player.getDisplayName().getString()); // Canvas - debug timeout
-                     this.disconnect(ServerCommonPacketListenerImpl.TIMEOUT_DISCONNECTION_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT);
-                 } else if (this.checkIfClosed(millis)) {
-                     this.keepAlivePending = true;
-@@ -279,6 +_,7 @@
-         if (!this.isSingleplayerOwner() && elapsedTime >= 15000L) { // use vanilla's 15000L between keep alive packets
-             if (this.keepAlivePending) {
-                 if (!this.processedDisconnect && elapsedTime >= KEEPALIVE_LIMIT) { // check keepalive limit, don't fire if already disconnected
-+                    LOGGER.warn("Player {} failed to respond to keep alive", this.player.getDisplayName().getString()); // Canvas - debug timeout
-                     this.disconnect(TIMEOUT_DISCONNECTION_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT); // Paper - kick event cause
-                 }
-                 // Paper end - give clients a longer time to respond to pings as per pre 1.12.2 timings
-@@ -289,13 +_,12 @@
-                 this.send(new ClientboundKeepAlivePacket(this.keepAliveChallenge));
+         // Paper start - improve keepalives
+         // Purpur start - Alternative Keepalive Handling
+@@ -228,8 +_,6 @@
+                 // Paper end - improve keepalives
              }
          }
 -
@@ -89,13 +38,7 @@
      }
  
      private boolean checkIfClosed(long time) {
-         if (this.closed) {
-             if (time - this.closedListenerTime >= 15000L) {
-+                LOGGER.info("Disconnected player {} from closing", this.player.getDisplayName().getString()); // Canvas - debug timeout
-                 this.disconnect(TIMEOUT_DISCONNECTION_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.TIMEOUT); // Paper - kick event cause
-             }
- 
-@@ -315,10 +_,64 @@
+@@ -254,10 +_,64 @@
      }
  
      public void send(Packet<?> packet) {
@@ -131,7 +74,7 @@
          this.send(packet, null);
      }
  
-     public void send(Packet<?> packet, @Nullable PacketSendListener listener) {
+     public void send(Packet<?> packet, @Nullable ChannelFutureListener channelFutureListener) {
 +        // Canvas start - no chat reports
 +        if (Config.INSTANCE.networking.noChatReports.enable) {
 +            Object self = this;
@@ -160,7 +103,7 @@
          // CraftBukkit start
          if (packet == null || this.processedDisconnect) { // Spigot
              return;
-@@ -368,24 +_,8 @@
+@@ -297,24 +_,13 @@
          if (this.processedDisconnect) {
              return;
          }
@@ -168,7 +111,7 @@
 -            org.bukkit.craftbukkit.util.Waitable waitable = new org.bukkit.craftbukkit.util.Waitable() {
 -                @Override
 -                protected Object evaluate() {
--                    ServerCommonPacketListenerImpl.this.disconnect(disconnectionDetails, cause); // Paper - kick event causes
+-                    ServerCommonPacketListenerImpl.this.disconnect(disconnectionDetails);
 -                    return null;
 -                }
 -            };
@@ -182,46 +125,28 @@
 -            } catch (java.util.concurrent.ExecutionException e) {
 -                throw new RuntimeException(e);
 -            }
-+        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.player)) { // Canvas - connection threading
-+            this.disconnectAsync(disconnectionDetails, cause); // Canvas - connection threading
++        // Canvas start - Threaded Regions
++        if (!(this instanceof ServerGamePacketListenerImpl gamePacketListener)) {
++            throw new UnsupportedOperationException("Configuration mode is not supported in its current state");
++        }
++        // Canvas end
++        if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(gamePacketListener.player)) { // Canvas - connection threading
++            this.disconnectAsync(disconnectionDetails); // Canvas - connection threading
              return;
          }
  
-@@ -423,7 +_,13 @@
-         this.onDisconnect(disconnectionDetails, leaveMessage); // CraftBukkit - fire quit instantly // Paper - use kick event leave message
+@@ -368,7 +_,13 @@
+         this.onDisconnect(disconnectionDetails);
          this.connection.setReadOnly();
          // CraftBukkit - Don't wait
 -        this.server.scheduleOnMain(this.connection::handleDisconnection); // Paper
 +        // Canvas start - Threaded Regions
-+        int chunkX = this.player.chunkPosition().x;
-+        int chunkZ = this.player.chunkPosition().z;
++        int chunkX = this.connection.getPlayer().chunkPosition().x;
++        int chunkZ = this.connection.getPlayer().chunkPosition().z;
 +        this.server.threadedServer().taskQueue.queueTickTaskQueue(
-+            this.player.serverLevel(), chunkX, chunkZ, this.connection::handleDisconnection
++            this.connection.getPlayer().serverLevel(), chunkX, chunkZ, this.connection::handleDisconnection
 +        );
 +        // Canvas end
      }
  
      // Paper start - add proper async disconnect
-@@ -436,19 +_,19 @@
-     }
- 
-     public void disconnectAsync(DisconnectionDetails disconnectionInfo, org.bukkit.event.player.PlayerKickEvent.Cause cause) {
--        if (this.cserver.isPrimaryThread()) {
-+        if (io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.player)) { // Canvas - connection threading
-             this.disconnect(disconnectionInfo, cause);
-             return;
-         }
- 
-         this.connection.setReadOnly();
--        this.server.scheduleOnMain(() -> {
-+        this.player.getBukkitEntity().taskScheduler.schedule((_) -> { // Canvas - connection threading
-             ServerCommonPacketListenerImpl.this.disconnect(disconnectionInfo, cause);
-             if (ServerCommonPacketListenerImpl.this.player.quitReason == null) {
-                 // cancelled
-                 ServerCommonPacketListenerImpl.this.connection.enableAutoRead();
-             }
--        });
-+        }, null, 0); // Canvas - connection threading
-     }
-     // Paper end - add proper async disconnect
- 

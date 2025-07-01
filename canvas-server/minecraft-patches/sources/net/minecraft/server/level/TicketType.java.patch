@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/TicketType.java
 +++ b/net/minecraft/server/level/TicketType.java
-@@ -45,21 +_,35 @@
+@@ -50,21 +_,35 @@
      public static final TicketType FORCED = register("forced", 0L, true, TicketType.TicketUse.LOADING_AND_SIMULATION);
      public static final TicketType PORTAL = register("portal", 300L, true, TicketType.TicketUse.LOADING_AND_SIMULATION);
      public static final TicketType ENDER_PEARL = register("ender_pearl", 40L, false, TicketType.TicketUse.LOADING_AND_SIMULATION);
@@ -25,7 +25,7 @@
      }
  
      // Paper start - rewrite chunk system - convert to class
-     private final long timeout;
+     private long timeout; // Paper - rewrite chunk system - remove final
      private final boolean persist;
      private final net.minecraft.server.level.TicketType.TicketUse use;
 +    // Canvas start - add name for debug
@@ -38,7 +38,7 @@
  
      public TicketType(long timeout, boolean persist, net.minecraft.server.level.TicketType.TicketUse use) {
          this.timeout = timeout;
-@@ -95,6 +_,7 @@
+@@ -100,6 +_,7 @@
          return "TicketType[" +
              "timeout=" + timeout + ", " +
              "persist=" + persist + ", " +

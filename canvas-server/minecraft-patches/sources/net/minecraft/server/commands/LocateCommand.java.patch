@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/commands/LocateCommand.java
 +++ b/net/minecraft/server/commands/LocateCommand.java
-@@ -109,6 +_,39 @@
+@@ -106,6 +_,39 @@
          BlockPos blockPos = BlockPos.containing(source.getPosition());
          ServerLevel level = source.getLevel();
          Stopwatch stopwatch = Stopwatch.createStarted(Util.TICKER);

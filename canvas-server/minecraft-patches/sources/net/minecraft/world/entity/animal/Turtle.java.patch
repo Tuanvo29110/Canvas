@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/animal/Turtle.java
 +++ b/net/minecraft/world/entity/animal/Turtle.java
-@@ -484,6 +_,13 @@
+@@ -485,6 +_,13 @@
          protected boolean isValidTarget(LevelReader level, BlockPos pos) {
              return level.getBlockState(pos).is(Blocks.WATER);
          }
@@ -14,7 +14,7 @@
      }
  
      static class TurtleLayEggGoal extends MoveToBlockGoal {
-@@ -539,6 +_,13 @@
+@@ -540,6 +_,13 @@
          protected boolean isValidTarget(LevelReader level, BlockPos pos) {
              return level.isEmptyBlock(pos.above()) && TurtleEggBlock.isSand(level, pos);
          }

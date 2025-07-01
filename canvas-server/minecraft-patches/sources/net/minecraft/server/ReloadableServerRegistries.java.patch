@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/ReloadableServerRegistries.java
 +++ b/net/minecraft/server/ReloadableServerRegistries.java
-@@ -52,7 +_,7 @@
+@@ -50,7 +_,7 @@
          List<CompletableFuture<WritableRegistry<?>>> list1 = LootDataType.values()
              .map(lootDataType -> scheduleRegistryLoad((LootDataType<?>)lootDataType, registryOps, resourceManager, backgroundExecutor, conversions)) // Paper
              .toList();

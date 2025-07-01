@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/monster/creaking/Creaking.java
 +++ b/net/minecraft/world/entity/monster/creaking/Creaking.java
-@@ -17,8 +_,6 @@
+@@ -16,8 +_,6 @@
  import net.minecraft.sounds.SoundEvent;
  import net.minecraft.sounds.SoundEvents;
  import net.minecraft.tags.DamageTypeTags;
@@ -9,7 +9,7 @@
  import net.minecraft.world.damagesource.DamageSource;
  import net.minecraft.world.entity.AnimationState;
  import net.minecraft.world.entity.Entity;
-@@ -235,10 +_,7 @@
+@@ -236,10 +_,7 @@
  
      @Override
      protected void customServerAiStep(ServerLevel level) {

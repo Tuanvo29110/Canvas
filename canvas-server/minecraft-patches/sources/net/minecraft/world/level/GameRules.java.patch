@@ -10,7 +10,7 @@
  import net.minecraft.commands.CommandSourceStack;
  import net.minecraft.commands.Commands;
  import net.minecraft.nbt.CompoundTag;
-@@ -277,7 +_,7 @@
+@@ -288,7 +_,7 @@
      }
  
      private GameRules(Map<GameRules.Key<?>, GameRules.Value<?>> rules, FeatureFlagSet enabledFeatures) {
@@ -19,7 +19,7 @@
          this.enabledFeatures = enabledFeatures;
  
          // Paper start - Perf: Use array for gamerule storage
-@@ -355,8 +_,32 @@
+@@ -366,8 +_,32 @@
      }
  
      public int getInt(GameRules.Key<GameRules.IntegerValue> key) {

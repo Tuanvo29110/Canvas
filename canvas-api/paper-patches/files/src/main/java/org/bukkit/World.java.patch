@@ -8,7 +8,7 @@
  
  /**
   * Represents a world, which may contain entities, chunks and blocks
-@@ -4464,6 +_,15 @@
+@@ -4482,6 +_,15 @@
       */
      @NotNull
      public Collection<GeneratedStructure> getStructures(int x, int z, @NotNull Structure structure);

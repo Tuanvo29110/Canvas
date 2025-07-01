@@ -1,6 +1,6 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
-@@ -644,11 +_,19 @@
+@@ -646,11 +_,19 @@
      }
  
      public final ChunkHolder vanillaChunkHolder;
@@ -20,7 +20,7 @@
          this.scheduler = scheduler;
          this.vanillaChunkHolder = new ChunkHolder(
                  new ChunkPos(chunkX, chunkZ), ChunkHolderManager.MAX_TICKET_LEVEL, world,
-@@ -1190,6 +_,7 @@
+@@ -1192,6 +_,7 @@
              for (int dz = -NEIGHBOUR_RADIUS; dz <= NEIGHBOUR_RADIUS; ++dz) {
                  for (int dx = -NEIGHBOUR_RADIUS; dx <= NEIGHBOUR_RADIUS; ++dx) {
                      final NewChunkHolder holder = (dx | dz) == 0 ? this : this.scheduler.chunkHolderManager.getChunkHolder(dx + this.chunkX, dz + this.chunkZ);
@@ -28,7 +28,7 @@
                      if (loaded) {
                          if (holder.setNeighbourFullLoaded(-dx, -dz)) {
                              changedFullStatus.add(holder);
-@@ -1214,6 +_,18 @@
+@@ -1216,6 +_,18 @@
  
      private void updateCurrentState(final FullChunkStatus to) {
          this.currentFullChunkStatus = to;
@@ -47,7 +47,7 @@
      }
  
      // only to be called on the main thread, no locks need to be held
-@@ -1348,7 +_,7 @@
+@@ -1350,7 +_,7 @@
          return this.requestedGenStatus;
      }
  
@@ -56,7 +56,7 @@
  
      void addStatusConsumer(final ChunkStatus status, final Consumer<ChunkAccess> consumer) {
          this.statusWaiters.computeIfAbsent(status, (final ChunkStatus keyInMap) -> {
-@@ -1359,7 +_,7 @@
+@@ -1361,7 +_,7 @@
      private void completeStatusConsumers(ChunkStatus status, final ChunkAccess chunk) {
          // Update progress listener for LevelLoadingScreen
          if (chunk != null) {
@@ -65,7 +65,7 @@
              if (progressListener != null) {
                  final ChunkStatus finalStatus = status;
                  this.scheduler.scheduleChunkTask(this.chunkX, this.chunkZ, () -> {
-@@ -1383,7 +_,7 @@
+@@ -1385,7 +_,7 @@
          }
  
          // must be scheduled to main, we do not trust the callback to not do anything stupid
@@ -74,7 +74,7 @@
              for (final Consumer<ChunkAccess> consumer : consumers) {
                  try {
                      consumer.accept(chunk);
-@@ -1394,7 +_,7 @@
+@@ -1396,7 +_,7 @@
          }, Priority.HIGHEST);
      }
  
@@ -83,7 +83,7 @@
  
      void addFullStatusConsumer(final FullChunkStatus status, final Consumer<LevelChunk> consumer) {
          this.fullStatusWaiters.computeIfAbsent(status, (final FullChunkStatus keyInMap) -> {
-@@ -1411,7 +_,7 @@
+@@ -1413,7 +_,7 @@
          }
  
          // must be scheduled to main, we do not trust the callback to not do anything stupid

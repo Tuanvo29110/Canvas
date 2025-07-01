@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
-@@ -15,6 +_,8 @@
+@@ -16,6 +_,8 @@
  import java.util.function.Predicate;
  import javax.annotation.Nonnull;
  import javax.annotation.Nullable;
@@ -9,7 +9,7 @@
  import net.minecraft.Util;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
-@@ -297,6 +_,14 @@
+@@ -307,6 +_,14 @@
          builder.define(DATA_SHOULDER_LEFT, new CompoundTag());
          builder.define(DATA_SHOULDER_RIGHT, new CompoundTag());
      }
@@ -24,7 +24,7 @@
  
      @Override
      public void tick() {
-@@ -315,25 +_,28 @@
+@@ -325,25 +_,28 @@
              this.takeXpDelay--;
          }
  
@@ -59,7 +59,7 @@
                  this.sleepCounter = 0;
              }
          }
-@@ -348,19 +_,23 @@
+@@ -358,19 +_,23 @@
          this.moveCloak();
          if (this instanceof ServerPlayer serverPlayer) {
              this.foodData.tick(serverPlayer);
@@ -88,7 +88,7 @@
          }
  
          int i = 29999999;
-@@ -630,7 +_,14 @@
+@@ -640,7 +_,14 @@
          }
  
          this.tickRegeneration();
@@ -103,7 +103,7 @@
          this.oBob = this.bob;
          if (this.abilities.flying && !this.isPassenger()) {
              this.resetFallDistance();
-@@ -1343,6 +_,13 @@
+@@ -1355,6 +_,13 @@
                                  }
  
                                  if (!cancelled) {

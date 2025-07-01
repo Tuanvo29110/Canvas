@@ -1,18 +1,14 @@
 --- a/net/minecraft/world/entity/monster/Drowned.java
 +++ b/net/minecraft/world/entity/monster/Drowned.java
-@@ -298,9 +_,11 @@
+@@ -297,6 +_,7 @@
+     @Override
+     public void updateSwimming() {
          if (!this.level().isClientSide) {
-             if (this.isEffectiveAi() && this.isUnderWater() && this.wantsToSwim()) {
-                 this.navigation = this.waterNavigation;
-+                (this).lithium$updateNavigationRegistration(); // Canvas
-                 this.setSwimming(true);
-             } else {
-                 this.navigation = this.groundNavigation;
-+                (this).lithium$updateNavigationRegistration(); // Canvas
-                 this.setSwimming(false);
-             }
++            (this).lithium$updateNavigationRegistration(); // Canvas
+             this.setSwimming(this.isEffectiveAi() && this.isUnderWater() && this.wantsToSwim());
          }
-@@ -313,7 +_,7 @@
+     }
+@@ -308,7 +_,7 @@
  
      protected boolean closeToNextPos() {
          Path path = this.getNavigation().getPath();
@@ -21,9 +17,9 @@
              BlockPos target = path.getTarget();
              if (target != null) {
                  double d = this.distanceToSqr(target.getX(), target.getY(), target.getZ());
-@@ -404,12 +_,20 @@
+@@ -398,12 +_,20 @@
+         public void start() {
              this.drowned.setSearchingForLand(false);
-             this.drowned.navigation = this.drowned.groundNavigation;
              super.start();
 +            (this.drowned).lithium$updateNavigationRegistration(); // Canvas
          }
@@ -32,8 +28,8 @@
          public void stop() {
              super.stop();
          }
-+
 +        // Canvas start - Async target finding
++
 +        @Override
 +        protected TypeToCheck typeToCheck() {
 +            return TypeToCheck.Drowned;

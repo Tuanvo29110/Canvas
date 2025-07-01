@@ -1,14 +1,14 @@
 --- a/net/minecraft/world/entity/projectile/EyeOfEnder.java
 +++ b/net/minecraft/world/entity/projectile/EyeOfEnder.java
-@@ -29,6 +_,7 @@
-     public double tz;
+@@ -28,6 +_,7 @@
+     public Vec3 target;
      public int life;
      public boolean surviveAfterDeath;
 +    public boolean asyncLocator$locateTaskOngoing = false; // Canvas - Asynchronous locator
  
      public EyeOfEnder(EntityType<? extends EyeOfEnder> entityType, Level level) {
          super(entityType, level);
-@@ -116,6 +_,11 @@
+@@ -95,6 +_,11 @@
      @Override
      public void tick() {
          super.tick();
@@ -16,7 +16,7 @@
 +        if (io.canvasmc.canvas.Config.INSTANCE.asyncLocator.enabled && this.asyncLocator$locateTaskOngoing) {
 +            return;
 +        }
-+        // Canvas end - Asynchronous locator
-         Vec3 deltaMovement = this.getDeltaMovement();
-         double d = this.getX() + deltaMovement.x;
-         double d1 = this.getY() + deltaMovement.y;
++        // Canvas end
+         Vec3 vec3 = this.position().add(this.getDeltaMovement());
+         if (!this.level().isClientSide() && this.target != null) {
+             this.setDeltaMovement(updateDeltaMovement(this.getDeltaMovement(), vec3, this.target));

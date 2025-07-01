@@ -1,6 +1,6 @@
 --- a/net/minecraft/stats/ServerStatsCounter.java
 +++ b/net/minecraft/stats/ServerStatsCounter.java
-@@ -45,7 +_,7 @@
+@@ -43,7 +_,7 @@
          }, map -> map.entrySet().stream().collect(Collectors.groupingBy(entry -> entry.getKey().getType(), Util.toMap())));
      private final MinecraftServer server;
      private final File file;
@@ -9,7 +9,7 @@
  
      private static <T> Codec<Map<Stat<?>, Integer>> createTypedStatsCodec(StatType<T> type) {
          Codec<T> codec = type.getRegistry().byNameCodec();
-@@ -144,10 +_,11 @@
+@@ -139,10 +_,11 @@
      public void sendStats(ServerPlayer player) {
          Object2IntMap<Stat<?>> map = new Object2IntOpenHashMap<>();
  

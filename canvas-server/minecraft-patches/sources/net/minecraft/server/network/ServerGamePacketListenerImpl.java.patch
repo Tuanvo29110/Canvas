@@ -17,24 +17,7 @@
  import java.util.function.BiFunction;
  import java.util.function.Consumer;
  import java.util.stream.Collectors;
-@@ -139,6 +_,7 @@
- import net.minecraft.resources.ResourceKey;
- import net.minecraft.resources.ResourceLocation;
- import net.minecraft.server.MinecraftServer;
-+import net.minecraft.server.RunningOnDifferentThreadException;
- import net.minecraft.server.level.ServerLevel;
- import net.minecraft.server.level.ServerPlayer;
- import net.minecraft.util.FutureChain;
-@@ -196,6 +_,8 @@
- import net.minecraft.world.level.block.entity.TestInstanceBlockEntity;
- import net.minecraft.world.level.block.state.BlockBehaviour;
- import net.minecraft.world.level.block.state.BlockState;
-+import net.minecraft.world.level.chunk.ChunkAccess;
-+import net.minecraft.world.level.chunk.status.ChunkStatus;
- import net.minecraft.world.phys.AABB;
- import net.minecraft.world.phys.BlockHitResult;
- import net.minecraft.world.phys.Vec3;
-@@ -284,10 +_,10 @@
+@@ -287,10 +_,10 @@
      private int knownMovePacketCount;
      private boolean receivedMovementThisTick;
      // CraftBukkit start - add fields
@@ -48,7 +31,7 @@
      private int dropCount = 0;
  
      private boolean hasMoved = false;
-@@ -334,6 +_,7 @@
+@@ -339,6 +_,7 @@
              }
          );
      // Purpur end - AFK API
@@ -56,7 +39,7 @@
  
      @Override
      public void tick() {
-@@ -362,15 +_,18 @@
+@@ -367,15 +_,18 @@
          }
  
          this.lastVehicle = this.player.getRootVehicle();
@@ -84,7 +67,7 @@
                      // LOGGER.warn("{} was kicked for floating a vehicle too long!", this.player.getName().getString()); // Paper - Logging moved to net.minecraft.server.network.ServerCommonPacketListenerImpl.disconnect()
                      this.disconnect(io.papermc.paper.configuration.GlobalConfiguration.get().messages.kick.flyingVehicle, org.bukkit.event.player.PlayerKickEvent.Cause.FLYING_VEHICLE); // Paper - use configurable kick message & kick event cause
                      return;
-@@ -533,9 +_,10 @@
+@@ -562,9 +_,10 @@
                  d7 = Math.max(d7, (otherFieldX * otherFieldX + otherFieldY * otherFieldY + otherFieldZ * otherFieldZ) - 1);
                  // Paper end - fix large move vectors killing the server
  
@@ -97,7 +80,7 @@
  
                  ++this.receivedMovePacketCount;
                  int i = this.receivedMovePacketCount - this.knownMovePacketCount;
-@@ -795,7 +_,12 @@
+@@ -824,7 +_,12 @@
      }
  
      // Paper start - AsyncTabCompleteEvent
@@ -111,16 +94,16 @@
          new com.google.common.util.concurrent.ThreadFactoryBuilder().setDaemon(true).setNameFormat("Async Tab Complete Thread - #%d").setUncaughtExceptionHandler(new net.minecraft.DefaultUncaughtExceptionHandlerWithName(MinecraftServer.LOGGER)).build());
      // Paper end - AsyncTabCompleteEvent
  
-@@ -803,7 +_,7 @@
+@@ -832,7 +_,7 @@
      public void handleCustomCommandSuggestions(ServerboundCommandSuggestionPacket packet) {
-         // PacketUtils.ensureRunningOnSameThread(packet, this, this.player.serverLevel()); // Paper - AsyncTabCompleteEvent; run this async
+         // PacketUtils.ensureRunningOnSameThread(packet, this, this.player.level()); // Paper - AsyncTabCompleteEvent; run this async
          // CraftBukkit start
 -        if (!this.tabSpamThrottler.isIncrementAndUnderThreshold() && !this.server.getPlayerList().isOp(this.player.getGameProfile()) && !this.server.isSingleplayerOwner(this.player.getGameProfile())) { // Paper - configurable tab spam limits
-+        if (!this.tabSpamThrottler.isIncrementAndUnderThreshold() && !this.server.getPlayerList().isOp(this.player.getGameProfile()) && !this.server.isSingleplayerOwner(this.player.getGameProfile()) && !Config.INSTANCE.networking.disableDisconnectSpam) { // Paper - configurable tab spam limits // Canvas - disable disconnect.spam
++        if (!Config.INSTANCE.networking.disableDisconnectSpam && !this.tabSpamThrottler.isIncrementAndUnderThreshold() && !this.server.getPlayerList().isOp(this.player.getGameProfile()) && !this.server.isSingleplayerOwner(this.player.getGameProfile())) { // Paper - configurable tab spam limits // Canvas - disable disconnect.spam
              this.disconnectAsync(Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM); // Paper - Kick event cause // Paper - add proper async disconnect
              return;
          }
-@@ -815,7 +_,7 @@
+@@ -844,7 +_,7 @@
          // Paper end - Don't suggest if tab-complete is disabled
          // Paper start
          final int index;
@@ -129,7 +112,7 @@
              this.disconnectAsync(Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM); // Paper - add proper async disconnect
              return;
          }
-@@ -842,7 +_,7 @@
+@@ -871,7 +_,7 @@
              }
  
              // This needs to be on main
@@ -138,7 +121,7 @@
          } else if (!completions.isEmpty()) {
              final com.mojang.brigadier.suggestion.SuggestionsBuilder builder0 = new com.mojang.brigadier.suggestion.SuggestionsBuilder(packet.getCommand(), stringReader.getTotalLength());
              final com.mojang.brigadier.suggestion.SuggestionsBuilder builder = builder0.createOffset(builder0.getInput().lastIndexOf(' ') + 1);
-@@ -875,6 +_,7 @@
+@@ -904,6 +_,7 @@
          ParseResults<CommandSourceStack> parseResults = this.server.getCommands().getDispatcher().parse(stringReader, this.player.createCommandSourceStack());
          // Paper start - Handle non-recoverable exceptions
          if (!parseResults.getExceptions().isEmpty()
@@ -146,7 +129,7 @@
              && parseResults.getExceptions().values().stream().anyMatch(e -> e instanceof io.papermc.paper.brigadier.TagParseCommandSyntaxException)) {
              this.disconnect(Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM);
              return;
-@@ -1292,11 +_,11 @@
+@@ -1324,11 +_,11 @@
          }
          // Paper end - Book size limits
          // CraftBukkit start
@@ -160,7 +143,7 @@
          // CraftBukkit end
          int slot = packet.slot();
          if (Inventory.isHotbarSlot(slot) || slot == 40) {
-@@ -1418,6 +_,7 @@
+@@ -1454,6 +_,7 @@
                      this.resetPosition();
                  }
  
@@ -168,7 +151,7 @@
                  if (this.player.hasClientLoaded()) {
                      float f = Mth.wrapDegrees(packet.getYRot(this.player.getYRot())); final float toYaw = f; // Paper - OBFHELPER
                      float f1 = Mth.wrapDegrees(packet.getXRot(this.player.getXRot())); final float toPitch = f1; // Paper - OBFHELPER
-@@ -1467,9 +_,10 @@
+@@ -1503,9 +_,10 @@
                                      this.receivedMovePacketCount++;
                                      int i = this.receivedMovePacketCount - this.knownMovePacketCount;
                                      // CraftBukkit start - handle custom speeds and skipped ticks
@@ -181,16 +164,16 @@
  
                                      if (i > Math.max(this.allowedPlayerTicks, 5)) {
                                      // CraftBukkit end
-@@ -1696,7 +_,7 @@
+@@ -1731,7 +_,7 @@
                                          && !isFallFlying
                                          && !isAutoSpinAttack
                                          && this.noBlocksAround(this.player);
--                                    this.player.serverLevel().getChunkSource().move(this.player);
+-                                    this.player.level().getChunkSource().move(this.player);
 +                                    if (!Config.INSTANCE.reduceChunkSourceUpdates || this.player.serverLevel() != serverLevel || this.player.chunkPosition() == playerStartChunkPosition) this.player.serverLevel().getChunkSource().move(this.player); // Canvas - reduce PlayerChunk updates
                                      Vec3 vec3 = new Vec3(this.player.getX() - x, this.player.getY() - y, this.player.getZ() - z);
                                      this.player.setOnGroundWithMovement(packet.isOnGround(), packet.horizontalCollision(), vec3);
                                      this.player.doCheckFallDamage(vec3.x, vec3.y, vec3.z, packet.isOnGround());
-@@ -1952,9 +_,10 @@
+@@ -1987,9 +_,10 @@
                      if (!this.player.isSpectator()) {
                          // limit how quickly items can be dropped
                          // If the ticks aren't the same then the count starts from 0 and we update the lastDropTick.
@@ -203,7 +186,7 @@
                          } else {
                              // Else we increment the drop count and check the amount.
                              this.dropCount++;
-@@ -1985,7 +_,7 @@
+@@ -2020,7 +_,7 @@
                  case ABORT_DESTROY_BLOCK:
                  case STOP_DESTROY_BLOCK:
                      // Paper start - Don't allow digging into unloaded chunks
@@ -212,7 +195,7 @@
                          this.player.connection.ackBlockChangesUpTo(packet.getSequence());
                          return;
                      }
-@@ -2068,10 +_,15 @@
+@@ -2103,10 +_,15 @@
                  }
                  // Paper end - improve distance check
                  BlockPos blockPos = hitResult.getBlockPos();
@@ -231,7 +214,7 @@
                          Direction direction = hitResult.getDirection();
                          this.player.resetLastActionTime();
                          int maxY = this.player.level().getMaxY();
-@@ -2479,7 +_,7 @@
+@@ -2511,7 +_,7 @@
              this.player.resetLastActionTime();
              // CraftBukkit start
              if (sync) {
@@ -240,7 +223,7 @@
              } else {
                  handler.run();
              }
-@@ -2585,6 +_,7 @@
+@@ -2617,6 +_,7 @@
          // this.chatSpamThrottler.increment();
          if (!this.chatSpamThrottler.isIncrementAndUnderThreshold()
              // CraftBukkit end
@@ -248,7 +231,7 @@
              && !this.server.getPlayerList().isOp(this.player.getGameProfile())
              && !this.server.isSingleplayerOwner(this.player.getGameProfile())) {
              this.disconnectAsync(Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM); // Paper - kick event cause & add proper async disconnect
-@@ -2811,7 +_,7 @@
+@@ -2822,7 +_,7 @@
              // Spigot end
              this.player.resetLastActionTime();
              this.player.setShiftKeyDown(packet.isUsingSecondaryAction());
@@ -257,7 +240,7 @@
                  if (!serverLevel.getWorldBorder().isWithinBounds(target.blockPosition())) {
                      return;
                  }
-@@ -3364,7 +_,7 @@
+@@ -3374,7 +_,7 @@
      public void handlePlaceRecipe(ServerboundPlaceRecipePacket packet) {
          // Paper start - auto recipe limit
          if (!org.bukkit.Bukkit.isPrimaryThread()) {
@@ -266,3 +249,26 @@
                  this.disconnectAsync(net.minecraft.network.chat.Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM); // Paper - kick event cause // Paper - add proper async disconnect
                  return;
              }
+@@ -3778,19 +_,19 @@
+ 
+     @Override
+     public void disconnectAsync(final net.minecraft.network.DisconnectionDetails disconnectionInfo) {
+-        if (this.cserver.isPrimaryThread()) {
++        if (io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(this.player)) { // Canvas - connection threading
+             this.disconnect(disconnectionInfo);
+             return;
+         }
+ 
+         this.connection.setReadOnly();
+-        this.server.scheduleOnMain(() -> {
++        this.player.getBukkitEntity().taskScheduler.schedule((_) -> { // Canvas - connection threading
+             this.disconnect(disconnectionInfo);
+             if (this.player.quitReason == null) {
+                 // cancelled
+                 this.connection.enableAutoRead();
+             }
+-        });
++        }, null, 0); // Canvas - connection threading
+     }
+ 
+     // Paper start

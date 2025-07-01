@@ -6,15 +6,17 @@
  import net.minecraft.core.BlockPos;
 +import net.minecraft.core.HolderGetter;
  import net.minecraft.core.registries.Registries;
- import net.minecraft.nbt.CompoundTag;
  import net.minecraft.network.syncher.EntityDataAccessor;
-@@ -37,14 +_,31 @@
+ import net.minecraft.network.syncher.EntityDataSerializers;
+@@ -36,6 +_,7 @@
  import net.minecraft.world.item.ItemStack;
  import net.minecraft.world.level.Level;
  import net.minecraft.world.level.ServerLevelAccessor;
 +import net.minecraft.world.level.block.entity.BannerPattern;
  import net.minecraft.world.level.pathfinder.Path;
- import net.minecraft.world.phys.Vec3;
+ import net.minecraft.world.level.storage.ValueInput;
+ import net.minecraft.world.level.storage.ValueOutput;
+@@ -43,9 +_,25 @@
  
  public abstract class Raider extends PatrollingMonster {
      protected static final EntityDataAccessor<Boolean> IS_CELEBRATING = SynchedEntityData.defineId(Raider.class, EntityDataSerializers.BOOLEAN);
@@ -43,7 +45,7 @@
      private static final int DEFAULT_WAVE = 0;
      private static final boolean DEFAULT_CAN_JOIN_RAID = false;
      @Nullable
-@@ -88,7 +_,7 @@
+@@ -89,7 +_,7 @@
              Raid currentRaid = this.getCurrentRaid();
              if (this.canJoinRaid()) {
                  if (currentRaid == null) {
@@ -52,7 +54,7 @@
                          Raid raidAt = serverLevel.getRaidAt(this.blockPosition());
                          if (raidAt != null && Raids.canJoinRaid(this)) {
                              raidAt.joinRaid(serverLevel, raidAt.getGroupsSpawned(), this, null, true);
-@@ -149,7 +_,7 @@
+@@ -150,7 +_,7 @@
      public boolean isCaptain() {
          ItemStack itemBySlot = this.getItemBySlot(EquipmentSlot.HEAD);
          boolean flag = !itemBySlot.isEmpty()
@@ -61,7 +63,7 @@
          boolean isPatrolLeader = this.isPatrolLeader();
          return flag && isPatrolLeader;
      }
-@@ -212,7 +_,7 @@
+@@ -213,7 +_,7 @@
          boolean flag = this.hasActiveRaid() && this.getCurrentRaid().getLeader(this.getWave()) != null;
          if (this.hasActiveRaid()
              && !flag
@@ -70,7 +72,7 @@
              // Paper start - EntityPickupItemEvent fixes
              if (org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPickupItemEvent(this, entity, 0, false).isCancelled()) {
                  return;
-@@ -371,7 +_,7 @@
+@@ -372,7 +_,7 @@
                      .level()
                      .getEntitiesOfClass(ItemEntity.class, this.mob.getBoundingBox().inflate(attributeValue, 8.0, attributeValue), Raider.ALLOWED_ITEMS)) {
                      long orDefault = this.unreachableBannerCache.getOrDefault(itemEntity.getId(), Long.MIN_VALUE);
@@ -79,7 +81,7 @@
                          map.put(itemEntity.getId(), orDefault);
                      } else {
                          Path path = this.mob.getNavigation().createPath(itemEntity, 1);
-@@ -381,7 +_,7 @@
+@@ -382,7 +_,7 @@
                              return true;
                          }
  
@@ -88,7 +90,7 @@
                      }
                  }
  
-@@ -398,6 +_,16 @@
+@@ -399,6 +_,16 @@
                  && !this.pathToBanner.isDone()
                  && !this.cannotPickUpBanner();
          }
@@ -104,8 +106,8 @@
 +        // Canvas end
  
          private boolean cannotPickUpBanner() {
-             if (!getServerLevel(this.mob).getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING, this.mob.level().purpurConfig.pillagerMobGriefingOverride) || !this.mob.canPickUpLoot()) return false; // Paper - respect game and entity rules for picking up items // Purpur - Add mobGriefing override to everything affected
-@@ -408,7 +_,7 @@
+             if (!getServerLevel(this.mob).getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING, this.mob.level().purpurConfig.pillagerMobGriefingOverride)) return true; // Paper - respect game and entity rules for picking up items // Purpur - Add mobGriefing override to everything affected
+@@ -409,7 +_,7 @@
              } else if (!this.mob.canBeLeader()) {
                  return true;
              } else if (ItemStack.matches(

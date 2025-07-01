@@ -9,7 +9,7 @@
  import it.unimi.dsi.fastutil.objects.Object2IntMap.Entry;
  import java.util.HashSet;
  import java.util.List;
-@@ -30,8 +_,6 @@
+@@ -26,8 +_,6 @@
  import net.minecraft.tags.TagKey;
  import net.minecraft.util.Mth;
  import net.minecraft.util.RandomSource;
@@ -18,9 +18,9 @@
  import net.minecraft.world.Container;
  import net.minecraft.world.Difficulty;
  import net.minecraft.world.DifficultyInstance;
-@@ -136,7 +_,42 @@
-     private BlockPos restrictCenter = BlockPos.ZERO;
-     private float restrictRadius = -1.0F;
+@@ -139,7 +_,42 @@
+     private BlockPos homePosition = BlockPos.ZERO;
+     private int homeRadius = -1;
      public boolean aware = true; // CraftBukkit
 +    // Canvas start
 +    private PathNavigation registeredNavigation;
@@ -61,7 +61,7 @@
  
      protected Mob(EntityType<? extends Mob> entityType, Level level) {
          super(entityType, level);
-@@ -204,16 +_,24 @@
+@@ -207,16 +_,24 @@
          return this.lookControl;
      }
  
@@ -88,7 +88,7 @@
      }
      // Paper end
  
-@@ -243,6 +_,12 @@
+@@ -246,6 +_,12 @@
      @Nullable
      @Override
      public LivingEntity getTarget() {
@@ -101,7 +101,7 @@
          return this.target;
      }
  
-@@ -318,14 +_,11 @@
+@@ -321,14 +_,11 @@
      @Override
      public void baseTick() {
          super.baseTick();
@@ -116,7 +116,7 @@
          incrementTicksSinceLastInteraction(); // Purpur - Entity lifespan
      }
  
-@@ -513,8 +_,6 @@
+@@ -526,8 +_,6 @@
      @Override
      public void aiStep() {
          super.aiStep();
@@ -125,7 +125,7 @@
          if (this.level() instanceof ServerLevel serverLevel
              && this.canPickUpLoot()
              && this.isAlive()
-@@ -537,8 +_,6 @@
+@@ -550,8 +_,6 @@
                  }
              }
          }
@@ -134,7 +134,7 @@
      }
  
      protected Vec3i getPickupReach() {
-@@ -702,12 +_,30 @@
+@@ -719,12 +_,30 @@
          return false;
      }
  
@@ -166,7 +166,7 @@
              if (nearestPlayer != null) {
                  // Paper start - Configurable despawn distances
                  final io.papermc.paper.configuration.WorldConfiguration.Entities.Spawning.DespawnRangePair despawnRangePair = this.level().paperConfig().entities.spawning.despawnRanges.get(this.getType().getCategory());
-@@ -748,42 +_,30 @@
+@@ -765,42 +_,30 @@
              return;
          }
          // Paper end - Allow nerfed mobs to jump and float
@@ -219,7 +219,7 @@
          this.sendDebugPackets();
      }
  
-@@ -1424,6 +_,7 @@
+@@ -1455,6 +_,7 @@
              // Paper end - Expand EntityUnleashEvent
          }
  

@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/projectile/AbstractArrow.java
 +++ b/net/minecraft/world/entity/projectile/AbstractArrow.java
-@@ -177,6 +_,11 @@
+@@ -174,6 +_,11 @@
  
      @Override
      public void tick() {

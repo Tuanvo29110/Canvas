@@ -29,7 +29,7 @@
              this.broadcastWithIgnore.accept(new ClientboundSetPassengersPacket(this.entity), list);
              // Paper start - Allow riding players
              if (this.entity instanceof ServerPlayer player) {
-@@ -189,22 +_,45 @@
+@@ -193,22 +_,45 @@
                      packet = ClientboundEntityPositionSyncPacket.of(this.entity);
                      flag3 = true;
                      flag4 = true;
@@ -86,7 +86,7 @@
                      double d = deltaMovement.distanceToSqr(this.lastSentMovement);
                      if (d > 1.0E-7 || d > 0.0 && deltaMovement.lengthSqr() == 0.0) {
                          this.lastSentMovement = deltaMovement;
-@@ -222,6 +_,7 @@
+@@ -226,6 +_,7 @@
                              this.broadcast.accept(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.lastSentMovement));
                          }
                      }
@@ -94,7 +94,7 @@
                  }
  
                  if (packet != null) {
-@@ -431,7 +_,7 @@
+@@ -425,7 +_,7 @@
                  this.broadcastAndSend(new ClientboundUpdateAttributesPacket(this.entity.getId(), attributesToSync));
              }
  

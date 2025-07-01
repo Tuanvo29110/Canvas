@@ -24,7 +24,7 @@
  
  public class CriteriaTriggers {
      public static final Codec<CriterionTrigger<?>> CODEC = BuiltInRegistries.TRIGGER_TYPES.byNameCodec();
-@@ -107,6 +_,15 @@
+@@ -108,6 +_,15 @@
      public static final FallAfterExplosionTrigger FALL_AFTER_EXPLOSION = register("fall_after_explosion", new FallAfterExplosionTrigger());
  
      private static <T extends CriterionTrigger<?>> T register(String name, T trigger) {

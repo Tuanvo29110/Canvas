@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/chunk/ProtoChunk.java
 +++ b/net/minecraft/world/level/chunk/ProtoChunk.java
-@@ -41,7 +_,7 @@
+@@ -46,7 +_,7 @@
      @Nullable
      private volatile LevelLightEngine lightEngine;
      private volatile ChunkStatus status = ChunkStatus.EMPTY;

@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/animal/Rabbit.java
 +++ b/net/minecraft/world/entity/animal/Rabbit.java
-@@ -669,7 +_,13 @@
+@@ -670,7 +_,13 @@
                  this.wantsToRaid = this.rabbit.wantsMoreFood();
              }
  
@@ -15,7 +15,7 @@
          }
  
          @Override
-@@ -722,6 +_,13 @@
+@@ -723,6 +_,13 @@
  
              return false;
          }

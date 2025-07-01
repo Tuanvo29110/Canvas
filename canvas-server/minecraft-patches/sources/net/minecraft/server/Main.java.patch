@@ -11,7 +11,7 @@
  import joptsimple.OptionParser;
  import joptsimple.OptionSet;
  import joptsimple.OptionSpec;
-@@ -62,6 +_,23 @@
+@@ -63,6 +_,23 @@
  
  public class Main {
      private static final Logger LOGGER = LogUtils.getLogger();
@@ -35,7 +35,7 @@
  
      @SuppressForbidden(
          reason = "System.out needed before bootstrap"
-@@ -118,6 +_,7 @@
+@@ -119,6 +_,7 @@
              Bootstrap.bootStrap();
              Bootstrap.validate();
              Util.startTimerHackThread();
@@ -43,7 +43,7 @@
              Path path1 = Paths.get("server.properties");
              DedicatedServerSettings dedicatedServerSettings = new DedicatedServerSettings(optionSet); // CraftBukkit - CLI argument support
              dedicatedServerSettings.forceSave();
-@@ -146,7 +_,7 @@
+@@ -147,7 +_,7 @@
                  return;
              }
  
@@ -52,7 +52,7 @@
              boolean eulaAgreed = Boolean.getBoolean("com.mojang.eula.agree");
              if (eulaAgreed) {
                  LOGGER.error("You have used the Spigot command line EULA agreement flag.");
-@@ -157,7 +_,7 @@
+@@ -158,7 +_,7 @@
                  // Spigot end
                  LOGGER.info("You need to agree to the EULA in order to run the server. Go to eula.txt for more info.");
                  return;
@@ -61,7 +61,7 @@
  
              // Paper start - Detect headless JRE
              String awtException = io.papermc.paper.util.ServerEnvironment.awtDependencyCheck();
-@@ -385,6 +_,7 @@
+@@ -388,6 +_,7 @@
              */ // CraftBukkit end
          } catch (Exception var42) {
              LOGGER.error(LogUtils.FATAL_MARKER, "Failed to start the minecraft server", (Throwable)var42);

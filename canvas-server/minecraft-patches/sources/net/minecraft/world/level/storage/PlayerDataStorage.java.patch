@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
-@@ -23,6 +_,7 @@
+@@ -24,6 +_,7 @@
      private final File playerDir;
      protected final DataFixer fixerUpper;
      private static final DateTimeFormatter FORMATTER = FileNameDateFormatter.create();
@@ -8,35 +8,35 @@
  
      public PlayerDataStorage(LevelStorageSource.LevelStorageAccess levelStorageAccess, DataFixer fixerUpper) {
          this.fixerUpper = fixerUpper;
-@@ -32,18 +_,81 @@
+@@ -33,20 +_,82 @@
  
      public void save(Player player) {
          if (org.spigotmc.SpigotConfig.disablePlayerDataSaving) return; // Spigot
--        try {
--            CompoundTag compoundTag = player.saveWithoutId(new CompoundTag());
++        // Canvas start - async playerdata saving
++        CompoundTag compoundTag;
+         try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
+             TagValueOutput tagValueOutput = TagValueOutput.createWithContext(scopedCollector, player.registryAccess());
+             player.saveWithoutId(tagValueOutput);
 -            Path path = this.playerDir.toPath();
 -            Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
+-            CompoundTag compoundTag = tagValueOutput.buildResult();
 -            NbtIo.writeCompressed(compoundTag, path1);
 -            Path path2 = path.resolve(player.getStringUUID() + ".dat");
 -            Path path3 = path.resolve(player.getStringUUID() + ".dat_old");
 -            Util.safeReplaceFile(path2, path1, path3);
--        } catch (Exception var7) {
--            LOGGER.warn("Failed to save player data for {}", player.getScoreboardName(), var7); // Paper - Print exception
+-        } catch (Exception var11) {
+-            LOGGER.warn("Failed to save player data for {}", player.getScoreboardName(), var11); // Paper - Print exception
 -        }
 -    }
-+        // Canvas start - Async playerdata saving
-+        CompoundTag compoundTag;
-+        try {
-+            compoundTag = player.saveWithoutId(new CompoundTag());
++            compoundTag = tagValueOutput.buildResult();
 +        } catch (Exception exception) {
 +            LOGGER.warn("Failed to encode player data for {}", player.getScoreboardName(), exception);
 +            return;
 +        }
 +        save(player.getScoreboardName(), player.getUUID(), player.getStringUUID(), compoundTag);
-+        // Canvas end - Async playerdata saving
++        // Canvas end
 +    }
-+
-+    // Canvas start - Async playerdata saving
++    // Canvas start - async playerdata saving
 +    public void save(String playerName, java.util.UUID uniqueId, String stringId, CompoundTag compoundTag) {
 +        var nbtBytes = new it.unimi.dsi.fastutil.io.FastByteArrayOutputStream(65536);
 +        try {
@@ -85,7 +85,7 @@
 +                String threadDump = "";
 +                var threadMXBean = java.lang.management.ManagementFactory.getThreadMXBean();
 +                for (var threadInfo : threadMXBean.dumpAllThreads(true, true)) {
-+                    if (threadInfo.getThreadName().equals("Canvas IO Thread")) {
++                    if (threadInfo.getThreadName().equals("Leaf IO Thread")) {
 +                        threadDump = threadInfo.toString();
 +                        break;
 +                    }
@@ -98,59 +98,58 @@
 +            }
 +        }
 +    }
-+    // Canvas end - Async playerdata saving
++    // Canvas end
  
      private void backup(String name, String stringUuid, String suffix) { // CraftBukkit
          Path path = this.playerDir.toPath();
-@@ -58,7 +_,13 @@
+@@ -61,7 +_,13 @@
          }
      }
  
 -    private Optional<CompoundTag> load(String name, String stringUuid, String suffix) { // CraftBukkit
 +    // Canvas start - Async playerdata saving
 +    private Optional<CompoundTag> load(String name, String stringUuid, String suffix) {
-+        return load(name, stringUuid, suffix, java.util.UUID.fromString(stringUuid));
++        return load(name, stringUuid, java.util.UUID.fromString(stringUuid), suffix);
 +    }
-+    private Optional<CompoundTag> load(String name, String stringUuid, String suffix, java.util.UUID playerUuid) { // CraftBukkit
++    private Optional<CompoundTag> load(String name, String stringUuid, java.util.UUID playerUuid, String suffix) { // CraftBukkit
 +        lockFor(playerUuid, name);
 +        // Canvas end - Async playerdata saving
          File file = new File(this.playerDir, stringUuid + suffix); // CraftBukkit
          // Spigot start
          boolean usingWrongFile = false;
-@@ -89,7 +_,7 @@
+@@ -92,7 +_,7 @@
  
-     public Optional<CompoundTag> load(Player player) {
+     public Optional<ValueInput> load(Player player, ProblemReporter problemReporter) {
          // CraftBukkit start
--        return this.load(player.getName().getString(), player.getStringUUID()).map((tag) -> {
-+        return this.load(player.getName().getString(), player.getStringUUID(), player.getUUID()).map((tag) -> { // Canvas - Async playerdata saving
+-        return this.load(player.getName().getString(), player.getStringUUID(), problemReporter).map((tag) -> {
++        return this.load(player.getName().getString(), player.getStringUUID(), player.getUUID(), problemReporter).map((tag) -> { // Canvas - async playerdata saving
              if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                  org.bukkit.craftbukkit.entity.CraftPlayer craftPlayer = serverPlayer.getBukkitEntity();
                  // Only update first played if it is older than the one we have
-@@ -104,20 +_,25 @@
+@@ -108,19 +_,24 @@
          });
      }
  
-+    // Canvas start - Async playerdata saving
-     public Optional<CompoundTag> load(String name, String uuid) {
-+        return this.load(name, uuid, java.util.UUID.fromString(uuid));
++    // Canvas start - async playerdata saving
+     public Optional<CompoundTag> load(String name, String uuid, ProblemReporter problemReporter) {
++        return this.load(name, uuid, java.util.UUID.fromString(uuid), problemReporter);
 +    }
-+    public Optional<CompoundTag> load(String name, String uuid, java.util.UUID playerUuid) {
++    public Optional<CompoundTag> load(String name, String uuid, java.util.UUID playerUuid, ProblemReporter problemReporter) {
          // CraftBukkit end
 -        Optional<CompoundTag> optional = this.load(name, uuid, ".dat"); // CraftBukkit
-+        Optional<CompoundTag> optional = this.load(name, uuid, ".dat", playerUuid); // CraftBukkit
++        Optional<CompoundTag> optional = this.load(name, uuid, playerUuid, ".dat"); // CraftBukkit
          if (optional.isEmpty()) {
              this.backup(name, uuid, ".dat"); // CraftBukkit
          }
  
 -        return optional.or(() -> this.load(name, uuid, ".dat_old")).map(compoundTag -> { // CraftBukkit
-+        return optional.or(() -> this.load(name, uuid, ".dat_old", playerUuid)).map(compoundTag -> { // CraftBukkit
++        return optional.or(() -> this.load(name, uuid, playerUuid, ".dat_old")).map(compoundTag -> { // CraftBukkit
              int dataVersion = NbtUtils.getDataVersion(compoundTag, -1);
-             compoundTag = DataFixTypes.PLAYER.updateToCurrentVersion(this.fixerUpper, compoundTag, dataVersion);
-             // player.load(compoundTag); // CraftBukkit - handled above
-             return compoundTag;
+             compoundTag = ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.PLAYER, compoundTag, dataVersion, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion()); // Paper - rewrite data conversion system
+             return compoundTag; // CraftBukkit - handled above
          });
      }
-+    // Canvas end - Async playerdata saving
++    // Canvas end
  
      // CraftBukkit start
      public File getPlayerDir() {

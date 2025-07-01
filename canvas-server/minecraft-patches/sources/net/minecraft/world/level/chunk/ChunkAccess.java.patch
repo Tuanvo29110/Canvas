@@ -16,7 +16,7 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportedException;
-@@ -76,10 +_,10 @@
+@@ -77,10 +_,10 @@
      protected BlendingData blendingData;
      public final Map<Heightmap.Types, Heightmap> heightmaps = Maps.newEnumMap(Heightmap.Types.class);
      // Paper - rewrite chunk system
@@ -31,7 +31,7 @@
      protected final LevelHeightAccessor levelHeightAccessor;
      protected final LevelChunkSection[] sections;
      // CraftBukkit start - SPIGOT-6814: move to IChunkAccess to account for 1.17 to 1.18 chunk upgrading.
-@@ -259,13 +_,19 @@
+@@ -260,13 +_,19 @@
      public int getHeight(Heightmap.Types type, int x, int z) {
          Heightmap heightmap = this.heightmaps.get(type);
          if (heightmap == null) {
@@ -52,7 +52,7 @@
  
          return heightmap.getFirstAvailable(x & 15, z & 15) - 1;
      }
-@@ -287,7 +_,7 @@
+@@ -288,7 +_,7 @@
      }
  
      public Map<Structure, StructureStart> getAllStarts() {
@@ -61,7 +61,7 @@
      }
  
      public void setAllStarts(Map<Structure, StructureStart> structureStarts) {
-@@ -303,13 +_,13 @@
+@@ -304,13 +_,13 @@
  
      @Override
      public void addReferenceForStructure(Structure structure, long reference) {
@@ -77,7 +77,7 @@
      }
  
      @Override
-@@ -465,7 +_,7 @@
+@@ -462,7 +_,7 @@
  
      public static ShortList getOrCreateOffsetList(ShortList[] packedPositions, int index) {
          if (packedPositions[index] == null) {

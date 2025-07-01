@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/chunk/status/ChunkStatusTasks.java
 +++ b/net/minecraft/world/level/chunk/status/ChunkStatusTasks.java
-@@ -165,7 +_,7 @@
+@@ -170,7 +_,7 @@
      static CompletableFuture<ChunkAccess> generateSpawn(
          WorldGenContext worldGenContext, ChunkStep step, StaticCache2D<GenerationChunkHolder> cache, ChunkAccess chunk
      ) {

@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/ai/goal/TemptGoal.java
 +++ b/net/minecraft/world/entity/ai/goal/TemptGoal.java
-@@ -36,14 +_,43 @@
+@@ -49,14 +_,43 @@
          this.targetingConditions = TEMPT_TARGETING.copy().selector((entity, level) -> this.shouldFollow(entity));
      }
  

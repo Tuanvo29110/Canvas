@@ -62,7 +62,7 @@
 -    private NaturalSpawner.SpawnState lastSpawnState;
 +    private NaturalSpawner.SpawnState lastSpawnState; */ // Canvas - Threaded Regions
      // Paper start
-     private final ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable<net.minecraft.world.level.chunk.LevelChunk> fullChunks = new ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable<>();
+     public final ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable<net.minecraft.world.level.chunk.LevelChunk> fullChunks = new ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable<>();
      public int getFullChunksCount() {
          return this.fullChunks.size();
      }
@@ -171,7 +171,7 @@
 -        ProfilerFiller gameprofilerfiller = Profiler.get();
 -
 -        gameprofilerfiller.push("purge");
-         this.ticketStorage.purgeStaleTickets();
+         this.ticketStorage.purgeStaleTickets(this.chunkMap);
          this.runDistanceManagerUpdates();
 -        gameprofilerfiller.popPush("unload");
          this.chunkMap.tick(() -> true);
@@ -187,7 +187,7 @@
          if (this.level.tickRateManager().runsNormally() || !tickChunks || this.level.spigotConfig.unloadFrozenChunks) { // Spigot
 +            // Canvas start
 +            if (this.ticksSinceLastPurgeStaleTicketsCall++ > Config.INSTANCE.ticksBetweenPurgeStaleTickets) {
-             this.ticketStorage.purgeStaleTickets();
+             this.ticketStorage.purgeStaleTickets(this.chunkMap);
 +            this.ticksSinceLastPurgeStaleTicketsCall = 0;
 +            }
 +            // Canvas end
@@ -239,7 +239,7 @@
 +                        player.mobBackoffCounts[ii] = newBackoff;
 +                    }
 +                    // Paper end - per player mob spawning backoff
-+               }
++                }
 +                if (tickData.firstRunSpawnCounts) {
 +                    tickData.firstRunSpawnCounts = false;
 +                    tickData.spawnCountsReady.set(true);
@@ -424,7 +424,7 @@
      @Override
      public LongSet getForceLoadedChunks() {
          return this.ticketStorage.getForceLoadedChunks();
-@@ -769,7 +_,10 @@
+@@ -772,7 +_,10 @@
      @Nullable
      @VisibleForDebug
      public NaturalSpawner.SpawnState getLastSpawnState() {
@@ -436,7 +436,7 @@
      }
  
      public void deactivateTicketsOnClosing() {
-@@ -778,11 +_,12 @@
+@@ -781,11 +_,12 @@
  
      public void onChunkReadyToSend(ChunkHolder chunkHolder) {
          if (chunkHolder.hasChangesToBroadcast()) {
@@ -450,7 +450,7 @@
          MainThreadExecutor(final Level level) {
              super("Chunk source main thread executor for " + level.dimension().location());
          }
-@@ -814,20 +_,150 @@
+@@ -817,20 +_,150 @@
  
          @Override
          protected void doRunTask(Runnable task) {

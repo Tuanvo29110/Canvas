@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/animal/allay/Allay.java
 +++ b/net/minecraft/world/entity/animal/allay/Allay.java
-@@ -29,8 +_,6 @@
+@@ -25,8 +_,6 @@
  import net.minecraft.tags.ItemTags;
  import net.minecraft.tags.TagKey;
  import net.minecraft.util.Mth;
@@ -9,7 +9,7 @@
  import net.minecraft.world.InteractionHand;
  import net.minecraft.world.InteractionResult;
  import net.minecraft.world.SimpleContainer;
-@@ -282,16 +_,12 @@
+@@ -267,16 +_,12 @@
          return 0.4F;
      }
  

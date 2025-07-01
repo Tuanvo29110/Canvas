@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/ai/attributes/AttributeInstance.java
 +++ b/net/minecraft/world/entity/ai/attributes/AttributeInstance.java
-@@ -26,8 +_,8 @@
+@@ -22,8 +_,8 @@
      private final Map<AttributeModifier.Operation, Map<ResourceLocation, AttributeModifier>> modifiersByOperation = Maps.newEnumMap(
          AttributeModifier.Operation.class
      );
@@ -11,7 +11,7 @@
      private double baseValue;
      private boolean dirty = true;
      private double cachedValue;
-@@ -56,7 +_,7 @@
+@@ -52,7 +_,7 @@
  
      @VisibleForTesting
      Map<ResourceLocation, AttributeModifier> getModifiers(AttributeModifier.Operation operation) {
@@ -20,7 +20,7 @@
      }
  
      public Set<AttributeModifier> getModifiers() {
-@@ -79,7 +_,7 @@
+@@ -75,7 +_,7 @@
      private void addModifier(AttributeModifier modifier) {
          AttributeModifier attributeModifier = this.modifierById.putIfAbsent(modifier.id(), modifier);
          if (attributeModifier != null) {
@@ -29,7 +29,7 @@
          } else {
              this.getModifiers(modifier.operation()).put(modifier.id(), modifier);
              this.setDirty();
-@@ -87,8 +_,13 @@
+@@ -83,8 +_,13 @@
      }
  
      public void addOrUpdateTransientModifier(AttributeModifier modifier) {
@@ -45,7 +45,7 @@
              this.getModifiers(modifier.operation()).put(modifier.id(), modifier);
              this.setDirty();
          }
-@@ -144,8 +_,12 @@
+@@ -140,8 +_,12 @@
  
      public double getValue() {
          if (this.dirty) {
@@ -59,20 +59,20 @@
          }
  
          return this.cachedValue;
-@@ -192,7 +_,15 @@
-         compoundTag.store("id", TYPE_CODEC, this.attribute);
-         compoundTag.putDouble("base", this.baseValue);
-         if (!this.permanentModifiers.isEmpty()) {
--            compoundTag.store("modifiers", AttributeModifier.CODEC.listOf(), List.copyOf(this.permanentModifiers.values()));
-+            // Canvas start - threaded tracker
-+            if (io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.enabled) {
-+                synchronized (this) {
-+                    compoundTag.store("modifiers", AttributeModifier.CODEC.listOf(), List.copyOf(this.permanentModifiers.values()));
-+                }
-+            } else {
-+                compoundTag.store("modifiers", AttributeModifier.CODEC.listOf(), List.copyOf(this.permanentModifiers.values()));
-+            }
-+            // Canvas end - threaded tracker
-         }
+@@ -184,7 +_,15 @@
+     }
  
-         return compoundTag;
+     public AttributeInstance.Packed pack() {
+-        return new AttributeInstance.Packed(this.attribute, this.baseValue, List.copyOf(this.permanentModifiers.values()));
++        // Canvas start - threaded tracker
++        if (io.canvasmc.canvas.Config.INSTANCE.entities.entityTracking.enabled) {
++            synchronized (this) {
++                return new AttributeInstance.Packed(this.attribute, this.baseValue, List.copyOf(this.permanentModifiers.values()));
++            }
++        } else {
++            return new AttributeInstance.Packed(this.attribute, this.baseValue, List.copyOf(this.permanentModifiers.values()));
++        }
++        // Canvas end
+     }
+ 
+     public void apply(AttributeInstance.Packed instance) {

@@ -10,7 +10,7 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.ReportedException;
-@@ -25,7 +_,7 @@
+@@ -22,7 +_,7 @@
  import net.minecraft.world.phys.Vec3;
  
  public abstract class BaseCommandBlock implements CommandSource {
@@ -19,7 +19,7 @@
      private static final Component DEFAULT_NAME = Component.literal("@");
      private static final int NO_LAST_EXECUTION = -1;
      private long lastExecution = -1L;
-@@ -37,6 +_,8 @@
+@@ -34,6 +_,8 @@
      private String command = "";
      @Nullable
      private Component customName;
@@ -28,11 +28,11 @@
      // CraftBukkit start
      @Override
      public abstract org.bukkit.command.CommandSender getBukkitSender(CommandSourceStack wrapper);
-@@ -119,7 +_,36 @@
+@@ -113,6 +_,34 @@
                              this.successCount++;
                          }
                      });
-+                    // Canvas start
++                    // Canvas start - optimize command blocks
 +                    if (Config.INSTANCE.blocks.cacheCommandBlockParseResults) {
 +                        // Prepare the command cache first
 +                        String commandCache = this.command;
@@ -43,7 +43,7 @@
 +                        // Ensure the event is still called
 +                        org.bukkit.event.server.ServerCommandEvent event = new org.bukkit.event.server.ServerCommandEvent(commandSourceStack.getBukkitSender(), commandCache);
 +                        org.bukkit.Bukkit.getPluginManager().callEvent(event);
-+                        if (!event.isCancelled()) {
++                        if (event.callEvent()) {
 +                            commandCache = event.getCommand();
 +                            String[] args = commandCache.split(" ");
 +                            // Dont try and run empty commands
@@ -57,11 +57,17 @@
 +                                }
 +                                server.getCommands().performCommand(parseResultsCache, newCommand);
 +                            }
-+                        }
++                        } else return true;
 +                    } else {
-                     server.getCommands().dispatchServerCommand(commandSourceStack, this.command); // CraftBukkit
-+                    }
 +                    // Canvas end
+                     // Paper start - ServerCommandEvent
+                     org.bukkit.event.server.ServerCommandEvent event = new org.bukkit.event.server.ServerCommandEvent(commandSourceStack.getBukkitSender(), net.minecraft.commands.Commands.trimOptionalPrefix(this.command));
+                     if (!event.callEvent()) {
+@@ -120,6 +_,7 @@
+                     }
+                     server.getCommands().performPrefixedCommand(commandSourceStack, event.getCommand());
+                     // Paper end - ServerCommandEvent
++                    } // Canvas - optimize command blocks
                  } catch (Throwable var6) {
                      CrashReport crashReport = CrashReport.forThrowable(var6, "Executing command block");
                      CrashReportCategory crashReportCategory = crashReport.addCategory("Command to be executed");
@@ -69,7 +75,7 @@
              return true;
          }
      }
-+    // Canvas start
++    // Canvas start - optimize command blocks
 +
 +    private void cache(CommandDispatcher<CommandSourceStack> dispatcher, CommandSourceStack commandSourceStack, String commandCache) {
 +        this.parseResultsCache = dispatcher.parse(commandCache, commandSourceStack);

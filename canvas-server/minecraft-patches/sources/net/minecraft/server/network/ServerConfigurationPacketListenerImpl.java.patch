@@ -24,35 +24,46 @@
  import org.slf4j.Logger;
  
  public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketListenerImpl implements ServerConfigurationPacketListener, TickablePacketListener {
-@@ -159,8 +_,41 @@
+@@ -153,7 +_,7 @@
                  return;
              }
  
+-            Component component = org.bukkit.craftbukkit.event.CraftEventFactory.handleLoginResult(playerList.canPlayerLogin(this.connection.getRemoteAddress(), this.gameProfile), this.paperConnection, this.connection, this.gameProfile, this.server, false); // Paper - Login event logic
++            Component component = org.bukkit.craftbukkit.event.CraftEventFactory.handleLoginResult(playerList.canPlayerLogin(this.connection.getRemoteAddress(), this.gameProfile, this.connection), this.paperConnection, this.connection, this.gameProfile, this.server, false); // Paper - Login event logic // Canvas - Threaded Regions
+             if (component != null) {
+                 this.disconnect(component);
+                 return;
+@@ -169,7 +_,43 @@
+                 serverPlayer = new ServerPlayer(this.server, this.server.overworld(), this.gameProfile, this.clientInformation);
+             }
+             // Paper end
+-            playerList.placeNewPlayer(this.connection, serverPlayer, this.createCookie(this.clientInformation));
 +            // Canvas start - Threaded Regions
-+            final int chunkX = this.player.chunkPosition().x;
-+            final int chunkZ = this.player.chunkPosition().z;
-+            final ServerLevel world = this.player.serverLevel();
++            final int chunkX = serverPlayer.chunkPosition().x;
++            final int chunkZ = serverPlayer.chunkPosition().z;
++            final ServerLevel world = serverPlayer.serverLevel();
 +            // place ticket
-+            LOGGER.info("Placing ticket for login and queuing placement task for player '{}'", this.player.getName().getString());
-             ServerPlayer playerForLogin = playerList.getPlayerForLogin(this.gameProfile, this.clientInformation, this.player); // CraftBukkit
--            playerList.placeNewPlayer(this.connection, playerForLogin, this.createCookie(this.clientInformation));
++            LOGGER.info("Placing ticket for login and queuing placement task for player '{}'", serverPlayer.getName().getString());
 +            Runnable placementTask = () -> {
 +                try {
-+                    playerList.placeNewPlayer(this.connection, playerForLogin, this.createCookie(this.clientInformation));
++                    playerList.placeNewPlayer(this.connection, serverPlayer, this.createCookie(this.clientInformation));
 +                } catch (Exception e) {
-+                    this.player.getBukkitEntity().taskScheduler.schedule((_) -> {
-+                        LOGGER.error("Unable to load new player, removing login ticket", e);
-+                        world.getChunkSource().updateRegionTicket(player.chunkPosition(), false, TicketType.LOGIN);
-+                    }, null, 0);
++                    MinecraftServer.getThreadedServer().taskQueue.queueTickTaskQueue(
++                        world, chunkX, chunkZ,
++                        () -> {
++                            LOGGER.error("Unable to load new player, removing login ticket", e);
++                            world.getChunkSource().updateRegionTicket(serverPlayer.chunkPosition(), false, TicketType.LOGIN);
++                        }, Priority.HIGHER
++                    );
 +                } finally {
-+                    this.player.getBukkitEntity().taskScheduler.schedule((_) -> {
++                    serverPlayer.getBukkitEntity().taskScheduler.schedule((_) -> {
 +                        LOGGER.info("Finished placing new player, removing login ticket");
-+                        world.getChunkSource().updateRegionTicket(player.chunkPosition(), false, TicketType.LOGIN);
++                        world.getChunkSource().updateRegionTicket(serverPlayer.chunkPosition(), false, TicketType.LOGIN);
 +                    }, null, 0);
 +                }
 +            };
 +            world.loadChunksForMoveAsync(
-+                playerForLogin.getBoundingBox().inflate(5),
++                serverPlayer.getBoundingBox().inflate(5),
 +                Priority.HIGHER,
 +                (_) -> {
 +                    world.getChunkSource().updateRegionTicket(chunkX, chunkZ, true, TicketType.LOGIN);
@@ -62,12 +73,12 @@
 +                        placementTask, Priority.HIGHER
 +                    );
 +                }
-+            );
++                );
 +            // Canvas end
          } catch (Exception var5) {
              LOGGER.error("Couldn't place player in world", (Throwable)var5);
              // Paper start - Debugging
-@@ -168,8 +_,8 @@
+@@ -177,8 +_,8 @@
                  var5.printStackTrace();
              }
              // Paper end - Debugging

@@ -93,7 +93,7 @@
 @@ -126,7 +_,7 @@
              return null;
          } else {
-             ServerLevel serverLevel = player.serverLevel();
+             ServerLevel serverLevel = player.level();
 -            if (serverLevel.getGameRules().getBoolean(GameRules.RULE_DISABLE_RAIDS)) {
 +            if (serverLevel.getGameRules().getBoolean(GameRules.RULE_DISABLE_RAIDS) || !io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(player) || !io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(serverLevel, pos.getX() >> 4, pos.getZ() >> 4, 8) || !io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(serverLevel, player.chunkPosition().x, player.chunkPosition().z, 8)) { // Canvas - Threaded Regions
                  return null;

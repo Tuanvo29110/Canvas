@@ -13,42 +13,40 @@
  import net.minecraft.CrashReport;
  import net.minecraft.CrashReportCategory;
  import net.minecraft.DefaultUncaughtExceptionHandler;
-@@ -54,7 +_,12 @@
-     // CraftBukkit end
+@@ -53,7 +_,12 @@
+ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener, TickablePacketListener {
      private static final AtomicInteger UNIQUE_THREAD_ID = new AtomicInteger(0);
      static final Logger LOGGER = LogUtils.getLogger();
 -    private static final java.util.concurrent.ExecutorService authenticatorPool = java.util.concurrent.Executors.newCachedThreadPool(new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("User Authenticator #%d").setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build()); // Paper - Cache authenticator threads
 +    // Canvas start - virtual threads
 +    private static final java.util.concurrent.ExecutorService authenticatorPool =
 +        Config.INSTANCE.virtualThreads.shouldReplaceAuthenticator() ?
-+            Executors.newVirtualThreadPerTaskExecutor() :
-+            java.util.concurrent.Executors.newCachedThreadPool(new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("User Authenticator #%d").setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build()); // Paper - Cache authenticator threads
++        Executors.newVirtualThreadPerTaskExecutor() :
++        java.util.concurrent.Executors.newCachedThreadPool(new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("User Authenticator #%d").setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build()); // Paper - Cache authenticator threads
 +    // Canvas end
      private static final int MAX_TICKS_BEFORE_LOGIN = 600;
      private final byte[] challenge;
      final MinecraftServer server;
-@@ -110,9 +_,13 @@
-         // Paper end - Do not allow logins while the server is shutting down
+@@ -92,7 +_,13 @@
+         // Paper end - login cookie API
  
          if (this.state == ServerLoginPacketListenerImpl.State.VERIFYING) {
--            if (this.connection.isConnected()) { // Paper - prevent logins to be processed even though disconnect was called
-+            // Canvas start - connection threading
++            // Canvas start - Threaded Regions
 +            String name = this.authenticatedProfile.getName();
 +            java.util.UUID uniqueId = this.authenticatedProfile.getId();
 +            if (this.server.getPlayerList().pushPendingJoin(name, uniqueId, this.connection)) {
 +            // Canvas end
              this.verifyLoginAndFinishConnectionSetup(Objects.requireNonNull(this.authenticatedProfile));
--            } // Paper - prevent logins to be processed even though disconnect was called
-+            } else { --this.tick; } // Paper - prevent logins to be processed even though disconnect was called // Canvas - max concurrent logins
++            } else { --this.tick; } // Canvas - Threaded Regions
          }
  
-         // CraftBukkit start
-@@ -459,7 +_,7 @@
-     @Override
-     public void handleCookieResponse(ServerboundCookieResponsePacket packet) {
-         // CraftBukkit start
--        net.minecraft.network.protocol.PacketUtils.ensureRunningOnSameThread(packet, this, this.server);
-+        net.minecraft.network.protocol.PacketUtils.ensureRunningOnSameThread(packet, this, this.player.serverLevel()); // Canvas
-         if (this.player != null && this.player.getBukkitEntity().handleCookieResponse(packet)) {
-             return;
-         }
+         if (this.state == ServerLoginPacketListenerImpl.State.WAITING_FOR_DUPE_DISCONNECT
+@@ -204,7 +_,7 @@
+ 
+     private void verifyLoginAndFinishConnectionSetup(GameProfile profile) {
+         PlayerList playerList = this.server.getPlayerList();
+-        Component component = org.bukkit.craftbukkit.event.CraftEventFactory.handleLoginResult(playerList.canPlayerLogin(this.connection.getRemoteAddress(), profile), this.paperLoginConnection, this.connection, profile, this.server, true); // Paper
++        Component component = org.bukkit.craftbukkit.event.CraftEventFactory.handleLoginResult(playerList.canPlayerLogin(this.connection.getRemoteAddress(), profile, this.connection), this.paperLoginConnection, this.connection, profile, this.server, true); // Paper // Canvas - Threaded Regions
+         if (component != null) {
+             this.disconnect(component);
+         } else {

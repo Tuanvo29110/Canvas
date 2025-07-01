@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/item/EnderEyeItem.java
 +++ b/net/minecraft/world/item/EnderEyeItem.java
-@@ -105,14 +_,47 @@
+@@ -106,14 +_,45 @@
          } else {
              player.startUsingItem(hand);
              if (level instanceof ServerLevel serverLevel) {
@@ -12,13 +12,12 @@
 +                } else {
 +                    blockPos = serverLevel.findNearestMapStructure(StructureTags.EYE_OF_ENDER_LOCATED, player.blockPosition(), 100, false);
 +                }
-+                // Canvas end - Asynchronous locator
++                // Canvas end
                  if (blockPos == null) {
                      return InteractionResult.CONSUME;
                  }
  
                  EyeOfEnder eyeOfEnder = new EyeOfEnder(level, player.getX(), player.getY(0.5), player.getZ());
-+
 +                // Canvas start - Asynchronous locator
 +                final boolean isAsyncLocatorEnabled = io.canvasmc.canvas.Config.INSTANCE.asyncLocator.enabled;
 +
@@ -42,15 +41,14 @@
 +                        }
 +                    });
 +                }
-+                // Canvas end - Asynchronous locator
-+
++                // Canvas end
                  eyeOfEnder.setItem(itemInHand);
--                eyeOfEnder.signalTo(blockPos);
-+                if (!isAsyncLocatorEnabled) eyeOfEnder.signalTo(blockPos); // Canvas - Asynchronous locator
+-                eyeOfEnder.signalTo(Vec3.atLowerCornerOf(blockPos));
++                if (!isAsyncLocatorEnabled) eyeOfEnder.signalTo(Vec3.atLowerCornerOf(blockPos)); // Canvas - Asynchronous locator
                  level.gameEvent(GameEvent.PROJECTILE_SHOOT, eyeOfEnder.position(), GameEvent.Context.of(player));
                  // CraftBukkit start
                  if (!level.addFreshEntity(eyeOfEnder)) {
-@@ -126,7 +_,7 @@
+@@ -127,7 +_,7 @@
                  float f = Mth.lerp(level.random.nextFloat(), 0.33F, 0.5F);
                  level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ENDER_EYE_LAUNCH, SoundSource.NEUTRAL, 1.0F, f);
                  itemInHand.consume(1, player);

@@ -360,8 +360,8 @@
  
      public <T extends Entity> void guardEntityTick(Consumer<T> consumerEntity, T entity) {
          try {
-@@ -1680,7 +_,7 @@
-     public BlockEntity getBlockEntity(BlockPos pos, boolean validate) {
+@@ -1674,7 +_,7 @@
+     public BlockEntity getBlockEntity(BlockPos pos) {
          // Paper start - Perf: Optimize capturedTileEntities lookup
          net.minecraft.world.level.block.entity.BlockEntity blockEntity;
 -        if (!this.capturedTileEntities.isEmpty() && (blockEntity = this.capturedTileEntities.get(pos)) != null) {
@@ -369,7 +369,7 @@
              return blockEntity;
          }
          // Paper end - Perf: Optimize capturedTileEntities lookup
-@@ -1698,8 +_,8 @@
+@@ -1691,8 +_,8 @@
          BlockPos blockPos = blockEntity.getBlockPos();
          if (!this.isOutsideBuildHeight(blockPos)) {
              // CraftBukkit start
@@ -380,7 +380,7 @@
                  return;
              }
              // CraftBukkit end
-@@ -1767,8 +_,14 @@
+@@ -1760,8 +_,14 @@
      }
  
      @Override
@@ -397,7 +397,7 @@
      }
  
      @Nullable
-@@ -1779,7 +_,6 @@
+@@ -1772,7 +_,6 @@
  
      @Override
      public List<Entity> getEntities(@Nullable Entity entity, AABB boundingBox, Predicate<? super Entity> predicate) {
@@ -405,7 +405,7 @@
          List<Entity> list = Lists.newArrayList();
  
          // Paper start - rewrite chunk system
-@@ -1808,8 +_,6 @@
+@@ -1801,8 +_,6 @@
      public <T extends Entity> void getEntities(final EntityTypeTest<Entity, T> entityTypeTest,
                                                 final AABB boundingBox, final Predicate<? super T> predicate,
                                                 final List<? super T> into, final int maxCount) {
@@ -414,8 +414,8 @@
          if (entityTypeTest instanceof net.minecraft.world.entity.EntityType<T> byType) {
              if (maxCount != Integer.MAX_VALUE) {
                  ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemLevel)this).moonrise$getEntityLookup().getEntities(byType, boundingBox, into, predicate, maxCount);
-@@ -1917,6 +_,12 @@
-     public void disconnect() {
+@@ -1910,6 +_,12 @@
+     public void onBlockEntityAdded(BlockEntity entity) {
      }
  
 +    // Canvas start - Threaded Regions
@@ -427,7 +427,7 @@
      public long getGameTime() {
          return this.levelData.getGameTime();
      }
-@@ -1944,7 +_,7 @@
+@@ -1937,7 +_,7 @@
          return this.levelData;
      }
  
@@ -436,7 +436,7 @@
  
      public float getThunderLevel(float partialTick) {
          return Mth.lerp(partialTick, this.oThunderLevel, this.thunderLevel) * this.getRainLevel(partialTick);
-@@ -2025,7 +_,7 @@
+@@ -2022,7 +_,7 @@
      public void updateNeighbourForOutputSignal(BlockPos pos, Block block) {
          for (Direction direction : Direction.Plane.HORIZONTAL) {
              BlockPos blockPos = pos.relative(direction);
@@ -445,7 +445,7 @@
                  BlockState blockState = this.getBlockState(blockPos);
                  if (blockState.is(Blocks.COMPARATOR)) {
                      this.neighborChanged(blockState, blockPos, block, null, false);
-@@ -2183,4 +_,17 @@
+@@ -2180,4 +_,17 @@
          return getWorld().getEnvironment() == org.bukkit.World.Environment.THE_END;
      }
      // Purpur end - Add allow water in end world option

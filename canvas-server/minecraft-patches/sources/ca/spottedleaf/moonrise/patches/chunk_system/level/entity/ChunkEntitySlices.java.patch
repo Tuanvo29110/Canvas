@@ -1,6 +1,6 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/ChunkEntitySlices.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/ChunkEntitySlices.java
-@@ -28,6 +_,7 @@
+@@ -35,6 +_,7 @@
  import java.util.Arrays;
  import java.util.Iterator;
  import java.util.List;
@@ -8,7 +8,7 @@
  import java.util.function.Predicate;
  
  public final class ChunkEntitySlices {
-@@ -40,8 +_,10 @@
+@@ -49,8 +_,10 @@
  
      private final EntityCollectionBySection allEntities;
      private final EntityCollectionBySection hardCollidingEntities;
@@ -21,7 +21,7 @@
      private final EntityList entities = new EntityList();
  
      public FullChunkStatus status;
-@@ -67,9 +_,15 @@
+@@ -76,9 +_,15 @@
  
          this.allEntities = new EntityCollectionBySection(this);
          this.hardCollidingEntities = new EntityCollectionBySection(this);
@@ -40,7 +40,7 @@
          this.status = status;
          this.chunkData = chunkData;
      }
-@@ -203,8 +_,10 @@
+@@ -225,8 +_,10 @@
          }
      }
  
@@ -51,7 +51,7 @@
          final boolean ret = this.preventStatusUpdates;
          this.preventStatusUpdates = true;
          return ret;
-@@ -216,9 +_,11 @@
+@@ -238,9 +_,11 @@
  
      public void stopPreventingStatusUpdates(final boolean prev) {
          this.preventStatusUpdates = prev;
@@ -63,7 +63,7 @@
          this.status = status;
  
          final Entity[] entities = this.entities.getRawData();
-@@ -232,9 +_,11 @@
+@@ -254,9 +_,11 @@
  
              lookup.entityStatusChange(entity, this, oldVisibility, newVisibility, false, false, false);
          }
@@ -75,7 +75,7 @@
          if (!this.entities.add(entity)) {
              return false;
          }
-@@ -248,14 +_,26 @@
+@@ -270,14 +_,26 @@
              this.hardCollidingEntities.addEntity(entity, sectionIndex);
          }
  
@@ -107,7 +107,7 @@
  
          EntityCollectionBySection byType = this.entitiesByType.get(entity.getType());
          if (byType != null) {
-@@ -266,9 +_,11 @@
+@@ -288,9 +_,11 @@
          }
  
          return true;
@@ -119,7 +119,7 @@
          if (!this.entities.remove(entity)) {
              return false;
          }
-@@ -282,19 +_,33 @@
+@@ -304,19 +_,33 @@
              this.hardCollidingEntities.removeEntity(entity, sectionIndex);
          }
  

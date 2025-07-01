@@ -27,7 +27,7 @@
      }
  
      public static <T extends Comparable<T>> String getPropertyName(Property<T> property, Object value) {
-@@ -620,17 +_,39 @@
+@@ -625,17 +_,39 @@
          return Maps.transformValues(map, mapper);
      }
  
@@ -67,7 +67,7 @@
      public static <V> CompletableFuture<List<V>> sequenceFailFast(List<? extends CompletableFuture<? extends V>> completableFutures) {
          CompletableFuture<List<V>> completableFuture = new CompletableFuture<>();
          return fallibleSequence(completableFutures, completableFuture::completeExceptionally).applyToEither(completableFuture, Function.identity());
-@@ -686,6 +_,7 @@
+@@ -691,6 +_,7 @@
  
      public static void logAndPauseIfInIde(String error) {
          LOGGER.error(error);

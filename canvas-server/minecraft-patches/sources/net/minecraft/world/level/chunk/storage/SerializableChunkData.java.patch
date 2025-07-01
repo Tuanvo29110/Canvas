@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
 +++ b/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
-@@ -469,14 +_,16 @@
+@@ -471,14 +_,16 @@
              throw new IllegalArgumentException("Chunk can't be serialized: " + chunk);
          } else {
              ChunkPos pos = chunk.getPos();
@@ -20,7 +20,7 @@
  
              final LevelChunkSection[] chunkSections = chunk.getSections();
              final ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray[] blockNibbles = ((ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk)chunk).starlight$getBlockNibbles();
-@@ -494,10 +_,20 @@
+@@ -496,10 +_,20 @@
                      continue;
                  }
  
@@ -44,7 +44,7 @@
                  );
  
                  if (blockNibble != null) {
-@@ -508,12 +_,16 @@
+@@ -510,12 +_,16 @@
                      ((ca.spottedleaf.moonrise.patches.starlight.storage.StarlightSectionData)(Object)sectionData).starlight$setSkyLightState(skyNibble.state);
                  }
  
@@ -63,7 +63,7 @@
              for (BlockPos blockPos : chunk.getBlockEntitiesPos()) {
                  CompoundTag blockEntityNbtForSaving = chunk.getBlockEntityNbtForSaving(blockPos, level.registryAccess());
                  if (blockEntityNbtForSaving != null) {
-@@ -521,15 +_,27 @@
+@@ -523,15 +_,27 @@
                  }
              }
  
@@ -93,7 +93,7 @@
              }
  
              Map<Heightmap.Types, long[]> map = new EnumMap<>(Heightmap.Types.class);
-@@ -537,14 +_,26 @@
+@@ -539,14 +_,26 @@
              for (Entry<Heightmap.Types, Heightmap> entry : chunk.getHeightmaps()) {
                  if (chunk.getPersistedStatus().heightmapsAfter().contains(entry.getKey())) {
                      long[] rawData = entry.getValue().getRawData();

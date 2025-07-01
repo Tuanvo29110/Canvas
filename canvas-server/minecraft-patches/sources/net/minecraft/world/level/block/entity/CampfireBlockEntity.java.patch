@@ -1,25 +1,24 @@
 --- a/net/minecraft/world/level/block/entity/CampfireBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/CampfireBlockEntity.java
-@@ -3,6 +_,7 @@
+@@ -4,6 +_,8 @@
  import java.util.Arrays;
  import java.util.Optional;
  import javax.annotation.Nullable;
 +import io.canvasmc.canvas.entity.SleepingBlockEntity;
++import net.minecraft.world.level.chunk.LevelChunk;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
  import net.minecraft.core.HolderLookup;
-@@ -30,15 +_,53 @@
- import net.minecraft.world.level.Level;
- import net.minecraft.world.level.block.CampfireBlock;
- import net.minecraft.world.level.block.state.BlockState;
-+import net.minecraft.world.level.chunk.LevelChunk;
- import net.minecraft.world.level.gameevent.GameEvent;
+@@ -38,7 +_,7 @@
+ import net.minecraft.world.level.storage.ValueOutput;
+ import org.slf4j.Logger;
  
 -public class CampfireBlockEntity extends BlockEntity implements Clearable {
-+public class CampfireBlockEntity extends BlockEntity implements Clearable, SleepingBlockEntity { // Canvas
++public class CampfireBlockEntity extends BlockEntity implements Clearable, SleepingBlockEntity { // Canvas - block entity sleeping
+     private static final Logger LOGGER = LogUtils.getLogger();
      private static final int BURN_COOL_SPEED = 2;
      private static final int NUM_SLOTS = 4;
-     private final NonNullList<ItemStack> items = NonNullList.withSize(4, ItemStack.EMPTY);
+@@ -46,6 +_,43 @@
      public final int[] cookingProgress = new int[4];
      public final int[] cookingTime = new int[4];
      public final boolean[] stopCooking = new boolean[4]; // Paper - Add more Campfire API
@@ -63,7 +62,7 @@
  
      public CampfireBlockEntity(BlockPos pos, BlockState blockState) {
          super(BlockEntityType.CAMPFIRE, pos, blockState);
-@@ -51,6 +_,7 @@
+@@ -58,6 +_,7 @@
          CampfireBlockEntity campfire,
          RecipeManager.CachedCheck<SingleRecipeInput, CampfireCookingRecipe> check
      ) {
@@ -71,7 +70,7 @@
          boolean flag = false;
  
          for (int i = 0; i < campfire.items.size(); i++) {
-@@ -64,8 +_,14 @@
+@@ -71,8 +_,14 @@
                      SingleRecipeInput singleRecipeInput = new SingleRecipeInput(itemStack);
                      // Paper start - add recipe to cook events
                      final var optionalCookingRecipe = check.getRecipeFor(singleRecipeInput, level);
@@ -87,7 +86,7 @@
                          .orElse(itemStack);
                      // Paper end - add recipe to cook events
                      if (itemStack1.isItemEnabled(level.enabledFeatures())) {
-@@ -81,6 +_,7 @@
+@@ -88,6 +_,7 @@
                          );
  
                          if (!blockCookEvent.callEvent()) {
@@ -95,7 +94,7 @@
                              return;
                          }
  
-@@ -106,6 +_,7 @@
+@@ -113,6 +_,7 @@
          if (flag) {
              setChanged(level, pos, state);
          }
@@ -103,7 +102,7 @@
      }
  
      public static void cooldownTick(Level level, BlockPos pos, BlockState state, CampfireBlockEntity blockEntity) {
-@@ -121,6 +_,7 @@
+@@ -128,6 +_,7 @@
          if (flag) {
              setChanged(level, pos, state);
          }
@@ -111,15 +110,15 @@
      }
  
      public static void particleTick(Level level, BlockPos pos, BlockState state, CampfireBlockEntity blockEntity) {
-@@ -176,6 +_,7 @@
-             System.arraycopy(cookingState, 0, this.stopCooking, 0, Math.min(this.stopCooking.length, bytes.length));
+@@ -183,6 +_,7 @@
+             System.arraycopy(cookingState, 0, this.stopCooking, 0, Math.min(this.stopCooking.length, bytes.capacity()));
          });
          // Paper end - Add more Campfire API
 +        this.wakeUpNow(); // Canvas - block entity sleeping
      }
  
      @Override
-@@ -225,6 +_,7 @@
+@@ -237,6 +_,7 @@
                  this.cookingTime[i] = event.getTotalCookTime(); // i -> event.getTotalCookTime()
                  // CraftBukkit end
                  this.cookingProgress[i] = 0;

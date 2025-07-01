@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/dedicated/DedicatedServerProperties.java
 +++ b/net/minecraft/server/dedicated/DedicatedServerProperties.java
-@@ -80,8 +_,8 @@
+@@ -82,8 +_,8 @@
      public final long maxTickTime = this.get("max-tick-time", TimeUnit.MINUTES.toMillis(1L));
      public final int maxChainedNeighborUpdates = this.get("max-chained-neighbor-updates", 1000000);
      public final int rateLimitPacketsPerSecond = this.get("rate-limit", 0);

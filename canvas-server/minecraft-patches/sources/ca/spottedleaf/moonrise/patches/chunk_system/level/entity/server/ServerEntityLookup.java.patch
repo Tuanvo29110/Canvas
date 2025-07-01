@@ -1,30 +1,36 @@
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/server/ServerEntityLookup.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/server/ServerEntityLookup.java
-@@ -7,6 +_,7 @@
- import ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel;
- import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.ChunkEntitySlices;
- import ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup;
+@@ -10,6 +_,7 @@
+ import ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager;
+ import ca.spottedleaf.moonrise.patches.chunk_system.ticket.ChunkSystemTicketType;
+ import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 +import io.canvasmc.canvas.region.ServerRegions;
  import net.minecraft.server.level.ServerLevel;
  import net.minecraft.server.level.ServerPlayer;
- import net.minecraft.world.entity.Entity;
-@@ -61,7 +_,7 @@
+ import net.minecraft.server.level.TicketType;
+@@ -75,7 +_,7 @@
                                                 final int oldSectionX, final int oldSectionY, final int oldSectionZ,
                                                 final int newSectionX, final int newSectionY, final int newSectionZ) {
          if (entity instanceof ServerPlayer player) {
 -            ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().tickPlayer(player);
 +            (this.serverWorld).moonrise$getNearbyPlayers(entity.chunkPosition()).tickPlayer(player); // Canvas - Threaded Regions
          }
-         PlatformHooks.get().entityMove(
-             entity,
-@@ -73,28 +_,29 @@
+         if (entity instanceof ThrownEnderpearl enderpearl && (oldSectionX != newSectionX || oldSectionZ != newSectionZ)) {
+             this.removeEnderPearl(CoordinateUtils.getChunkKey(oldSectionX, oldSectionZ));
+@@ -90,19 +_,20 @@
+ 
      @Override
      protected void addEntityCallback(final Entity entity) {
++        ServerRegions.getTickData(this.world.level()).addEntity(entity); // Canvas - Threaded Regions
          if (entity instanceof ServerPlayer player) {
 -            ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().addPlayer(player);
 +            // ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().addPlayer(player); // Canvas - Threaded Regions
          }
-+        ServerRegions.getTickData(this.world.level()).addEntity(entity); // Canvas - Threaded Regions
+         if (entity instanceof ThrownEnderpearl enderpearl) {
+             this.addEnderPearl(CoordinateUtils.getChunkKey(enderpearl.chunkPosition()));
+         }
+-        entity.registerScheduler(); // Paper - optimise Folia entity scheduler
++        // Canvas - Threaded Regions
      }
  
      @Override
@@ -33,8 +39,9 @@
 -            ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().removePlayer(player);
 +            (this.serverWorld).moonrise$getNearbyPlayers(entity.chunkPosition()).removePlayer(player); // Canvas - Threaded Regions
          }
-     }
- 
+         if (entity instanceof ThrownEnderpearl enderpearl) {
+             this.removeEnderPearl(CoordinateUtils.getChunkKey(enderpearl.chunkPosition()));
+@@ -112,14 +_,14 @@
      @Override
      protected void entityStartLoaded(final Entity entity) {
          // Moonrise start - entity tracker

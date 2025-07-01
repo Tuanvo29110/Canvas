@@ -51,8 +51,8 @@
      private int receivedPackets;
      private int sentPackets;
      private float averageReceivedPackets;
-@@ -147,8 +_,30 @@
-     @Nullable public SocketAddress haProxyAddress; // Paper - Add API to get player's proxy address
+@@ -148,8 +_,30 @@
+     public @Nullable net.minecraft.server.level.ServerPlayer savedPlayerForLoginEventLegacy; // Paper - playerloginevent
      // Paper start - Optimize network
      public boolean isPending = true;
 +    private io.netty.channel.SingleThreadEventLoop eventLoop; // Canvas - optimise packets that are not flushed
@@ -82,7 +82,7 @@
  
      public Connection(PacketFlow receiving) {
          this.receiving = receiving;
-@@ -158,6 +_,7 @@
+@@ -159,6 +_,7 @@
      public void channelActive(ChannelHandlerContext context) throws Exception {
          super.channelActive(context);
          this.channel = context.channel();
@@ -90,7 +90,7 @@
          this.address = this.channel.remoteAddress();
          this.preparing = false; // Spigot
          if (this.delayedDisconnect != null) {
-@@ -434,7 +_,7 @@
+@@ -431,7 +_,7 @@
          }
  
          packet.onPacketDispatch(this.getPlayer());
@@ -98,8 +98,8 @@
 +        if (false && connected && (InnerUtil.canSendImmediate(this, packet) // Canvas - connection threading
              || (io.papermc.paper.util.MCUtil.isMainThread() && packet.isReady() && this.pendingActions.isEmpty()
              && (packet.getExtraPackets() == null || packet.getExtraPackets().isEmpty())))) {
-             this.sendPacket(packet, listener, flush);
-@@ -463,11 +_,12 @@
+             this.sendPacket(packet, channelFutureListener, flag);
+@@ -460,11 +_,12 @@
      }
  
      public void runOnceConnected(Consumer<Connection> action) {
@@ -113,19 +113,19 @@
          }
      }
  
-@@ -476,6 +_,11 @@
+@@ -473,6 +_,11 @@
          if (this.channel.eventLoop().inEventLoop()) {
-             this.doSendPacket(packet, sendListener, flush);
+             this.doSendPacket(packet, channelFutureListener, flag);
          } else {
 +            // Canvas start - optimise packets that are not flushed
-+            if (!flush && io.canvasmc.canvas.Config.INSTANCE.networking.optimizeNonFlushPacketSending) {
-+                this.eventLoop.lazyExecute(() -> this.doSendPacket(packet, sendListener, flush));
++            if (!flag && io.canvasmc.canvas.Config.INSTANCE.networking.optimizeNonFlushPacketSending) {
++                this.eventLoop.lazyExecute(() -> this.doSendPacket(packet, channelFutureListener, flag));
 +            } else
 +            // Canvas end
-             this.channel.eventLoop().execute(() -> this.doSendPacket(packet, sendListener, flush));
+             this.channel.eventLoop().execute(() -> this.doSendPacket(packet, channelFutureListener, flag));
          }
      }
-@@ -518,10 +_,11 @@
+@@ -509,10 +_,11 @@
      }
  
      public void flushChannel() {
@@ -138,7 +138,7 @@
          }
      }
  
-@@ -535,53 +_,59 @@
+@@ -526,53 +_,59 @@
  
      // Paper start - Optimize network: Rewrite this to be safer if ran off main thread
      private boolean flushQueue() {
@@ -236,7 +236,7 @@
      }
      // Paper end - Optimize network
  
-@@ -591,36 +_,15 @@
+@@ -582,36 +_,15 @@
      private static int tickSecond; // Purpur - Max joins per second
      public void tick() {
          this.flushQueue();
@@ -276,7 +276,7 @@
              this.handleDisconnection();
          }
  
-@@ -635,6 +_,7 @@
+@@ -626,6 +_,7 @@
          if (this.bandwidthDebugMonitor != null) {
              this.bandwidthDebugMonitor.tick();
          }
@@ -284,7 +284,7 @@
      }
  
      protected void tickSecond() {
-@@ -862,10 +_,10 @@
+@@ -853,10 +_,10 @@
  
      public void handleDisconnection() {
          if (this.channel != null && !this.channel.isOpen()) {
@@ -297,7 +297,7 @@
                  PacketListener packetListener = this.getPacketListener();
                  PacketListener packetListener1 = packetListener != null ? packetListener : this.disconnectListener;
                  if (packetListener1 != null) {
-@@ -893,6 +_,22 @@
+@@ -884,6 +_,22 @@
                                  ((InetSocketAddress) this.address).getAddress(), false).callEvent();
                      }
                  }
@@ -320,7 +320,7 @@
                  // Paper end - Add PlayerConnectionCloseEvent
              }
          }
-@@ -913,16 +_,40 @@
+@@ -904,16 +_,40 @@
      // Paper start - Optimize network
      public void clearPacketQueue() {
          final net.minecraft.server.level.ServerPlayer player = getPlayer();

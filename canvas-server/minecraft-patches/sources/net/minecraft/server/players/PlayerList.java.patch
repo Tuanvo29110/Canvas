@@ -7,7 +7,7 @@
  import com.google.common.collect.Lists;
  import com.google.common.collect.Maps;
  import com.google.common.collect.Sets;
-@@ -11,15 +_,20 @@
+@@ -10,15 +_,20 @@
  import java.nio.file.Path;
  import java.text.SimpleDateFormat;
  import java.time.Instant;
@@ -28,7 +28,7 @@
  import net.minecraft.ChatFormatting;
  import net.minecraft.FileUtil;
  import net.minecraft.commands.CommandSourceStack;
-@@ -110,10 +_,10 @@
+@@ -109,10 +_,10 @@
      public static final Component DUPLICATE_LOGIN_DISCONNECT_MESSAGE = Component.translatable("multiplayer.disconnect.duplicate_login");
      private static final Logger LOGGER = LogUtils.getLogger();
      private static final int SEND_PLAYER_INFO_INTERVAL = 600;
@@ -41,7 +41,7 @@
      private final UserBanList bans = new UserBanList(USERBANLIST_FILE);
      private final IpBanList ipBans = new IpBanList(IPBANLIST_FILE);
      private final ServerOpList ops = new ServerOpList(OPLIST_FILE);
-@@ -152,6 +_,7 @@
+@@ -151,6 +_,7 @@
      public void placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie) {
          player.isRealPlayer = true; // Paper
          player.loginTime = System.currentTimeMillis(); // Paper - Replace OfflinePlayer#getLastPlayed
@@ -49,46 +49,46 @@
          GameProfile gameProfile = player.getGameProfile();
          GameProfileCache profileCache = this.server.getProfileCache();
          String string;
-@@ -234,6 +_,11 @@
-         org.spigotmc.event.player.PlayerSpawnLocationEvent ev = new org.spigotmc.event.player.PlayerSpawnLocationEvent(spawnPlayer, spawnPlayer.getLocation());
-         this.cserver.getPluginManager().callEvent(ev);
+@@ -235,6 +_,11 @@
+             org.spigotmc.event.player.PlayerSpawnLocationEvent ev = new org.spigotmc.event.player.PlayerSpawnLocationEvent(spawnPlayer, spawnPlayer.getLocation());
+             this.cserver.getPluginManager().callEvent(ev);
  
-+        // Canvas start - don't place player in world if kicked before being spawned in
-+        if (!connection.isConnected() || player.quitReason != null) {
-+            return;
-+        }
-+        // Canvas end
-         org.bukkit.Location loc = ev.getSpawnLocation();
-         serverLevel = ((org.bukkit.craftbukkit.CraftWorld) loc.getWorld()).getHandle();
++            // Canvas start - don't place player in world if kicked before being spawned in
++            if (!connection.isConnected() || player.quitReason != null) {
++                return;
++            }
++            // Canvas end
+             org.bukkit.Location loc = ev.getSpawnLocation();
+             serverLevel = ((org.bukkit.craftbukkit.CraftWorld) loc.getWorld()).getHandle();
  
-@@ -275,7 +_,7 @@
-                 !_boolean,
-                 _boolean2,
-                 player.createCommonSpawnInfo(serverLevel),
--                this.server.enforceSecureProfile()
-+                Config.INSTANCE.networking.noChatReports.enable || this.server.enforceSecureProfile() // Canvas
-             )
-         );
-         player.getBukkitEntity().sendSupportedChannels(); // CraftBukkit
-@@ -327,7 +_,7 @@
-         // Ensure that player inventory is populated with its viewer
-         player.containerMenu.transferTo(player.containerMenu, bukkitPlayer);
+@@ -276,7 +_,7 @@
+                     !_boolean,
+                     _boolean2,
+                     player.createCommonSpawnInfo(serverLevel),
+-                    this.server.enforceSecureProfile()
++                    Config.INSTANCE.networking.noChatReports.enable || this.server.enforceSecureProfile() // Canvas - no chat reports
+                 )
+             );
+             player.getBukkitEntity().sendSupportedChannels(); // CraftBukkit
+@@ -328,7 +_,7 @@
+             // Ensure that player inventory is populated with its viewer
+             player.containerMenu.transferTo(player.containerMenu, bukkitPlayer);
  
--        org.bukkit.event.player.PlayerJoinEvent playerJoinEvent = new org.bukkit.event.player.PlayerJoinEvent(bukkitPlayer, io.papermc.paper.adventure.PaperAdventure.asAdventure(mutableComponent)); // Paper - Adventure
-+        org.bukkit.event.player.PlayerJoinEvent playerJoinEvent = new org.bukkit.event.player.PlayerJoinEvent(bukkitPlayer, getJoinMsg(mutableComponent, bukkitPlayer)); // Paper - Adventure // Canvas - Configurable connection message - join message
-         this.cserver.getPluginManager().callEvent(playerJoinEvent);
+-            org.bukkit.event.player.PlayerJoinEvent playerJoinEvent = new org.bukkit.event.player.PlayerJoinEvent(bukkitPlayer, io.papermc.paper.adventure.PaperAdventure.asAdventure(mutableComponent)); // Paper - Adventure
++            org.bukkit.event.player.PlayerJoinEvent playerJoinEvent = new org.bukkit.event.player.PlayerJoinEvent(bukkitPlayer, getJoinMsg(mutableComponent, bukkitPlayer)); // Paper - Adventure // Canvas - Configurable connection message - join message
+             this.cserver.getPluginManager().callEvent(playerJoinEvent);
  
-         if (!player.connection.isAcceptingMessages()) {
-@@ -345,7 +_,7 @@
-         // CraftBukkit start - sendAll above replaced with this loop
-         ClientboundPlayerInfoUpdatePacket packet = ClientboundPlayerInfoUpdatePacket.createPlayerInitializing(List.of(player)); // Paper - Add Listing API for Player
+             if (!player.connection.isAcceptingMessages()) {
+@@ -346,7 +_,7 @@
+             // CraftBukkit start - sendAll above replaced with this loop
+             ClientboundPlayerInfoUpdatePacket packet = ClientboundPlayerInfoUpdatePacket.createPlayerInitializing(List.of(player)); // Paper - Add Listing API for Player
  
--        final List<ServerPlayer> onlinePlayers = Lists.newArrayListWithExpectedSize(this.players.size() - 1); // Paper - Use single player info update packet on join
-+        final List<ServerPlayer> onlinePlayers = new ArrayList<>(); // Paper - Use single player info update packet on join // Canvas - don't use expected size
-         for (int i = 0; i < this.players.size(); ++i) {
-             ServerPlayer entityplayer1 = (ServerPlayer) this.players.get(i);
+-            final List<ServerPlayer> onlinePlayers = Lists.newArrayListWithExpectedSize(this.players.size() - 1); // Paper - Use single player info update packet on join
++            final List<ServerPlayer> onlinePlayers = new ArrayList<>(); // Paper - Use single player info update packet on join // Canvas - don't use expected size
+             for (int i = 0; i < this.players.size(); ++i) {
+                 ServerPlayer entityplayer1 = (ServerPlayer) this.players.get(i);
  
-@@ -485,9 +_,9 @@
+@@ -488,9 +_,9 @@
          return optional;
      }
  
@@ -100,7 +100,7 @@
          this.playerIo.save(player);
          ServerStatsCounter serverStatsCounter = player.getStats(); // CraftBukkit
          if (serverStatsCounter != null) {
-@@ -515,7 +_,7 @@
+@@ -518,7 +_,7 @@
              player.closeContainer(org.bukkit.event.inventory.InventoryCloseEvent.Reason.DISCONNECT); // Paper - Inventory close reason
          }
  
@@ -109,25 +109,16 @@
          this.cserver.getPluginManager().callEvent(playerQuitEvent);
          player.getBukkitEntity().disconnect(playerQuitEvent.getQuitMessage());
  
-@@ -613,16 +_,7 @@
-         UUID uuid = gameProfile.getId();
-         List<ServerPlayer> list = Lists.newArrayList();
- 
--        for (net.minecraft.server.level.ServerPlayer serverPlayer : this.players) {
--            if (serverPlayer.getUUID().equals(uuid) || (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() && serverPlayer.getGameProfile().getName().equalsIgnoreCase(gameProfile.getName()))) { // Paper - validate usernames
--                list.add(serverPlayer);
--            }
--        }
--
--        for (final net.minecraft.server.level.ServerPlayer serverPlayer : list) {
--            this.save(serverPlayer); // CraftBukkit - Force the player's inventory to be saved
--            serverPlayer.connection.disconnect(DUPLICATE_LOGIN_DISCONNECT_MESSAGE, org.bukkit.event.player.PlayerKickEvent.Cause.DUPLICATE_LOGIN); // Paper - kick event cause
--        }
-+        // Canvas - moved to pushPendingLogin
- 
-         // Instead of kicking then returning, we need to store the kick reason
-         // in the event, check with plugins to see if it's ok, and THEN kick
-@@ -641,7 +_,7 @@
+@@ -617,7 +_,7 @@
+         }
+     }
+     // Paper end - PlayerLoginEvent
+-    public LoginResult canPlayerLogin(SocketAddress socketAddress, GameProfile gameProfile) { // Paper - PlayerLoginEvent
++    public LoginResult canPlayerLogin(SocketAddress socketAddress, GameProfile gameProfile, Connection connection) { // Paper - PlayerLoginEvent // Canvas - Threaded Regions
+         LoginResult whitelistEventResult; // Paper
+         // Paper start - Fix MC-158900
+         UserBanListEntry userBanListEntry;
+@@ -626,7 +_,7 @@
              MutableComponent mutableComponent = Component.translatable("multiplayer.disconnect.banned.reason", userBanListEntry.getReason());
              if (userBanListEntry.getExpires() != null) {
                  mutableComponent.append(
@@ -136,7 +127,7 @@
                  );
              }
  
-@@ -655,7 +_,7 @@
+@@ -640,13 +_,13 @@
              MutableComponent mutableComponent = Component.translatable("multiplayer.disconnect.banned_ip.reason", ipBanListEntry.getReason());
              if (ipBanListEntry.getExpires() != null) {
                  mutableComponent.append(
@@ -145,16 +136,14 @@
                  );
              }
  
-@@ -665,7 +_,7 @@
-             // return this.players.size() >= this.maxPlayers && !this.canBypassPlayerLimit(gameProfile)
-             //     ? Component.translatable("multiplayer.disconnect.server_full")
-             //     : null;
--            if (this.players.size() >= this.maxPlayers && !(player.hasPermission("purpur.joinfullserver") || this.canBypassPlayerLimit(gameProfile))) { // Purpur - Allow player join full server by permission
-+            if (!this.countConnection(loginlistener.connection, this.maxPlayers) && !(player.hasPermission("purpur.joinfullserver") || this.canBypassPlayerLimit(gameProfile))) { // Purpur - Allow player join full server by permission // Canvas - count connection
-                 event.disallow(org.bukkit.event.player.PlayerLoginEvent.Result.KICK_FULL, net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(org.spigotmc.SpigotConfig.serverFullMessage)); // Spigot // Paper - Adventure
-             }
+             return new LoginResult(mutableComponent, org.bukkit.event.player.PlayerLoginEvent.Result.KICK_BANNED); // Paper - PlayerLoginEvent
+         } else {
+-            return this.canBypassFullServerLogin(gameProfile, new LoginResult(Component.translatable("multiplayer.disconnect.server_full"), org.bukkit.event.player.PlayerLoginEvent.Result.KICK_FULL)); // Paper - PlayerServerFullCheckEvent
++            return this.canBypassFullServerLogin(gameProfile, new LoginResult(Component.translatable("multiplayer.disconnect.server_full"), org.bukkit.event.player.PlayerLoginEvent.Result.KICK_FULL), connection); // Paper - PlayerServerFullCheckEvent // Canvas - Threaded Regions
          }
-@@ -898,6 +_,7 @@
+     }
+ 
+@@ -861,6 +_,7 @@
      }
  
      public void tick() {
@@ -162,7 +151,7 @@
          if (++this.sendAllPlayerInfoIn > 600) {
              // CraftBukkit start
              for (int i = 0; i < this.players.size(); ++i) {
-@@ -1004,7 +_,9 @@
+@@ -967,7 +_,9 @@
          this.ops.add(new ServerOpListEntry(profile, this.server.getOperatorUserPermissionLevel(), this.ops.canBypassPlayerLimit(profile)));
          ServerPlayer player = this.getPlayer(profile.getId());
          if (player != null) {
@@ -172,7 +161,7 @@
          }
      }
  
-@@ -1012,7 +_,9 @@
+@@ -975,7 +_,9 @@
          this.ops.remove(profile);
          ServerPlayer player = this.getPlayer(profile.getId());
          if (player != null) {
@@ -182,7 +171,18 @@
          }
      }
  
-@@ -1125,10 +_,16 @@
+@@ -1028,8 +_,8 @@
+     }
+ 
+     // Paper start - whitelist verify event / login event
+-    public LoginResult canBypassFullServerLogin(final GameProfile profile, final LoginResult currentResult) {
+-        final boolean shouldKick = this.players.size() >= this.maxPlayers && !(/*player.hasPermission("purpur.joinfullserver") || */this.canBypassPlayerLimit(profile)); // Purpur - Allow player join full server by permission TODO: this hasn't worked for a while, so comment it out until we can reliably check perms of the player joining
++    public LoginResult canBypassFullServerLogin(final GameProfile profile, final LoginResult currentResult, final Connection connection) { // Canvas - Threaded Regions
++        final boolean shouldKick = !this.countConnection(connection, this.maxPlayers) && !(/*player.hasPermission("purpur.joinfullserver") || */this.canBypassPlayerLimit(profile)); // Purpur - Allow player join full server by permission TODO: this hasn't worked for a while, so comment it out until we can reliably check perms of the player joining // Canvas - Threaded Regions
+         final io.papermc.paper.event.player.PlayerServerFullCheckEvent fullCheckEvent = new io.papermc.paper.event.player.PlayerServerFullCheckEvent(
+             com.destroystokyo.paper.profile.CraftPlayerProfile.asBukkitMirror(profile),
+             io.papermc.paper.adventure.PaperAdventure.asAdventure(currentResult.message),
+@@ -1105,10 +_,16 @@
      public void saveAll(final int interval) {
          io.papermc.paper.util.MCUtil.ensureMain("Save Players" , () -> { // Paper - Ensure main
          int numSaved = 0;
@@ -201,7 +201,7 @@
                  this.save(player);
                  if (interval != -1 && ++numSaved >= io.papermc.paper.configuration.GlobalConfiguration.get().playerAutoSave.maxPerTick()) {
                      break;
-@@ -1339,6 +_,11 @@
+@@ -1319,6 +_,11 @@
      }
  
      public boolean verifyChatTrusted(PlayerChatMessage message) {
@@ -213,7 +213,7 @@
          return message.hasSignature() && !message.hasExpiredServer(Instant.now());
      }
  
-@@ -1384,25 +_,29 @@
+@@ -1364,25 +_,29 @@
      }
  
      public void setViewDistance(int viewDistance) {
@@ -251,7 +251,7 @@
      }
  
      public List<ServerPlayer> getPlayers() {
-@@ -1461,4 +_,95 @@
+@@ -1441,4 +_,95 @@
      public boolean isAllowCommandsForAllPlayers() {
          return this.allowCommandsForAllPlayers;
      }

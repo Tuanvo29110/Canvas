@@ -1,25 +1,20 @@
 --- a/net/minecraft/world/level/block/entity/ShulkerBoxBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/ShulkerBoxBlockEntity.java
-@@ -3,6 +_,7 @@
+@@ -3,6 +_,8 @@
  import java.util.List;
  import java.util.stream.IntStream;
  import javax.annotation.Nullable;
 +import io.canvasmc.canvas.entity.SleepingBlockEntity;
++import net.minecraft.world.level.chunk.LevelChunk;
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
- import net.minecraft.core.HolderLookup;
-@@ -27,12 +_,13 @@
- import net.minecraft.world.level.block.Block;
- import net.minecraft.world.level.block.ShulkerBoxBlock;
- import net.minecraft.world.level.block.state.BlockState;
-+import net.minecraft.world.level.chunk.LevelChunk;
- import net.minecraft.world.level.gameevent.GameEvent;
- import net.minecraft.world.level.material.PushReaction;
+ import net.minecraft.core.NonNullList;
+@@ -32,7 +_,7 @@
  import net.minecraft.world.phys.AABB;
  import net.minecraft.world.phys.Vec3;
  
 -public class ShulkerBoxBlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer {
-+public class ShulkerBoxBlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer, SleepingBlockEntity { // Canvas
++public class ShulkerBoxBlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer, SleepingBlockEntity { // Canvas - block entity sleeping
      public static final int COLUMNS = 9;
      public static final int ROWS = 3;
      public static final int CONTAINER_SIZE = 27;

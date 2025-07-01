@@ -69,7 +69,7 @@
              org.purpurmc.purpur.task.BossBarTask.startAll(); // Purpur - Implement TPSBar
              if (org.purpurmc.purpur.PurpurConfig.beeCountPayload) org.purpurmc.purpur.task.BeehiveTask.instance().register(); // Purpur - Give bee counts in beehives to Purpur clients
              return true;
-@@ -602,6 +_,14 @@
+@@ -600,6 +_,14 @@
  
      @Override
      public boolean enforceSecureProfile() {
@@ -84,7 +84,7 @@
          DedicatedServerProperties properties = this.getProperties();
          // Paper start - Add setting for proxy online mode status
          return properties.enforceSecureProfile
-@@ -790,12 +_,6 @@
+@@ -787,12 +_,6 @@
      }
  
      @Override
@@ -97,7 +97,7 @@
      public SampleLogger getTickTimeLogger() {
          return this.tickTimeLogger;
      }
-@@ -846,7 +_,7 @@
+@@ -843,7 +_,7 @@
  
      // CraftBukkit start
      public boolean isDebugging() {

@@ -5,9 +5,9 @@
  
 +import io.canvasmc.canvas.region.ServerRegions;
  import net.minecraft.core.BlockPos;
- import net.minecraft.nbt.CompoundTag;
  import net.minecraft.world.entity.EntitySelector;
-@@ -146,7 +_,7 @@
+ import net.minecraft.world.entity.EntityType;
+@@ -147,7 +_,7 @@
  
      // Paper start
      public void immunize() {

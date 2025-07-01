@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/network/ServerTextFilter.java
 +++ b/net/minecraft/server/network/ServerTextFilter.java
-@@ -25,6 +_,7 @@
+@@ -24,6 +_,7 @@
  import java.util.concurrent.ThreadFactory;
  import java.util.concurrent.atomic.AtomicInteger;
  import javax.annotation.Nullable;

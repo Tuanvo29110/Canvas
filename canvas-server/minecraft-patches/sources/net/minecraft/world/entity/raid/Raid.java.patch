@@ -13,8 +13,8 @@
      private Predicate<ServerPlayer> validPlayer() {
          return player -> {
              BlockPos blockPos = player.blockPosition();
--            return player.isAlive() && player.serverLevel().getRaidAt(blockPos) == this;
-+            return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(player) && player.isAlive() && player.serverLevel().getRaidAt(blockPos) == this; // Canvas - threadsafe raids
+-            return player.isAlive() && player.level().getRaidAt(blockPos) == this;
++            return io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(player) && player.isAlive() && player.level().getRaidAt(blockPos) == this; // Canvas - threadsafe raids
          };
      }
  

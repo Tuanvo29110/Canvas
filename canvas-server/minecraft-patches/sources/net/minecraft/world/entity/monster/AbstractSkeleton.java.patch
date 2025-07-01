@@ -6,9 +6,9 @@
  import javax.annotation.Nullable;
 +import io.canvasmc.canvas.Config;
  import net.minecraft.core.BlockPos;
- import net.minecraft.nbt.CompoundTag;
  import net.minecraft.server.level.ServerLevel;
-@@ -186,6 +_,16 @@
+ import net.minecraft.sounds.SoundEvent;
+@@ -187,6 +_,16 @@
          double d1 = target.getY(0.3333333333333333) - arrow.getY();
          double d2 = target.getZ() - this.getZ();
          double squareRoot = Math.sqrt(d * d + d2 * d2);
@@ -23,5 +23,5 @@
 +        }
 +        // Canvas end
          if (this.level() instanceof ServerLevel serverLevel) {
-             // CraftBukkit start
-             org.bukkit.event.entity.EntityShootBowEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityShootBowEvent(this, this.getMainHandItem(), arrow.getPickupItem(), arrow, net.minecraft.world.InteractionHand.MAIN_HAND, distanceFactor, true); // Paper - improve entity shoot bow event, add arrow stack to event
+             Projectile.Delayed<AbstractArrow> delayedEntity = Projectile.spawnProjectileUsingShootDelayed( // Paper - delayed
+                 arrow, serverLevel, projectile, d, d1 + squareRoot * 0.2F, d2, 1.6F, serverLevel.purpurConfig.skeletonBowAccuracyMap.getOrDefault(serverLevel.getDifficulty().getId(), (float) (14 - serverLevel.getDifficulty().getId() * 4))  // Purpur - skeleton bow accuracy option

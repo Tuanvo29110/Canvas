@@ -44,7 +44,7 @@
      private final ExplosionDamageCalculator damageCalculator;
      private final Map<Player, Vec3> hitPlayers = new HashMap<>();
      // CraftBukkit - add field
-@@ -518,6 +_,23 @@
+@@ -521,6 +_,23 @@
                                          dragonPart.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, dragonPart, f1));
                                      }
                                  }
@@ -68,7 +68,7 @@
                              } else {
                                  entity.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, entity, f1));
                              }
-@@ -531,7 +_,7 @@
+@@ -534,7 +_,7 @@
                          double d4 = (1.0 - d) * f1 * knockbackMultiplier;
                          double d5;
                          if (entity instanceof LivingEntity livingEntity) {
@@ -77,7 +77,7 @@
                          } else {
                              d5 = d4;
                          }
-@@ -559,8 +_,56 @@
+@@ -562,8 +_,56 @@
              }
          }
      }
@@ -134,7 +134,7 @@
          List<ServerExplosion.StackCollector> list = new ArrayList<>();
          Util.shuffle(blocks, this.level.random);
  
-@@ -671,10 +_,7 @@
+@@ -669,10 +_,7 @@
          List<BlockPos> list = this.calculateExplodedPositions();
          this.hurtEntities();
          if (this.interactsWithBlocks()) {
@@ -145,7 +145,7 @@
          }
  
          if (this.fire) {
-@@ -779,16 +_,16 @@
+@@ -776,16 +_,16 @@
              return this.getSeenFraction(vec3d, entity, this.directMappedBlockCache, this.mutablePos); // Paper - collision optimisations
          }
          CacheKey key = new CacheKey(this, entity.getBoundingBox());

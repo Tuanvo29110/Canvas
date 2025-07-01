@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/player/Inventory.java
 +++ b/net/minecraft/world/entity/player/Inventory.java
-@@ -439,7 +_,10 @@
+@@ -456,7 +_,10 @@
              }
          }
  
@@ -12,7 +12,7 @@
              ItemStack itemStack = this.equipment.get(equipmentSlot);
              if (itemStack == stack) {
                  this.equipment.set(equipmentSlot, ItemStack.EMPTY);
-@@ -504,17 +_,21 @@
+@@ -515,17 +_,21 @@
  
      @Override
      public boolean isEmpty() {
@@ -36,7 +36,7 @@
  
          return true;
      }
-@@ -561,32 +_,61 @@
+@@ -572,32 +_,61 @@
      }
  
      public boolean contains(ItemStack stack) {
@@ -114,7 +114,7 @@
          return false;
      }
  
-@@ -605,7 +_,10 @@
+@@ -616,7 +_,10 @@
      }
  
      public void fillStackedContents(StackedItemContents contents) {

@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/chunk/PalettedContainer.java
 +++ b/net/minecraft/world/level/chunk/PalettedContainer.java
-@@ -25,12 +_,28 @@
+@@ -24,12 +_,28 @@
  import net.minecraft.util.ZeroBitStorage;
  
  public class PalettedContainer<T> implements PaletteResize<T>, PalettedContainerRO<T> {
@@ -30,7 +30,7 @@
      //private final ThreadingDetector threadingDetector = new ThreadingDetector("PalettedContainer"); // Paper - unused
  
      public void acquire() {
-@@ -168,6 +_,11 @@
+@@ -167,6 +_,11 @@
          this.registry = registry;
          this.data = this.createOrReuseData(null, 0);
          this.data.palette.idFor(palette);
@@ -42,7 +42,7 @@
          this.updateData(this.data); // Paper - optimise palette reads
      }
  
-@@ -222,7 +_,7 @@
+@@ -221,7 +_,7 @@
          return this.getAndSet(this.strategy.getIndex(x, y, z), state);
      }
  
@@ -51,7 +51,7 @@
          // Paper start - optimise palette reads
          final int paletteIdx = this.data.palette.idFor(state);
          final PalettedContainer.Data<T> data = this.data;
-@@ -344,28 +_,54 @@
+@@ -343,28 +_,54 @@
      public synchronized PalettedContainerRO.PackedData<T> pack(IdMap<T> registry, PalettedContainer.Strategy strategy) { // Paper - synchronize
          this.acquire();
  
@@ -123,7 +123,7 @@
      }
  
      private static <T> void swapPalette(int[] bits, IntUnaryOperator operator) {
-@@ -392,6 +_,12 @@
+@@ -391,6 +_,12 @@
      public boolean maybeHas(Predicate<T> predicate) {
          return this.data.palette.maybeHas(predicate);
      }
@@ -136,7 +136,7 @@
  
      @Override
      public PalettedContainer<T> copy() {
-@@ -405,13 +_,33 @@
+@@ -404,13 +_,33 @@
  
      @Override
      public void count(PalettedContainer.CountConsumer<T> countConsumer) {
@@ -177,7 +177,7 @@
      }
  
      record Configuration<T>(Palette.Factory factory, int bits) {
-@@ -432,7 +_,7 @@
+@@ -431,7 +_,7 @@
  
          private final PalettedContainer.Configuration<T> configuration;
          private final BitStorage storage;
