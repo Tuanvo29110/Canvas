@@ -87,7 +87,7 @@
 +                }
 +
 +                if (Config.INSTANCE.networking.noChatReports.convertToGameMessage) {
-+                    if (packet instanceof ClientboundPlayerChatPacket chat && listener != null) {
++                    if (packet instanceof ClientboundPlayerChatPacket chat && channelFutureListener != null) {
 +                        cancel = true;
 +                        listenerImpl.send(chat);
 +                    }

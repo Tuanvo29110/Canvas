@@ -113,26 +113,25 @@
 +        if (clumps$clumpedMap != null) {
 +            CompoundTag map = new CompoundTag();
 +            clumps$getClumpedMap().forEach((value, count) -> map.putInt(String.valueOf(value), count));
-+            compound.put("clumpedMap", map);
++            output.store("clumpedMap", CompoundTag.CODEC, map);
 +        }
 +        // Canvas end
      }
  
      @Override
-@@ -352,10 +_,52 @@
+@@ -352,10 +_,51 @@
          this.setValue(input.getIntOr("Value", 0)); // Paper - load as Integer
          this.count = input.read("Count", ExtraCodecs.POSITIVE_INT).orElse(1);
          this.loadPaperNBT(input); // Paper
 +        // Canvas start - clump xp orbs
 +        Map<Integer, Integer> map = new HashMap<>();
-+        if (compound.contains("clumpedMap")) {
-+            CompoundTag clumpedMap = compound.getCompound("clumpedMap").orElseThrow(); // orElseThrow, because we already verified that 'clumpedMap' exists
-+            for (String s : clumpedMap.keySet()) {
-+                map.put(Integer.parseInt(s), clumpedMap.getInt(s).orElseThrow()); // orElseThrow, because this is a valid key since we are fetching from the keyset
++        input.read("clumpedMap", CompoundTag.CODEC).ifPresentOrElse(clumpedMap -> {
++            for(String s : clumpedMap.keySet()) {
++                clumpedMap.getInt(s).ifPresent(value -> {
++                    map.put(Integer.parseInt(s), value);
++                });
 +            }
-+        } else {
-+            map.put(this.getValue(), count);
-+        }
++        }, () -> map.put(getValue(), count));
 +
 +        clumps$setClumpedMap(map);
 +        // Canvas end

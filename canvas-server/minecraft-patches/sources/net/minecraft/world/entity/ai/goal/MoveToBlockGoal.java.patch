@@ -17,7 +17,7 @@
 +    protected boolean poll() {
 +        if (!(this.mob.getGoalCtx().result() instanceof BlockPos blockPos1)) return false;
 +        if (!this.mob.level().hasChunkAt(blockPos1)
-+            || !this.mob.isWithinRestriction(blockPos1)
++            || !this.mob.isWithinHome(blockPos1)
 +            || !this.isValidTarget(this.mob.level(), blockPos1)) {
 +            return false;
 +        }
@@ -47,9 +47,9 @@
 +        final int searchRange = this.searchRange;
 +        final int verticalSearchRange = this.verticalSearchRange;
 +        final BlockPos blockPos = mob.blockPosition();
-+        final float restrictRadius = mob.getRestrictRadius();
-+        final BlockPos restrictCenter = mob.getRestrictCenter();
-+        ctx.wake = () -> findNearestBlockAsync(ty, toRemove, mob, serverLevel, verticalSearchStart, searchRange, verticalSearchRange, blockPos, restrictRadius, restrictCenter);
++        final float homeRadius = mob.getHomeRadius();
++        final BlockPos homePos = mob.getHomePosition();
++        ctx.wake = () -> findNearestBlockAsync(ty, toRemove, mob, serverLevel, verticalSearchStart, searchRange, verticalSearchRange, blockPos, homeRadius, homePos);
 +        return false;
 +    }
 +

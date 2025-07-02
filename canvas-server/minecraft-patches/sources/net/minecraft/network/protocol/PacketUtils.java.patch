@@ -40,7 +40,7 @@
                  if (processor instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl serverCommonPacketListener && serverCommonPacketListener.processedDisconnect) return; // Paper - Don't handle sync packets for kicked players
                  if (processor.shouldHandleMessage(packet)) {
                      try {
-@@ -37,13 +_,24 @@
+@@ -37,13 +_,23 @@
                  } else {
                      LOGGER.debug("Ignoring packet due to disconnection: {}", packet);
                  }
@@ -60,7 +60,6 @@
 +                gamePacketListener.player.connection.connection.schedulePacket(run);
 +            } else if (processor instanceof ServerConfigurationPacketListenerImpl configurationPacketListener) {
 +                // push to main
-+                configurationPacketListener.player.serverLevel().wake();
 +                configurationPacketListener.connection.schedulePacket(run);
 +            } else if (processor instanceof ServerLoginPacketListenerImpl) {
 +                // push on main

@@ -324,10 +324,26 @@
              ret |= this.processPendingFullUpdate();
          }
  
-@@ -1486,14 +_,48 @@
-     private boolean processPendingFullUpdate() {
-         this.processOffThreadFullUpdates();
+@@ -1471,29 +_,52 @@
+         return CURRENT_TICKET_UPDATE_SCHEDULING.get();
+     }
  
+-    // only call on tick thread
+-    private void processOffThreadFullUpdates() {
+-        final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = this.pendingFullLoadUpdate;
+-        final MultiThreadedQueue<NewChunkHolder> offThreadPendingFullLoadUpdate = this.offThreadPendingFullLoadUpdate;
+-
+-        NewChunkHolder toUpdate;
+-        while ((toUpdate = offThreadPendingFullLoadUpdate.poll()) != null) {
+-            pendingFullLoadUpdate.add(toUpdate);
+-        }
+-    }
++    // Canvas - Threaded Regions
+ 
+     // only call on tick thread
+     private boolean processPendingFullUpdate() {
+-        this.processOffThreadFullUpdates();
+-
 -        final ArrayDeque<NewChunkHolder> pendingFullLoadUpdate = this.pendingFullLoadUpdate;
 +        // Canvas start - Threaded Regions
 +        final HolderManagerRegionData data = this.getCurrentRegionData();

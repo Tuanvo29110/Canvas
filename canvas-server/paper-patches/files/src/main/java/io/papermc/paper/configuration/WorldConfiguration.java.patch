@@ -1,15 +1,10 @@
 --- a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
 +++ b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
-@@ -498,6 +_,12 @@
-     public Chunks chunks;
+@@ -516,6 +_,7 @@
  
-     public class Chunks extends ConfigurationPart {
-+        // Canvas start - prevent moving into unloaded chunks
-+        @PostProcess
-+        public void postProcess() {
-+            this.preventMovingIntoUnloadedChunks = true;
-+        }
-+        // Canvas end
-         public AutosavePeriod autoSaveInterval = AutosavePeriod.def();
-         public int maxAutoSaveChunksPerTick = 24;
-         public int fixedChunkInhabitedTime = -1;
+         @PostProcess
+         private void postProcess() {
++            this.preventMovingIntoUnloadedChunks = true; // Canvas - prevent moving into unloaded chunks
+             FeatureHooks.setPlayerChunkUnloadDelay(this.delayChunkUnloadsBy.ticks());
+         }
+     }

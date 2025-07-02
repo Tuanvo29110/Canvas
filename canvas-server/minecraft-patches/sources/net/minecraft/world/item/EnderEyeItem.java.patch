@@ -32,8 +32,8 @@
 +                    ).thenOnServerThread(pos -> {
 +                        eyeOfEnder.asyncLocator$locateTaskOngoing = false;
 +                        if (pos != null) {
-+                            eyeOfEnder.signalTo(pos.getBlockPos());
-+                            CriteriaTriggers.USED_ENDER_EYE.trigger((ServerPlayer) player, pos.getBlockPos());
++                            eyeOfEnder.signalTo(Vec3.atLowerCornerOf(pos.get()));
++                            CriteriaTriggers.USED_ENDER_EYE.trigger((ServerPlayer) player, pos.get());
 +                            player.awardStat(Stats.ITEM_USED.get(this));
 +                        } else {
 +                            // Set the entity's life to long enough that it dies

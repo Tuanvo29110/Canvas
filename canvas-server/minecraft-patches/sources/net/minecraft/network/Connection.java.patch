@@ -51,7 +51,7 @@
      private int receivedPackets;
      private int sentPackets;
      private float averageReceivedPackets;
-@@ -148,8 +_,30 @@
+@@ -148,8 +_,34 @@
      public @Nullable net.minecraft.server.level.ServerPlayer savedPlayerForLoginEventLegacy; // Paper - playerloginevent
      // Paper start - Optimize network
      public boolean isPending = true;
@@ -70,6 +70,10 @@
 +
 +    public void schedulePacket(Runnable runnable) {
 +        packetsToProcess.add(runnable);
++    }
++
++    public boolean hasPackets() {
++        return !packetsToProcess.isEmpty();
 +    }
 +
 +    public void tickPackets() {

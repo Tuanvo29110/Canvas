@@ -4,7 +4,6 @@ import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.canvasmc.canvas.CanvasBootstrap;
-import io.canvasmc.canvas.command.debug.EntityDumpCommand;
 import io.canvasmc.canvas.command.debug.FlySpeedCommand;
 import io.canvasmc.canvas.command.debug.PriorityCommand;
 import io.canvasmc.canvas.command.debug.RandomTeleportCommand;
@@ -46,7 +45,6 @@ public final class CanvasCommands {
         register(FlySpeedCommand::new);
         register(TasksCommand::new);
         register(RandomTeleportCommand::new);
-        register(EntityDumpCommand::new);
         if (PurpurConfig.registerMinecraftDebugCommands || CanvasBootstrap.RUNNING_IN_IDE) {
             registerMinecraftDebugCommands(dispatcher, context);
         }

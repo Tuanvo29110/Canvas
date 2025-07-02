@@ -444,7 +444,7 @@
 +                    if (chunk == null || chunk.locX != chunkX || chunk.locZ != chunkZ) {
 +                        chunk = this.level().getChunkIfLoadedImmediately(chunkX, chunkZ);
 +                        if (chunk == null) {
-+                            return;
++                            return true;
 +                        }
 +                        chunkCache[chunkKey] = chunk;
 +                    }

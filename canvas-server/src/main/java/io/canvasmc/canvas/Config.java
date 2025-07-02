@@ -794,7 +794,8 @@ public class Config {
                 if (INSTANCE.debug.printConfigurationTree) {
                     // build and print config tree.
                     YamlTextFormatter formatter = new YamlTextFormatter(4);
-                    CanvasBootstrap.LOGGER.info(Component.text("Printing configuration tree:").appendNewline().append(formatter.apply(context.contents())));
+                    // TODO - come back to this.
+                    // CanvasBootstrap.LOGGER.info(Component.text("Printing configuration tree:").appendNewline().append(formatter.apply(context.contents())));
                 }
                 for (final String change : changes) {
                     CanvasBootstrap.LOGGER.info(change);

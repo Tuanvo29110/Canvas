@@ -316,10 +316,10 @@
 +
 +        if (conflictingId != null || conflictingName != null) {
 +            if (conflictingName != null && conflictingName.packetListener instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl) {
-+                ((net.minecraft.server.network.ServerCommonPacketListenerImpl) conflictingName.packetListener).disconnectAsync(message, org.bukkit.event.player.PlayerKickEvent.Cause.DUPLICATE_LOGIN);
++                ((net.minecraft.server.network.ServerCommonPacketListenerImpl) conflictingName.packetListener).disconnectAsync(message, io.papermc.paper.connection.DisconnectionReason.DUPLICATE_LOGIN_MESSAGE);
 +            }
 +            if (conflictingName != conflictingId && conflictingId != null && conflictingId.packetListener instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl) {
-+                ((net.minecraft.server.network.ServerCommonPacketListenerImpl) conflictingId.packetListener).disconnectAsync(message, org.bukkit.event.player.PlayerKickEvent.Cause.DUPLICATE_LOGIN);
++                ((net.minecraft.server.network.ServerCommonPacketListenerImpl) conflictingId.packetListener).disconnectAsync(message, io.papermc.paper.connection.DisconnectionReason.DUPLICATE_LOGIN_MESSAGE);
 +            }
 +        }
 +
