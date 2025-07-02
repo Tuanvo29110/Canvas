@@ -864,7 +864,7 @@
          }
          // Paper end - rewrite chunk system
  
-@@ -1344,59 +_,53 @@
+@@ -1344,59 +_,54 @@
  
      // Paper start - log detailed entity tick information
      // TODO replace with varhandle
@@ -905,6 +905,7 @@
 -        profilerFiller.pop();
  
          for (Entity entity1 : entity.getPassengers()) {
++            if (entity1 == null) continue; // Canvas - ensure nonnull
              this.tickPassenger(entity, entity1, isActive); // Paper - EAR 2
          }
          // Paper start - log detailed entity tick information
