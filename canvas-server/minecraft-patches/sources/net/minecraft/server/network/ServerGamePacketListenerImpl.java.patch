@@ -228,7 +228,7 @@
                  this.disconnectAsync(net.minecraft.network.chat.Component.translatable("disconnect.spam"), org.bukkit.event.player.PlayerKickEvent.Cause.SPAM); // Paper - kick event cause // Paper - add proper async disconnect
                  return;
              }
-@@ -3778,19 +_,19 @@
+@@ -3783,19 +_,19 @@
  
      @Override
      public void disconnectAsync(final net.minecraft.network.DisconnectionDetails disconnectionInfo) {
@@ -250,4 +250,4 @@
 +        }, null, 0); // Canvas - connection threading
      }
  
-     // Paper start
+     public final boolean isDisconnected() {

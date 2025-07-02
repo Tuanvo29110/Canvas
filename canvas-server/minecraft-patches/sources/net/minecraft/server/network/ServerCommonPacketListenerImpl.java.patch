@@ -21,7 +21,7 @@
  import org.slf4j.Logger;
  
  public abstract class ServerCommonPacketListenerImpl implements ServerCommonPacketListener {
-@@ -190,7 +_,6 @@
+@@ -271,7 +_,6 @@
      }
  
      protected void keepConnectionAlive() {
@@ -29,7 +29,7 @@
          long millis = Util.getMillis();
          // Paper start - improve keepalives
          // Purpur start - Alternative Keepalive Handling
-@@ -228,8 +_,6 @@
+@@ -309,8 +_,6 @@
                  // Paper end - improve keepalives
              }
          }
@@ -38,7 +38,7 @@
      }
  
      private boolean checkIfClosed(long time) {
-@@ -254,10 +_,64 @@
+@@ -335,10 +_,64 @@
      }
  
      public void send(Packet<?> packet) {
@@ -103,7 +103,7 @@
          // CraftBukkit start
          if (packet == null || this.processedDisconnect) { // Spigot
              return;
-@@ -297,24 +_,13 @@
+@@ -378,24 +_,13 @@
          if (this.processedDisconnect) {
              return;
          }
@@ -135,7 +135,7 @@
              return;
          }
  
-@@ -368,7 +_,13 @@
+@@ -449,7 +_,13 @@
          this.onDisconnect(disconnectionDetails);
          this.connection.setReadOnly();
          // CraftBukkit - Don't wait

@@ -39,7 +39,7 @@
      public final ContainerSynchronizer containerSynchronizer = new ContainerSynchronizer() {
          private final LoadingCache<TypedDataComponent<?>, Integer> cache = CacheBuilder.newBuilder()
              .maximumSize(256L)
-@@ -433,6 +_,7 @@
+@@ -432,6 +_,7 @@
      private boolean tpsBar = false; // Purpur - Implement TPSBar
      private boolean compassBar = false; // Purpur - Add compass command
      private boolean ramBar = false; // Purpur - Implement rambar commands
@@ -47,7 +47,7 @@
  
      // Paper start - rewrite chunk system
      private ca.spottedleaf.moonrise.patches.chunk_system.player.RegionizedPlayerChunkLoader.PlayerChunkLoaderData chunkLoader;
-@@ -501,7 +_,7 @@
+@@ -500,7 +_,7 @@
              long l1 = l * l;
              int i = l1 > 2147483647L ? Integer.MAX_VALUE : (int)l1;
              int coprime = this.getCoprime(i);
@@ -56,7 +56,7 @@
  
              for (int i1 = 0; i1 < i; i1++) {
                  int i2 = (randomInt + coprime * i1) % i;
-@@ -775,12 +_,24 @@
+@@ -774,12 +_,24 @@
  
          Entity camera = this.getCamera();
          if (camera != this) {
@@ -82,7 +82,7 @@
              } else {
                  this.setCamera(this);
              }
-@@ -805,6 +_,28 @@
+@@ -804,6 +_,28 @@
          }
          // Purpur end - Ridables
      }
@@ -111,7 +111,7 @@
  
      private void updatePlayerAttributes() {
          AttributeInstance attribute = this.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
-@@ -838,15 +_,22 @@
+@@ -837,15 +_,22 @@
      public void doTick() {
          try {
              if (valid && !this.isSpectator() || !this.touchingUnloadedChunk()) { // Paper - don't tick dead players that are not in the world currently (pending respawn)
@@ -135,7 +135,7 @@
  
              if (this.getHealth() != this.lastSentHealth
                  || this.lastSentFood != this.foodData.getFoodLevel()
-@@ -917,6 +_,7 @@
+@@ -916,6 +_,7 @@
              }
              // CraftBukkit end
          } catch (Throwable var4) {
@@ -143,7 +143,7 @@
              CrashReport crashReport = CrashReport.forThrowable(var4, "Ticking player");
              CrashReportCategory crashReportCategory = crashReport.addCategory("Player being ticked");
              this.fillCrashReportCategory(crashReportCategory);
-@@ -1042,6 +_,7 @@
+@@ -1041,6 +_,7 @@
      // Paper end - Expand PlayerDeathEvent API
      @Override
      public void die(DamageSource cause) {
@@ -151,7 +151,7 @@
          // this.gameEvent(GameEvent.ENTITY_DIE); // Paper - move below event cancellation check
          boolean _boolean = this.level().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES); final boolean showDeathMessage = _boolean; // Paper - OBFHELPER
          // CraftBukkit start - fire PlayerDeathEvent
-@@ -1158,6 +_,7 @@
+@@ -1157,6 +_,7 @@
          this.getCombatTracker().recheckStatus();
          this.setLastDeathLocation(Optional.of(GlobalPos.of(this.level().dimension(), this.blockPosition())));
          this.setClientLoaded(false);
@@ -159,7 +159,7 @@
      }
  
      private void tellNeutralMobsThatIDied() {
-@@ -1438,14 +_,10 @@
+@@ -1437,14 +_,10 @@
                  this.unsetRemoved();
                  */
                  // CraftBukkit end
@@ -174,7 +174,7 @@
                  // CraftBukkit start
                  this.isChangingDimension = true; // CraftBukkit - Set teleport invulnerability only if player changing worlds
                  LevelData worlddata = level.getLevelData();
-@@ -1463,7 +_,6 @@
+@@ -1462,7 +_,6 @@
                  this.connection.internalTeleport(PositionMoveRotation.of(teleportTransition), teleportTransition.relatives()); // CraftBukkit - use internal teleport without event
                  this.connection.resetPosition();
                  level.addDuringTeleport(this);
@@ -182,7 +182,7 @@
                  this.triggerDimensionChangeTriggers(serverLevel);
                  this.stopUsingItem();
                  this.connection.send(new ClientboundPlayerAbilitiesPacket(this.getAbilities()));
-@@ -1549,6 +_,13 @@
+@@ -1548,6 +_,13 @@
          super.take(entity, quantity);
          this.containerMenu.broadcastChanges();
      }
@@ -196,7 +196,7 @@
  
      // CraftBukkit start - moved bed result checks from below into separate method
      private Either<Player.BedSleepingProblem, Unit> getBedResult(BlockPos at, Direction direction) {
-@@ -2188,12 +_,18 @@
+@@ -2187,12 +_,18 @@
  
      @Override
      public void crit(Entity entityHit) {
@@ -217,7 +217,7 @@
      }
  
      @Override
-@@ -2225,6 +_,7 @@
+@@ -2224,6 +_,7 @@
              this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.CHANGE_GAME_MODE, gameMode.getId()));
              if (gameMode == GameType.SPECTATOR) {
                  this.removeEntitiesOnShoulder();
@@ -225,7 +225,7 @@
                  this.stopRiding();
                  EnchantmentHelper.stopLocationBasedEffects(this);
              } else {
-@@ -2501,6 +_,11 @@
+@@ -2500,6 +_,11 @@
      }
  
      public void setCamera(@Nullable Entity entityToSpectate) {
@@ -237,7 +237,7 @@
          Entity camera = this.getCamera();
          this.camera = (Entity)(entityToSpectate == null ? this : entityToSpectate);
          if (camera != this.camera) {
-@@ -2519,16 +_,18 @@
+@@ -2518,16 +_,18 @@
                  }
              }
              // Paper end - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
