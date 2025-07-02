@@ -1,0 +1,40 @@
+--- a/net/minecraft/commands/arguments/EntityArgument.java
++++ b/net/minecraft/commands/arguments/EntityArgument.java
+@@ -65,6 +_,37 @@
+         }
+     }
+ 
++    // Canvas start - Cache function getEntity calls
++    public static final java.util.Map<String, List<? extends Entity>> TICK_ENTITY_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
++    public static Collection<? extends Entity> getOptionalEntitiesCachedAs(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
++        if (!(context.getSource().source instanceof net.minecraft.server.MinecraftServer)) return getOptionalEntities(context, name);
++        EntitySelector selector = context.getArgument(name, EntitySelector.class);
++        List<com.mojang.brigadier.context.ParsedCommandNode<CommandSourceStack>> nodes = context.getNodes();
++        int idxStart = nodes.get(1).getRange().getStart();
++        int idxEnd = nodes.get(2).getRange().getEnd();
++        String selectorString = context.getInput().substring(idxStart, idxEnd);
++        List<? extends Entity> entities = TICK_ENTITY_CACHE.get(selectorString);
++        if (entities == null) {
++            entities = selector.findEntities(context.getSource());
++            TICK_ENTITY_CACHE.put(selectorString, entities);
++        }
++        return entities;
++    }
++    public static Collection<? extends Entity> getOptionalEntitiesCachedPositionedAs(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
++        if (!(context.getSource().source instanceof net.minecraft.server.MinecraftServer)) return getOptionalEntities(context, name);
++        EntitySelector selector = context.getArgument(name, EntitySelector.class);
++        List<com.mojang.brigadier.context.ParsedCommandNode<CommandSourceStack>> nodes = context.getNodes();
++        int idxStart = nodes.get(1).getRange().getStart();
++        int idxEnd = nodes.get(3).getRange().getEnd();
++        String selectorString = context.getInput().substring(idxStart, idxEnd);
++        List<? extends Entity> entities = TICK_ENTITY_CACHE.get(selectorString);
++        if (entities == null) {
++            entities = selector.findEntities(context.getSource());
++            TICK_ENTITY_CACHE.put(selectorString, entities);
++        }
++        return entities;
++    }
++    // Canvas end
+     public static Collection<? extends Entity> getOptionalEntities(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+         return context.getArgument(name, EntitySelector.class).findEntities(context.getSource());
+     }

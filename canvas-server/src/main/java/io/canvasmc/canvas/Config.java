@@ -25,7 +25,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import net.kyori.adventure.text.Component;
 import net.minecraft.Util;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -179,11 +178,19 @@ public class Config {
 
         public Biomes biomes = new Biomes();
         public static class Biomes {
-            @Experimental
             @Comment("Replace vanilla SHA-256 seed obfuscation in BiomeManager with XXHash")
             public boolean fastBiomeManagerSeedObfuscation = false;
             @Comment("Seed obfuscation key for XXHash. Requires fastBiomeManagerSeedObfuscation to be enabled")
             public long seedObfuscationKey = ThreadLocalRandom.current().nextLong();
+            public Caching caching = new Caching();
+            public static class Caching {
+                @Comment("Enables biome caching, which makes a biome lookup caching layer to reduce expensive biome calculations and queries")
+                public boolean enabled = false;
+                @Comment("Enables advancement-related biome checks for biome caching")
+                public boolean advancement = false;
+                @Comment("Enables biome caching for mob spawning biome lookups")
+                public boolean mobSpawn = false;
+            }
         }
     }
 
@@ -766,6 +773,13 @@ public class Config {
         "This means a lot less ticking with the same accurate counting."
     })
     public int increaseTimeStatistics = 20;
+
+    @Experimental
+    @Comment(value = {
+        "Cache the result of same execute command in the current and next tick.",
+        "Will improve performance on servers with massive datapack functions"
+    })
+    public boolean cacheExecuteCommandResult = false;
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);

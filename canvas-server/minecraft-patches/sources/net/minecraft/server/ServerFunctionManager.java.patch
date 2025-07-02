@@ -9,7 +9,28 @@
  import org.slf4j.Logger;
  
  public class ServerFunctionManager {
-@@ -50,19 +_,12 @@
+@@ -37,6 +_,7 @@
+         return this.server.getCommands().getDispatcher();
+     }
+ 
++    int ticksCached = 0;  // Canvas - Cache function getEntity calls
+     public void tick() {
+         if (this.server.tickRateManager().runsNormally()) {
+             if (this.postReload) {
+@@ -46,23 +_,25 @@
+             }
+ 
+             this.executeTagFunctions(this.ticking, TICK_FUNCTION_TAG);
++            // Canvas start - Cache function getEntity calls
++            if (io.canvasmc.canvas.Config.INSTANCE.cacheExecuteCommandResult) {
++                ticksCached++;
++                if (ticksCached > 1) {
++                    net.minecraft.commands.arguments.EntityArgument.TICK_ENTITY_CACHE.clear();
++                    ticksCached = 0;
++                }
++            }
++            // Canvas end
+         }
      }
  
      private void executeTagFunctions(Collection<CommandFunction<CommandSourceStack>> functionObjects, ResourceLocation identifier) {
