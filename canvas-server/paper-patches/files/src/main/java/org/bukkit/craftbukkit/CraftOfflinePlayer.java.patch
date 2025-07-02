@@ -1,15 +1,15 @@
 --- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-@@ -196,7 +_,7 @@
-     }
+@@ -200,7 +_,7 @@
  
      private CompoundTag getData() {
--        return this.storage.load(this.profile.getName(), this.profile.getId().toString()).orElse(null);
-+        return this.storage.load(this.profile.getName(), this.profile.getId().toString(), this.profile.getId()).orElse(null); // Canvas - async playerdata saving
+         // This method does not use the problem reporter
+-        return this.storage.load(this.profile.getName(), this.profile.getId().toString(), ProblemReporter.DISCARDING).orElse(null);
++        return this.storage.load(this.profile.getName(), this.profile.getId().toString(), this.profile.getId(), ProblemReporter.DISCARDING).orElse(null); // Canvas - async playerdata saving
      }
  
      private CompoundTag getBukkitData() {
-@@ -746,16 +_,7 @@
+@@ -750,16 +_,7 @@
       * @param compoundTag
       */
      private void save(CompoundTag compoundTag) {

@@ -32,7 +32,7 @@
      private YamlConfiguration configuration;
      private YamlConfiguration commandsConfiguration;
      private final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
-@@ -318,7 +_,7 @@
+@@ -317,7 +_,7 @@
      private final ServerConfiguration serverConfig = new PaperServerConfiguration();
  
      // Paper start - Folia region threading API
@@ -41,7 +41,7 @@
      private final io.papermc.paper.threadedregions.scheduler.FoliaAsyncScheduler asyncScheduler = new io.papermc.paper.threadedregions.scheduler.FoliaAsyncScheduler();
      private final io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler globalRegionScheduler = new io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler();
  
-@@ -339,14 +_,14 @@
+@@ -338,14 +_,14 @@
  
      @Override
      public final boolean isOwnedByCurrentRegion(World world, io.papermc.paper.math.Position position) {
@@ -58,7 +58,7 @@
              ((CraftWorld) world).getHandle(), position.blockX() >> 4, position.blockZ() >> 4, squareRadiusChunks
          );
      }
-@@ -354,7 +_,7 @@
+@@ -353,7 +_,7 @@
      @Override
      public final boolean isOwnedByCurrentRegion(Location location) {
          World world = location.getWorld();
@@ -67,7 +67,7 @@
              ((CraftWorld) world).getHandle(), location.getBlockX() >> 4, location.getBlockZ() >> 4
          );
      }
-@@ -362,35 +_,35 @@
+@@ -361,35 +_,35 @@
      @Override
      public final boolean isOwnedByCurrentRegion(Location location, int squareRadiusChunks) {
          World world = location.getWorld();
@@ -108,7 +108,7 @@
      }
  
      @Override
-@@ -858,6 +_,19 @@
+@@ -856,6 +_,19 @@
      public ServerTickManager getServerTickManager() {
          return this.serverTickManager;
      }
@@ -128,7 +128,7 @@
  
      @Override
      public ResourcePack getServerResourcePack() {
-@@ -976,7 +_,7 @@
+@@ -974,7 +_,7 @@
  
      @Override
      public List<World> getWorlds() {
@@ -137,7 +137,7 @@
      }
  
      @Override
-@@ -1053,7 +_,7 @@
+@@ -1025,7 +_,7 @@
              throw new IllegalStateException(org.bukkit.command.defaults.ReloadCommand.RELOADING_DISABLED_MESSAGE);
          }
          // Paper end - lifecycle events
@@ -146,7 +146,7 @@
          this.reloadCount++;
          this.configuration = YamlConfiguration.loadConfiguration(this.getConfigFile());
          this.commandsConfiguration = YamlConfiguration.loadConfiguration(this.getCommandsConfigFile());
-@@ -1159,7 +_,7 @@
+@@ -1131,7 +_,7 @@
          this.syncCommands(); // Refresh commands after event
          // Paper end - brigadier command API
          new ServerLoadEvent(ServerLoadEvent.LoadType.RELOAD).callEvent();
@@ -155,7 +155,7 @@
      }
  
      // Paper start - Wait for Async Tasks during shutdown
-@@ -3256,7 +_,11 @@
+@@ -3233,7 +_,11 @@
  
      @Override
      public int getCurrentTick() {

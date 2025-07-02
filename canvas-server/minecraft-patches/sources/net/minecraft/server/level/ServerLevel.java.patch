@@ -314,7 +314,7 @@
      }
  
      // Paper start
-@@ -727,18 +_,147 @@
+@@ -727,18 +_,150 @@
      public StructureManager structureManager() {
          return this.structureManager;
      }
@@ -419,9 +419,12 @@
 +    public void regionTick1(ServerRegions.WorldTickData tickData) {
 +        ((TickableScheduler) this.server.server.getRegionScheduler()).tick(tickData);
 +        if (this.server.isRegionized()) this.syncTimeToPlayers();
-+        for (final Entity entity : tickData.getLocalEntitiesCopy()) {
-+            if (entity == null || !entity.getBukkitEntity().taskScheduler.hasTasks()) continue; // Canvas - optimize entity scheduler
-+            entity.tickScheduler();
++        for (io.papermc.paper.threadedregions.EntityScheduler scheduler : tickData.entitySchedulerTickList.getAllSchedulers()) {
++            Entity handle = scheduler.entity.getHandleRaw();
++            if (!io.canvasmc.canvas.region.ServerRegions.isTickThreadFor(handle) || scheduler.isRetired()) {
++                continue;
++            }
++            scheduler.executeTick();
 +        }
 +        chunkSource.tick(() -> true, false);
 +    }
@@ -1254,7 +1257,7 @@
 +    // Canvas start - getAllBlockEntities - getAllRegionizedEntities
 +
 +    public Iterable<Entity> getAllRegionizedEntities() {
-+        Set<Entity> entities = new ObjectHashSet<>();
++        Set<Entity> entities = new it.unimi.dsi.fastutil.objects.ObjectArraySet<>();
 +        if (this.server.isRegionized()) {
 +            this.regioniser.computeForAllRegionsUnsynchronised((region) -> {
 +                for (final Entity loadedEntity : region.getData().tickData.getLoadedEntities()) {
@@ -1270,7 +1273,7 @@
 +    }
 +
 +    public Iterable<BlockEntity> getAllBlockEntities() {
-+        Set<BlockEntity> blockEntities = new ObjectHashSet<>();
++        Set<BlockEntity> blockEntities = new it.unimi.dsi.fastutil.objects.ObjectArraySet<>();
 +        if (this.server.isRegionized()) {
 +            this.regioniser.computeForAllRegionsUnsynchronised((region) -> {
 +                for (final LevelChunk chunk : region.getData().tickData.getTickingChunks().getRawDataUnchecked()) {

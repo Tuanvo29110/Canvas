@@ -1,14 +1,14 @@
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -11,6 +_,7 @@
- import io.papermc.paper.configuration.GlobalConfiguration;
+@@ -13,6 +_,7 @@
  import io.papermc.paper.entity.LookAnchor;
  import io.papermc.paper.entity.PaperPlayerGiveResult;
-+import it.unimi.dsi.fastutil.shorts.Short2ObjectMaps;
  import io.papermc.paper.entity.PlayerGiveResult;
++import it.unimi.dsi.fastutil.shorts.Short2ObjectMaps;
  import io.papermc.paper.math.Position;
  import io.papermc.paper.util.MCUtil;
-@@ -207,6 +_,7 @@
+ import it.unimi.dsi.fastutil.shorts.ShortArraySet;
+@@ -213,6 +_,7 @@
  import org.bukkit.scoreboard.Scoreboard;
  import org.jspecify.annotations.NonNull;
  import org.jspecify.annotations.Nullable;
@@ -16,7 +16,7 @@
  
  @DelegateDeserialization(CraftOfflinePlayer.class)
  public class CraftPlayer extends CraftHumanEntity implements Player {
-@@ -216,7 +_,7 @@
+@@ -228,7 +_,7 @@
      private boolean hasPlayedBefore = false;
      private final ConversationTracker conversationTracker = new ConversationTracker();
      private final Set<String> channels = new HashSet<String>();
@@ -25,7 +25,7 @@
      private final Set<UUID> unlistedEntities = new HashSet<>(); // Paper - Add Listing API for Player
      private static final WeakHashMap<Plugin, WeakReference<Plugin>> pluginWeakReferences = new WeakHashMap<>();
      private int hash = 0;
-@@ -1020,7 +_,7 @@
+@@ -981,7 +_,7 @@
              SectionPos sectionPos = entry.getKey();
              it.unimi.dsi.fastutil.shorts.Short2ObjectMap<net.minecraft.world.level.block.state.BlockState> blockData = entry.getValue();
  
@@ -34,7 +34,7 @@
              this.getHandle().connection.send(packet);
          }
      }
-@@ -1059,7 +_,7 @@
+@@ -1020,7 +_,7 @@
      private record ChunkSectionChanges(ShortSet positions, List<net.minecraft.world.level.block.state.BlockState> blockData) {
  
          public ChunkSectionChanges() {
@@ -43,7 +43,7 @@
          }
      }
  
-@@ -2082,7 +_,7 @@
+@@ -2043,7 +_,7 @@
      private void unregisterEntity(Entity other) {
          // Paper end
          ChunkMap tracker = ((ServerLevel) this.getHandle().level()).getChunkSource().chunkMap;
@@ -52,7 +52,7 @@
          if (entry != null) {
              entry.removePlayer(this.getHandle());
          }
-@@ -2179,7 +_,7 @@
+@@ -2140,7 +_,7 @@
              if (original != null) otherPlayer.setUUID(original); // Paper - uuid override
          }
  
@@ -61,7 +61,7 @@
          if (entry != null && !entry.seenBy.contains(this.getHandle().connection)) {
              entry.updatePlayer(this.getHandle());
          }
-@@ -2269,8 +_,14 @@
+@@ -2230,8 +_,14 @@
  
      @Override
      public boolean canSee(org.bukkit.entity.Entity entity) {

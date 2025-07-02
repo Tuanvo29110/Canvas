@@ -17,7 +17,7 @@
          }
          if (entity instanceof ThrownEnderpearl enderpearl && (oldSectionX != newSectionX || oldSectionZ != newSectionZ)) {
              this.removeEnderPearl(CoordinateUtils.getChunkKey(oldSectionX, oldSectionZ));
-@@ -90,19 +_,20 @@
+@@ -90,8 +_,9 @@
  
      @Override
      protected void addEntityCallback(final Entity entity) {
@@ -28,11 +28,7 @@
          }
          if (entity instanceof ThrownEnderpearl enderpearl) {
              this.addEnderPearl(CoordinateUtils.getChunkKey(enderpearl.chunkPosition()));
-         }
--        entity.registerScheduler(); // Paper - optimise Folia entity scheduler
-+        // Canvas - Threaded Regions
-     }
- 
+@@ -102,7 +_,7 @@
      @Override
      protected void removeEntityCallback(final Entity entity) {
          if (entity instanceof ServerPlayer player) {

@@ -545,6 +545,7 @@ public class ServerRegions {
                 if (from.trackerUnloadedEntities.contains(entity)) {
                     into.trackerUnloadedEntities.add(entity);
                 }
+                entity.getBukkitEntity().taskScheduler.registerTo(into.entitySchedulerTickList);
             }
             // block ticking
             for (final BlockEventData blockEventData : from.blockEvents) {
@@ -697,6 +698,7 @@ public class ServerRegions {
             for (final Entity entity : from.allEntities) {
                 into.allEntities.add(entity);
                 entity.updateTicks(fromTickOffset, fromRedstoneTimeOffset);
+                entity.getBukkitEntity().taskScheduler.registerTo(into.entitySchedulerTickList);
             }
             for (final Entity entity : from.loadedEntities) {
                 into.loadedEntities.add(entity);
@@ -843,6 +845,7 @@ public class ServerRegions {
         public final ReentrantLock tickLock = new ReentrantLock();
         public final RegionizedTaskQueue.RegionTaskQueueData taskQueueData;
         // entities
+        public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList();
         public final ReferenceList<Entity> allEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
         public final ReferenceList<Entity> loadedEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
         private final ReferenceList<Entity> trackerUnloadedEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY); // TODO - is this even used?

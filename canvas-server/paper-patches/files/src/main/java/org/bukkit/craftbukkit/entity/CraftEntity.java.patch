@@ -5,10 +5,10 @@
  import com.google.common.collect.ImmutableSet;
  import com.google.common.collect.Lists;
 +import io.canvasmc.canvas.region.ServerRegions;
+ import com.mojang.logging.LogUtils;
  import io.papermc.paper.datacomponent.DataComponentType;
  import io.papermc.paper.entity.TeleportFlag;
- import java.util.HashSet;
-@@ -337,7 +_,7 @@
+@@ -350,7 +_,7 @@
          if (dismount) this.entity.stopRiding(); // Paper - Teleport passenger API
  
          // Let the server handle cross world teleports
@@ -17,7 +17,7 @@
              // Prevent teleportation to an other world during world generation
              Preconditions.checkState(!this.entity.generation, "Cannot teleport entity to an other world during world generation");
              this.entity.teleport(new TeleportTransition(((CraftWorld) location.getWorld()).getHandle(), CraftLocation.toVec3(location), Vec3.ZERO, location.getPitch(), location.getYaw(), Set.of(), TeleportTransition.DO_NOTHING, TeleportCause.PLUGIN));
-@@ -754,7 +_,7 @@
+@@ -759,7 +_,7 @@
          ImmutableSet.Builder<Player> players = ImmutableSet.builder();
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -26,7 +26,7 @@
  
          if (entityTracker != null) {
              for (ServerPlayerConnection connection : entityTracker.seenBy) {
-@@ -1067,7 +_,7 @@
+@@ -1087,7 +_,7 @@
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -35,7 +35,7 @@
  
          if (entityTracker == null) {
              return;
-@@ -1084,7 +_,7 @@
+@@ -1104,7 +_,7 @@
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -44,7 +44,7 @@
  
          if (entityTracker == null) {
              return;
-@@ -1121,26 +_,54 @@
+@@ -1141,26 +_,54 @@
          ServerLevel world = ((CraftWorld)locationClone.getWorld()).getHandle();
          CompletableFuture<Boolean> ret = new java.util.concurrent.CompletableFuture<>();
  
@@ -116,7 +116,7 @@
      }
      // Paper end - more teleport API / async chunk API
  
-@@ -1214,7 +_,7 @@
+@@ -1234,7 +_,7 @@
      @Override
      public Set<org.bukkit.entity.Player> getTrackedPlayers() {
          ServerLevel world = (net.minecraft.server.level.ServerLevel)this.entity.level();

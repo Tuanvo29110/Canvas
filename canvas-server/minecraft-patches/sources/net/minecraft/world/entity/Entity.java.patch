@@ -960,7 +960,7 @@
      // Paper start - optimise Folia entity scheduler
      public final void registerScheduler() {
 -        this.getBukkitEntity().taskScheduler.registerTo(net.minecraft.server.MinecraftServer.getServer().entitySchedulerTickList);
-+        // this.getBukkitEntity().taskScheduler.registerTo(net.minecraft.server.MinecraftServer.getServer().entitySchedulerTickList); // Canvas - Threaded Regions
++        this.getBukkitEntity().taskScheduler.registerTo(ServerRegions.getRegionizedTickData(this.chunkPosition.x, this.chunkPosition.z, this.level.level()).entitySchedulerTickList); // Canvas - Threaded Regions
      }
      // Paper end - optimise Folia entity scheduler
  

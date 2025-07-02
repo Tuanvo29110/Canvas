@@ -23,13 +23,13 @@
          this(
              getManifestAttribute(manifest, ATTRIBUTE_BRAND_ID)
                  .map(Key::key)
--                .orElse(BRAND_PURPUR_ID), // Purpur - Fix pufferfish issues // Purpur - Rebrand
-+                .orElse(BRAND_CANVAS_ID), // Purpur - Fix pufferfish issues // Purpur - Rebrand // Canvas - Rebrand
+-                .orElse(BRAND_PURPUR_ID), // Purpur - Rebrand
++                .orElse(BRAND_CANVAS_ID), // Purpur - Rebrand // Canvas - Rebrand
              getManifestAttribute(manifest, ATTRIBUTE_BRAND_NAME)
--                .orElse(BRAND_PURPUR_NAME), // Purpur - Fix pufferfish issues // Purpur - Rebrand
-+                .orElse(BRAND_CANVAS_NAME), // Purpur - Fix pufferfish issues // Purpur - Rebrand // Canvas - Rebrand
-             SharedConstants.getCurrentVersion().getId(),
-             SharedConstants.getCurrentVersion().getName(),
+-                .orElse(BRAND_PURPUR_NAME), // Purpur - Rebrand
++                .orElse(BRAND_CANVAS_NAME), // Purpur - Rebrand // Canvas - Rebrand
+             SharedConstants.getCurrentVersion().id(),
+             SharedConstants.getCurrentVersion().name(),
              getManifestAttribute(manifest, ATTRIBUTE_BUILD_NUMBER)
 @@ -58,11 +_,12 @@
              getManifestAttribute(manifest, ATTRIBUTE_GIT_BRANCH),

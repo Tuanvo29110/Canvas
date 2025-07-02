@@ -6,10 +6,10 @@
  
 -    public static void main(String[] args) {
 +    public static OptionParser main(String[] args) { // Canvas - rewrite bootstrap
-         // Todo: Installation script
          if (System.getProperty("jdk.nio.maxCachedBufferSize") == null) System.setProperty("jdk.nio.maxCachedBufferSize", "262144"); // Paper - cap per-thread NIO cache size; https://www.evanjones.ca/java-bytebuffer-leak.html
          OptionParser parser = new OptionParser() {
-@@ -181,6 +_,7 @@
+             {
+@@ -180,6 +_,7 @@
              }
          };
  
@@ -17,7 +17,7 @@
          OptionSet options = null;
  
          try {
-@@ -253,6 +_,9 @@
+@@ -252,5 +_,8 @@
                  t.printStackTrace();
              }
          }
@@ -25,5 +25,4 @@
 +        return parser;
 +        // Canvas end
      }
- 
-     private static List<String> asList(String... params) {
+ }
