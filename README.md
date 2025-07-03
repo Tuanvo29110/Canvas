@@ -4,24 +4,21 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/CraftCanvasMC/Canvas)](https://github.com/CraftCanvasMC/Canvas/graphs/contributors)
 [![Discord](https://img.shields.io/discord/1168986665038127205?color=5865F2)](https://canvasmc.io/discord)
 
-Canvas is a Minecraft server software introducing a fully multithreaded architecture to the dedicated server through a rewritten
-chunk system executor, parallel world ticking and regionization. Canvas is an attempt at a fully multithreaded Minecraft
-dedicated server without breaking plugin compatibility, and creating a more scalable environment for more modern CPUs.
+Canvas is currently undergoing a major Rewrite for better maintainability.
+Getting as much help as possible is incredibly important, and this project is open to contributions!
 
-**Canvas is not a simple drop-in replacement for Paper or Purpur. It is a fundamentally different architecture that requires
-some configuration and understanding before use.**
+Only Versions for MC 1.21.7 and onwards will be supported!
 
-Canvas' config(`canvas-server.yml`), is aimed for vanilla parity and stability
-rather than raw performance, so it needs to be manually configured to do anything to benefit your server.
-Canvas also is very hardware dependent and is not friendly with shared hosting due to its rewritten chunk system executor being much more aggressive than other
-forks(however it does provide much higher performance). There is no recommended hardware for Canvas *yet*, but a good amount of
-threads is highly recommended for Canvas to be effective like at least 10 threads (5 dedicated cores = 5x2).
+## The current TODOs for the rewrite, are:
 
-Please also test prior to putting on a production server to see if your plugins are compatible, as Canvas' threaded nature makes a plugin compatibility layer. If you find a plugin that is incompatible, please tell us in our [Discord server](https://canvasmc.io/discord).
+```
+- Bring back the canvas scheduler
+- Rewrite chunk system
+- Additonal, better api
+- Remove folia region profiler
+- Add spark support
+```
 
-Canvas contains patches from [Leaf](https://github.com/Winds-Studio/Leaf) to assist in single threaded performance. This
-does ***not*** mean Canvas is "better" than Leaf or worse than it. Canvas and Leaf are very different pieces of software
-tailored to very specific environments with very different architectures.
 
 Useful links:
 
