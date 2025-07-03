@@ -4,8 +4,8 @@
      public static String getBukkitVersion() {
          String result = "Unknown-Version";
  
--        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Pufferfish // Purpur - Rebrand
-+        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/io.canvasmc.canvas/canvas-api/pom.properties"); // Pufferfish // Purpur - Rebrand // Canvas
+-        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/dev.folia/folia-api/pom.properties"); // Folia
++        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/io.canvasmc.canvas/canvas-api/pom.properties"); // Folia // Canvas - Rebrand
          Properties properties = new Properties();
  
          if (stream != null) {

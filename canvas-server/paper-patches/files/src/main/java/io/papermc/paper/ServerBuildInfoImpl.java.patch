@@ -1,47 +1,23 @@
 --- a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
 +++ b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
-@@ -23,15 +_,18 @@
-     Optional<String> gitBranch,
-     Optional<String> gitCommit
- ) implements ServerBuildInfo {
-+    public static boolean IS_EXPERIMENTAL = false; // Canvas - experimental toggle
-     private static final String ATTRIBUTE_BRAND_ID = "Brand-Id";
-     private static final String ATTRIBUTE_BRAND_NAME = "Brand-Name";
-     private static final String ATTRIBUTE_BUILD_TIME = "Build-Time";
-     private static final String ATTRIBUTE_BUILD_NUMBER = "Build-Number";
-     private static final String ATTRIBUTE_GIT_BRANCH = "Git-Branch";
-     private static final String ATTRIBUTE_GIT_COMMIT = "Git-Commit";
-+    private static final String ATTRIBUTE_EXPERIMENTAL = "Experimental"; // Canvas - experimental toggle
- 
-     private static final String BRAND_PAPER_NAME = "Paper";
-     private static final String BRAND_PURPUR_NAME = "Purpur"; // Purpur - Rebrand
-+    private static final String BRAND_CANVAS_NAME = "Canvas"; // Canvas - Rebrand
- 
-     private static final String BUILD_DEV = "DEV";
- 
-@@ -43,9 +_,9 @@
+@@ -42,9 +_,9 @@
          this(
              getManifestAttribute(manifest, ATTRIBUTE_BRAND_ID)
                  .map(Key::key)
--                .orElse(BRAND_PURPUR_ID), // Purpur - Rebrand
-+                .orElse(BRAND_CANVAS_ID), // Purpur - Rebrand // Canvas - Rebrand
+-                .orElse(Key.key("papermc", "folia")), // Folia
++                .orElse(Key.key("canvasmc", "canvas")), // Folia // Canvas - Rebrand
              getManifestAttribute(manifest, ATTRIBUTE_BRAND_NAME)
--                .orElse(BRAND_PURPUR_NAME), // Purpur - Rebrand
-+                .orElse(BRAND_CANVAS_NAME), // Purpur - Rebrand // Canvas - Rebrand
+-                .orElse("Folia"), // Folia
++                .orElse("Canvas"), // Folia // Canvas - Rebrand
              SharedConstants.getCurrentVersion().id(),
              SharedConstants.getCurrentVersion().name(),
              getManifestAttribute(manifest, ATTRIBUTE_BUILD_NUMBER)
-@@ -58,11 +_,12 @@
-             getManifestAttribute(manifest, ATTRIBUTE_GIT_BRANCH),
-             getManifestAttribute(manifest, ATTRIBUTE_GIT_COMMIT)
-         );
-+        IS_EXPERIMENTAL = Boolean.parseBoolean(getManifestAttribute(manifest, ATTRIBUTE_EXPERIMENTAL).orElse("false"));
-     }
+@@ -61,7 +_,7 @@
  
      @Override
      public boolean isBrandCompatible(final @NotNull Key brandId) {
--        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID); // Purpur - Fix pufferfish issues // Purpur - Rebrand
-+        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID) || brandId.equals(BRAND_PURPUR_ID); // Purpur - Fix pufferfish issues // Purpur - Rebrand // Canvas - Rebrand
+-        return brandId.equals(this.brandId);
++        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID) || brandId.equals(BRAND_FOLIA_ID); // Canvas - Rebrand
      }
  
      @Override

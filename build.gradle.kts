@@ -129,17 +129,17 @@ repositories {
 }
 
 paperweight {
-    upstreams.register("purpur") {
-        repo = github("PurpurMC", "Purpur")
-        ref = providers.gradleProperty("purpurCommit")
+    upstreams.register("folia") {
+        repo = github("PaperMC", "Folia")
+        ref = providers.gradleProperty("foliaCommit")
 
         patchFile {
-            path = "purpur-server/build.gradle.kts"
+            path = "folia-server/build.gradle.kts"
             outputFile = file("canvas-server/build.gradle.kts")
             patchFile = file("canvas-server/build.gradle.kts.patch")
         }
         patchFile {
-            path = "purpur-api/build.gradle.kts"
+            path = "folia-api/build.gradle.kts"
             outputFile = file("canvas-api/build.gradle.kts")
             patchFile = file("canvas-api/build.gradle.kts.patch")
         }
@@ -148,11 +148,11 @@ paperweight {
             patchesDir = file("canvas-api/paper-patches")
             outputDir = file("paper-api")
         }
-        patchDir("purpurApi") {
-            upstreamPath = "purpur-api"
+        patchDir("foliaApi") {
+            upstreamPath = "folia-api"
             excludes = listOf("build.gradle.kts", "build.gradle.kts.patch", "paper-patches")
-            patchesDir = file("canvas-api/purpur-patches")
-            outputDir = file("purpur-api")
+            patchesDir = file("canvas-api/folia-patches")
+            outputDir = file("folia-api")
         }
     }
 }

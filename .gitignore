@@ -1,72 +1,18 @@
-# JVM crash related
-core.*
-hs_err_pid*
+# Ignore Gradle project-specific cache directory
+.gradle
 
-# Intellij
-/.idea/*
-!/.idea/runConfigurations
-!/.idea/icon.svg
-*.iml
-*.ipr
-*.iws
-out/
+# Ignore Gradle build output directory
+build
 
-# Eclipse
-.classpath
-.project
-.settings/
-
-# netbeans
-nbproject/
-nbactions.xml
-
-# Gradle
-!gradle-wrapper.jar
-.gradle/
-build/
-*/build/
-
-# we use maven!
-build.xml
-
-# Maven
-log/
-dependency-reduced-pom.xml
-
-# various other potential build files
-bin/
-dist/
-manifest.mf
-
-# Mac
-.DS_Store/
-.DS_Store
-
-# vim
-.*.sw[a-p]
-
-# Linux temp files
-*~
-
-# other stuff
 /run
 
-# Canvas minecraft sources
-/canvas-server/src/minecraft
-
-# Canvas gradles
-/canvas-api/build.gradle.kts
 /canvas-server/build.gradle.kts
-
-# Paper upstream
-/paper-api
-/paper-api-generator
+/canvas-api/build.gradle.kts
+/folia-server/build.gradle.kts
+/folia-server/src/minecraft
+/folia-api/build.gradle.kts
 /paper-server
+/paper-api
 
-# Purpur upstream
-/purpur-server
-/purpur-api
-
-*.jar
-test-plugin.settings.gradle.kts
+.idea/
 /local/
