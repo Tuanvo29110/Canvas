@@ -15,11 +15,12 @@ Only Versions for MC 1.21.7 and onwards will be supported!
 - Bring back the canvas scheduler
 - Rewrite chunk system
 - Additonal, better api
+- Remove folia region profiler
 - Add spark support
 ```
 
 
-[OLD] Useful links:
+Useful links:
 
 - [Website](https://canvasmc.io)
 - [Documentation](https://docs.canvasmc.io)
