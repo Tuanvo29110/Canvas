@@ -1,0 +1,10 @@
+--- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+@@ -97,6 +_,7 @@
+             throw new UnsupportedOperationException("Configuration mode is not supported in its current state");
+         }
+         gamePacketListener.player.getBukkitEntity().taskScheduler.retire();
++        gamePacketListener.player.getBukkitEntity().stopAcceptingPackets(); // Canvas - rewrite scheduler
+         // Folia end - region threading
+     }
+ 

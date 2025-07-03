@@ -1,0 +1,15 @@
+--- a/io/papermc/paper/threadedregions/TickData.java
++++ b/io/papermc/paper/threadedregions/TickData.java
+@@ -20,6 +_,12 @@
+     }
+ 
+     public void addDataFrom(final TickRegionScheduler.TickTime time) {
++        // Canvas start - rewrite scheduler
++        if (!time.isTickExecution()) {
++            // TODO fix later
++            return;
++        }
++        // Canvas end
+         final long start = time.tickStart();
+ 
+         TickRegionScheduler.TickTime first;

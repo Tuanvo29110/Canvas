@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/level/Level.java
++++ b/net/minecraft/world/level/Level.java
+@@ -808,7 +_,7 @@
+     // Folia start - region ticking
+     public final io.papermc.paper.threadedregions.RegionizedData<io.papermc.paper.threadedregions.RegionizedWorldData> worldRegionData
+         = new io.papermc.paper.threadedregions.RegionizedData<>(
+-        (ServerLevel)this, () -> new io.papermc.paper.threadedregions.RegionizedWorldData((ServerLevel)Level.this),
++        (ServerLevel)this, (regionData) -> new io.papermc.paper.threadedregions.RegionizedWorldData((ServerLevel)Level.this, regionData), // Canvas - rewrite scheduler
+         io.papermc.paper.threadedregions.RegionizedWorldData.REGION_CALLBACK
+     );
+     public volatile io.papermc.paper.threadedregions.RegionizedServer.WorldLevelData tickData;

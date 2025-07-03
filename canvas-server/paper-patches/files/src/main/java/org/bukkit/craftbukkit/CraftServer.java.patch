@@ -1,0 +1,20 @@
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -2954,7 +_,7 @@
+     @Override
+     public double getAverageTickTime() {
+         // Folia start - region threading
+-        ca.spottedleaf.concurrentutil.scheduler.SchedulerThreadPool.SchedulableTick task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentTickingTask();
++        io.canvasmc.canvas.tick.ScheduledTaskThreadPool.SchedulableTick task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentTickingTask(); // Canvas - rewrite scheduler
+         if (task == null) {
+             // might be on the shutdown thread, try retrieving the current region
+             if (io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion() != null) {
+@@ -3027,7 +_,7 @@
+     @Override
+     public double[] getTPS() {
+         // Folia start - region threading
+-        ca.spottedleaf.concurrentutil.scheduler.SchedulerThreadPool.SchedulableTick task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentTickingTask();
++        io.canvasmc.canvas.tick.ScheduledTaskThreadPool.SchedulableTick task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentTickingTask(); // Canvas - rewrite scheduler
+         if (task == null) {
+             // might be on the shutdown thread, try retrieving the current region
+             if (io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion() != null) {

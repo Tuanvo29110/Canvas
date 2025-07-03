@@ -1,0 +1,63 @@
+--- a/io/papermc/paper/threadedregions/RegionizedWorldData.java
++++ b/io/papermc/paper/threadedregions/RegionizedWorldData.java
+@@ -82,6 +_,7 @@
+             // entities
+             for (final ServerPlayer player : from.localPlayers) {
+                 into.localPlayers.add(player);
++                player.getBukkitEntity().updateRegion(into); // Canvas - rewrite scheduler
+                 into.nearbyPlayers.addPlayer(player);
+             }
+             for (final Entity entity : from.allEntities) {
+@@ -181,6 +_,7 @@
+                 // the chunk holder must _exist_, and so the region section exists.
+                 final RegionizedWorldData into = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
+                 into.localPlayers.add(player);
++                player.getBukkitEntity().updateRegion(into); // Canvas - rewrite scheduler
+                 into.nearbyPlayers.addPlayer(player);
+             }
+             for (final Entity entity : from.allEntities) {
+@@ -348,7 +_,8 @@
+     }
+ 
+     // entities
+-    private final List<ServerPlayer> localPlayers = new ArrayList<>();
++    // this is copy on write to allow packet processing to iterate safely // Canvas - rewrite scheduler
++    private final java.util.concurrent.CopyOnWriteArrayList<ServerPlayer> localPlayers = new java.util.concurrent.CopyOnWriteArrayList<>(); // Canvas - rewrite scheduler
+     private final NearbyPlayers nearbyPlayers;
+     public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList();
+     private final ReferenceList<Entity> allEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
+@@ -447,7 +_,9 @@
+     public final alternate.current.wire.WireHandler wireHandler;
+     public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
+ 
+-    public RegionizedWorldData(final ServerLevel world) {
++    public final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData; // Canvas - rewrite scheduler
++
++    public RegionizedWorldData(final ServerLevel world, final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData) { // Canvas - rewrite scheduler
+         this.world = world;
+         this.blockLevelTicks = new LevelTicks<>(world::isPositionTickingWithEntitiesLoaded, world, true);
+         this.fluidLevelTicks = new LevelTicks<>(world::isPositionTickingWithEntitiesLoaded, world, false);
+@@ -455,6 +_,7 @@
+         this.nearbyPlayers = new NearbyPlayers(world);
+         this.wireHandler = new alternate.current.wire.WireHandler(world);
+         this.turbo = new io.papermc.paper.redstone.RedstoneWireTurbo((RedStoneWireBlock)Blocks.REDSTONE_WIRE);
++        this.regionData = regionData; // Canvas - rewrite scheduler
+ 
+         // tasks may be drained before the region ticks, so we must set up the tick data early just in case
+         this.updateTickData();
+@@ -612,6 +_,7 @@
+         if (this.allEntities.add(entity)) {
+             if (entity instanceof ServerPlayer player) {
+                 this.localPlayers.add(player);
++                player.getBukkitEntity().updateRegion(this); // Canvas - rewrite scheduler
+             }
+             TickRegions.RegionStats.updateCurrentRegion();
+         }
+@@ -628,6 +_,7 @@
+         if (this.allEntities.remove(entity)) {
+             if (entity instanceof ServerPlayer player) {
+                 this.localPlayers.remove(player);
++                player.getBukkitEntity().updateRegion(null); // Canvas - rewrite scheduler
+             }
+             TickRegions.RegionStats.updateCurrentRegion();
+         }

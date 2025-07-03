@@ -1,0 +1,81 @@
+--- a/io/papermc/paper/threadedregions/RegionizedServer.java
++++ b/io/papermc/paper/threadedregions/RegionizedServer.java
+@@ -24,6 +_,7 @@
+ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.List;
++import java.util.Set;
+ import java.util.concurrent.CopyOnWriteArrayList;
+ import java.util.concurrent.atomic.AtomicBoolean;
+ import java.util.function.BooleanSupplier;
+@@ -65,7 +_,7 @@
+         // now we can schedule
+         this.tickHandle.setInitialStart(System.nanoTime() + TickRegionScheduler.TIME_BETWEEN_TICKS);
+         TickRegions.getScheduler().scheduleRegion(this.tickHandle);
+-        TickRegions.getScheduler().init();
++        TickRegions.start(); // Canvas - rewrite scheduler
+     }
+ 
+     public void invalidateStatus() {
+@@ -93,6 +_,17 @@
+         return;
+     }
+ 
++    // Canvas start - rewrite scheduler
++    private boolean hasAnyGlobalChunkTasks() {
++        for (final ServerLevel world : this.worlds) {
++            if (world.taskQueueRegionData.hasGlobalChunkTasks()) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    // Canvas end
+     /**
+      * Returns the current tick of the region ticking.
+      * @throws IllegalStateException If there is no current region.
+@@ -131,7 +_,7 @@
+         private final AtomicBoolean ticking = new AtomicBoolean();
+ 
+         public GlobalTickTickHandle(final RegionizedServer server) {
+-            super(null, SchedulerThreadPool.DEADLINE_NOT_SET);
++            super(null, io.canvasmc.canvas.tick.ScheduledTaskThreadPool.DEADLINE_NOT_SET); // Canvas - rewrite scheduler
+             this.server = server;
+         }
+ 
+@@ -177,20 +_,28 @@
+             return true;
+         }
+ 
++        // Canvas start - rewrite scheduler
++        private boolean runGlobalTask() {
++            boolean ret = false;
++            for (final ServerLevel world : this.server.worlds) {
++                ret |= world.taskQueueRegionData.executeGlobalChunkTask();
++            }
++            return ret;
++        }
++
+         @Override
+-        protected boolean runRegionTasks(final BooleanSupplier canContinue) {
++        protected void runRegionTasks(final BooleanSupplier canContinue) {
+             do {
+-                if (!this.runOneTask()) {
+-                    return false;
++                if (!this.runOneTask() || !this.runGlobalTask()) {
++                    return;
+                 }
+             } while (canContinue.getAsBoolean());
+-
+-            return true;
++        // Canvas end
+         }
+ 
+         @Override
+         protected boolean hasIntermediateTasks() {
+-            return !this.server.globalTickQueue.isEmpty();
++            return !this.server.globalTickQueue.isEmpty() || this.server.hasAnyGlobalChunkTasks(); // Canvas - rewrite scheduler
+         }
+     }
+ 
