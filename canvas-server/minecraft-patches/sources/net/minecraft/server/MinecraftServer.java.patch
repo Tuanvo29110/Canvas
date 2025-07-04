@@ -1,10 +1,90 @@
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1647,6 +_,7 @@
+@@ -1580,7 +_,6 @@
+     // Folia start - region threading
+     public void tickServer(long startTime, long scheduledEnd, long targetBuffer,
+                            io.papermc.paper.threadedregions.TickRegions.TickRegionData region) {
+-        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle foliaProfiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
+         // Folia end - region threading
+         org.spigotmc.WatchdogThread.tick(); // Spigot
+         long nanos = startTime; // Folia - region threading
+@@ -1618,7 +_,6 @@
+             }
+         }
+ 
+-
+         // Folia start - region threading
+         region.world.getCurrentWorldData().updateTickData();
+         if (region.world.checkInitialised.get() != ServerLevel.WORLD_INIT_CHECKED) {
+@@ -1640,26 +_,18 @@
+         new com.destroystokyo.paper.event.server.ServerTickStartEvent((int)region.getCurrentTick()).callEvent(); // Paper - Server Tick Events // Folia - region threading
+         // Folia start - region threading
+         if (region != null) {
+-            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.INTERNAL_TICK_TASKS); try { // Folia - profiler
+             region.getTaskQueueData().drainTasks();
+-            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.INTERNAL_TICK_TASKS); } // Folia - profiler
+-            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.PLUGIN_TICK_TASKS); try { // Folia - profiler
              ((io.papermc.paper.threadedregions.scheduler.FoliaRegionScheduler)org.bukkit.Bukkit.getRegionScheduler()).tick();
-             } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.PLUGIN_TICK_TASKS); } // Folia - profiler
+-            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.PLUGIN_TICK_TASKS); } // Folia - profiler
              // now run all the entity schedulers
+-            long tickedEntitySchedulers = 0L; // Folia - profiler
+-            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.ENTITY_SCHEDULER_TICK); try { // Folia - profiler
 +            region.drainPackets(); // Canvas - rewrite scheduler
-             long tickedEntitySchedulers = 0L; // Folia - profiler
-             foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.ENTITY_SCHEDULER_TICK); try { // Folia - profiler
              for (io.papermc.paper.threadedregions.EntityScheduler scheduler : region.world.getCurrentWorldData().entitySchedulerTickList.getAllSchedulers()) {
+                 net.minecraft.world.entity.Entity handle = scheduler.entity.getHandleRaw();
+                 if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(handle) || scheduler.isRetired()) {
+                     continue;
+                 }
+ 
+-                ++tickedEntitySchedulers; // Folia - profiler
+                 scheduler.executeTick();
+             }
+-            foliaProfiler.addCounter(ca.spottedleaf.leafprofiler.LProfilerRegistry.ENTITY_SCHEDULERS_TICKED, tickedEntitySchedulers); // Folia - profiler
+-            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.ENTITY_SCHEDULER_TICK); } // Folia - profiler
+         }
+         // Folia end - region threading
+         //this.tickCount++; // Folia - region threading
+@@ -1679,7 +_,6 @@
+         }
+         profiler.push("save");
+         final boolean fullSave = autosavePeriod > 0 && io.papermc.paper.threadedregions.RegionizedServer.getCurrentTick() % autosavePeriod == 0; // Folia - region threading
+-        foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.AUTOSAVE); try { // Folia - profiler
+         try {
+             this.isSaving = true;
+             if (playerSaveInterval > 0) {
+@@ -1693,7 +_,6 @@
+         } finally {
+             this.isSaving = false;
+         }
+-        } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.AUTOSAVE); } // Folia - profiler
+         profiler.pop();
+         // Paper end - Incremental chunk and player saving
+ 
+@@ -1775,7 +_,6 @@
+     // Folia - region threading - moved to regionised data
+ 
+     protected void tickChildren(BooleanSupplier hasTimeLeft, io.papermc.paper.threadedregions.TickRegions.TickRegionData region) { // Folia - region threading
+-        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
+         final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData(); // Folia - regionised ticking
+         ProfilerFiller profilerFiller = Profiler.get();
+         //this.getPlayerList().getPlayers().forEach(serverPlayer1 -> serverPlayer1.connection.suspendFlushing()); // Folia - region threading
+@@ -1828,9 +_,7 @@
+             profilerFiller.push("tick");
+ 
+             try {
+-                profiler.startTimer(serverLevel.tickTimerId); try { // Folia - profiler
+                 serverLevel.tick(hasTimeLeft, region); // Folia - region threading
+-                } finally { profiler.stopTimer(serverLevel.tickTimerId); } // Folia - profiler
+             } catch (Throwable var7) {
+                 CrashReport crashReport = CrashReport.forThrowable(var7, "Exception ticking world");
+                 serverLevel.fillReportDetails(crashReport);
+@@ -1844,9 +_,7 @@
+         //this.isIteratingOverLevels = false; // Paper - Throw exception on world create while being ticked // Folia - region threading
+ 
+         profilerFiller.popPush("connection");
+-        profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CONNECTION_TICK); try { // Folia - profiler
+         regionizedWorldData.tickConnections(); // Folia - region threading
+-        } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CONNECTION_TICK); } // Folia - profiler
+         profilerFiller.popPush("players");
+         //this.playerList.tick(); // Folia - region threading
+         if (this.tickRateManager.runsNormally()) {

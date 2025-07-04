@@ -1,5 +1,16 @@
 --- a/net/minecraft/network/protocol/PacketUtils.java
 +++ b/net/minecraft/network/protocol/PacketUtils.java
+@@ -26,10 +_,7 @@
+                 if (processor instanceof net.minecraft.server.network.ServerCommonPacketListenerImpl serverCommonPacketListener && serverCommonPacketListener.processedDisconnect) return; // Paper - Don't handle sync packets for kicked players
+                 if (processor.shouldHandleMessage(packet)) {
+                     try {
+-                        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
+-                        final int packetTimerId = profiler.getOrCreateTimerAndStart(() -> "Packet Handler: ".concat(io.papermc.paper.util.ObfHelper.INSTANCE.deobfClassName(packet.getClass().getName()))); try { // Folia - profiler
+                         packet.handle(processor);
+-                        } finally { profiler.stopTimer(packetTimerId); } // Folia - profiler
+                     } catch (Exception var4) {
+                         if (var4 instanceof ReportedException reportedException && reportedException.getCause() instanceof OutOfMemoryError) {
+                             throw makeReportedException(var4, packet, processor);
 @@ -50,7 +_,7 @@
              };
              // ignore retired state, if removed then we don't want the packet to be handled

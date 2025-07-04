@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Main" type="Application" factoryName="Application" nameIsGenerated="true">
+  <configuration default="false" name="org.bukkit.craftbukkit.Main" type="Application" factoryName="Application" nameIsGenerated="true">
     <option name="ALTERNATIVE_JRE_PATH" value="$USER_HOME$/.sdkman/candidates/java/24.0.1-graal" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
-    <option name="MAIN_CLASS_NAME" value="net.minecraft.server.Main" />
+    <option name="MAIN_CLASS_NAME" value="org.bukkit.craftbukkit.Main" />
     <module name="canvas.canvas-server.main" />
     <shortenClasspath name="NONE" />
     <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED -Dpaper.debug-sync-loads=true -Dminecraft.running-in-ide=true" />

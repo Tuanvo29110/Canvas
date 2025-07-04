@@ -1,0 +1,15 @@
+--- a/net/minecraft/world/ticks/LevelTicks.java
++++ b/net/minecraft/world/ticks/LevelTicks.java
+@@ -247,12 +_,6 @@
+     }
+ 
+     private void runCollectedTicks(BiConsumer<BlockPos, T> ticker) {
+-        // Folia start - profiler
+-        io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler().addCounter(
+-            ca.spottedleaf.leafprofiler.LProfilerRegistry.BLOCK_OR_FLUID_TICK_COUNT,
+-            (long)this.toRunThisTick.size()
+-        );
+-        // Folia end - profiler
+         while (!this.toRunThisTick.isEmpty()) {
+             ScheduledTick<T> scheduledTick = this.toRunThisTick.poll();
+             if (!this.toRunThisTickSet.isEmpty()) {

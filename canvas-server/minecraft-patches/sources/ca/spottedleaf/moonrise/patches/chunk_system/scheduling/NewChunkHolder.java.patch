@@ -1,0 +1,19 @@
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
+@@ -1681,8 +_,6 @@
+ 
+     public SaveStat save(final boolean shutdown) {
+         TickThread.ensureTickThread(this.world, this.chunkX, this.chunkZ, "Cannot save data off-main");
+-        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
+-        profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_SAVE); try { // Folia - profiler
+ 
+         ChunkAccess chunk = this.getCurrentChunk();
+         PoiChunk poi = this.getPoiChunk();
+@@ -1741,7 +_,6 @@
+                         canSavePOI | executedUnloadTasks[MoonriseRegionFileIO.RegionFileType.POI_DATA.ordinal()]
+                 )
+                 : null;
+-        } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_SAVE); } // Folia - profiler
+     }
+ 
+     private boolean saveChunk(final ChunkAccess chunk, final boolean unloading) {

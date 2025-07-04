@@ -1,0 +1,23 @@
+--- a/net/minecraft/world/level/chunk/LevelChunk.java
++++ b/net/minecraft/world/level/chunk/LevelChunk.java
+@@ -932,12 +_,9 @@
+             if (!this.blockEntity.isRemoved() && this.blockEntity.hasLevel()) {
+                 BlockPos blockPos = this.blockEntity.getBlockPos();
+                 if (LevelChunk.this.isTicking(blockPos)) {
+-                    final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
+-                    final int timerId = this.blockEntity.getType().tileEntityTimingId; // Folia - profiler
+                     try {
+                         ProfilerFiller profilerFiller = Profiler.get();
+                         profilerFiller.push(this::getType);
+-                        profiler.startTimer(timerId); try { // Folia - profiler
+                         BlockState blockState = LevelChunk.this.getBlockState(blockPos);
+                         if (this.blockEntity.getType().isValid(blockState)) {
+                             this.ticker.tick(LevelChunk.this.level, this.blockEntity.getBlockPos(), blockState, this.blockEntity);
+@@ -951,7 +_,6 @@
+                             }
+                             // Paper end - Remove the Block Entity if it's invalid
+                         }
+-                        } finally { profiler.stopTimer(timerId); } // Folia - profiler
+ 
+                         profilerFiller.pop();
+                     } catch (Throwable var5) {
