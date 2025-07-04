@@ -1,0 +1,30 @@
+--- a/net/minecraft/world/level/pathfinder/PathFinder.java
++++ b/net/minecraft/world/level/pathfinder/PathFinder.java
+@@ -12,9 +_,6 @@
+ import java.util.stream.Collectors;
+ import javax.annotation.Nullable;
+ import net.minecraft.core.BlockPos;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+-import net.minecraft.util.profiling.metrics.MetricCategory;
+ import net.minecraft.world.entity.Mob;
+ import net.minecraft.world.level.PathNavigationRegion;
+ 
+@@ -57,9 +_,6 @@
+ 
+     @Nullable
+     private Path findPath(Node node, List<Map.Entry<Target, BlockPos>> positions, float maxRange, int accuracy, float searchDepthMultiplier) { // Paper - optimize collection
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("find_path");
+-        profilerFiller.markForCharting(MetricCategory.PATH_FINDING);
+         // Set<Target> set = targetPositions.keySet(); // Paper
+         node.g = 0.0F;
+         node.h = this.getBestH(node, positions); // Paper - optimize collection
+@@ -129,7 +_,6 @@
+                 best = path;
+             }
+         }
+-        profilerFiller.pop();
+         return best;
+         // Paper end - Perf: remove streams and optimize collection
+     }

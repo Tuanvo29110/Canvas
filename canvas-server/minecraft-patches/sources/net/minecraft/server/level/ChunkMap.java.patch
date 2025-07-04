@@ -1,23 +1,35 @@
 --- a/net/minecraft/server/level/ChunkMap.java
 +++ b/net/minecraft/server/level/ChunkMap.java
-@@ -409,17 +_,12 @@
+@@ -62,8 +_,6 @@
+ import net.minecraft.util.Mth;
+ import net.minecraft.util.StaticCache2D;
+ import net.minecraft.util.TriState;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.util.thread.BlockableEventLoop;
+ import net.minecraft.util.thread.ConsecutiveExecutor;
+ import net.minecraft.world.entity.Entity;
+@@ -409,20 +_,10 @@
      }
  
      protected void tick(BooleanSupplier hasMoreTime) {
 -        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
-         ProfilerFiller profilerFiller = Profiler.get();
-         profilerFiller.push("poi");
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("poi");
 -        profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.POI_MANAGER_TICK); try { // Folia - profiler
          this.poiManager.tick(hasMoreTime);
 -        } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.POI_MANAGER_TICK); } // Folia - profiler
-         profilerFiller.popPush("chunk_unload");
+-        profilerFiller.popPush("chunk_unload");
          if (!this.level.noSave()) {
 -            profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.PROCESS_UNLOADS); try { // Folia - profiler
              this.processUnloads(hasMoreTime);
 -            } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.PROCESS_UNLOADS); } // Folia - profiler
          }
+-
+-        profilerFiller.pop();
+     }
  
-         profilerFiller.pop();
+     public boolean hasWork() {
 @@ -1004,18 +_,13 @@
  
      // Paper start - optimise entity tracker

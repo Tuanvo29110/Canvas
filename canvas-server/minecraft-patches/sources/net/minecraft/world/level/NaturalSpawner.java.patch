@@ -1,0 +1,30 @@
+--- a/net/minecraft/world/level/NaturalSpawner.java
++++ b/net/minecraft/world/level/NaturalSpawner.java
+@@ -23,8 +_,6 @@
+ import net.minecraft.util.Mth;
+ import net.minecraft.util.RandomSource;
+ import net.minecraft.util.VisibleForDebug;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.util.random.WeightedList;
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.entity.EntitySpawnReason;
+@@ -152,9 +_,6 @@
+     }
+ 
+     public static void spawnForChunk(ServerLevel level, LevelChunk chunk, NaturalSpawner.SpawnState spawnState, List<MobCategory> categories) {
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("spawner");
+-
+         for (MobCategory mobCategory : categories) {
+             // Paper start - Optional per player mob spawns
+             final boolean canSpawn;
+@@ -189,8 +_,6 @@
+                 // Paper end - Optional per player mob spawns
+             }
+         }
+-
+-        profilerFiller.pop();
+     }
+ 
+     // Paper start - Add mobcaps commands

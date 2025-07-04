@@ -1,0 +1,22 @@
+--- a/net/minecraft/world/entity/npc/Villager.java
++++ b/net/minecraft/world/entity/npc/Villager.java
+@@ -35,8 +_,6 @@
+ import net.minecraft.tags.ItemTags;
+ import net.minecraft.util.Mth;
+ import net.minecraft.util.SpawnUtil;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.Difficulty;
+ import net.minecraft.world.DifficultyInstance;
+ import net.minecraft.world.InteractionHand;
+@@ -294,10 +_,7 @@
+     }
+     protected void customServerAiStep(ServerLevel level, final boolean inactive) {
+         // Paper end - EAR 2
+-        ProfilerFiller profilerFiller = Profiler.get();
+-        profilerFiller.push("villagerBrain");
+         if (!inactive) this.getBrain().tick(level, this); // Paper - EAR 2
+-        profilerFiller.pop();
+         if (this.assignProfessionWhenSpawned) {
+             this.assignProfessionWhenSpawned = false;
+         }

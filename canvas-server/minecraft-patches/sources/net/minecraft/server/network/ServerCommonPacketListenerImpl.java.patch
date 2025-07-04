@@ -1,5 +1,13 @@
 --- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+@@ -26,7 +_,6 @@
+ import net.minecraft.server.MinecraftServer;
+ import net.minecraft.server.level.ClientInformation;
+ import net.minecraft.util.VisibleForDebug;
+-import net.minecraft.util.profiling.Profiler;
+ import org.slf4j.Logger;
+ 
+ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPacketListener {
 @@ -97,6 +_,7 @@
              throw new UnsupportedOperationException("Configuration mode is not supported in its current state");
          }
@@ -8,3 +16,20 @@
          // Folia end - region threading
      }
  
+@@ -193,7 +_,6 @@
+     }
+ 
+     protected void keepConnectionAlive() {
+-        Profiler.get().push("keepAlive");
+         long millis = Util.getMillis();
+         // Paper start - improve keepalives
+         if (this.checkIfClosed(millis) && !this.processedDisconnect) {
+@@ -214,8 +_,6 @@
+                 // Paper end - improve keepalives
+             }
+         }
+-
+-        Profiler.get().pop();
+     }
+ 
+     private boolean checkIfClosed(long time) {

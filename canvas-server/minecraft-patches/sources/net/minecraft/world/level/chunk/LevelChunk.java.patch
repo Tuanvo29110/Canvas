@@ -1,23 +1,47 @@
 --- a/net/minecraft/world/level/chunk/LevelChunk.java
 +++ b/net/minecraft/world/level/chunk/LevelChunk.java
-@@ -932,12 +_,9 @@
+@@ -24,8 +_,6 @@
+ import net.minecraft.server.level.FullChunkStatus;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.util.ProblemReporter;
+-import net.minecraft.util.profiling.Profiler;
+-import net.minecraft.util.profiling.ProfilerFiller;
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.level.ChunkPos;
+ import net.minecraft.world.level.Level;
+@@ -389,12 +_,8 @@
+                 }
+ 
+                 if (LightEngine.hasDifferentLightProperties(blockState, state)) {
+-                    ProfilerFiller profilerFiller = Profiler.get();
+-                    profilerFiller.push("updateSkyLightSources");
+                     // Paper - rewrite chunk system
+-                    profilerFiller.popPush("queueCheckLight");
+                     this.level.getChunkSource().getLightEngine().checkBlock(pos);
+-                    profilerFiller.pop();
+                 }
+ 
+                 boolean flag = !blockState.is(block);
+@@ -932,12 +_,7 @@
              if (!this.blockEntity.isRemoved() && this.blockEntity.hasLevel()) {
                  BlockPos blockPos = this.blockEntity.getBlockPos();
                  if (LevelChunk.this.isTicking(blockPos)) {
 -                    final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
 -                    final int timerId = this.blockEntity.getType().tileEntityTimingId; // Folia - profiler
                      try {
-                         ProfilerFiller profilerFiller = Profiler.get();
-                         profilerFiller.push(this::getType);
+-                        ProfilerFiller profilerFiller = Profiler.get();
+-                        profilerFiller.push(this::getType);
 -                        profiler.startTimer(timerId); try { // Folia - profiler
                          BlockState blockState = LevelChunk.this.getBlockState(blockPos);
                          if (this.blockEntity.getType().isValid(blockState)) {
                              this.ticker.tick(LevelChunk.this.level, this.blockEntity.getBlockPos(), blockState, this.blockEntity);
-@@ -951,7 +_,6 @@
+@@ -951,9 +_,6 @@
                              }
                              // Paper end - Remove the Block Entity if it's invalid
                          }
 -                        } finally { profiler.stopTimer(timerId); } // Folia - profiler
- 
-                         profilerFiller.pop();
+-
+-                        profilerFiller.pop();
                      } catch (Throwable var5) {
+                         // Paper start - Prevent block entity and entity crashes
+                         final String msg = String.format("BlockEntity threw exception at %s:%s,%s,%s", LevelChunk.this.getLevel().getWorld().getName(), this.getPos().getX(), this.getPos().getY(), this.getPos().getZ());
