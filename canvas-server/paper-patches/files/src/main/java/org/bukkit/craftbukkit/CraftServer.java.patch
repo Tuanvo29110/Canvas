@@ -18,3 +18,31 @@
          if (task == null) {
              // might be on the shutdown thread, try retrieving the current region
              if (io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion() != null) {
+@@ -3295,6 +_,27 @@
+ 
+         return getTPSFromRegion(((CraftWorld)world).getHandle(), chunkX, chunkZ);
+     }
++    // Canvas start - expand region api
++
++    /**
++     * Returns the region on the current thraed, or null if we are on the global tick thread
++     * <br>
++     * This will throw if not on a tick runner
++     * @return the current region
++     */
++    @Override
++    public @Nullable io.canvasmc.canvas.region.WorldRegion getCurrentRegion() {
++        io.papermc.paper.threadedregions.ThreadedRegionizer.ThreadedRegion<io.papermc.paper.threadedregions.TickRegions.TickRegionData, io.papermc.paper.threadedregions.TickRegions.TickRegionSectionData>
++            region = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion();
++        if (region == null) {
++            return null;
++        } else {
++            io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = region.regioniser.world.worldRegionData.get();
++            if (regionizedWorldData == null) return null;
++            return regionizedWorldData.apiHandle;
++        }
++    }
++    // Canvas end
+ 
+     private static double[] getTPSFromRegion(ServerLevel world, int chunkX, int chunkZ) {
+         io.papermc.paper.threadedregions.ThreadedRegionizer.ThreadedRegion<io.papermc.paper.threadedregions.TickRegions.TickRegionData, io.papermc.paper.threadedregions.TickRegions.TickRegionSectionData>

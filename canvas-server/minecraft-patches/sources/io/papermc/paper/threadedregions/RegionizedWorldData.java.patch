@@ -26,12 +26,13 @@
      private final NearbyPlayers nearbyPlayers;
      public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList();
      private final ReferenceList<Entity> allEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
-@@ -447,7 +_,9 @@
+@@ -447,7 +_,10 @@
      public final alternate.current.wire.WireHandler wireHandler;
      public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
  
 -    public RegionizedWorldData(final ServerLevel world) {
 +    public final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData; // Canvas - rewrite scheduler
++    public final ApiHandle apiHandle = new ApiHandle(this); // Canvas - expand region api
 +
 +    public RegionizedWorldData(final ServerLevel world, final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData) { // Canvas - rewrite scheduler
          this.world = world;
@@ -61,3 +62,71 @@
              }
              TickRegions.RegionStats.updateCurrentRegion();
          }
+@@ -768,4 +_,67 @@
+     public int getChunkCount() {
+         return this.chunks.size();
+     }
++    // Canvas start - expand region API
++
++    public static class ApiHandle implements io.canvasmc.canvas.region.WorldRegion {
++        @Override
++        public org.bukkit.World getWorld() {
++            return this.worldData.world.getWorld();
++        }
++
++        @Override
++        public org.bukkit.Chunk getCenterChunk() {
++            ChunkPos pos = this.worldData.regionData.region.getCenterChunk();
++            return pos == null ? null : getWorld().getChunkAt(pos.longKey);
++        }
++
++        @Override
++        public List<org.bukkit.Chunk> getOwnedChunks() {
++            it.unimi.dsi.fastutil.objects.ObjectArrayList<org.bukkit.Chunk> chunks = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>();
++            for (final LevelChunk chunk : this.worldData.chunks) {
++                chunks.add(getWorld().getChunkAt(chunk.coordinateKey));
++            }
++            return chunks;
++        }
++
++        @Override
++        public List<org.bukkit.Chunk> getTickingChunks() {
++            it.unimi.dsi.fastutil.objects.ObjectArrayList<org.bukkit.Chunk> chunks = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>();
++            for (final LevelChunk chunk : this.worldData.tickingChunks) {
++                chunks.add(getWorld().getChunkAt(chunk.coordinateKey));
++            }
++            return chunks;
++        }
++
++        @Override
++        public int getChunkCount() {
++            return this.worldData.getChunkCount();
++        }
++
++        @Override
++        public List<org.bukkit.entity.Player> getLocalPlayers() {
++            it.unimi.dsi.fastutil.objects.ObjectArrayList<org.bukkit.entity.Player> players = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>();
++            for (final ServerPlayer localPlayer : this.worldData.localPlayers) {
++                players.add(localPlayer.getBukkitEntity());
++            }
++            return players;
++        }
++
++        @Override
++        public int getPlayerCount() {
++            return this.worldData.getPlayerCount();
++        }
++
++        @Override
++        public int getEntityCount() {
++            return this.worldData.getEntityCount();
++        }
++
++        private final RegionizedWorldData worldData;
++
++        public ApiHandle(RegionizedWorldData worldData) {
++            this.worldData = worldData;
++        }
++    }
++    // Canvas end
+ }
