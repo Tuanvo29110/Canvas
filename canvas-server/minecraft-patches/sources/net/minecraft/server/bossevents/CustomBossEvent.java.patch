@@ -1,0 +1,11 @@
+--- a/net/minecraft/server/bossevents/CustomBossEvent.java
++++ b/net/minecraft/server/bossevents/CustomBossEvent.java
+@@ -20,7 +_,7 @@
+ public class CustomBossEvent extends ServerBossEvent {
+     private static final int DEFAULT_MAX = 100;
+     private final ResourceLocation id;
+-    private final Set<UUID> players = Sets.newHashSet();
++    private final Set<UUID> players = Sets.newConcurrentHashSet(); // Folia - region threading
+     private int value;
+     private int max = 100;
+     // CraftBukkit start

@@ -1,0 +1,12 @@
+--- a/net/minecraft/server/commands/DialogCommand.java
++++ b/net/minecraft/server/commands/DialogCommand.java
+@@ -46,7 +_,9 @@
+ 
+     private static int showDialog(CommandSourceStack source, Collection<ServerPlayer> targets, Holder<Dialog> dialog) {
+         for (ServerPlayer serverPlayer : targets) {
++            serverPlayer.getBukkitEntity().taskScheduler.schedule((_) -> { // Folia - region threading
+             serverPlayer.openDialog(dialog);
++            }, null, 0L); // Folia - region threading
+         }
+ 
+         if (targets.size() == 1) {

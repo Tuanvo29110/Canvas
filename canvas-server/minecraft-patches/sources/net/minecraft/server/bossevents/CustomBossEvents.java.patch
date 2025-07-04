@@ -1,0 +1,11 @@
+--- a/net/minecraft/server/bossevents/CustomBossEvents.java
++++ b/net/minecraft/server/bossevents/CustomBossEvents.java
+@@ -20,7 +_,7 @@
+     private static final Codec<Map<ResourceLocation, CustomBossEvent.Packed>> EVENTS_CODEC = Codec.unboundedMap(
+         ResourceLocation.CODEC, CustomBossEvent.Packed.CODEC
+     );
+-    private final Map<ResourceLocation, CustomBossEvent> events = Maps.newHashMap();
++    private final Map<ResourceLocation, CustomBossEvent> events = Maps.newConcurrentMap(); // Folia - region threading
+ 
+     @Nullable
+     public CustomBossEvent get(ResourceLocation id) {

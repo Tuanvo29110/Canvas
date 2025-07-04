@@ -16,6 +16,48 @@
  import net.minecraft.util.profiling.jfr.JvmProfiler;
  import net.minecraft.world.flag.FeatureFlagSet;
  import net.minecraft.world.flag.FeatureFlags;
+@@ -185,7 +_,7 @@
+         AdvancementCommands.register(this.dispatcher);
+         AttributeCommand.register(this.dispatcher, context);
+         ExecuteCommand.register(this.dispatcher, context);
+-        //BossBarCommands.register(this.dispatcher, context); // Folia - region threading - TODO
++        BossBarCommands.register(this.dispatcher, context);
+         ClearInventoryCommands.register(this.dispatcher, context);
+         //CloneCommands.register(this.dispatcher, context); // Folia - region threading - TODO
+         DamageCommand.register(this.dispatcher, context);
+@@ -193,7 +_,7 @@
+         //DataPackCommand.register(this.dispatcher, context); // Folia - region threading - TODO
+         //DebugCommand.register(this.dispatcher); // Folia - region threading - TODO
+         DefaultGameModeCommands.register(this.dispatcher);
+-        //DialogCommand.register(this.dispatcher, context); // Folia - region threading - TODO
++        DialogCommand.register(this.dispatcher, context);
+         DifficultyCommand.register(this.dispatcher);
+         EffectCommands.register(this.dispatcher, context);
+         EmoteCommands.register(this.dispatcher);
+@@ -222,7 +_,7 @@
+         RecipeCommand.register(this.dispatcher);
+         //ReturnCommand.register(this.dispatcher); // Folia - region threading - TODO later
+         //RideCommand.register(this.dispatcher); // Folia - region threading - TODO later
+-        //RotateCommand.register(this.dispatcher); // Folia - region threading - TODO later
++        RotateCommand.register(this.dispatcher);
+         SayCommand.register(this.dispatcher);
+         //ScheduleCommand.register(this.dispatcher); // Folia - region threading
+         //ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading
+@@ -231,11 +_,11 @@
+         SetBlockCommand.register(this.dispatcher, context);
+         SetSpawnCommand.register(this.dispatcher);
+         SetWorldSpawnCommand.register(this.dispatcher);
+-        //SpectateCommand.register(this.dispatcher); // Folia - region threading - TODO later
+-        //SpreadPlayersCommand.register(this.dispatcher); // Folia - region threading - TODO later
++        SpectateCommand.register(this.dispatcher);
++        SpreadPlayersCommand.register(this.dispatcher); // Folia - region threading - TODO this only searches through currently loaded chunks, which deviates from vanilla, can we improve this?
+         StopSoundCommand.register(this.dispatcher);
+         SummonCommand.register(this.dispatcher, context);
+-        //TagCommand.register(this.dispatcher); // Folia - region threading - TODO later
++        TagCommand.register(this.dispatcher);
+         //TeamCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
+         //TeamMsgCommand.register(this.dispatcher); // Folia - region threading - TODO later
+         TeleportCommand.register(this.dispatcher);
 @@ -349,7 +_,6 @@
          org.spigotmc.AsyncCatcher.catchOp("Cannot perform command async");
          // Paper end
