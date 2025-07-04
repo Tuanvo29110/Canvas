@@ -107,7 +107,12 @@
          // Folia start - region threading
          region.world.getCurrentWorldData().updateTickData();
          if (region.world.checkInitialised.get() != ServerLevel.WORLD_INIT_CHECKED) {
-@@ -1640,26 +_,18 @@
+@@ -1636,30 +_,22 @@
+         };
+         // Folia end - region threading
+ 
+-        this.server.spark.tickStart(); // Paper - spark
++        // Canvas - moved to global region
          new com.destroystokyo.paper.event.server.ServerTickStartEvent((int)region.getCurrentTick()).callEvent(); // Paper - Server Tick Events // Folia - region threading
          // Folia start - region threading
          if (region != null) {
@@ -162,7 +167,15 @@
          //this.runAllTasks(); // Paper - move runAllTasks() into full server tick (previously for timings) // Folia - region threading
          //this.server.spark.executeMainThreadTasks(); // Paper - spark // Folia - region threading
          // Paper start - Server Tick Events
-@@ -1712,10 +_,7 @@
+@@ -1705,17 +_,14 @@
+         long remaining = scheduledEnd - endTime; // Folia - region ticking
+         new com.destroystokyo.paper.event.server.ServerTickEndEvent((int)io.papermc.paper.threadedregions.RegionizedServer.getCurrentTick(), ((double)(endTime - startTime) / 1000000D), remaining).callEvent(); // Folia - region ticking
+         // Paper end - Server Tick Events
+-        this.server.spark.tickEnd(((double)(endTime - startTime) / 1000000D)); // Paper - spark // Folia - region threading
++        // Canvas - moved to global region
+         // Folia - region threading
+     }
+ 
      private void autoSave() {
          //this.ticksUntilAutosave = this.autosavePeriod; // CraftBukkit // Folia - region threading
          LOGGER.debug("Autosave started");

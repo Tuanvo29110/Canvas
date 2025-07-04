@@ -1,6 +1,7 @@
 package io.canvasmc.canvas;
 
 import io.canvasmc.canvas.config.*;
+import io.canvasmc.canvas.config.annotation.Comment;
 import io.canvasmc.canvas.config.internal.ConfigurationManager;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.Util;
@@ -13,6 +14,19 @@ public class Config {
     public static boolean RUNNING_IN_IDE = Boolean.getBoolean("minecraft.running-in-ide");
     public static ComponentLogger LOGGER = ComponentLogger.logger("Canvas");
     public static Config INSTANCE;
+
+    @Comment(value = {
+        "Folia is incompatible with spark normally. Canvas fixes it and implements a new spark plugin for Folia support",
+        "If this option is enabled, Canvas will use the modified spark plugin internally for Folia support, otherwise it",
+        "will use Papers spark implementation, which may have issues."
+    })
+    public boolean useOurSparkPlugin = true;
+
+    public Chunks chunks = new Chunks();
+    public static class Chunks {
+        @Comment("Use euclidean distance squared for chunk task ordering. Makes the world load in what appears a circle rather than a diamond")
+        public boolean useEuclideanDistanceSquared = true;
+    }
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);

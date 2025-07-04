@@ -79,3 +79,21 @@
          }
      }
  
+@@ -302,6 +_,8 @@
+         // expire invalid click command callbacks
+         io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.CALLBACK_MANAGER.handleQueue((int)this.tickCount);
+ 
++        long startTime = System.nanoTime(); // Canvas - support spark
++        MinecraftServer.getServer().server.spark.tickStart(); // Paper - spark // Canvas - support spark
+         // scheduler
+         ((FoliaGlobalRegionScheduler)Bukkit.getGlobalRegionScheduler()).tick();
+ 
+@@ -326,6 +_,8 @@
+ 
+         // player list
+         MinecraftServer.getServer().getPlayerList().tick();
++        long endTime = System.nanoTime(); // Canvas - support spark
++        MinecraftServer.getServer().server.spark.tickEnd(((double)(endTime - startTime) / 1000000D)); // Paper - spark // Folia - region threading // Canvas - support spark
+     }
+ 
+     private void tickPlayerSample() {
