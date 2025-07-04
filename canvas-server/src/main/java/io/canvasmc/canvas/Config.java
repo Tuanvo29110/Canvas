@@ -26,6 +26,9 @@ public class Config {
     public static class Chunks {
         @Comment("Use euclidean distance squared for chunk task ordering. Makes the world load in what appears a circle rather than a diamond")
         public boolean useEuclideanDistanceSquared = true;
+
+        @Comment("The thread priority for Canvas' rewritten chunk system executor")
+        public int threadPoolPriority = Thread.NORM_PRIORITY;
     }
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {

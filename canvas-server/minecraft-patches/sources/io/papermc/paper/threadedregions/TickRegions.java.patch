@@ -1,5 +1,14 @@
 --- a/io/papermc/paper/threadedregions/TickRegions.java
 +++ b/io/papermc/paper/threadedregions/TickRegions.java
+@@ -21,7 +_,7 @@
+ 
+ public final class TickRegions implements ThreadedRegionizer.RegionCallbacks<TickRegions.TickRegionData, TickRegions.TickRegionSectionData> {
+ 
+-    private static final Logger LOGGER = LogUtils.getLogger();
++    private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger("ThreadedRegions"); // Canvas - change LOGGER name
+     private static int regionShift = 31;
+ 
+     public static int getRegionChunkShift() {
 @@ -45,6 +_,13 @@
          gridExponent = Math.min(31, gridExponent);
          regionShift = gridExponent;

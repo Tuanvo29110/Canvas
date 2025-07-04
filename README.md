@@ -12,7 +12,6 @@ Only Versions for MC 1.21.7 and onwards will be supported!
 ## The current TODOs for the rewrite, are:
 
 ```
-- Rewrite chunk system
 - Additonal, better api
 ```
 
