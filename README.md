@@ -14,8 +14,6 @@ Only Versions for MC 1.21.7 and onwards will be supported!
 ```
 - Rewrite chunk system
 - Additonal, better api
-- Remove folia region profiler
-- Add spark support
 ```
 
 
