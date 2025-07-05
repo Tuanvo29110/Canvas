@@ -12,7 +12,13 @@ Only Versions for MC 1.21.7 and onwards will be supported!
 ## The current TODOs for the rewrite, are:
 
 ```
-- Additonal, better api
+- regionized data API for plugins. essentially just want a way to allow plugins to be able to hook into RegionizedWorldData and add their own regionized data that will have callbacks for merge and split
+- upstream Leaf -- ill handle this
+- fix more folia commands
+- fix scoreboard api
+- fix world load/unload api
+- fix waypoints
+- reapply old canvas optimizations and configs -- i(Dueris) will handle this
 ```
 
 
