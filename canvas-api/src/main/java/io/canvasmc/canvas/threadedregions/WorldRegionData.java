@@ -1,14 +1,14 @@
-package io.canvasmc.canvas.region;
+package io.canvasmc.canvas.threadedregions;
 
+import java.util.List;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import java.util.List;
 
 /**
  * Represents a Folia/Canvas region
  */
-public interface WorldRegion {
+public interface WorldRegionData {
 
     /**
      * Gets the world this region belongs to.
@@ -65,4 +65,11 @@ public interface WorldRegion {
      * @return number of entities
      */
     int getEntityCount();
+
+    /**
+     * Gets the {@link ThreadedWorldRegion} for this region data
+     *
+     * @return the region
+     */
+    ThreadedWorldRegion getRegionizerRegion();
 }

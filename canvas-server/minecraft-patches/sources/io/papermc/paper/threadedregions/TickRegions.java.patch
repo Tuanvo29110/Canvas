@@ -32,7 +32,13 @@
          LOGGER.info("Regionised ticking is enabled with " + tickThreads + " tick threads");
      }
  
-@@ -81,11 +_,6 @@
+@@ -76,16 +_,13 @@
+         final TickRegionData data = region.getData();
+         // post-region merge/split regioninfo update
+         data.getRegionStats().updateFrom(data.getOrCreateRegionizedData(data.world.worldRegionData));
++        new io.canvasmc.canvas.event.region.RegionCreateEvent(region.apiHandle).callEvent(); // Canvas - expand region api
+     }
+ 
      @Override
      public void onRegionDestroy(final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> region) {
          // nothing for now
@@ -41,9 +47,26 @@
 -            region.getData().profiler.stopProfiler();
 -        }
 -        // Folia end - profiler
++        new io.canvasmc.canvas.event.region.RegionDestroyEvent(region.apiHandle).callEvent(); // Canvas - expand region api
      }
  
      @Override
+@@ -93,6 +_,7 @@
+         final TickRegionData data = region.getData();
+ 
+         data.tickHandle.checkInitialSchedule();
++        new io.canvasmc.canvas.event.region.RegionActiveEvent(region.apiHandle).callEvent(); // Canvas - expand region api
+         scheduler.scheduleRegion(data.tickHandle);
+     }
+ 
+@@ -101,6 +_,7 @@
+         final TickRegionData data = region.getData();
+ 
+         scheduler.descheduleRegion(data.tickHandle);
++        new io.canvasmc.canvas.event.region.RegionInactiveEvent(region.apiHandle).callEvent(); // Canvas - expand region api
+         // old handle cannot be scheduled anymore, copy to a new handle
+         data.tickHandle = data.tickHandle.copy();
+     }
 @@ -108,23 +_,13 @@
      @Override
      public void preMerge(final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegionSectionData> from,
@@ -145,6 +168,15 @@
          public RegionStats getRegionStats() {
              return this.regionStats;
          }
+@@ -213,7 +_,7 @@
+             return this.holderManagerRegionData;
+         }
+ 
+-        <T> T getRegionizedData(final RegionizedData<T> regionizedData) {
++        public <T> T getRegionizedData(final RegionizedData<T> regionizedData) { // Canvas - package-private -> public
+             return (T)this.regionizedData.get(regionizedData);
+         }
+ 
 @@ -224,7 +_,7 @@
                  return ret;
              }

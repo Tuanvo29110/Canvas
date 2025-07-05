@@ -62,13 +62,13 @@
              }
              TickRegions.RegionStats.updateCurrentRegion();
          }
-@@ -768,4 +_,67 @@
+@@ -768,4 +_,72 @@
      public int getChunkCount() {
          return this.chunks.size();
      }
 +    // Canvas start - expand region API
 +
-+    public static class ApiHandle implements io.canvasmc.canvas.region.WorldRegion {
++    public static class ApiHandle implements io.canvasmc.canvas.threadedregions.WorldRegionData {
 +        @Override
 +        public org.bukkit.World getWorld() {
 +            return this.worldData.world.getWorld();
@@ -120,6 +120,11 @@
 +        @Override
 +        public int getEntityCount() {
 +            return this.worldData.getEntityCount();
++        }
++
++        @Override
++        public io.canvasmc.canvas.threadedregions.ThreadedWorldRegion getRegionizerRegion() {
++            return this.worldData.regionData.region.apiHandle;
 +        }
 +
 +        private final RegionizedWorldData worldData;

@@ -31,7 +31,7 @@
 +     * @return the current region
 +     */
 +    @Override
-+    public @Nullable io.canvasmc.canvas.region.WorldRegion getCurrentRegion() {
++    public @Nullable io.canvasmc.canvas.threadedregions.WorldRegionData getCurrentRegion() {
 +        io.papermc.paper.threadedregions.ThreadedRegionizer.ThreadedRegion<io.papermc.paper.threadedregions.TickRegions.TickRegionData, io.papermc.paper.threadedregions.TickRegions.TickRegionSectionData>
 +            region = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion();
 +        if (region == null) {

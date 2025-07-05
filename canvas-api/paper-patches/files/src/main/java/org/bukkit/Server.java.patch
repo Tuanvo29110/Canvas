@@ -12,7 +12,7 @@
 +     * This will throw if not on a tick runner
 +     * @return the current region
 +     */
-+    @Nullable io.canvasmc.canvas.region.WorldRegion getCurrentRegion();
++    @Nullable io.canvasmc.canvas.threadedregions.WorldRegionData getCurrentRegion();
 +    // Canvas end
      // Folia end - region TPS API
  }

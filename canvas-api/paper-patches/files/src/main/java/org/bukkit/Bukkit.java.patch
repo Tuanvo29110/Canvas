@@ -12,7 +12,7 @@
 +     * This will throw if not on a tick runner
 +     * @return the current region
 +     */
-+    public static @Nullable io.canvasmc.canvas.region.WorldRegion getCurrentRegion() {
++    public static @Nullable io.canvasmc.canvas.threadedregions.WorldRegionData getCurrentRegion() {
 +        return server.getCurrentRegion();
 +    }
 +    // Canvas end

@@ -1,0 +1,61 @@
+--- a/io/papermc/paper/threadedregions/ThreadedRegionizer.java
++++ b/io/papermc/paper/threadedregions/ThreadedRegionizer.java
+@@ -53,6 +_,7 @@
+      * See REGION_LOGIC.md for complete details on what this class is doing
+      */
+ 
++    public final io.canvasmc.canvas.threadedregions.ServerRegionizerImpl apiRegionizer; // Canvas - expand region api
+     public ThreadedRegionizer(final int minSectionRecalcCount, final double maxDeadRegionPercent,
+                               final int emptySectionCreateRadius, final int regionSectionMergeRadius,
+                               final int regionSectionChunkShift, final ServerLevel world,
+@@ -72,6 +_,7 @@
+         this.world = world;
+         this.callbacks = callbacks;
+         //this.loadTestData();
++        this.apiRegionizer = new io.canvasmc.canvas.threadedregions.ServerRegionizerImpl(this); // Canvas - expand region api
+     }
+ 
+     /*
+@@ -693,12 +_,14 @@
+ 
+         private final ReferenceOpenHashSet<ThreadedRegion<R, S>> mergeIntoLater = new ReferenceOpenHashSet<>();
+         private final ReferenceOpenHashSet<ThreadedRegion<R, S>> expectingMergeFrom = new ReferenceOpenHashSet<>();
++        public final io.canvasmc.canvas.threadedregions.ThreadedWorldRegion apiHandle; // Canvas - expand region API
+ 
+         public ThreadedRegion(final ThreadedRegionizer<R, S> regioniser) {
+             this.regioniser = regioniser;
+             this.id = REGION_ID_GENERATOR.getAndIncrement();
+             this.state = STATE_TRANSIENT;
+             this.data = regioniser.callbacks.createNewData(this);
++            this.apiHandle = new io.canvasmc.canvas.threadedregions.ThreadedWorldRegionImpl((ThreadedRegion<TickRegions.TickRegionData, TickRegions.TickRegionSectionData>) this); // Canvas - expand region API
+         }
+ 
+         public LongArrayList getOwnedSections() {
+@@ -815,11 +_,11 @@
+             this.regioniser.onRegionDestroy(this);
+         }
+ 
+-        private final boolean hasNoAliveSections() {
++        public final boolean hasNoAliveSections() { // Canvas - private -> public
+             return this.deadSections.size() == this.sectionByKey.size();
+         }
+ 
+-        private final double getDeadSectionPercent() {
++        public final double getDeadSectionPercent() { // Canvas - private -> public
+             return (double)this.deadSections.size() / (double)this.sectionByKey.size();
+         }
+ 
+@@ -926,11 +_,11 @@
+             }
+         }
+ 
+-        private boolean isDead() {
++        public boolean isDead() { // Canvas - private -> public
+             return this.state == STATE_DEAD;
+         }
+ 
+-        private boolean isTicking() {
++        public boolean isTicking() { // Canvas - private -> public
+             return this.state == STATE_TICKING;
+         }
+ 
