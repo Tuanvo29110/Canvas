@@ -5,7 +5,7 @@
  
  public class ServerBossEvent extends BossEvent {
 -    private final Set<ServerPlayer> players = Sets.newHashSet();
-+    private final Set<ServerPlayer> players = Sets.newConcurrentHashSet(); // Folia - region threading
++    private final Set<ServerPlayer> players = Sets.newConcurrentHashSet(); // Canvas - fix commands with region threading
      private final Set<ServerPlayer> unmodifiablePlayers = Collections.unmodifiableSet(this.players);
      public boolean visible = true;
  

@@ -5,7 +5,7 @@
      private static final int DEFAULT_MAX = 100;
      private final ResourceLocation id;
 -    private final Set<UUID> players = Sets.newHashSet();
-+    private final Set<UUID> players = Sets.newConcurrentHashSet(); // Folia - region threading
++    private final Set<UUID> players = Sets.newConcurrentHashSet(); // Canvas - fix commands with region threading
      private int value;
      private int max = 100;
      // CraftBukkit start

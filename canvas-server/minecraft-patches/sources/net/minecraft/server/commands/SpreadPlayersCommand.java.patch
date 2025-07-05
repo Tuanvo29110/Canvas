@@ -5,7 +5,7 @@
              }
  
 -            entity.teleportTo(
-+            // Folia start - region threading
++             // Canvas start - fix commands with region threading
 +            entity.teleportAsync(
                  level,
 -                Mth.floor(position.x) + 0.5,
@@ -26,7 +26,7 @@
 +                Entity.TELEPORT_FLAG_TELEPORT_PASSENGERS | Entity.TELEPORT_FLAG_LOAD_CHUNK,
 +                (_) -> {}
              );
-+            // Folia end - region threading
++            // Canvas end
              double d1 = Double.MAX_VALUE;
  
              for (SpreadPlayersCommand.Position position1 : positions) {
@@ -35,18 +35,18 @@
          public int getSpawnY(BlockGetter level, int y) {
              BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos(this.x, (double)(y + 1), this.z);
 -            boolean isAir = level.getBlockState(mutableBlockPos).isAir();
-+            BlockState possiblyLoaded = level.getBlockStateIfLoaded(mutableBlockPos); // Folia - region threading
-+            boolean isAir = possiblyLoaded != null && possiblyLoaded.isAir(); // Folia - region threading
++            BlockState possiblyLoaded = level.getBlockStateIfLoaded(mutableBlockPos); // Canvas - fix commands with region threading
++            boolean isAir = possiblyLoaded != null && possiblyLoaded.isAir(); // Canvas - fix commands with region threading
              mutableBlockPos.move(Direction.DOWN);
 -            boolean isAir1 = level.getBlockState(mutableBlockPos).isAir();
-+            BlockState possiblyLoaded1 = level.getBlockStateIfLoaded(mutableBlockPos); // Folia - region threading
-+            boolean isAir1 = possiblyLoaded1 != null && possiblyLoaded1.isAir(); // Folia - region threading
++            BlockState possiblyLoaded1 = level.getBlockStateIfLoaded(mutableBlockPos); // Canvas - fix commands with region threading
++            boolean isAir1 = possiblyLoaded1 != null && possiblyLoaded1.isAir(); // Canvas - fix commands with region threading
  
              while (mutableBlockPos.getY() > level.getMinY()) {
                  mutableBlockPos.move(Direction.DOWN);
 -                boolean isAir2 = level.getBlockState(mutableBlockPos).isAir();
-+                BlockState possiblyLoaded2 = level.getBlockStateIfLoaded(mutableBlockPos); // Folia - region threading
-+                boolean isAir2 = possiblyLoaded2 != null && possiblyLoaded2.isAir(); // Folia - region threading
++                BlockState possiblyLoaded2 = level.getBlockStateIfLoaded(mutableBlockPos); // Canvas - fix commands with region threading
++                boolean isAir2 = possiblyLoaded2 != null && possiblyLoaded2.isAir(); // Canvas - fix commands with region threading
                  if (!isAir2 && isAir1 && isAir) {
                      return mutableBlockPos.getY() + 1;
                  }
@@ -56,10 +56,10 @@
              BlockPos blockPos = BlockPos.containing(this.x, this.getSpawnY(level, y) - 1, this.z);
 -            BlockState blockState = level.getBlockState(blockPos);
 -            return blockPos.getY() < y && !blockState.liquid() && !blockState.is(BlockTags.FIRE);
-+            // Folia start - region threading
++             // Canvas start - fix commands with region threading
 +            BlockState blockState = level.getBlockStateIfLoaded(blockPos);
 +            return blockState != null && blockPos.getY() < y && !blockState.liquid() && !blockState.is(BlockTags.FIRE);
-+            // Folia end - region threading
++            // Canvas end
          }
  
          public void randomize(RandomSource random, double minX, double minZ, double maxX, double maxZ) {

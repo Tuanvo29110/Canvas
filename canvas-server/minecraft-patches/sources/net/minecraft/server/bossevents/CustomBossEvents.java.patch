@@ -5,7 +5,7 @@
          ResourceLocation.CODEC, CustomBossEvent.Packed.CODEC
      );
 -    private final Map<ResourceLocation, CustomBossEvent> events = Maps.newHashMap();
-+    private final Map<ResourceLocation, CustomBossEvent> events = Maps.newConcurrentMap(); // Folia - region threading
++    private final Map<ResourceLocation, CustomBossEvent> events = Maps.newConcurrentMap(); // Canvas - fix commands with region threading
  
      @Nullable
      public CustomBossEvent get(ResourceLocation id) {
