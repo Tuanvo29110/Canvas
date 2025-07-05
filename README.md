@@ -12,15 +12,6 @@ Only Versions for MC 1.21.7 and onwards will be supported!
 ## The current TODOs for the rewrite, are:
 
 ```
-Rebrand
-Remove Folia Profiler
-Remove Vanilla Profiler
-Implement Spark Plugin
-Rewrite Scheduler
-Rewrite Moonrise Executor
-Fix Folia Commands
-ShapeUpdateEvent
-More Region API
 - Additonal, better api
 ```
 
