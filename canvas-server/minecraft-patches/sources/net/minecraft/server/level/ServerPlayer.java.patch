@@ -9,6 +9,38 @@
  import net.minecraft.world.Container;
  import net.minecraft.world.Difficulty;
  import net.minecraft.world.InteractionHand;
+@@ -1567,6 +_,7 @@
+         }
+         // must be manually removed from connections, delay until after reset() so that we do not trip any thread checks
+         this.level().getCurrentWorldData().connections.remove(this.connection.connection);
++        this.level().getCurrentWorldData().waypointManager.removePlayer(this); // Canvas - region threading - restore waypoints
+ 
+         ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> spawnPosComplete =
+             new ca.spottedleaf.concurrentutil.completable.CallbackCompletable<>();
+@@ -1678,6 +_,7 @@
+     protected ServerPlayer transformForAsyncTeleport(ServerLevel destination, Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
+         // must be manually removed from connections
+         this.level().getCurrentWorldData().connections.remove(this.connection.connection);
++        this.level().getCurrentWorldData().waypointManager.removePlayer(this); // Canvas - region threading - restore waypoints
+         this.level().removePlayerImmediately(this, Entity.RemovalReason.CHANGED_DIMENSION);
+ 
+         this.spawnIn(destination);
+@@ -1700,6 +_,7 @@
+ 
+             // must be manually added to connections
+             this.level().getCurrentWorldData().connections.add(this.connection.connection);
++            this.level().getCurrentWorldData().waypointManager.addPlayer(this); // Canvas - region threading - restore waypoints
+ 
+             // required to set up the pending teleport stuff to the client, and to actually update
+             // the player's position clientside
+@@ -1753,6 +_,7 @@
+ 
+             // must be manually added to connections
+             this.level().getCurrentWorldData().connections.add(this.connection.connection);
++            this.level().getCurrentWorldData().waypointManager.addPlayer(this); // Canvas - region threading - restore waypoints
+ 
+             // required to set up the pending teleport stuff to the client, and to actually update
+             // the player's position clientside
 @@ -1893,14 +_,10 @@
                  this.unsetRemoved();
                  */

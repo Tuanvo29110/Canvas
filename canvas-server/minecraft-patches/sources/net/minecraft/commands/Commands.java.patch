@@ -58,6 +58,15 @@
          //TeamCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
          //TeamMsgCommand.register(this.dispatcher); // Folia - region threading - TODO later
          TeleportCommand.register(this.dispatcher);
+@@ -245,7 +_,7 @@
+         TimeCommand.register(this.dispatcher);
+         TitleCommand.register(this.dispatcher, context);
+         //TriggerCommand.register(this.dispatcher); // Folia - region threading - TODO later
+-        //WaypointCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
++        WaypointCommand.register(this.dispatcher, context);
+         WeatherCommand.register(this.dispatcher);
+         WorldBorderCommand.register(this.dispatcher);
+         if (JvmProfiler.INSTANCE.isAvailable()) {
 @@ -349,7 +_,6 @@
          org.spigotmc.AsyncCatcher.catchOp("Cannot perform command async");
          // Paper end

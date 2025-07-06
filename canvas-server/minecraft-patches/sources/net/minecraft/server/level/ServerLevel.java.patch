@@ -191,6 +191,15 @@
      }
  
      @VisibleForTesting
+@@ -1161,7 +_,7 @@
+     }
+ 
+     public ServerWaypointManager getWaypointManager() {
+-        return this.waypointManager;
++        return this.getCurrentWorldData().waypointManager; // Canvas - region threading - restore waypoints
+     }
+ 
+     public void advanceWeatherCycle() { // Folia - region threading - public
 @@ -1340,18 +_,9 @@
              // Folia - region threading
              // Paper end - log detailed entity tick information
@@ -250,4 +259,24 @@
 -            } finally { profiler.stopTimer(timerId); } // Folia - profiler
          }
      }
+ 
+@@ -2786,9 +_,7 @@
+             // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
+             if (entity instanceof ServerPlayer serverPlayer) {
+                 ServerLevel.this.players.add(serverPlayer);
+-                if (serverPlayer.isReceivingWaypoints()) {
+-                    ServerLevel.this.getWaypointManager().addPlayer(serverPlayer);
+-                }
++                // Canvas - region threading - restore waypoints - this is handled elsewhere
+ 
+                 ServerLevel.this.updateSleepingPlayerList();
+             }
+@@ -2873,7 +_,7 @@
+             ServerLevel.this.getChunkSource().removeEntity(entity);
+             if (entity instanceof ServerPlayer serverPlayer) {
+                 ServerLevel.this.players.remove(serverPlayer);
+-                ServerLevel.this.getWaypointManager().removePlayer(serverPlayer);
++                // Canvas - region threading - restore waypoints - this is handled elsewhere
+                 ServerLevel.this.updateSleepingPlayerList();
+             }
  

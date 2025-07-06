@@ -1,5 +1,13 @@
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
+@@ -341,6 +_,7 @@
+             // Folia start - rewrite login process
+             // only after setting the connection listener to game type, add the connection to this regions list
+             serverLevel.getCurrentWorldData().connections.add(connection);
++            serverLevel.getCurrentWorldData().waypointManager.removePlayer(player); // Canvas - region threading - restore waypoints
+             // Folia end - rewrite login process
+             connection.setupInboundProtocol(
+                 GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(this.server.registryAccess()), serverGamePacketListenerImpl),
 @@ -1151,7 +_,6 @@
  
      public void saveAll(final int interval) {

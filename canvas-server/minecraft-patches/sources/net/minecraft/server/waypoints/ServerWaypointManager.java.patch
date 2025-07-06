@@ -1,0 +1,56 @@
+--- a/net/minecraft/server/waypoints/ServerWaypointManager.java
++++ b/net/minecraft/server/waypoints/ServerWaypointManager.java
+@@ -22,7 +_,11 @@
+ 
+     @Override
+     public void trackWaypoint(WaypointTransmitter waypoint) {
+-        // Folia - region threading
++        this.waypoints.add(waypoint);
++
++        for (ServerPlayer serverPlayer : this.players) {
++            this.createConnection(serverPlayer, waypoint);
++        }
+     }
+ 
+     @Override
+@@ -49,15 +_,37 @@
+     }
+ 
+     public void addPlayer(ServerPlayer player) {
+-        // Folia - region threading
++        this.players.add(player);
++
++        for (WaypointTransmitter waypointTransmitter : this.waypoints) {
++            this.createConnection(player, waypointTransmitter);
++        }
++
++        if (player.isTransmittingWaypoint()) {
++            this.trackWaypoint((WaypointTransmitter)player);
++        }
+     }
+ 
+     public void updatePlayer(ServerPlayer player) {
+-        // Folia - region threading
++        Map<WaypointTransmitter, WaypointTransmitter.Connection> map = this.connections.row(player);
++        SetView<WaypointTransmitter> set = Sets.difference(this.waypoints, map.keySet());
++
++        for (Entry<WaypointTransmitter, WaypointTransmitter.Connection> entry : ImmutableSet.copyOf(map.entrySet())) {
++            this.updateConnection(player, entry.getKey(), entry.getValue());
++        }
++
++        for (WaypointTransmitter waypointTransmitter : set) {
++            this.createConnection(player, waypointTransmitter);
++        }
+     }
+ 
+     public void removePlayer(ServerPlayer player) {
+-        // Folia - region threading
++        this.connections.row(player).values().removeIf(connection -> {
++            connection.disconnect();
++            return true;
++        });
++        this.untrackWaypoint((WaypointTransmitter)player);
++        this.players.remove(player);
+     }
+ 
+     public void breakAllConnections() {
