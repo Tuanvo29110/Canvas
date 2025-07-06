@@ -8,7 +8,7 @@
  import org.slf4j.Logger;
  
  public abstract class ServerCommonPacketListenerImpl implements ServerCommonPacketListener {
-@@ -97,6 +_,7 @@
+@@ -101,6 +_,7 @@
              throw new UnsupportedOperationException("Configuration mode is not supported in its current state");
          }
          gamePacketListener.player.getBukkitEntity().taskScheduler.retire();
@@ -16,7 +16,7 @@
          // Folia end - region threading
      }
  
-@@ -193,7 +_,6 @@
+@@ -265,7 +_,6 @@
      }
  
      protected void keepConnectionAlive() {
@@ -24,7 +24,7 @@
          long millis = Util.getMillis();
          // Paper start - improve keepalives
          if (this.checkIfClosed(millis) && !this.processedDisconnect) {
-@@ -214,8 +_,6 @@
+@@ -286,8 +_,6 @@
                  // Paper end - improve keepalives
              }
          }
