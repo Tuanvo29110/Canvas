@@ -34,11 +34,22 @@
          DifficultyCommand.register(this.dispatcher);
          EffectCommands.register(this.dispatcher, context);
          EmoteCommands.register(this.dispatcher);
-@@ -222,7 +_,7 @@
+@@ -212,7 +_,7 @@
+         KillCommand.register(this.dispatcher);
+         ListPlayersCommand.register(this.dispatcher);
+         LocateCommand.register(this.dispatcher, context);
+-        //LootCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
++        LootCommand.register(this.dispatcher, context);
+         MsgCommand.register(this.dispatcher);
+         ParticleCommand.register(this.dispatcher, context);
+         PlaceCommand.register(this.dispatcher);
+@@ -221,8 +_,8 @@
+         //ReloadCommand.register(this.dispatcher); // Folia - region threading
          RecipeCommand.register(this.dispatcher);
          //ReturnCommand.register(this.dispatcher); // Folia - region threading - TODO later
-         //RideCommand.register(this.dispatcher); // Folia - region threading - TODO later
+-        //RideCommand.register(this.dispatcher); // Folia - region threading - TODO later
 -        //RotateCommand.register(this.dispatcher); // Folia - region threading - TODO later
++        RideCommand.register(this.dispatcher);
 +        RotateCommand.register(this.dispatcher);
          SayCommand.register(this.dispatcher);
          //ScheduleCommand.register(this.dispatcher); // Folia - region threading
