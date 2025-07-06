@@ -50,7 +50,7 @@
 -        //SpectateCommand.register(this.dispatcher); // Folia - region threading - TODO later
 -        //SpreadPlayersCommand.register(this.dispatcher); // Folia - region threading - TODO later
 +        SpectateCommand.register(this.dispatcher);
-+        SpreadPlayersCommand.register(this.dispatcher); // Folia - region threading - TODO this only searches through currently loaded chunks, which deviates from vanilla, can we improve this?
++        SpreadPlayersCommand.register(this.dispatcher);
          StopSoundCommand.register(this.dispatcher);
          SummonCommand.register(this.dispatcher, context);
 -        //TagCommand.register(this.dispatcher); // Folia - region threading - TODO later
