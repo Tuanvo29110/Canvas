@@ -93,6 +93,22 @@
                      }
                      // Folia end - region threading
                  } else if (this.portalProcess.hasExpired()) {
+@@ -4358,6 +_,7 @@
+         EntityTreeNode passengerTree = this.detachPassengers();
+         List<EntityTreeNode> fullPassengerTree = passengerTree.getFullTree();
+         ServerLevel originWorld = (ServerLevel)this.level;
++        if (destination.isUnloading) return false; // Canvas - fix world loading/unloading
+ 
+         for (EntityTreeNode node : fullPassengerTree) {
+             node.root.preChangeDimension();
+@@ -4622,6 +_,7 @@
+                 }
+             }
+         }
++        if (to.isUnloading) return false; // Canvas - fix world loading/unloading
+ 
+         return true;
+     }
 @@ -4797,15 +_,12 @@
              entity.teleport(this.calculatePassengerTransition(teleportTransition, entity));
          }

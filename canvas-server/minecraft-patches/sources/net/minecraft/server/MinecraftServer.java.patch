@@ -34,6 +34,15 @@
      private ServerConnectionListener connection;
      public final ChunkProgressListenerFactory progressListenerFactory;
      @Nullable
+@@ -1020,7 +_,7 @@
+     // CraftBukkit end
+ 
+     // Folia start - region threading
+-    private final java.util.concurrent.atomic.AtomicBoolean hasStartedShutdownThread = new java.util.concurrent.atomic.AtomicBoolean();
++    public final java.util.concurrent.atomic.AtomicBoolean hasStartedShutdownThread = new java.util.concurrent.atomic.AtomicBoolean(); // Canvas - private -> public
+ 
+     private void haltServerRegionThreading() {
+         if (this.hasStartedShutdownThread.getAndSet(true)) {
 @@ -1059,9 +_,6 @@
          shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
          org.spigotmc.WatchdogThread.doStop(); // Paper - Improved watchdog support
@@ -327,7 +336,16 @@
      }
  
      public boolean isLevelEnabled(Level level) {
-@@ -1922,18 +_,23 @@
+@@ -1918,22 +_,31 @@
+ 
+     @Nullable
+     public ServerLevel getLevel(ResourceKey<Level> dimension) {
+-        return this.levels.get(dimension);
++        // Canvas start - fix world loading/unloading
++        ServerLevel serverLevel = this.levels.get(dimension);
++        if (serverLevel != null && serverLevel.isUnloading) return null;
++        return serverLevel;
++        // Canvas end
      }
  
      // CraftBukkit start

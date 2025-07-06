@@ -50,11 +50,11 @@
          }
  
          ServerLevel handle = ((CraftWorld) world).getHandle();
-+        if (handle.isUnloading) return true; // Canvas - fix world loading/unloading - we are already unloading
++        if (handle.isUnloading) return false; // Canvas - fix world loading/unloading - we are already unloading
  
          if (this.console.getLevel(handle.dimension()) == null) {
              return false;
-@@ -1483,19 +_,18 @@
+@@ -1483,19 +_,19 @@
          }
  
          try {
@@ -62,6 +62,7 @@
 -                handle.save(null, true, false); // Paper - Fix saving in unloadWorld
 -            }
 +            // Canvas start - fix world loading/unloading
++            if (this.console.hasStartedShutdownThread.get()) return false; // don't unload during shutdown
 +            MinecraftServer.LOGGER.info("Beginning unload for World '" + world.getName() + "'");
 +            handle.isUnloading = true;
 +            // moved to regions
