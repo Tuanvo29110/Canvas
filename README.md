@@ -15,7 +15,6 @@ Only Versions for MC 1.21.7 and onwards will be supported!
 - upstream Leaf -- ill handle this
 - fix more folia commands
 - fix scoreboard api
-- fix world load/unload api - https://github.com/CraftCanvasMC/Canvas/pull/110
 - reapply old canvas optimizations and configs -- i(Dueris) will handle this
 ```
 
