@@ -212,6 +212,20 @@
  
              // generic regionised data
              final long fromTickOffset = currentTickTo - currentTickFrom; // see merge jd
+@@ -328,6 +_,13 @@
+             // task queue
+             this.taskQueueData.mergeInto(data.taskQueueData);
+         }
++        // Canvas start - fix world loading/unloading
++        public volatile boolean isClosed = false;
++
++        public void markClosed() {
++            this.isClosed = true;
++        }
++        // Canvas end
+     }
+ 
+     public static final class ConcreteRegionTickHandle extends TickRegionScheduler.RegionScheduleHandle { // Folia - watchdog
 @@ -350,11 +_,11 @@
          }
  
