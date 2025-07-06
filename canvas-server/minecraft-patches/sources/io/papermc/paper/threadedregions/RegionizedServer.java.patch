@@ -71,11 +71,7 @@
          }
      }
  
-@@ -298,10 +_,11 @@
-         }
-         this.randomWalk();
-          */
--        ++this.tickCount;
+@@ -302,6 +_,8 @@
          // expire invalid click command callbacks
          io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.CALLBACK_MANAGER.handleQueue((int)this.tickCount);
  
