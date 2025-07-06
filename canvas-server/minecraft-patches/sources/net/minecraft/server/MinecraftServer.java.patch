@@ -327,6 +327,30 @@
      }
  
      public boolean isLevelEnabled(Level level) {
+@@ -1922,18 +_,23 @@
+     }
+ 
+     // CraftBukkit start
++    private final Object levelLock = new Object(); // Canvas - fix world loading/unloading
+     public void addLevel(ServerLevel level) {
++        synchronized (levelLock) { // Canvas - fix world loading/unloading
+         Map<ResourceKey<Level>, ServerLevel> oldLevels = this.levels;
+         Map<ResourceKey<Level>, ServerLevel> newLevels = Maps.newLinkedHashMap(oldLevels);
+         newLevels.put(level.dimension(), level);
+         this.levels = Collections.unmodifiableMap(newLevels);
++        } // Canvas - fix world loading/unloading
+     }
+ 
+     public void removeLevel(ServerLevel level) {
++        synchronized (levelLock) { // Canvas - fix world loading/unloading
+         Map<ResourceKey<Level>, ServerLevel> oldLevels = this.levels;
+         Map<ResourceKey<Level>, ServerLevel> newLevels = Maps.newLinkedHashMap(oldLevels);
+         newLevels.remove(level.dimension());
+         this.levels = Collections.unmodifiableMap(newLevels);
++        } // Canvas - fix world loading/unloading
+     }
+     // CraftBukkit end
+ 
 @@ -2720,55 +_,6 @@
      }
      // CraftBukkit end
