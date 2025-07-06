@@ -253,7 +253,7 @@
 +                if (!serverLevel.players().isEmpty()) {
 +                    // a player was teleported into the world when finishing teleports, kick.
 +                    for (final ServerPlayer localPlayer : serverLevel.getLocalPlayers()) {
-+                        localPlayer.getBukkitEntity().kickPlayer("World unloading");
++                        localPlayer.getBukkitEntity().kick(net.kyori.adventure.text.Component.text("World unloading"), org.bukkit.event.player.PlayerKickEvent.Cause.WORLD_UNLOAD);
 +                    }
 +                }
 +

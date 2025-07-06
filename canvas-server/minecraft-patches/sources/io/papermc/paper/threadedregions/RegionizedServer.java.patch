@@ -108,7 +108,7 @@
 +                // double check that *all* players are removed from this world, since they may
 +                // be added in some weird spot during shutdown of the world that we didn't catch previously
 +                for (final net.minecraft.server.level.ServerPlayer player : world.players()) {
-+                    player.getBukkitEntity().kick(net.kyori.adventure.text.Component.text("World unloading"), org.bukkit.event.player.PlayerKickEvent.Cause.UNKNOWN);
++                    player.getBukkitEntity().kick(net.kyori.adventure.text.Component.text("World unloading"), org.bukkit.event.player.PlayerKickEvent.Cause.WORLD_UNLOAD);
 +                }
 +                // all regions saved and players are removed, we can now close this world
 +                world.moonrise$getChunkTaskScheduler().halt(false, 0L);
