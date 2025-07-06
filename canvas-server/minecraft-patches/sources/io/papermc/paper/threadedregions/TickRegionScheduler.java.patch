@@ -5,7 +5,7 @@
      // Folia end - watchdog
  
 -    private final SchedulerThreadPool scheduler;
-+    private final io.canvasmc.canvas.tick.ScheduledTaskThreadPool scheduler; // Canvas - rewrite scheduler
++    public final io.canvasmc.canvas.tick.ScheduledTaskThreadPool scheduler; // Canvas - rewrite scheduler
  
 -    public TickRegionScheduler(final int threads) {
 -        this.scheduler = new SchedulerThreadPool(threads, new ThreadFactory() {

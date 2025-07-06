@@ -1,6 +1,23 @@
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -114,19 +_,8 @@
+@@ -13,6 +_,8 @@
+ import com.mojang.jtracy.DiscontinuousFrame;
+ import com.mojang.jtracy.TracyClient;
+ import com.mojang.logging.LogUtils;
++import io.papermc.paper.threadedregions.RegionizedWorldData;
++import io.papermc.paper.threadedregions.TickRegions;
+ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+ import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+ import java.awt.image.BufferedImage;
+@@ -70,6 +_,7 @@
+ import net.minecraft.data.worldgen.features.MiscOverworldFeatures;
+ import net.minecraft.gametest.framework.GameTestTicker;
+ import net.minecraft.nbt.Tag;
++import net.minecraft.network.DisconnectionDetails;
+ import net.minecraft.network.chat.ChatDecorator;
+ import net.minecraft.network.chat.ChatType;
+ import net.minecraft.network.chat.Component;
+@@ -114,28 +_,19 @@
  import net.minecraft.util.debugchart.RemoteDebugSampleType;
  import net.minecraft.util.debugchart.SampleLogger;
  import net.minecraft.util.debugchart.TpsDebugDimensions;
@@ -20,6 +37,25 @@
  import net.minecraft.util.thread.ReentrantBlockableEventLoop;
  import net.minecraft.world.Difficulty;
  import net.minecraft.world.RandomSequences;
++import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.entity.ai.village.VillageSiege;
+ import net.minecraft.world.entity.npc.CatSpawner;
+ import net.minecraft.world.entity.npc.WanderingTraderSpawner;
+ import net.minecraft.world.entity.player.Player;
+ import net.minecraft.world.flag.FeatureFlagSet;
+ import net.minecraft.world.flag.FeatureFlags;
++import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.item.alchemy.PotionBrewing;
+ import net.minecraft.world.item.crafting.RecipeManager;
+ import net.minecraft.world.level.ChunkPos;
+@@ -171,6 +_,7 @@
+ import net.minecraft.world.level.storage.WorldData;
+ import net.minecraft.world.phys.Vec2;
+ import net.minecraft.world.phys.Vec3;
++import org.bukkit.event.inventory.InventoryCloseEvent;
+ import org.slf4j.Logger;
+ 
+ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTask> implements ServerInfo, ChunkIOErrorReporter, CommandSource, ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer { // Paper - rewrite chunk system
 @@ -199,13 +_,6 @@
      public LevelStorageSource.LevelStorageAccess storageSource;
      public final PlayerDataStorage playerDataStorage;
@@ -203,9 +239,60 @@
  
          // CraftBukkit start
          // Run tasks that are waiting on processing
-@@ -1816,57 +_,38 @@
+@@ -1795,6 +_,7 @@
+         // Send time updates to everyone, it will get the right time from the world the player is in.
+         // Paper start - Perf: Optimize time updates
+         for (final ServerLevel level : Arrays.asList(region.world)) { // Folia - region threading
++            if (region.world.isUnloading) continue; // Canvas - fix world loading/unloading
+             final boolean doDaylight = level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT);
+             final long dayTime = level.getDayTime();
+             long worldTime = level.getGameTime();
+@@ -1815,58 +_,81 @@
+ 
          //this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked // Folia - region threading
          for (ServerLevel serverLevel : Arrays.asList(region.world)) { // Folia - region threading
++            // Canvas start - fix world loading/unloading
++            if (serverLevel.isUnloading) {
++                // finish teleports
++                final ChunkPos center = region.region.getCenterChunk();
++                final List<ServerLevel.PendingTeleport> pendingTeleports = serverLevel.removeAllRegionTeleports();
++                if (!pendingTeleports.isEmpty()) {
++                    LOGGER.info("Completing " + pendingTeleports.size() + " pending teleports in region around chunk " + center + " in world '" + region.region.regioniser.world.getWorld().getName() + "'");
++                    for (final ServerLevel.PendingTeleport pendingTeleport : pendingTeleports) {
++                        LOGGER.info("Completing teleportation to target position " + pendingTeleport.to());
++
++                        // first, add entities to entity chunk so that they will be saved
++                        for (final Entity.EntityTreeNode node : pendingTeleport.rootVehicle().getFullTree()) {
++                            // assume that world and position are set to destination here
++                            node.root.setLevel(serverLevel); // in case the pending teleport is from a portal before it finds the exact destination
++                            serverLevel.moonrise$getEntityLookup().addEntityForShutdownTeleportComplete(node.root);
++                        }
++
++                        // then, rebuild the passenger tree so that when saving only the root vehicle will be written - and if
++                        // there are any player passengers, that the later player saving will save the tree
++                        pendingTeleport.rootVehicle().restore();
++
++                        // now we are finished
++                        LOGGER.info("Completed teleportation to target position " + pendingTeleport.to());
++                    }
++                }
++
++                if (!serverLevel.players().isEmpty()) {
++                    // a player was teleported into the world when finishing teleports, kick.
++                    for (final ServerPlayer localPlayer : serverLevel.getLocalPlayers()) {
++                        localPlayer.getBukkitEntity().kickPlayer("World unloading");
++                    }
++                }
++
++                LOGGER.info("Saving chunks around region around chunk " + center + " in world '" + region.region.regioniser.world.getWorld().getName() + "'");
++                region.region.regioniser.world.moonrise$getChunkTaskScheduler().chunkHolderManager.close(true, true, false, false, false);
++
++                LOGGER.info("Descheduling region around chunk " + center + " in world '" + region.region.regioniser.world.getWorld().getName() + "'");
++                TickRegions.getScheduler().descheduleRegion(region.getRegionSchedulingHandle());
++                region.markClosed();
++                continue;
++            }
++            // Canvas end
              // Folia - region threading
 -            profilerFiller.push(() -> serverLevel + " " + serverLevel.dimension().location());
              /* Drop global time updates
