@@ -3,6 +3,7 @@ package io.canvasmc.canvas.chunk;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
@@ -167,17 +168,43 @@ public class DynamicChunkPosLongSet implements Set<Long> {
 
     @Override
     public @NotNull Iterator<Long> iterator() {
-        throw new UnsupportedOperationException("iterators not allowed in DCPLS");
-    }
+        return new Iterator<>() {
+            private int index = 0;
+            private int lastReturnedIndex = -1;
 
-    @Override
-    public @NotNull Object @NotNull [] toArray() {
-        throw new UnsupportedOperationException("toArray not allowed in DCPLS");
-    }
+            private void advance() {
+                while (index < table.length && table[index] == EMPTY_KEY) {
+                    index++;
+                }
+            }
 
-    @Override
-    public @NotNull <T> T @NotNull [] toArray(@NotNull final T @NotNull [] a) {
-        throw new UnsupportedOperationException("toArray not allowed in DCPLS");
+            @Override
+            public boolean hasNext() {
+                advance();
+                return index < table.length;
+            }
+
+            @Override
+            public Long next() {
+                advance();
+                if (index >= table.length) {
+                    throw new NoSuchElementException();
+                }
+                lastReturnedIndex = index;
+                return table[index++];
+            }
+
+            @Override
+            public void remove() {
+                if (lastReturnedIndex < 0) {
+                    throw new IllegalStateException("remove() called before next()");
+                }
+                table[lastReturnedIndex] = EMPTY_KEY;
+                size--;
+                lastChecked = EMPTY_KEY;
+                lastReturnedIndex = -1;
+            }
+        };
     }
 
     @Override
@@ -196,26 +223,70 @@ public class DynamicChunkPosLongSet implements Set<Long> {
 
     @Override
     public boolean containsAll(@NotNull final Collection<?> c) {
-        throw new UnsupportedOperationException("containsAll not allowed in DCPLS");
+        for (Object o : c) {
+            if (!contains(o)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
     public boolean addAll(@NotNull final Collection<? extends Long> c) {
-        throw new UnsupportedOperationException("addAll not allowed in DCPLS");
+        boolean changed = false;
+        for (Long l : c) {
+            if (!contains(l)) {
+                add(l);
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     @Override
     public boolean retainAll(@NotNull final Collection<?> c) {
-        throw new UnsupportedOperationException("retainAll not allowed in DCPLS");
+        boolean changed = false;
+        for (int i = 0; i < table.length; i++) {
+            long key = table[i];
+            if (key != EMPTY_KEY && !c.contains(key)) {
+                table[i] = EMPTY_KEY;
+                size--;
+                changed = true;
+            }
+        }
+        lastChecked = EMPTY_KEY;
+        return changed;
     }
 
     @Override
     public boolean removeAll(@NotNull final Collection<?> c) {
-        throw new UnsupportedOperationException("removeAll not allowed in DCPLS");
+        boolean changed = false;
+        for (Object o : c) {
+            if (o instanceof Long l && containsLong(l)) {
+                remove(l);
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     @Override
     public void clear() {
-        throw new UnsupportedOperationException("clear not allowed in DCPLS");
+        Arrays.fill(this.table, EMPTY_KEY);
+        this.size = 0;
+        lastChecked = EMPTY_KEY;
     }
+
+    // unsupported
+
+    @Override
+    public @NotNull Object @NotNull [] toArray() {
+        throw new UnsupportedOperationException("toArray not allowed in DCPLS");
+    }
+
+    @Override
+    public @NotNull <T> T @NotNull [] toArray(@NotNull final T @NotNull [] a) {
+        throw new UnsupportedOperationException("toArray not allowed in DCPLS");
+    }
+
 }
