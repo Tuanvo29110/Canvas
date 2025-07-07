@@ -9,6 +9,15 @@
  import net.minecraft.world.entity.Entity;
  import net.minecraft.world.entity.Mob;
  import net.minecraft.world.entity.ai.attributes.Attributes;
+@@ -157,7 +_,7 @@
+ 
+     @Nullable
+     protected Path createPath(Set<BlockPos> targets, @Nullable Entity target, int regionOffset, boolean offsetUpward, int accuracy) {
+-        return this.createPath(targets, target, regionOffset, offsetUpward, accuracy, this.getMaxPathLength());
++        return this.createPath(targets, target, regionOffset, offsetUpward, accuracy, (float) this.mob.getAttributeValue(Attributes.FOLLOW_RANGE)); // Canvas - fix folia issues
+     }
+ 
+     @Nullable
 @@ -189,13 +_,10 @@
                  }
              }
@@ -23,3 +32,19 @@
              if (path != null && path.getTarget() != null) {
                  this.targetPos = path.getTarget();
                  this.reachRange = accuracy;
+@@ -300,7 +_,14 @@
+ 
+     protected double getGroundY(Vec3 vec) {
+         BlockPos blockPos = BlockPos.containing(vec);
+-        return this.level.getBlockState(blockPos.below()).isAir() ? vec.y : WalkNodeEvaluator.getFloorLevel(this.level, blockPos);
++        // Canvas start - fix folia issues
++        BlockPos belowPos = blockPos.below();
++
++        PathNavigationRegion pathRegion = new PathNavigationRegion(this.level, belowPos, blockPos);
++        BlockState blockState = pathRegion.getBlockState(belowPos);
++
++        return blockState.isAir() ? vec.y : WalkNodeEvaluator.getFloorLevel(this.level, blockPos);
++        // Canvas end
+     }
+ 
+     protected void followThePath() {

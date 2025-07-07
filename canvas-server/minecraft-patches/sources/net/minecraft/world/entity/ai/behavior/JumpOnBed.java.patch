@@ -1,0 +1,14 @@
+--- a/net/minecraft/world/entity/ai/behavior/JumpOnBed.java
++++ b/net/minecraft/world/entity/ai/behavior/JumpOnBed.java
+@@ -102,6 +_,11 @@
+     }
+ 
+     private boolean isBed(ServerLevel level, BlockPos pos) {
++        // Canvas start - fix folia issues
++        if (!level.hasChunkAt(pos)) {
++            return false;
++        }
++        // Canvas end
+         return level.getBlockState(pos).is(BlockTags.BEDS);
+     }
+ 
