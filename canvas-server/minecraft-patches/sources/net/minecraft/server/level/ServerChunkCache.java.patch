@@ -153,18 +153,24 @@
          boolean _boolean = this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && !this.level.getLocalPlayers().isEmpty(); // CraftBukkit // Folia - region threading
          int _int = this.level.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
          List<MobCategory> filteredSpawningCategories;
-@@ -607,35 +_,22 @@
-         List<LevelChunk> list = regionizedWorldData.temporaryChunkTickList; // Folia - region threading
+@@ -604,38 +_,25 @@
+             filteredSpawningCategories = List.of();
+         }
+ 
+-        List<LevelChunk> list = regionizedWorldData.temporaryChunkTickList; // Folia - region threading
++        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> list = this.level.getCurrentWorldData().getEntityTickingChunks(); // Canvas - optimize collect spawning chunks
  
          try {
 -            profiler.push("filteringSpawningChunks");
 -            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_SPAWN_COLLECT_CHUNKS); try { // Folia - profiler
-             this.chunkMap.collectSpawningChunks(list);
+-            this.chunkMap.collectSpawningChunks(list);
 -            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_SPAWN_COLLECT_CHUNKS); } // Folia - profiler
 -            profiler.popPush("shuffleSpawningChunks");
++            // this.chunkMap.collectSpawningChunks(list); // Canvas - optimize collect spawning chunks
              // Paper start - chunk tick iteration optimisation
              this.shuffleRandom.setSeed(this.level.random.nextLong());
-             if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled
+-            if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled
++            // if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled // Canvas - optimize collect spawning chunks
              // Paper end - chunk tick iteration optimisation
 -            profiler.popPush("tickSpawningChunks");
  
@@ -175,7 +181,8 @@
              }
 -            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.SPAWN_TICK); } // Folia - profiler
          } finally {
-             list.clear();
+-            list.clear();
++            // list.clear(); // Canvas - optimize collect spawning chunks
          }
  
 -        profiler.popPush("tickTickingChunks");
