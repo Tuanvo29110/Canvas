@@ -1,0 +1,19 @@
+--- a/net/minecraft/world/entity/projectile/DragonFireball.java
++++ b/net/minecraft/world/entity/projectile/DragonFireball.java
+@@ -31,6 +_,16 @@
+         if (result.getType() != HitResult.Type.ENTITY || !this.ownedBy(((EntityHitResult)result).getEntity())) {
+             if (!this.level().isClientSide) {
+                 List<LivingEntity> entitiesOfClass = this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(4.0, 2.0, 4.0));
++                // Canvas start - ensure entities are owned by this region
++                List<LivingEntity> safeEntities = new java.util.ArrayList<>();
++
++                for (LivingEntity entity : entitiesOfClass) {
++                    if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(entity)) {
++                        safeEntities.add(entity);
++                    }
++                }
++
++                // Canvas end
+                 AreaEffectCloud areaEffectCloud = new AreaEffectCloud(this.level(), this.getX(), this.getY(), this.getZ());
+                 Entity owner = this.getOwner();
+                 if (owner instanceof LivingEntity) {

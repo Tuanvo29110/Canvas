@@ -1,5 +1,13 @@
 --- a/io/papermc/paper/threadedregions/RegionizedServer.java
 +++ b/io/papermc/paper/threadedregions/RegionizedServer.java
+@@ -56,6 +_,7 @@
+ 
+     public void addWorld(final ServerLevel world) {
+         this.worlds.add(world);
++        world.updateTickData(); // Canvas - update tick data on world add
+     }
+ 
+     public void init() {
 @@ -65,7 +_,7 @@
          // now we can schedule
          this.tickHandle.setInitialStart(System.nanoTime() + TickRegionScheduler.TIME_BETWEEN_TICKS);
