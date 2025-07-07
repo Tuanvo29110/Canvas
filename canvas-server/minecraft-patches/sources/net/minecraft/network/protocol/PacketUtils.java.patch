@@ -11,12 +11,11 @@
                      } catch (Exception var4) {
                          if (var4 instanceof ReportedException reportedException && reportedException.getCause() instanceof OutOfMemoryError) {
                              throw makeReportedException(var4, packet, processor);
-@@ -50,7 +_,7 @@
+@@ -50,6 +_,7 @@
              };
              // ignore retired state, if removed then we don't want the packet to be handled
              if (processor instanceof net.minecraft.server.network.ServerGamePacketListenerImpl gamePacketListener) {
--                gamePacketListener.player.queuePacketTask(run);
-+                gamePacketListener.player.getBukkitEntity().addPacket(run); // Canvas - rewrite scheduler
++                // TODO - rewritten scheduler, reroute to CraftPlayer
+                 gamePacketListener.player.queuePacketTask(run);
              } else if (processor instanceof net.minecraft.server.network.ServerConfigurationPacketListenerImpl configurationPacketListener) {
                  io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(run);
-             } else if (processor instanceof net.minecraft.server.network.ServerLoginPacketListenerImpl loginPacketListener) {
