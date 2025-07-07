@@ -10,6 +10,17 @@
              }
              for (final Entity entity : from.allEntities) {
                  into.allEntities.add(entity);
+@@ -159,6 +_,10 @@
+             for (final ChunkHolder chunkHolder : from.chunkHoldersToBroadcast) {
+                 into.chunkHoldersToBroadcast.add(chunkHolder);
+             }
++            // Canvas start - optimize entity/block ticking chunk lookups
++            into.blockTickingChunkHolders.addAll(from.blockTickingChunkHolders);
++            into.entityTickingChunkHolders.addAll(from.entityTickingChunkHolders);
++            // Canvas end
+         }
+ 
+         @Override
 @@ -171,8 +_,12 @@
                  final ChunkPos pos = player.chunkPosition();
                  // Note: It is impossible for an entity in the world to _not_ be in an entity chunk, which means
@@ -33,6 +44,29 @@
                  into.nearbyPlayers.addPlayer(player);
              }
              for (final Entity entity : from.allEntities) {
+@@ -326,6 +_,22 @@
+                     into.chunkHoldersToBroadcast.add(chunkHolder);
+                 }
+             }
++            // Canvas start - optimize entity/block ticking chunk lookups
++            // we can just use 'regionToData' to find the chunk, since
++            // the long in this case *is* the chunk key
++            for (final long chunkKey : from.blockTickingChunkHolders) {
++                RegionizedWorldData worldData = regionToData.get(chunkKey);
++                if (worldData != null) {
++                    worldData.blockTickingChunkHolders.add(chunkKey);
++                }
++            }
++            for (final long chunkKey : from.entityTickingChunkHolders) {
++                RegionizedWorldData worldData = regionToData.get(chunkKey);
++                if (worldData != null) {
++                    worldData.entityTickingChunkHolders.add(chunkKey);
++                }
++            }
++            // Canvas end
+         }
+     };
+ 
 @@ -348,7 +_,8 @@
      }
  
@@ -43,7 +77,7 @@
      private final NearbyPlayers nearbyPlayers;
      public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList();
      private final ReferenceList<Entity> allEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
-@@ -447,7 +_,11 @@
+@@ -447,7 +_,34 @@
      public final alternate.current.wire.WireHandler wireHandler;
      public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
  
@@ -52,6 +86,29 @@
 +    public final ApiHandle apiHandle = new ApiHandle(this); // Canvas - expand region api
 +    public final net.minecraft.server.waypoints.ServerWaypointManager waypointManager = new net.minecraft.server.waypoints.ServerWaypointManager(); // Canvas - region threading - restore waypoints
 +
++    // Canvas start - optimize entity/block ticking chunk lookups
++    // if there's lots of chunks loaded, we don't want to search through that map to find block
++    // ticking holders or entity ticking holders, so we cache the ones that are valid to limit the search.
++    // the DynamicChunkPosLongSet is the fastest option for 'contains' operations(via tests conducted in V2)
++    public final Set<Long> blockTickingChunkHolders = new io.canvasmc.canvas.chunk.DynamicChunkPosLongSet();
++    public final Set<Long> entityTickingChunkHolders = new io.canvasmc.canvas.chunk.DynamicChunkPosLongSet();
++
++    public void markBlockTicking(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
++        this.blockTickingChunkHolders.add(newChunkHolder.getCachedLongPos());
++    }
++
++    public void markNonBlockTickingIfPossible(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
++        this.blockTickingChunkHolders.remove(newChunkHolder.getCachedLongPos());
++    }
++
++    public void markEntityTicking(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
++        this.entityTickingChunkHolders.add(newChunkHolder.getCachedLongPos());
++    }
++
++    public void markNonEntityTickingIfPossible(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
++        this.entityTickingChunkHolders.remove(newChunkHolder.getCachedLongPos());
++    }
++    // Canvas end
 +    public RegionizedWorldData(final ServerLevel world, final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData) { // Canvas - rewrite scheduler
          this.world = world;
          this.blockLevelTicks = new LevelTicks<>(world::isPositionTickingWithEntitiesLoaded, world, true);
