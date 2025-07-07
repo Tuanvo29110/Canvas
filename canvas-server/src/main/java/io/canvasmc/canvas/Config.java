@@ -31,6 +31,15 @@ public class Config {
         public int threadPoolPriority = Thread.NORM_PRIORITY;
     }
 
+    public Networking networking = new Networking();
+    public static class Networking {
+        @Comment(value = {
+            "The clientbound set entity motion packet can often cause high network (Netty) usage and consumes (on larger production servers)",
+            "up to 60% of your network usage. Disabling this has minimal side effects, such as squids and glow squids swimming upright until attacked."
+        })
+        public boolean disableClientboundSetEntityMotionPacket = false;
+    }
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

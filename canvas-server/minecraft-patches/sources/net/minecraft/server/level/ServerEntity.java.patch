@@ -1,0 +1,11 @@
+--- a/net/minecraft/server/level/ServerEntity.java
++++ b/net/minecraft/server/level/ServerEntity.java
+@@ -222,7 +_,7 @@
+                                         )
+                                     )
+                                 );
+-                        } else {
++                        } else if (!io.canvasmc.canvas.Config.INSTANCE.networking.disableClientboundSetEntityMotionPacket) { // Canvas - allow disabling set entity motion packet
+                             this.broadcast.accept(new ClientboundSetEntityMotionPacket(this.entity.getId(), this.lastSentMovement));
+                         }
+                     }

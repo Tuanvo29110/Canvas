@@ -26,9 +26,9 @@ public class SetMaxPlayersCommand {
                         setMaxPlayers(newSize, false);
                         context.getSource().sendSystemMessage(Component.literal("Set max player count to ").append(Component.literal("" + newSize).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA))));
                         return 1;
-                    }).then(argument("save", BoolArgumentType.bool()).executes(context -> {
+                    }).then(argument("persist", BoolArgumentType.bool()).executes(context -> {
                         final Integer newSize = context.getArgument("count", Integer.class);
-                        setMaxPlayers(newSize, BoolArgumentType.getBool(context, "save"));
+                        setMaxPlayers(newSize, BoolArgumentType.getBool(context, "persist"));
                         context.getSource().sendSystemMessage(Component.literal("Set max player count to ").append(Component.literal("" + newSize).setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA))));
                         return 1;
                     }))
