@@ -1,5 +1,14 @@
 --- a/folia-server/build.gradle.kts
 +++ b/folia-server/build.gradle.kts
+@@ -10,7 +_,7 @@
+     `java-library`
+     `maven-publish`
+     idea
+-    id("io.papermc.paperweight.core")
++    id("io.canvasmc.weaver.core")
+     id("io.papermc.fill.gradle") version "1.0.3"
+ }
+ 
 @@ -27,6 +_,7 @@
      gitFilePatches = false
      

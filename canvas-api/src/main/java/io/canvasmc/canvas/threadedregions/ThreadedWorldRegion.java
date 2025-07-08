@@ -15,7 +15,7 @@ public interface ThreadedWorldRegion {
 
     /**
      * Get the dead section percent of this tick region
-     * Note: </br>
+     * Note: <br>
      * 1.Dead percent is mean the percent of the unloaded chunk count of this tick region, which is also used for determine
      * that the tick region should or not check for splitting
      *
