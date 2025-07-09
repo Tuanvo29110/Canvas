@@ -1,41 +1,6 @@
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
-@@ -26,8 +_,6 @@
- import net.minecraft.server.MinecraftServer;
- import net.minecraft.server.level.progress.ChunkProgressListener;
- import net.minecraft.util.VisibleForDebug;
--import net.minecraft.util.profiling.Profiler;
--import net.minecraft.util.profiling.ProfilerFiller;
- import net.minecraft.util.thread.BlockableEventLoop;
- import net.minecraft.world.entity.Entity;
- import net.minecraft.world.entity.MobCategory;
-@@ -159,8 +_,6 @@
-     // Paper start - chunk tick iteration optimisations
-     private final ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom shuffleRandom = new ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom(0L);
-     private void iterateTickingChunksFaster() {
--        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle foliaProfiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
--        foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.RANDOM_TICK); try { // Folia - profiler
-         final ServerLevel world = this.level;
-         final int randomTickSpeed = world.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
- 
-@@ -172,7 +_,7 @@
-         // 1. we do not care about new additions
-         // 2. _removes_ are impossible at this stage in the tick
-         final LevelChunk[] raw = entityTickingChunks.getRawDataUnchecked();
--        final int size = entityTickingChunks.size(); foliaProfiler.addCounter(ca.spottedleaf.leafprofiler.LProfilerRegistry.RANDOM_CHUNK_TICK_COUNT, (long)size); // Folia - profiler
-+        final int size = entityTickingChunks.size();
- 
-         java.util.Objects.checkFromToIndex(0, size, raw.length);
-         for (int i = 0; i < size; ++i) {
-@@ -184,7 +_,6 @@
-                 continue;
-             }
-         }
--        } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.RANDOM_TICK); } // Folia - profiler
-     }
-     // Paper end - chunk tick iteration optimisations
- 
-@@ -450,10 +_,7 @@
+@@ -445,10 +_,7 @@
      }
  
      public boolean isPositionTicking(long chunkPos) {
@@ -47,160 +12,28 @@
      }
  
      public void save(boolean flush) {
-@@ -477,72 +_,47 @@
-     // CraftBukkit start - modelled on below
-     public void purgeUnload() {
-         if (true) return; // Paper - rewrite chunk system
--        ProfilerFiller gameprofilerfiller = Profiler.get();
- 
--        gameprofilerfiller.push("purge");
-         this.ticketStorage.purgeStaleTickets(this.chunkMap);
-         this.runDistanceManagerUpdates();
--        gameprofilerfiller.popPush("unload");
-         this.chunkMap.tick(() -> true);
--        gameprofilerfiller.pop();
-         this.clearCache();
-     }
-     // CraftBukkit end
- 
-     @Override
-     public void tick(BooleanSupplier hasTimeLeft, boolean tickChunks) {
--        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle foliaProfiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
--        ProfilerFiller profilerFiller = Profiler.get();
--        profilerFiller.push("purge");
--        foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_HOLDER_MANAGER_TICK); try { // Folia - profiler
-         if (this.level.tickRateManager().runsNormally() || !tickChunks || this.level.spigotConfig.unloadFrozenChunks) { // Spigot
-             this.ticketStorage.purgeStaleTickets(this.chunkMap);
-         }
- 
-         this.runDistanceManagerUpdates();
--        } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_HOLDER_MANAGER_TICK); } // Folia - profiler
--        profilerFiller.popPush("chunks");
-         if (tickChunks) {
--            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.PLAYER_CHUNK_LOADER_TICK); try { // Folia - profiler
-             ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getPlayerChunkLoader().tick(); // Paper - rewrite chunk system
--            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.PLAYER_CHUNK_LOADER_TICK); } // Folia - profiler
--            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_TICK); try { // Folia - profiler
-             this.tickChunks();
--            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_TICK); } // Folia - profiler
-             this.chunkMap.tick();
-         }
- 
--        profilerFiller.popPush("unload");
-         this.chunkMap.tick(hasTimeLeft);
--        profilerFiller.pop();
-         this.clearCache();
-     }
- 
-     private void tickChunks() {
-         io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.level.getCurrentWorldData(); // Folia - region threading
--        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle foliaProfiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
-         //long gameTime = this.level.getGameTime(); // Folia - region threading
-         long l = 1L; // Folia - region threading
-         //this.lastInhabitedUpdate = gameTime; // Folia - region threading
-         if (!this.level.isDebug()) {
--            ProfilerFiller profilerFiller = Profiler.get();
--            profilerFiller.push("pollingChunks");
-             if (this.level.tickRateManager().runsNormally()) {
--                profilerFiller.push("tickingChunks");
--                this.tickChunks(profilerFiller, l);
--                profilerFiller.pop();
-+                this.tickChunks(l);
-             }
- 
--            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.BROADCAST_BLOCK_CHANGES); try { // Folia - profiler
--            this.broadcastChangedChunks(profilerFiller);
--            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.BROADCAST_BLOCK_CHANGES); } // Folia - profiler
--            profilerFiller.pop();
-+            this.broadcastChangedChunks();
-         }
-     }
- 
--    private void broadcastChangedChunks(ProfilerFiller profiler) {
-+    private void broadcastChangedChunks() {
-         io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.level.getCurrentWorldData(); // Folia - region threading
--        profiler.push("broadcast");
- 
-         for (ChunkHolder chunkHolder : regionizedWorldData.chunkHoldersToBroadcast) { // Folia - region threading - note: do not need to thread check, as getChunkToSend is only non-null when the chunkholder is loaded
-             LevelChunk tickingChunk = chunkHolder.getChunkToSend(); // Paper - rewrite chunk system
-@@ -552,17 +_,13 @@
-         }
- 
-         regionizedWorldData.chunkHoldersToBroadcast.clear(); // Folia - region threading
--        profiler.pop();
-     }
- 
--    private void tickChunks(ProfilerFiller profiler, long timeInhabited) {
-+    private void tickChunks(long timeInhabited) {
-         io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.level.getCurrentWorldData(); // Folia - region threadin
--        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle foliaProfiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
--        profiler.popPush("naturalSpawnCount");
-         int naturalSpawnChunkCount = this.distanceManager.getNaturalSpawnChunkCount();
-         // Paper start - Optional per player mob spawns
-         NaturalSpawner.SpawnState spawnState;
--        foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.MOB_SPAWN_ENTITY_COUNT); try { // Folia - profiler
-         if ((this.spawnFriendlies || this.spawnEnemies) && this.level.paperConfig().entities.spawning.perPlayerMobSpawns) { // don't count mobs when animals and monsters are disabled
-             // re-set mob counts
-             for (ServerPlayer player : this.level.getLocalPlayers()) { // Folia - region threading
-@@ -582,10 +_,8 @@
-         } else {
-             spawnState = NaturalSpawner.createState(naturalSpawnChunkCount, regionizedWorldData.getLoadedEntities(), this::getFullChunk, !this.level.paperConfig().entities.spawning.perPlayerMobSpawns ? new LocalMobCapCalculator(this.chunkMap) : null, false); // Folia - region threading - note: function only cares about loaded entities, doesn't need all
-         }
--        } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.MOB_SPAWN_ENTITY_COUNT); } // Folia - profiler
-         // Paper end - Optional per player mob spawns
-         regionizedWorldData.lastSpawnState = spawnState; // Folia - region threading
--        profiler.popPush("spawnAndTick");
-         boolean _boolean = this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && !this.level.getLocalPlayers().isEmpty(); // CraftBukkit // Folia - region threading
-         int _int = this.level.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
-         List<MobCategory> filteredSpawningCategories;
-@@ -604,38 +_,25 @@
+@@ -568,20 +_,20 @@
              filteredSpawningCategories = List.of();
          }
  
 -        List<LevelChunk> list = regionizedWorldData.temporaryChunkTickList; // Folia - region threading
-+        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> list = this.level.getCurrentWorldData().getEntityTickingChunks(); // Canvas - optimize collect spawning chunks
++        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> list = this.level.getCurrentWorldData().getEntityTickingChunks(); // Folia - region threading // Canvas - optimize collect spawning chunks
  
          try {
--            profiler.push("filteringSpawningChunks");
--            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_SPAWN_COLLECT_CHUNKS); try { // Folia - profiler
 -            this.chunkMap.collectSpawningChunks(list);
--            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_SPAWN_COLLECT_CHUNKS); } // Folia - profiler
--            profiler.popPush("shuffleSpawningChunks");
 +            // this.chunkMap.collectSpawningChunks(list); // Canvas - optimize collect spawning chunks
              // Paper start - chunk tick iteration optimisation
              this.shuffleRandom.setSeed(this.level.random.nextLong());
 -            if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled
 +            // if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled // Canvas - optimize collect spawning chunks
              // Paper end - chunk tick iteration optimisation
--            profiler.popPush("tickSpawningChunks");
  
--            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.SPAWN_TICK); try { // Folia - profiler
--            foliaProfiler.addCounter(ca.spottedleaf.leafprofiler.LProfilerRegistry.SPAWN_CHUNK_COUNT, (long)list.size()); // Folia - profiler
              for (LevelChunk levelChunk : list) {
                  this.tickSpawningChunk(levelChunk, timeInhabited, filteredSpawningCategories, spawnState);
              }
--            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.SPAWN_TICK); } // Folia - profiler
          } finally {
 -            list.clear();
 +            // list.clear(); // Canvas - optimize collect spawning chunks
          }
  
--        profiler.popPush("tickTickingChunks");
          this.iterateTickingChunksFaster(); // Paper - chunk tick iteration optimisations
--        profiler.pop();
--        profiler.popPush("customSpawners");
-         if (_boolean) {
--            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.MISC_MOB_SPAWN_TICK); try { // Folia - profiler
-             this.level.tickCustomSpawners(this.spawnEnemies, this.spawnFriendlies);
--            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.MISC_MOB_SPAWN_TICK); } // Folia - profiler
-         }
-     }
- 
-@@ -902,7 +_,6 @@
-         @Override
-         protected void doRunTask(Runnable task) {
-             if (true) throw new UnsupportedOperationException(); // Folia - region threading
--            Profiler.get().incrementCounter("runTask");
-             super.doRunTask(task);
-         }
- 

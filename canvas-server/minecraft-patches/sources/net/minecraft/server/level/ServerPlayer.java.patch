@@ -1,15 +1,6 @@
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -106,8 +_,6 @@
- import net.minecraft.util.Mth;
- import net.minecraft.util.RandomSource;
- import net.minecraft.util.Unit;
--import net.minecraft.util.profiling.Profiler;
--import net.minecraft.util.profiling.ProfilerFiller;
- import net.minecraft.world.Container;
- import net.minecraft.world.Difficulty;
- import net.minecraft.world.InteractionHand;
-@@ -1567,6 +_,7 @@
+@@ -1565,6 +_,7 @@
          }
          // must be manually removed from connections, delay until after reset() so that we do not trip any thread checks
          this.level().getCurrentWorldData().connections.remove(this.connection.connection);
@@ -17,7 +8,7 @@
  
          ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> spawnPosComplete =
              new ca.spottedleaf.concurrentutil.completable.CallbackCompletable<>();
-@@ -1678,6 +_,7 @@
+@@ -1676,6 +_,7 @@
      protected ServerPlayer transformForAsyncTeleport(ServerLevel destination, Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
          // must be manually removed from connections
          this.level().getCurrentWorldData().connections.remove(this.connection.connection);
@@ -25,7 +16,7 @@
          this.level().removePlayerImmediately(this, Entity.RemovalReason.CHANGED_DIMENSION);
  
          this.spawnIn(destination);
-@@ -1700,6 +_,7 @@
+@@ -1698,6 +_,7 @@
  
              // must be manually added to connections
              this.level().getCurrentWorldData().connections.add(this.connection.connection);
@@ -33,7 +24,7 @@
  
              // required to set up the pending teleport stuff to the client, and to actually update
              // the player's position clientside
-@@ -1753,6 +_,7 @@
+@@ -1751,6 +_,7 @@
  
              // must be manually added to connections
              this.level().getCurrentWorldData().connections.add(this.connection.connection);
@@ -41,26 +32,3 @@
  
              // required to set up the pending teleport stuff to the client, and to actually update
              // the player's position clientside
-@@ -1893,14 +_,10 @@
-                 this.unsetRemoved();
-                 */
-                 // CraftBukkit end
--                ProfilerFiller profilerFiller = Profiler.get();
--                profilerFiller.push("moving");
-                 if (level != null && resourceKey == net.minecraft.world.level.dimension.LevelStem.OVERWORLD && level.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER) { // CraftBukkit - empty to fall through to null to event
-                     this.enteredNetherPosition = this.position();
-                 }
- 
--                profilerFiller.pop();
--                profilerFiller.push("placing");
-                 // CraftBukkit start
-                 this.isChangingDimension = true; // CraftBukkit - Set teleport invulnerability only if player changing worlds
-                 LevelData worlddata = level.getLevelData();
-@@ -1917,7 +_,6 @@
-                 this.connection.internalTeleport(PositionMoveRotation.of(teleportTransition), teleportTransition.relatives()); // CraftBukkit - use internal teleport without event
-                 this.connection.resetPosition();
-                 level.addDuringTeleport(this);
--                profilerFiller.pop();
-                 this.triggerDimensionChangeTriggers(serverLevel);
-                 this.stopUsingItem();
-                 this.connection.send(new ClientboundPlayerAbilitiesPacket(this.getAbilities()));

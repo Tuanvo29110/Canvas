@@ -12,7 +12,6 @@ Only Versions for MC 1.21.7 and onwards will be supported!
 ## The current TODOs for the rewrite, are:
 
 ```
-- upstream Leaf -- need new tooling, after tooling is built I(Dueris) will handle this
 - fix events(respawn, teleport events, etc)
 - fix more folia commands
 - fix scoreboard api

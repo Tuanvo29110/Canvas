@@ -1,22 +1,6 @@
 --- a/net/minecraft/commands/Commands.java
 +++ b/net/minecraft/commands/Commands.java
-@@ -58,7 +_,6 @@
- import net.minecraft.server.commands.DamageCommand;
- import net.minecraft.server.commands.DataPackCommand;
- import net.minecraft.server.commands.DeOpCommands;
--import net.minecraft.server.commands.DebugCommand;
- import net.minecraft.server.commands.DebugConfigCommand;
- import net.minecraft.server.commands.DebugMobSpawningCommand;
- import net.minecraft.server.commands.DebugPathCommand;
-@@ -139,7 +_,6 @@
- import net.minecraft.server.commands.data.DataCommands;
- import net.minecraft.server.level.ServerPlayer;
- import net.minecraft.tags.TagKey;
--import net.minecraft.util.profiling.Profiler;
- import net.minecraft.util.profiling.jfr.JvmProfiler;
- import net.minecraft.world.flag.FeatureFlagSet;
- import net.minecraft.world.flag.FeatureFlags;
-@@ -185,7 +_,7 @@
+@@ -183,7 +_,7 @@
          AdvancementCommands.register(this.dispatcher);
          AttributeCommand.register(this.dispatcher, context);
          ExecuteCommand.register(this.dispatcher, context);
@@ -25,7 +9,7 @@
          ClearInventoryCommands.register(this.dispatcher, context);
          //CloneCommands.register(this.dispatcher, context); // Folia - region threading - TODO
          DamageCommand.register(this.dispatcher, context);
-@@ -193,7 +_,7 @@
+@@ -191,7 +_,7 @@
          //DataPackCommand.register(this.dispatcher, context); // Folia - region threading - TODO
          //DebugCommand.register(this.dispatcher); // Folia - region threading - TODO
          DefaultGameModeCommands.register(this.dispatcher);
@@ -34,7 +18,7 @@
          DifficultyCommand.register(this.dispatcher);
          EffectCommands.register(this.dispatcher, context);
          EmoteCommands.register(this.dispatcher);
-@@ -212,7 +_,7 @@
+@@ -210,7 +_,7 @@
          KillCommand.register(this.dispatcher);
          ListPlayersCommand.register(this.dispatcher);
          LocateCommand.register(this.dispatcher, context);
@@ -43,7 +27,7 @@
          MsgCommand.register(this.dispatcher);
          ParticleCommand.register(this.dispatcher, context);
          PlaceCommand.register(this.dispatcher);
-@@ -221,8 +_,8 @@
+@@ -219,8 +_,8 @@
          //ReloadCommand.register(this.dispatcher); // Folia - region threading
          RecipeCommand.register(this.dispatcher);
          //ReturnCommand.register(this.dispatcher); // Folia - region threading - TODO later
@@ -54,7 +38,7 @@
          SayCommand.register(this.dispatcher);
          //ScheduleCommand.register(this.dispatcher); // Folia - region threading
          //ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading
-@@ -231,11 +_,11 @@
+@@ -229,11 +_,11 @@
          SetBlockCommand.register(this.dispatcher, context);
          SetSpawnCommand.register(this.dispatcher);
          SetWorldSpawnCommand.register(this.dispatcher);
@@ -69,7 +53,7 @@
          //TeamCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
          //TeamMsgCommand.register(this.dispatcher); // Folia - region threading - TODO later
          TeleportCommand.register(this.dispatcher);
-@@ -245,9 +_,10 @@
+@@ -243,9 +_,10 @@
          TimeCommand.register(this.dispatcher);
          TitleCommand.register(this.dispatcher, context);
          //TriggerCommand.register(this.dispatcher); // Folia - region threading - TODO later
@@ -81,29 +65,3 @@
          if (JvmProfiler.INSTANCE.isAvailable()) {
              JfrCommand.register(this.dispatcher);
          }
-@@ -349,7 +_,6 @@
-         org.spigotmc.AsyncCatcher.catchOp("Cannot perform command async");
-         // Paper end
-         CommandSourceStack commandSourceStack = parseResults.getContext().getSource();
--        Profiler.get().push(() -> "/" + command);
-         ContextChain<CommandSourceStack> contextChain = finishParsing(parseResults, command, commandSourceStack);
- 
-         try {
-@@ -387,8 +_,6 @@
-                 commandSourceStack.sendFailure(Component.literal(Util.describeError(var12)));
-                 LOGGER.error("'/{}' threw an exception", command, var12);
-             }
--        } finally {
--            Profiler.get().pop();
-         }
-     }
- 
-@@ -445,7 +_,7 @@
-             int max = Math.max(1, server.getGameRules().getInt(GameRules.RULE_MAX_COMMAND_CHAIN_LENGTH));
-             int _int = server.getGameRules().getInt(GameRules.RULE_MAX_COMMAND_FORK_COUNT);
- 
--            try (ExecutionContext<CommandSourceStack> executionContext1 = new ExecutionContext<>(max, _int, Profiler.get())) {
-+            try (ExecutionContext<CommandSourceStack> executionContext1 = new ExecutionContext<>(max, _int)) {
-                 CURRENT_EXECUTION_CONTEXT.set(executionContext1);
-                 contextConsumer.accept(executionContext1);
-                 executionContext1.runCommandQueue();

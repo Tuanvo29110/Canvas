@@ -1,15 +1,6 @@
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -80,8 +_,6 @@
- import net.minecraft.util.Mth;
- import net.minecraft.util.ProblemReporter;
- import net.minecraft.util.RandomSource;
--import net.minecraft.util.profiling.Profiler;
--import net.minecraft.util.profiling.ProfilerFiller;
- import net.minecraft.world.InteractionHand;
- import net.minecraft.world.InteractionResult;
- import net.minecraft.world.Nameable;
-@@ -318,7 +_,7 @@
+@@ -316,7 +_,7 @@
      protected UUID uuid = Mth.createInsecureUUID(this.random);
      protected String stringUUID = this.uuid.toString();
      private boolean hasGlowingTag;
@@ -17,83 +8,8 @@
 +    private final Set<String> tags = new io.papermc.paper.util.SizeLimitedSet<>(it.unimi.dsi.fastutil.objects.ObjectSets.synchronize(new it.unimi.dsi.fastutil.objects.ObjectOpenHashSet<>()), MAX_ENTITY_TAG_COUNT); // Paper - fully limit tag size - replace set impl // Canvas - fix commands with region threading
      private final double[] pistonDeltas = new double[]{0.0, 0.0, 0.0};
      private long pistonDeltasGameTime = Long.MIN_VALUE; // Folia - region threading
-     private EntityDimensions dimensions;
-@@ -857,8 +_,6 @@
-     // CraftBukkit end
- 
-     public void baseTick() {
--        ProfilerFiller profilerFiller = Profiler.get();
--        profilerFiller.push("entityBaseTick");
-         if (firstTick && this instanceof net.minecraft.world.entity.NeutralMob neutralMob) neutralMob.tickInitialPersistentAnger(level); // Paper - Prevent entity loading causing async lookups
-         this.inBlockState = null;
-         if (this.isPassenger() && this.getVehicle().isRemoved()) {
-@@ -912,8 +_,6 @@
-         if (this.level() instanceof ServerLevel serverLevelx && this instanceof Leashable) {
-             Leashable.tickLeash(serverLevelx, (Entity & Leashable)this);
-         }
--
--        profilerFiller.pop();
-     }
- 
-     public void setSharedFlagOnFire(boolean isOnFire) {
-@@ -1133,8 +_,6 @@
-                 }
-             }
- 
--            ProfilerFiller profilerFiller = Profiler.get();
--            profilerFiller.push("move");
-             if (this.stuckSpeedMultiplier.lengthSqr() > 1.0E-7) {
-                 movement = movement.multiply(this.stuckSpeedMultiplier);
-                 this.stuckSpeedMultiplier = Vec3.ZERO;
-@@ -1143,7 +_,6 @@
-             // Paper start - ignore movement changes while inactive.
-             if (isTemporarilyActive && !(this instanceof ItemEntity) && movement == getDeltaMovement() && type == MoverType.SELF) {
-                 setDeltaMovement(Vec3.ZERO);
--                profilerFiller.pop();
-                 return;
-             }
-             // Paper end
-@@ -1168,8 +_,6 @@
-                 this.setPos(vec32);
-             }
- 
--            profilerFiller.pop();
--            profilerFiller.push("rest");
-             boolean flag = !Mth.equal(movement.x, vec3.x);
-             boolean flag1 = !Mth.equal(movement.z, vec3.z);
-             this.horizontalCollision = flag || flag1;
-@@ -1192,7 +_,6 @@
-             }
- 
-             if (this.isRemoved()) {
--                profilerFiller.pop();
-             } else {
-                 if (this.horizontalCollision) {
-                     Vec3 deltaMovement = this.getDeltaMovement();
-@@ -1236,7 +_,6 @@
- 
-                 float blockSpeedFactor = this.getBlockSpeedFactor();
-                 this.setDeltaMovement(this.getDeltaMovement().multiply(blockSpeedFactor, 1.0, blockSpeedFactor));
--                profilerFiller.pop();
-             }
-         }
-         // Paper start - detailed watchdog information
-@@ -3427,14 +_,11 @@
-             this.processPortalCooldown();
-             if (this.portalProcess != null) {
-                 if (this.portalProcess.processPortalTeleportation(serverLevel, this, this.canUsePortal(false))) {
--                    ProfilerFiller profilerFiller = Profiler.get();
--                    profilerFiller.push("portal");
-                     this.setPortalCooldown();
-                     // Folia start - region threading
-                     try {
-                         return this.portalProcess.portalAsync(serverLevel, this);
-                     } finally {
--                        profilerFiller.pop();
-                     }
-                     // Folia end - region threading
-                 } else if (this.portalProcess.hasExpired()) {
-@@ -4358,6 +_,7 @@
+     protected EntityDimensions dimensions;
+@@ -4342,6 +_,7 @@
          EntityTreeNode passengerTree = this.detachPassengers();
          List<EntityTreeNode> fullPassengerTree = passengerTree.getFullTree();
          ServerLevel originWorld = (ServerLevel)this.level;
@@ -101,47 +17,11 @@
  
          for (EntityTreeNode node : fullPassengerTree) {
              node.root.preChangeDimension();
-@@ -4622,6 +_,7 @@
+@@ -4606,6 +_,7 @@
                  }
              }
          }
 +        if (to.isUnloading) return false; // Canvas - fix world loading/unloading
  
          return true;
-     }
-@@ -4797,15 +_,12 @@
-             entity.teleport(this.calculatePassengerTransition(teleportTransition, entity));
-         }
- 
--        ProfilerFiller profilerFiller = Profiler.get();
--        profilerFiller.push("teleportSameDimension");
-         this.teleportSetPosition(PositionMoveRotation.of(teleportTransition), teleportTransition.relatives());
-         if (!teleportTransition.asPassenger()) {
-             this.sendTeleportTransitionToRidingPlayers(teleportTransition);
-         }
- 
-         teleportTransition.postTeleportTransition().onTransition(this);
--        profilerFiller.pop();
-         return this;
-     }
- 
-@@ -4821,11 +_,8 @@
-             }
-         }
- 
--        ProfilerFiller profilerFiller = Profiler.get();
--        profilerFiller.push("teleportCrossDimension");
-         Entity entityx = this.getType().create(newLevel, EntitySpawnReason.DIMENSION_TRAVEL);
-         if (entityx == null) {
--            profilerFiller.pop();
-             return null;
-         } else {
-             // Paper start - Fix item duplication and teleport issues
-@@ -4845,7 +_,6 @@
-             newLevel.resetEmptyTime();
-             teleportTransition.postTeleportTransition().onTransition(entityx);
-             this.teleportSpectators(teleportTransition, oldLevel);
--            profilerFiller.pop();
-             return entityx;
-         }
      }

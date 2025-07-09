@@ -1,15 +1,6 @@
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -75,8 +_,6 @@
- import net.minecraft.util.ProgressListener;
- import net.minecraft.util.RandomSource;
- import net.minecraft.util.datafix.DataFixTypes;
--import net.minecraft.util.profiling.Profiler;
--import net.minecraft.util.profiling.ProfilerFiller;
- import net.minecraft.util.valueproviders.IntProvider;
- import net.minecraft.util.valueproviders.UniformInt;
- import net.minecraft.world.DifficultyInstance;
-@@ -656,6 +_,7 @@
+@@ -654,6 +_,7 @@
      public static final int WORLD_INIT_CHECKED = 2;
      public final java.util.concurrent.atomic.AtomicInteger checkInitialised = new java.util.concurrent.atomic.AtomicInteger(WORLD_INIT_NOT_CHECKED);
      public ChunkPos randomSpawnSelection;
@@ -17,127 +8,7 @@
  
      public static final record PendingTeleport(Entity.EntityTreeNode rootVehicle, Vec3 to) {}
      private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<PendingTeleport> pendingTeleports = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
-@@ -727,17 +_,12 @@
- 
-     public void tick(BooleanSupplier hasTimeLeft, io.papermc.paper.threadedregions.TickRegions.TickRegionData region) { // Folia - regionised ticking
-         final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.getCurrentWorldData(); // Folia - regionised ticking
--        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
--        ProfilerFiller profilerFiller = Profiler.get();
-         regionizedWorldData.setHandlingTick(true); // Folia - regionised ticking
-         TickRateManager tickRateManager = this.tickRateManager();
-         boolean runsNormally = tickRateManager.runsNormally();
-         if (runsNormally) {
--            profilerFiller.push("world border");
-             //this.getWorldBorder().tick(); // Folia - regionised ticking
--            profilerFiller.popPush("weather");
-             //this.advanceWeatherCycle(); // Folia - regionised ticking
--            profilerFiller.pop();
-         }
- 
-         this.tickSleep(); // Folia - region threading - move into tickSleep
-@@ -747,53 +_,31 @@
-             this.tickTime();
-         }
- 
--        profilerFiller.push("tickPending");
-         if (!this.isDebug() && runsNormally) {
-             long l = regionizedWorldData.getRedstoneGameTime(); // Folia - region threading
--            profilerFiller.push("blockTicks");
--            profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.BLOCK_TICK); try { // Folia - profiler
-             regionizedWorldData.getBlockLevelTicks().tick(l, paperConfig().environment.maxBlockTicks, this::tickBlock); // Paper - configurable max block ticks // Folia - region ticking
--            } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.BLOCK_TICK); } // Folia - profiler
--            profilerFiller.popPush("fluidTicks");
--            profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.FLUID_TICK); try { // Folia - profiler
-             regionizedWorldData.getFluidLevelTicks().tick(l, paperConfig().environment.maxFluidTicks, this::tickFluid); // Paper - configurable max fluid ticks // Folia - region ticking
--            } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.FLUID_TICK); } // Folia - profiler
--            profilerFiller.pop();
-         }
- 
--        profilerFiller.popPush("raid");
-         if (runsNormally) {
--            profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.RAIDS_TICK); try { // Folia - profiler
-             this.raids.tick(this);
--            } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.RAIDS_TICK); } // Folia - profiler
-         }
- 
--        profilerFiller.popPush("chunkSource");
--        profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_PROVIDER_TICK); try { // Folia - profiler
-         this.getChunkSource().tick(hasTimeLeft, true);
--        } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_PROVIDER_TICK); } // Folia - profiler
--        profilerFiller.popPush("blockEvents");
-         if (runsNormally) {
--            profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.BLOCK_EVENT_TICK); try { // Folia - profiler
-             this.runBlockEvents();
--            } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.BLOCK_EVENT_TICK); } // Folia - profiler
-         }
- 
-         regionizedWorldData.setHandlingTick(false); // Folia - regionised ticking
--        profilerFiller.pop();
-         boolean flag = true || !paperConfig().unsupportedSettings.disableWorldTickingWhenEmpty || !this.players.isEmpty() || !this.getForceLoadedChunks().isEmpty(); // CraftBukkit - this prevents entity cleanup, other issues on servers with no players // Paper - restore this // Folia - unrestore this, we always need to tick empty worlds
-         if (flag) {
-             this.resetEmptyTime();
-         }
- 
-         if (flag || this.emptyTime++ < 300) {
--            profilerFiller.push("entities");
-             if (this.dragonFight != null && runsNormally) {
--                profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.DRAGON_FIGHT_TICK); try { // Folia - profiler
-                 if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this, this.dragonFight.origin)) { // Folia - region threading
--                profilerFiller.push("dragonFight");
-                 this.dragonFight.tick();
--                profilerFiller.pop();
-                 } else { // Folia start - region threading
-                     // try to load dragon fight
-                     ChunkPos fightCenter = new ChunkPos(this.dragonFight.origin);
-@@ -802,22 +_,16 @@
-                             null
-                     );
-                 } // Folia end - region threading
--                } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.DRAGON_FIGHT_TICK); } // Folia - profiler
-             }
- 
--            profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.ACTIVATE_ENTITIES); try { // Folia - profiler
-             io.papermc.paper.entity.activation.ActivationRange.activateEntities(this); // Paper - EAR
--            } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.ACTIVATE_ENTITIES); } // Folia - profiler
--            profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.ENTITY_TICK); try { // Folia - profiler
-             regionizedWorldData // Folia - regionised ticking
-                 .forEachTickingEntity( // Folia - regionised ticking
-                     entity -> {
-                         if (!entity.isRemoved()) {
-                             if (!tickRateManager.isEntityFrozen(entity)) {
--                                profilerFiller.push("checkDespawn");
-                                 entity.checkDespawn();
-                                 if (entity.isRemoved()) return; // Folia - region threading - if we despawned, DON'T TICK IT!
--                                profilerFiller.pop();
-                                 if (true) { // Paper - rewrite chunk system
-                                     Entity vehicle = entity.getVehicle();
-                                     if (vehicle != null) {
-@@ -828,24 +_,15 @@
-                                         entity.stopRiding();
-                                     }
- 
--                                    profilerFiller.push("tick");
-                                     this.guardEntityTick(this::tickNonPassenger, entity);
--                                    profilerFiller.pop();
-                                 }
-                             }
-                         }
-                     }
-                 );
--            } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.ENTITY_TICK); } // Folia - profiler
--            profilerFiller.pop();
--            profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.TILE_ENTITY); try { // Folia - profiler
-             this.tickBlockEntities();
--            } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.TILE_ENTITY); } // Folia - profiler
-         }
--
--        profilerFiller.push("entityManagement");
-         // Paper - rewrite chunk system
--        profilerFiller.pop();
-     }
- 
-     // Folia start - region threading
-@@ -880,10 +_,7 @@
+@@ -836,10 +_,7 @@
  
      @Override
      public boolean shouldTickBlocksAt(long chunkPos) {
@@ -149,69 +20,7 @@
      }
  
      protected void tickTime() {
-@@ -891,9 +_,7 @@
-             io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.getCurrentWorldData(); // Folia - region threading
-             long l = regionizedWorldData.getRedstoneGameTime() + 1L; // Folia - region threading
-             regionizedWorldData.setRedstoneGameTime(l); // Folia - region threading
--            Profiler.get().push("scheduledFunctions");
-             //this.serverLevelData.getScheduledEvents().tick(this.server, l); // Folia - region threading - TODO any way to bring this in?
--            Profiler.get().pop();
-             if (false && this.serverLevelData.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {  // Folia - region threading
-                 this.setDayTime(this.levelData.getDayTime() + 1L);
-             }
-@@ -905,11 +_,8 @@
-     }
- 
-     public void tickCustomSpawners(boolean spawnEnemies, boolean spawnFriendlies) {
--        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
-         for (CustomSpawner customSpawner : this.customSpawners) {
--            final int customSpawnerTimer = profiler.getOrCreateTimerAndStart(() -> "Misc Spawner: ".concat(io.papermc.paper.util.ObfHelper.INSTANCE.deobfClassName(customSpawner.getClass().getName()))); try { // Folia - profiler
-             customSpawner.tick(this, spawnEnemies, spawnFriendlies);
--            } finally { profiler.stopTimer(customSpawnerTimer); } // Folia - profiler
-         }
-     }
- 
-@@ -986,8 +_,6 @@
-         ChunkPos pos = chunk.getPos();
-         int minBlockX = pos.getMinBlockX();
-         int minBlockZ = pos.getMinBlockZ();
--        ProfilerFiller profilerFiller = Profiler.get();
--        profilerFiller.push("iceandsnow");
- 
-         if (!this.paperConfig().environment.disableIceAndSnow) { // Paper - Option to disable ice and snow
-         for (int i = 0; i < randomTickSpeed; i++) {
-@@ -997,12 +_,9 @@
-         }
-         } // Paper - Option to disable ice and snow
- 
--        profilerFiller.popPush("tickBlocks");
-         if (randomTickSpeed > 0) {
-             this.optimiseRandomTick(chunk, randomTickSpeed); // Paper - optimise random ticking
-         }
--
--        profilerFiller.pop();
-     }
- 
-     public void tickThunder(LevelChunk chunk) {
-@@ -1010,8 +_,6 @@
-         boolean isRaining = this.isRaining();
-         int minBlockX = pos.getMinBlockX();
-         int minBlockZ = pos.getMinBlockZ();
--        ProfilerFiller profilerFiller = Profiler.get();
--        profilerFiller.push("thunder");
-         if (!this.paperConfig().environment.disableThunder && isRaining && this.isThundering() && this.spigotConfig.thunderChance > 0 && this.random.nextInt(this.spigotConfig.thunderChance) == 0) { // Spigot // Paper - Option to disable thunder
-             BlockPos blockPos = this.findLightningTargetAround(this.getBlockRandomPos(minBlockX, 0, minBlockZ, 15));
-             if (this.isRainingAt(blockPos)) {
-@@ -1037,8 +_,6 @@
-                 }
-             }
-         }
--
--        profilerFiller.pop();
-     }
- 
-     @VisibleForTesting
-@@ -1161,7 +_,7 @@
+@@ -1103,7 +_,7 @@
      }
  
      public ServerWaypointManager getWaypointManager() {
@@ -220,67 +29,7 @@
      }
  
      public void advanceWeatherCycle() { // Folia - region threading - public
-@@ -1340,18 +_,9 @@
-             // Folia - region threading
-             // Paper end - log detailed entity tick information
-         entity.setOldPosAndRot();
--        ProfilerFiller profilerFiller = Profiler.get();
-         entity.tickCount++;
-         entity.totalEntityAge++; // Paper - age-like counter for all entities
--        profilerFiller.push(() -> BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
--        profilerFiller.incrementCounter("tickNonPassenger");
-         final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
--        // Folia start - profiler
--        final int timerId = isActive ? entity.getType().tickTimerId : entity.getType().inactiveTickTimerId;
--        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler();
--        profiler.startTimer(timerId);
--        try {
--        // Folia end - profiler
-         if (isActive) { // Paper - EAR 2
-         entity.tick();
-         // Folia start - region threading
-@@ -1365,8 +_,6 @@
-         }
-         // Folia end - region threading
-         } else {entity.inactiveTick();} // Paper - EAR 2
--        profilerFiller.pop();
--        } finally { profiler.stopTimer(timerId); } // Folia - profiler
- 
-         for (Entity entity1 : entity.getPassengers()) {
-             this.tickPassenger(entity, entity1, isActive); // Paper - EAR 2
-@@ -1382,18 +_,9 @@
-         if (passengerEntity.isRemoved() || passengerEntity.getVehicle() != ridingEntity) {
-             passengerEntity.stopRiding();
-         } else if (passengerEntity instanceof Player || this.getCurrentWorldData().hasEntityTickingEntity(passengerEntity)) { // Folia - region threading
--            // Folia start - profiler
--            final int timerId = isActive ? passengerEntity.getType().tickTimerId : passengerEntity.getType().inactiveTickTimerId;
--            final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler();
--            profiler.startTimer(timerId);
--            try {
--            // Folia end - profiler
-             passengerEntity.setOldPosAndRot();
-             passengerEntity.tickCount++;
-             passengerEntity.totalEntityAge++; // Paper - age-like counter for all entities
--            ProfilerFiller profilerFiller = Profiler.get();
--            profilerFiller.push(() -> BuiltInRegistries.ENTITY_TYPE.getKey(passengerEntity.getType()).toString());
--            profilerFiller.incrementCounter("tickPassenger");
-             // Paper start - EAR 2
-             if (isActive) {
-             passengerEntity.rideTick();
-@@ -1414,12 +_,10 @@
-                 ridingEntity.positionRider(passengerEntity);
-             }
-             // Paper end - EAR 2
--            profilerFiller.pop();
- 
-             for (Entity entity : passengerEntity.getPassengers()) {
-                 this.tickPassenger(passengerEntity, entity, isActive); // Paper - EAR 2
-             }
--            } finally { profiler.stopTimer(timerId); } // Folia - profiler
-         }
-     }
- 
-@@ -2641,25 +_,15 @@
+@@ -2561,25 +_,15 @@
      }
  
      public boolean isPositionTickingWithEntitiesLoaded(long chunkPos) {
@@ -309,7 +58,7 @@
      }
  
      public boolean anyPlayerCloseEnoughForSpawning(BlockPos pos) {
-@@ -2671,10 +_,7 @@
+@@ -2591,10 +_,7 @@
      }
  
      public boolean canSpawnEntitiesInChunk(ChunkPos chunkPos) {
@@ -321,7 +70,7 @@
      }
  
      @Override
-@@ -2786,9 +_,7 @@
+@@ -2706,9 +_,7 @@
              // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
              if (entity instanceof ServerPlayer serverPlayer) {
                  ServerLevel.this.players.add(serverPlayer);
@@ -332,7 +81,7 @@
  
                  ServerLevel.this.updateSleepingPlayerList();
              }
-@@ -2873,7 +_,7 @@
+@@ -2793,7 +_,7 @@
              ServerLevel.this.getChunkSource().removeEntity(entity);
              if (entity instanceof ServerPlayer serverPlayer) {
                  ServerLevel.this.players.remove(serverPlayer);

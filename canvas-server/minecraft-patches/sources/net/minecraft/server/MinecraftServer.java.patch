@@ -1,40 +1,6 @@
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -114,19 +_,8 @@
- import net.minecraft.util.debugchart.RemoteDebugSampleType;
- import net.minecraft.util.debugchart.SampleLogger;
- import net.minecraft.util.debugchart.TpsDebugDimensions;
--import net.minecraft.util.profiling.EmptyProfileResults;
--import net.minecraft.util.profiling.ProfileResults;
--import net.minecraft.util.profiling.Profiler;
--import net.minecraft.util.profiling.ProfilerFiller;
--import net.minecraft.util.profiling.ResultField;
--import net.minecraft.util.profiling.SingleTickProfiler;
- import net.minecraft.util.profiling.jfr.JvmProfiler;
- import net.minecraft.util.profiling.jfr.callback.ProfiledDuration;
--import net.minecraft.util.profiling.metrics.profiling.ActiveMetricsRecorder;
--import net.minecraft.util.profiling.metrics.profiling.InactiveMetricsRecorder;
--import net.minecraft.util.profiling.metrics.profiling.MetricsRecorder;
--import net.minecraft.util.profiling.metrics.profiling.ServerMetricsSamplersProvider;
--import net.minecraft.util.profiling.metrics.storage.MetricsPersister;
- import net.minecraft.util.thread.ReentrantBlockableEventLoop;
- import net.minecraft.world.Difficulty;
- import net.minecraft.world.RandomSequences;
-@@ -199,13 +_,6 @@
-     public LevelStorageSource.LevelStorageAccess storageSource;
-     public final PlayerDataStorage playerDataStorage;
-     private final List<Runnable> tickables = Lists.newArrayList();
--    private MetricsRecorder metricsRecorder = InactiveMetricsRecorder.INSTANCE;
--    private Consumer<ProfileResults> onMetricsRecordingStopped = results -> this.stopRecordingMetrics();
--    private Consumer<Path> onMetricsRecordingFinished = path -> {};
--    private boolean willStartRecordingMetrics;
--    @Nullable
--    private MinecraftServer.TimeProfiler debugCommandProfiler;
--    private boolean debugCommandProfilerDelayStart;
-     private ServerConnectionListener connection;
-     public final ChunkProgressListenerFactory progressListenerFactory;
-     @Nullable
-@@ -1020,7 +_,7 @@
+@@ -1002,7 +_,7 @@
      // CraftBukkit end
  
      // Folia start - region threading
@@ -43,176 +9,15 @@
  
      private void haltServerRegionThreading() {
          if (this.hasStartedShutdownThread.getAndSet(true)) {
-@@ -1059,9 +_,6 @@
-         shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
-         org.spigotmc.WatchdogThread.doStop(); // Paper - Improved watchdog support
-         // CraftBukkit end
--        if (this.metricsRecorder.isRecording()) {
--            this.cancelRecordingMetrics();
--        }
- 
-         LOGGER.info("Stopping server");
-         Commands.COMMAND_SENDING_POOL.shutdownNow(); // Paper - Perf: Async command map building; Shutdown and don't bother finishing
-@@ -1330,18 +_,11 @@
-                 // Spigot end
- 
-                 boolean flag = l == 0L;
--                if (this.debugCommandProfilerDelayStart) {
--                    this.debugCommandProfilerDelayStart = false;
--                    //this.debugCommandProfiler = new MinecraftServer.TimeProfiler(Util.getNanos(), this.tickCount); // Folia - region threading
--                }
- 
-                 //MinecraftServer.currentTick = (int) (System.currentTimeMillis() / 50); // CraftBukkit // Paper - don't overwrite current tick time
-                 lastTick = currentTime;
-                 this.nextTickTimeNanos += l;
- 
--                try (Profiler.Scope scope = Profiler.use(this.createProfiler())) {
--                    ProfilerFiller profilerFiller = Profiler.get();
--                    profilerFiller.push("tick");
-                     this.tickFrame.start();
-                     if (true) throw new UnsupportedOperationException(); // Folia - region threading
-                     // Paper start - rewrite chunk system
-@@ -1352,7 +_,6 @@
-                     }
-                     // Paper end - rewrite chunk system
-                     this.tickFrame.end();
--                    profilerFiller.popPush("nextTickWait");
-                     this.mayHaveDelayedTasks = true;
-                     this.delayedTasksMaxNextTickTimeNanos = Math.max(Util.getNanos() + l, this.nextTickTimeNanos);
-                     this.startMeasuringTaskExecutionTime();
-@@ -1362,11 +_,7 @@
-                         this.tickRateManager.endTickWork();
-                     }
- 
--                    profilerFiller.pop();
-                     this.logFullTickTime();
--                } finally {
--                    this.endMetricsRecordingTick();
--                }
- 
-                 this.isReady = true;
-                 JvmProfiler.INSTANCE.onServerTick(this.smoothedTickTimeMillis);
-@@ -1536,7 +_,6 @@
-     @Override
-     public void doRunTask(TickTask task) {
-         if (true) throw new UnsupportedOperationException(); // Folia - region threading
--        Profiler.get().incrementCounter("runTask");
-         super.doRunTask(task);
-     }
- 
-@@ -1580,7 +_,6 @@
-     // Folia start - region threading
-     public void tickServer(long startTime, long scheduledEnd, long targetBuffer,
-                            io.papermc.paper.threadedregions.TickRegions.TickRegionData region) {
--        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle foliaProfiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
-         // Folia end - region threading
-         org.spigotmc.WatchdogThread.tick(); // Spigot
-         long nanos = startTime; // Folia - region threading
-@@ -1618,7 +_,6 @@
-             }
-         }
- 
--
-         // Folia start - region threading
-         region.world.getCurrentWorldData().updateTickData();
-         if (region.world.checkInitialised.get() != ServerLevel.WORLD_INIT_CHECKED) {
-@@ -1636,30 +_,22 @@
-         };
-         // Folia end - region threading
- 
--        this.server.spark.tickStart(); // Paper - spark
-+        // Canvas - moved to global region
-         new com.destroystokyo.paper.event.server.ServerTickStartEvent((int)region.getCurrentTick()).callEvent(); // Paper - Server Tick Events // Folia - region threading
-         // Folia start - region threading
-         if (region != null) {
--            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.INTERNAL_TICK_TASKS); try { // Folia - profiler
+@@ -1607,6 +_,7 @@
              region.getTaskQueueData().drainTasks();
--            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.INTERNAL_TICK_TASKS); } // Folia - profiler
--            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.PLUGIN_TICK_TASKS); try { // Folia - profiler
              ((io.papermc.paper.threadedregions.scheduler.FoliaRegionScheduler)org.bukkit.Bukkit.getRegionScheduler()).tick();
--            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.PLUGIN_TICK_TASKS); } // Folia - profiler
              // now run all the entity schedulers
--            long tickedEntitySchedulers = 0L; // Folia - profiler
--            foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.ENTITY_SCHEDULER_TICK); try { // Folia - profiler
 +            region.drainPackets(); // Canvas - rewrite scheduler
              for (io.papermc.paper.threadedregions.EntityScheduler scheduler : region.world.getCurrentWorldData().entitySchedulerTickList.getAllSchedulers()) {
                  net.minecraft.world.entity.Entity handle = scheduler.entity.getHandleRaw();
                  if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(handle) || scheduler.isRetired()) {
-                     continue;
-                 }
- 
--                ++tickedEntitySchedulers; // Folia - profiler
-                 scheduler.executeTick();
-             }
--            foliaProfiler.addCounter(ca.spottedleaf.leafprofiler.LProfilerRegistry.ENTITY_SCHEDULERS_TICKED, tickedEntitySchedulers); // Folia - profiler
--            } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.ENTITY_SCHEDULER_TICK); } // Folia - profiler
-         }
-         // Folia end - region threading
-         //this.tickCount++; // Folia - region threading
-@@ -1672,14 +_,11 @@
- 
-         //this.ticksUntilAutosave--; // Folia - region threading
-         // Paper start - Incremental chunk and player saving
--        final ProfilerFiller profiler = Profiler.get();
-         int playerSaveInterval = io.papermc.paper.configuration.GlobalConfiguration.get().playerAutoSave.rate;
-         if (playerSaveInterval < 0) {
-             playerSaveInterval = autosavePeriod;
-         }
--        profiler.push("save");
-         final boolean fullSave = autosavePeriod > 0 && io.papermc.paper.threadedregions.RegionizedServer.getCurrentTick() % autosavePeriod == 0; // Folia - region threading
--        foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.AUTOSAVE); try { // Folia - profiler
-         try {
-             this.isSaving = true;
-             if (playerSaveInterval > 0) {
-@@ -1693,11 +_,8 @@
-         } finally {
-             this.isSaving = false;
-         }
--        } finally { foliaProfiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.AUTOSAVE); } // Folia - profiler
--        profiler.pop();
-         // Paper end - Incremental chunk and player saving
- 
--        ProfilerFiller profilerFiller = Profiler.get();
-         //this.runAllTasks(); // Paper - move runAllTasks() into full server tick (previously for timings) // Folia - region threading
-         //this.server.spark.executeMainThreadTasks(); // Paper - spark // Folia - region threading
-         // Paper start - Server Tick Events
-@@ -1705,17 +_,14 @@
-         long remaining = scheduledEnd - endTime; // Folia - region ticking
-         new com.destroystokyo.paper.event.server.ServerTickEndEvent((int)io.papermc.paper.threadedregions.RegionizedServer.getCurrentTick(), ((double)(endTime - startTime) / 1000000D), remaining).callEvent(); // Folia - region ticking
-         // Paper end - Server Tick Events
--        this.server.spark.tickEnd(((double)(endTime - startTime) / 1000000D)); // Paper - spark // Folia - region threading
-+        // Canvas - moved to global region
-         // Folia - region threading
-     }
- 
-     private void autoSave() {
-         //this.ticksUntilAutosave = this.autosavePeriod; // CraftBukkit // Folia - region threading
-         LOGGER.debug("Autosave started");
--        ProfilerFiller profilerFiller = Profiler.get();
--        profilerFiller.push("save");
-         this.saveEverything(true, false, false);
--        profilerFiller.pop();
-         LOGGER.debug("Autosave finished");
-     }
- 
-@@ -1775,16 +_,12 @@
-     // Folia - region threading - moved to regionised data
- 
-     protected void tickChildren(BooleanSupplier hasTimeLeft, io.papermc.paper.threadedregions.TickRegions.TickRegionData region) { // Folia - region threading
--        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); // Folia - profiler
-         final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData(); // Folia - regionised ticking
--        ProfilerFiller profilerFiller = Profiler.get();
-         //this.getPlayerList().getPlayers().forEach(serverPlayer1 -> serverPlayer1.connection.suspendFlushing()); // Folia - region threading
-         //this.server.getScheduler().mainThreadHeartbeat(); // CraftBukkit // Folia - region threading
-         // Folia - region threading - moved to global tick - and moved entity scheduler to tickRegion
-         //io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.CALLBACK_MANAGER.handleQueue(this.tickCount); // Paper // Folia - region threading - moved to global tick
--        profilerFiller.push("commandFunctions");
-         //this.getFunctions().tick(); // Folia - region threading - TODO Purge functions
--        profilerFiller.popPush("levels");
- 
-         // CraftBukkit start
-         // Run tasks that are waiting on processing
-@@ -1795,6 +_,7 @@
+@@ -1737,6 +_,7 @@
          // Send time updates to everyone, it will get the right time from the world the player is in.
          // Paper start - Perf: Optimize time updates
          for (final ServerLevel level : Arrays.asList(region.world)) { // Folia - region threading
@@ -220,10 +25,10 @@
              final boolean doDaylight = level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT);
              final long dayTime = level.getDayTime();
              long worldTime = level.getGameTime();
-@@ -1815,58 +_,81 @@
+@@ -1764,6 +_,48 @@
+             }
+             // CraftBukkit end */
  
-         //this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked // Folia - region threading
-         for (ServerLevel serverLevel : Arrays.asList(region.world)) { // Folia - region threading
 +            // Canvas start - fix world loading/unloading
 +            if (serverLevel.isUnloading) {
 +                // finish teleports
@@ -266,77 +71,10 @@
 +                continue;
 +            }
 +            // Canvas end
-             // Folia - region threading
--            profilerFiller.push(() -> serverLevel + " " + serverLevel.dimension().location());
-             /* Drop global time updates
-             if (this.tickCount % 20 == 0) {
--                profilerFiller.push("timeSync");
-                 this.synchronizeTime(serverLevel);
--                profilerFiller.pop();
-             }
-             // CraftBukkit end */
- 
--            profilerFiller.push("tick");
--
              try {
--                profiler.startTimer(serverLevel.tickTimerId); try { // Folia - profiler
                  serverLevel.tick(hasTimeLeft, region); // Folia - region threading
--                } finally { profiler.stopTimer(serverLevel.tickTimerId); } // Folia - profiler
              } catch (Throwable var7) {
-                 CrashReport crashReport = CrashReport.forThrowable(var7, "Exception ticking world");
-                 serverLevel.fillReportDetails(crashReport);
-                 throw new ReportedException(crashReport);
-             }
- 
--            profilerFiller.pop();
--            profilerFiller.pop();
-             regionizedWorldData.explosionDensityCache.clear(); // Paper - Optimize explosions // Folia - region threading
-         }
-         //this.isIteratingOverLevels = false; // Paper - Throw exception on world create while being ticked // Folia - region threading
- 
--        profilerFiller.popPush("connection");
--        profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CONNECTION_TICK); try { // Folia - profiler
-         regionizedWorldData.tickConnections(); // Folia - region threading
--        } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CONNECTION_TICK); } // Folia - profiler
--        profilerFiller.popPush("players");
-         //this.playerList.tick(); // Folia - region threading
-         if (this.tickRateManager.runsNormally()) {
-             GameTestTicker.SINGLETON.tick();
-         }
- 
--        profilerFiller.popPush("server gui refresh");
--
-         if (false) for (int i = 0; i < this.tickables.size(); i++) { // Folia - region threading - TODO WTF is this?
-             this.tickables.get(i).run();
-         }
- 
--        profilerFiller.popPush("send chunks");
--
-         if (false) for (ServerPlayer serverPlayer : this.playerList.getPlayers()) { // Folia - region threading
-             serverPlayer.connection.chunkSender.sendNextChunks(serverPlayer);
-             serverPlayer.connection.resumeFlushing();
-         }
--
--        profilerFiller.pop();
-     }
- 
-     public void tickConnection() {
-@@ -1882,14 +_,9 @@
-     }
- 
-     public void forceTimeSynchronization() {
--        ProfilerFiller profilerFiller = Profiler.get();
--        profilerFiller.push("timeSync");
--
-         for (ServerLevel serverLevel : this.getAllLevels()) {
-             this.synchronizeTime(serverLevel);
-         }
--
--        profilerFiller.pop();
-     }
- 
-     public boolean isLevelEnabled(Level level) {
-@@ -1918,22 +_,31 @@
+@@ -1836,22 +_,31 @@
  
      @Nullable
      public ServerLevel getLevel(ResourceKey<Level> dimension) {
@@ -369,134 +107,3 @@
      }
      // CraftBukkit end
  
-@@ -2720,55 +_,6 @@
-     }
-     // CraftBukkit end
- 
--    private ProfilerFiller createProfiler() {
--        if (this.willStartRecordingMetrics) {
--            this.metricsRecorder = ActiveMetricsRecorder.createStarted(
--                new ServerMetricsSamplersProvider(Util.timeSource, this.isDedicatedServer()),
--                Util.timeSource,
--                Util.ioPool(),
--                new MetricsPersister("server"),
--                this.onMetricsRecordingStopped,
--                path -> {
--                    this.executeBlocking(() -> this.saveDebugReport(path.resolve("server")));
--                    this.onMetricsRecordingFinished.accept(path);
--                }
--            );
--            this.willStartRecordingMetrics = false;
--        }
--
--        this.metricsRecorder.startTick();
--        return SingleTickProfiler.decorateFiller(this.metricsRecorder.getProfiler(), SingleTickProfiler.createTickProfiler("Server"));
--    }
--
--    public void endMetricsRecordingTick() {
--        this.metricsRecorder.endTick();
--    }
--
--    public boolean isRecordingMetrics() {
--        return this.metricsRecorder.isRecording();
--    }
--
--    public void startRecordingMetrics(Consumer<ProfileResults> output, Consumer<Path> onMetricsRecordingFinished) {
--        this.onMetricsRecordingStopped = profileResults -> {
--            this.stopRecordingMetrics();
--            output.accept(profileResults);
--        };
--        this.onMetricsRecordingFinished = onMetricsRecordingFinished;
--        this.willStartRecordingMetrics = true;
--    }
--
--    public void stopRecordingMetrics() {
--        this.metricsRecorder = InactiveMetricsRecorder.INSTANCE;
--    }
--
--    public void finishRecordingMetrics() {
--        this.metricsRecorder.end();
--    }
--
--    public void cancelRecordingMetrics() {
--        this.metricsRecorder.cancel();
--    }
--
-     public Path getWorldPath(LevelResource levelResource) {
-         return this.storageSource.getLevelPath(levelResource);
-     }
-@@ -2818,18 +_,6 @@
-         return this.isSaving;
-     }
- 
--    public boolean isTimeProfilerRunning() {
--        return this.debugCommandProfilerDelayStart || this.debugCommandProfiler != null;
--    }
--
--    public void startTimeProfiler() {
--        this.debugCommandProfilerDelayStart = true;
--    }
--
--    public ProfileResults stopTimeProfiler() {
--        throw new UnsupportedOperationException(); // Folia - region threading
--    }
--
-     public int getMaxChainedNeighborUpdates() {
-         return 1000000;
-     }
-@@ -2937,55 +_,6 @@
-     }
- 
-     public record ServerResourcePackInfo(UUID id, String url, String hash, boolean isRequired, @Nullable Component prompt) {
--    }
--
--    static class TimeProfiler {
--        final long startNanos;
--        final int startTick;
--
--        TimeProfiler(long startNanos, int startTick) {
--            this.startNanos = startNanos;
--            this.startTick = startTick;
--        }
--
--        ProfileResults stop(final long endTimeNano, final int endTimeTicks) {
--            return new ProfileResults() {
--                @Override
--                public List<ResultField> getTimes(String sectionPath) {
--                    return Collections.emptyList();
--                }
--
--                @Override
--                public boolean saveResults(Path path) {
--                    return false;
--                }
--
--                @Override
--                public long getStartTimeNano() {
--                    return TimeProfiler.this.startNanos;
--                }
--
--                @Override
--                public int getStartTimeTicks() {
--                    return TimeProfiler.this.startTick;
--                }
--
--                @Override
--                public long getEndTimeNano() {
--                    return endTimeNano;
--                }
--
--                @Override
--                public int getEndTimeTicks() {
--                    return endTimeTicks;
--                }
--
--                @Override
--                public String getProfilerResults() {
--                    return "";
--                }
--            };
--        }
-     }
- 
-     // Paper start - Add tick times API and /mspt command
