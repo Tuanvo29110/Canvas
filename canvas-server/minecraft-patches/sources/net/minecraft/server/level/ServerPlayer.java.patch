@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -1564,7 +_,7 @@
+@@ -1564,19 +_,38 @@
              ServerPlayer.this.reset();
          }
          // must be manually removed from connections, delay until after reset() so that we do not trip any thread checks
@@ -9,6 +9,89 @@
  
          ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> spawnPosComplete =
              new ca.spottedleaf.concurrentutil.completable.CallbackCompletable<>();
+         boolean[] usedRespawnAnchor = new boolean[1];
+ 
+         // set up post spawn location logic
++        boolean[] isBedSpawn = new boolean[]{false}; // Canvas - fix events with region threading
++        boolean[] missingRespawnBlock = new boolean[]{false}; // Canvas - fix events with region threading
+         spawnPosComplete.addWaiter((spawnLoc, throwable) -> {
+             // update pos and velocity
+-            ServerPlayer.this.setPosRaw(spawnLoc.getX(), spawnLoc.getY(), spawnLoc.getZ());
+-            ServerPlayer.this.setYRot(spawnLoc.getYaw());
+-            ServerPlayer.this.setYHeadRot(spawnLoc.getYaw());
+-            ServerPlayer.this.setXRot(spawnLoc.getPitch());
++            // Canvas start - fix events with region threading
++            org.bukkit.event.player.PlayerRespawnEvent respawnEvent = new org.bukkit.event.player.PlayerRespawnEvent(
++                ServerPlayer.this.getBukkitEntity(),
++                spawnLoc,
++                isBedSpawn[0],
++                usedRespawnAnchor[0],
++                missingRespawnBlock[0],
++                reason
++            );
++            respawnEvent.callEvent();
++            if (this.connection.isDisconnected()) {
++                // plugin disconnected the client, cancel respawn
++                return;
++            }
++            java.util.concurrent.atomic.AtomicReference<org.bukkit.Location> spawnLocAtomic = new java.util.concurrent.atomic.AtomicReference<>();
++            Runnable finalize = () -> {
++            ServerPlayer.this.setPosRaw(spawnLocAtomic.get().getX(), spawnLocAtomic.get().getY(), spawnLocAtomic.get().getZ());
++            ServerPlayer.this.setYRot(spawnLocAtomic.get().getYaw());
++            ServerPlayer.this.setYHeadRot(spawnLocAtomic.get().getYaw());
++            ServerPlayer.this.setXRot(spawnLocAtomic.get().getPitch());
++            // Canvas end
+             ServerPlayer.this.setDeltaMovement(Vec3.ZERO);
+             // placeInAsync will update the world
+ 
+@@ -1584,7 +_,7 @@
+                 origin,
+                 // use the load chunk flag just in case the spawn loc isn't loaded, and to ensure the chunks
+                 // stay loaded for a bit with the teleport ticket
+-                ((org.bukkit.craftbukkit.CraftWorld)spawnLoc.getWorld()).getHandle(),
++                ((org.bukkit.craftbukkit.CraftWorld)spawnLocAtomic.get().getWorld()).getHandle(), // Canvas - fix events with region threading
+                 TELEPORT_FLAG_LOAD_CHUNK | TELEPORT_FLAGS_PLAYER_RESPAWN,
+                 passengerTree, // note: we expect this to just be the player, no passengers
+                 (entity) -> {
+@@ -1606,6 +_,22 @@
+                     }
+                 }
+             );
++            // Canvas start - fix events with region threading
++            };
++            spawnLocAtomic.set(respawnEvent.getRespawnLocation());
++            if (spawnLoc != respawnEvent.getRespawnLocation()) {
++                // event changed the location, load async and then call finalizer
++                // use all the events location for this, they may have changed the world
++                ServerLevel respawnAt = ((org.bukkit.craftbukkit.CraftWorld) respawnEvent.getRespawnLocation().getWorld()).getHandle();
++                respawnAt.moonrise$loadChunksAsync(
++                    new BlockPos(spawnLoc.getBlockX(), spawnLoc.getBlockY(), spawnLoc.getBlockZ()),
++                    16, ca.spottedleaf.concurrentutil.util.Priority.HIGHER, (_) -> finalize.run()
++                );
++            } else {
++                // event didn't modify location, run finalizer
++                finalize.run();
++            }
++            // Canvas end
+         });
+ 
+         // find and modify respawn block state
+@@ -1623,6 +_,7 @@
+                         respawnWorld, respawnConfig, !alive
+                     ).orElse(null);
+                     if (spawnPos == null) {
++                        missingRespawnBlock[0] = true; // Canvas - fix events with region threading
+                         // no spawn
+                         ServerPlayer.this.connection.send(
+                             new ClientboundGameEventPacket(ClientboundGameEventPacket.NO_RESPAWN_BLOCK_AVAILABLE, 0.0F)
+@@ -1638,6 +_,7 @@
+                     boolean isRespawnAnchor = respawnWorld.getBlockState(respawnConfig.pos()).is(net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR);
+                     boolean isBed = respawnWorld.getBlockState(respawnConfig.pos()).is(net.minecraft.tags.BlockTags.BEDS);
+                     usedRespawnAnchor[0] = !alive && isRespawnAnchor;
++                    isBedSpawn[0] = isBed; // Canvas - fix events with region threading
+ 
+                     // finished now, pass the location on
+                     spawnPosComplete.complete(
 @@ -1675,7 +_,7 @@
      @Override
      protected ServerPlayer transformForAsyncTeleport(ServerLevel destination, Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
