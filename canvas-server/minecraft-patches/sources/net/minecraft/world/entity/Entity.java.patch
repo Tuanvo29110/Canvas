@@ -9,14 +9,58 @@
      private final double[] pistonDeltas = new double[]{0.0, 0.0, 0.0};
      private long pistonDeltasGameTime = Long.MIN_VALUE; // Folia - region threading
      protected EntityDimensions dimensions;
-@@ -4342,6 +_,7 @@
-         EntityTreeNode passengerTree = this.detachPassengers();
-         List<EntityTreeNode> fullPassengerTree = passengerTree.getFullTree();
-         ServerLevel originWorld = (ServerLevel)this.level;
+@@ -4292,12 +_,50 @@
+                 return false;
+             }
+         }
 +        if (destination.isUnloading) return false; // Canvas - fix world loading/unloading
  
-         for (EntityTreeNode node : fullPassengerTree) {
-             node.root.preChangeDimension();
+         // TODO any events that can modify go HERE
++        // Canvas start - fix events with region threading
++        // Note: TeleportCommand.java normally calls this event for that, but we
++        // don't need to there because it calls this method, and we handle it here
++        Vec3 currPos = this.position();
++        org.bukkit.Location newLocation;
++        org.bukkit.Location from = new org.bukkit.Location(this.level().getWorld(), currPos.x, currPos.y, currPos.z, this.getYRot(), this.getXRot());
++        org.bukkit.Location to = new org.bukkit.Location(destination.getWorld(), pos.x, pos.y, pos.z, yaw, pitch);
++        if (!(this instanceof ServerPlayer player)) {
++            org.bukkit.event.entity.EntityTeleportEvent entityTeleportEvent = new org.bukkit.event.entity.EntityTeleportEvent(
++                this.getBukkitEntity(), from, to
++            );
++            if (!entityTeleportEvent.callEvent() || entityTeleportEvent.getTo() == null) {
++                return false;
++            } else {
++                newLocation = entityTeleportEvent.getTo();
++                yaw = entityTeleportEvent.getTo().getYaw();
++                pitch = entityTeleportEvent.getTo().getPitch();
++            }
++        } else {
++            org.bukkit.event.player.PlayerTeleportEvent playerTeleportEvent = new org.bukkit.event.player.PlayerTeleportEvent(
++                player.getBukkitEntity(), from, to,
++                cause, Set.of()
++            );
++
++            if (!playerTeleportEvent.callEvent()) {
++                return false;
++            } else {
++                newLocation = playerTeleportEvent.getTo();
++                yaw = playerTeleportEvent.getTo().getYaw();
++                pitch = playerTeleportEvent.getTo().getPitch();
++            }
++        }
++
++        pos = new Vec3(
++            newLocation.getX(), newLocation.getY(), newLocation.getZ()
++        );
++        // Canvas end
+ 
+         // check for same region
+         if (destination == this.level()) {
+-            Vec3 currPos = this.position();
++            // Vec3 currPos = this.position(); // Canvas - fix events with region threading - move up
+             if (
+                 destination.regioniser.getRegionAtUnsynchronised(
+                     ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkX(currPos), ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkZ(currPos)
 @@ -4606,6 +_,7 @@
                  }
              }
