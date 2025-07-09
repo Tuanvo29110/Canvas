@@ -1,13 +1,5 @@
 --- a/io/papermc/paper/threadedregions/RegionizedWorldData.java
 +++ b/io/papermc/paper/threadedregions/RegionizedWorldData.java
-@@ -76,6 +_,7 @@
-             // connections
-             for (final Connection conn : from.connections) {
-                 into.connections.add(conn);
-+                conn.updateRegion(into); // Canvas - rewrite scheduler
-             }
-             // time
-             final long fromRedstoneTimeOffset = into.redstoneTime - from.redstoneTime;
 @@ -83,6 +_,7 @@
              for (final ServerPlayer player : from.localPlayers) {
                  into.localPlayers.add(player);
@@ -27,7 +19,7 @@
          }
  
          @Override
-@@ -171,8 +_,13 @@
+@@ -171,8 +_,12 @@
                  final ChunkPos pos = player.chunkPosition();
                  // Note: It is impossible for an entity in the world to _not_ be in an entity chunk, which means
                  // the chunk holder must _exist_, and so the region section exists.
@@ -39,7 +31,6 @@
 +                into.connections.add(conn);
 +                into.waypointManager.addPlayer(player);
 +                // Canvas end
-+                conn.updateRegion(into); // Canvas - rewrite scheduler
              }
              // entities
              for (final ServerPlayer player : from.localPlayers) {
@@ -120,7 +111,7 @@
  
          // tasks may be drained before the region ticks, so we must set up the tick data early just in case
          this.updateTickData();
-@@ -500,6 +_,20 @@
+@@ -500,6 +_,18 @@
          );
      }
  
@@ -128,13 +119,11 @@
 +    public void addConnection(Connection connection, ServerPlayer serverPlayer) {
 +        this.connections.add(connection);
 +        this.waypointManager.addPlayer(serverPlayer); // Canvas - region threading - restore waypoints
-+        connection.updateRegion(this);
 +    }
 +
 +    public void removeConnection(Connection connection, ServerPlayer serverPlayer) {
 +        this.connections.remove(connection);
 +        this.waypointManager.removePlayer(serverPlayer); // Canvas - region threading - restore waypoints
-+        connection.updateRegion(null);
 +    }
 +
 +    // Canvas end

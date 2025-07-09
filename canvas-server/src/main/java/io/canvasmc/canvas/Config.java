@@ -38,9 +38,6 @@ public class Config {
             "up to 60% of your network usage. Disabling this has minimal side effects, such as squids and glow squids swimming upright until attacked."
         })
         public boolean disableClientboundSetEntityMotionPacket = false;
-
-        @Comment("Enables a new packet handler that allows processing packets in-between ticks")
-        public boolean intermediateTaskHandlingOfPackets = false;
     }
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {

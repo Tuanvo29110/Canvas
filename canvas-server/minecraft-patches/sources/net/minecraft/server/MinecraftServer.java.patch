@@ -9,14 +9,6 @@
  
      private void haltServerRegionThreading() {
          if (this.hasStartedShutdownThread.getAndSet(true)) {
-@@ -1607,6 +_,7 @@
-             region.getTaskQueueData().drainTasks();
-             ((io.papermc.paper.threadedregions.scheduler.FoliaRegionScheduler)org.bukkit.Bukkit.getRegionScheduler()).tick();
-             // now run all the entity schedulers
-+            region.drainPackets(); // Canvas - rewrite scheduler
-             for (io.papermc.paper.threadedregions.EntityScheduler scheduler : region.world.getCurrentWorldData().entitySchedulerTickList.getAllSchedulers()) {
-                 net.minecraft.world.entity.Entity handle = scheduler.entity.getHandleRaw();
-                 if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(handle) || scheduler.isRetired()) {
 @@ -1737,6 +_,7 @@
          // Send time updates to everyone, it will get the right time from the world the player is in.
          // Paper start - Perf: Optimize time updates
