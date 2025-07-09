@@ -39,7 +39,7 @@ run_gradle_task() {
   local task="$1"
   if [ "${gradle_tasks[$task]}" = "true" ]; then
     echo "Running Gradle task: $task"
-    ./gradlew "$task" || echo "Gradle task '$task' failed, continuing..."
+    ./gradlew "$task" -Dpaperweight.debug=true || echo "Gradle task '$task' failed, continuing..."
     echo "Gradle task '$task' completed (or failed but continuing)."
   else
     echo "Skipping Gradle task '$task' as no changes were detected."
