@@ -4,7 +4,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
     java
     `maven-publish`
-    id("io.canvasmc.weaver.patcher") version "2.1.0-SNAPSHOT"
+    id("io.canvasmc.weaver.patcher") version "2.1.1-SNAPSHOT"
 }
 
 allprojects {
