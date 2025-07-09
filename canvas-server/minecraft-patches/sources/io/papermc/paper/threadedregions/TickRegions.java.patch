@@ -71,7 +71,7 @@
  
          // queue data
          private final RegionizedTaskQueue.RegionTaskQueueData taskQueueData;
-@@ -166,14 +_,63 @@
+@@ -166,14 +_,60 @@
  
          // async-safe read-only region data
          private final RegionStats regionStats;
@@ -104,12 +104,9 @@
 +            final RegionizedWorldData worldData = this.world.getCurrentWorldData();
 +            boolean hasPacketsNew = false;
 +
-+            for (final net.minecraft.server.level.ServerPlayer player : worldData.getLocalPlayers()) {
-+                if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(player)) {
-+                    continue;
-+                }
-+                if (player.getBukkitEntity().executeOnePacket()) {
-+                    hasPacketsNew |= player.getBukkitEntity().hasPackets();
++            for (final net.minecraft.network.Connection connection : worldData.connections) {
++                if (connection.executeOnePacket()) {
++                    hasPacketsNew |= connection.hasPackets();
 +                }
 +            }
 +
@@ -117,8 +114,8 @@
 +                this.hasPackets.set(false);
 +
 +                // handle race condition: packet added during packet processing
-+                for (final net.minecraft.server.level.ServerPlayer player : worldData.getLocalPlayers()) {
-+                    if (player.getBukkitEntity().hasPackets()) {
++                for (final net.minecraft.network.Connection connection : worldData.connections) {
++                    if (connection.hasPackets()) {
 +                        this.hasPackets.set(true);
 +                        break;
 +                    }

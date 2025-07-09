@@ -1,10 +1,16 @@
 --- a/io/papermc/paper/threadedregions/RegionizedWorldData.java
 +++ b/io/papermc/paper/threadedregions/RegionizedWorldData.java
-@@ -82,7 +_,9 @@
-             // entities
+@@ -76,6 +_,7 @@
+             // connections
+             for (final Connection conn : from.connections) {
+                 into.connections.add(conn);
++                conn.updateRegion(into); // Canvas - rewrite scheduler
+             }
+             // time
+             final long fromRedstoneTimeOffset = into.redstoneTime - from.redstoneTime;
+@@ -83,6 +_,7 @@
              for (final ServerPlayer player : from.localPlayers) {
                  into.localPlayers.add(player);
-+                player.getBukkitEntity().updateRegion(into); // Canvas - rewrite scheduler
                  into.nearbyPlayers.addPlayer(player);
 +                into.waypointManager.addPlayer(player); // Canvas - region threading - restore waypoints
              }
@@ -21,7 +27,7 @@
          }
  
          @Override
-@@ -171,8 +_,12 @@
+@@ -171,8 +_,13 @@
                  final ChunkPos pos = player.chunkPosition();
                  // Note: It is impossible for an entity in the world to _not_ be in an entity chunk, which means
                  // the chunk holder must _exist_, and so the region section exists.
@@ -33,17 +39,10 @@
 +                into.connections.add(conn);
 +                into.waypointManager.addPlayer(player);
 +                // Canvas end
++                conn.updateRegion(into); // Canvas - rewrite scheduler
              }
              // entities
              for (final ServerPlayer player : from.localPlayers) {
-@@ -181,6 +_,7 @@
-                 // the chunk holder must _exist_, and so the region section exists.
-                 final RegionizedWorldData into = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
-                 into.localPlayers.add(player);
-+                player.getBukkitEntity().updateRegion(into); // Canvas - rewrite scheduler
-                 into.nearbyPlayers.addPlayer(player);
-             }
-             for (final Entity entity : from.allEntities) {
 @@ -326,6 +_,22 @@
                      into.chunkHoldersToBroadcast.add(chunkHolder);
                  }
@@ -121,22 +120,36 @@
  
          // tasks may be drained before the region ticks, so we must set up the tick data early just in case
          this.updateTickData();
-@@ -612,6 +_,7 @@
-         if (this.allEntities.add(entity)) {
-             if (entity instanceof ServerPlayer player) {
-                 this.localPlayers.add(player);
-+                player.getBukkitEntity().updateRegion(this); // Canvas - rewrite scheduler
+@@ -500,6 +_,20 @@
+         );
+     }
+ 
++    // Canvas start - rewrite tick scheduler
++    public void addConnection(Connection connection, ServerPlayer serverPlayer) {
++        this.connections.add(connection);
++        this.waypointManager.addPlayer(serverPlayer); // Canvas - region threading - restore waypoints
++        connection.updateRegion(this);
++    }
++
++    public void removeConnection(Connection connection, ServerPlayer serverPlayer) {
++        this.connections.remove(connection);
++        this.waypointManager.removePlayer(serverPlayer); // Canvas - region threading - restore waypoints
++        connection.updateRegion(null);
++    }
++
++    // Canvas end
+     // connections
+     public void tickConnections() {
+         final List<Connection> connections = new ArrayList<>(this.connections);
+@@ -509,7 +_,7 @@
+                 conn.handleDisconnection();
+                 // global tick thread will not remove connections not owned by it, so we need to
+                 RegionizedServer.getInstance().removeConnection(conn);
+-                this.connections.remove(conn);
++                this.removeConnection(conn, conn.getPlayer()); // Canvas - rewrite tick scheduler
+                 cleanUpConnection(conn);
+                 continue;
              }
-             TickRegions.RegionStats.updateCurrentRegion();
-         }
-@@ -628,6 +_,7 @@
-         if (this.allEntities.remove(entity)) {
-             if (entity instanceof ServerPlayer player) {
-                 this.localPlayers.remove(player);
-+                player.getBukkitEntity().updateRegion(null); // Canvas - rewrite scheduler
-             }
-             TickRegions.RegionStats.updateCurrentRegion();
-         }
 @@ -768,4 +_,72 @@
      public int getChunkCount() {
          return this.chunks.size();

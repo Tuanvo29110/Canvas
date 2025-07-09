@@ -1,10 +1,11 @@
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-@@ -2776,6 +_,7 @@
+@@ -2775,7 +_,7 @@
+         this.removePlayerFromWorld();
          } finally { // Folia start - rewrite login process - move connection ownership to global region
              io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.player.level().getCurrentWorldData();
-             worldData.connections.remove(this.connection);
-+            worldData.waypointManager.removePlayer(this.player); // Canvas - region threading - restore waypoints
+-            worldData.connections.remove(this.connection);
++            worldData.removeConnection(this.connection, this.player); // Canvas - rewrite tick scheduler
              // once waitingForSwitchToConfig is set, the global tick thread will own the connection
          } // Folia end - rewrite login process - move connection ownership to global region
          this.waitingForSwitchToConfig = true; // Folia - rewrite login process - fix bad ordering of this field write - moved down

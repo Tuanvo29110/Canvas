@@ -1,10 +1,11 @@
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -341,6 +_,7 @@
+@@ -340,7 +_,7 @@
+             ServerGamePacketListenerImpl serverGamePacketListenerImpl = new ServerGamePacketListenerImpl(this.server, connection, player, cookie);
              // Folia start - rewrite login process
              // only after setting the connection listener to game type, add the connection to this regions list
-             serverLevel.getCurrentWorldData().connections.add(connection);
-+            serverLevel.getCurrentWorldData().waypointManager.removePlayer(player); // Canvas - region threading - restore waypoints
+-            serverLevel.getCurrentWorldData().connections.add(connection);
++            serverLevel.getCurrentWorldData().addConnection(connection, player); // Canvas - rewrite tick scheduler
              // Folia end - rewrite login process
              connection.setupInboundProtocol(
                  GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(this.server.registryAccess()), serverGamePacketListenerImpl),

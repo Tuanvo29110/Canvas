@@ -57,7 +57,7 @@
          ServerLevel level = source.getLevel();
          int minY = level.getMinY();
          if (maxHeight < minY) {
-@@ -130,6 +_,176 @@
+@@ -130,6 +_,181 @@
              return positions.length;
          }
      }
@@ -211,14 +211,19 @@
 +                pile = piles[i++];
 +            }
 +
-+            entity.getBukkitEntity().taskScheduler.schedule((_) -> {
-+                entity.teleportAsync(
-+                    world, new net.minecraft.world.phys.Vec3(Math.floor((pile).x) + 0.5, pile.getSpawnY(world, maxY), Math.floor((pile).z) + 0.5),
-+                    entity.getYRot(), entity.getXRot(), entity.getDeltaMovement(),
-+                    org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND,
-+                    Entity.TELEPORT_FLAG_TELEPORT_PASSENGERS | Entity.TELEPORT_FLAG_LOAD_CHUNK, null
-+                );
-+            }, null, 0L);
++            BlockPos pos = new BlockPos((int) Math.round(Math.floor((pile).x)), pile.getSpawnY(world, maxY), (int) Math.round(Math.floor((pile).z)));
++            world.getServer().regionizedServer.taskQueue.queueTickTaskQueue(
++                world, pos.getX() >> 4, pos.getZ() >> 4, () -> {
++                    entity.getBukkitEntity().taskScheduler.schedule((_) -> {
++                        entity.teleportAsync(
++                            world, pos.getCenter(),
++                            entity.getYRot(), entity.getXRot(), entity.getDeltaMovement(),
++                            org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND,
++                            Entity.TELEPORT_FLAG_TELEPORT_PASSENGERS | Entity.TELEPORT_FLAG_LOAD_CHUNK, null
++                        );
++                    }, null, 0L);
++                }
++            );
 +
 +            double e = Double.MAX_VALUE;
 +
