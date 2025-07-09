@@ -65,7 +65,7 @@
                  }
              }
          }
-+        if (to.isUnloading) return false; // Canvas - fix world loading/unloading
++        if (to != null && to.isUnloading) return false; // Canvas - fix world loading/unloading
  
          return true;
      }
