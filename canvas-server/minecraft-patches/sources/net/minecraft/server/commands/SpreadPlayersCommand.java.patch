@@ -14,7 +14,7 @@
      private static final int MAX_ITERATION_COUNT = 10000;
      private static final Dynamic4CommandExceptionType ERROR_FAILED_TO_SPREAD_TEAMS = new Dynamic4CommandExceptionType(
          (teamCount, x, z, suggestedSpread) -> Component.translatableEscape("commands.spreadplayers.failed.teams", teamCount, x, z, suggestedSpread)
-@@ -102,6 +_,42 @@
+@@ -102,6 +_,44 @@
      private static int spreadPlayers(
          CommandSourceStack source, Vec2 center, float spreadDistance, float maxRange, int maxHeight, boolean respectTeams, Collection<? extends Entity> targets
      ) throws CommandSyntaxException {
@@ -38,6 +38,7 @@
 +                sendMessage(source, level, Component.literal("Spreading " + positions.length + (positions.length == 1 ? " entity " : " entities ") + "around " + center.x + ", " + center.y + " asynchronously..."));
 +                ASYNC_EXECUTOR.submit(() -> {
 +                    try {
++                        sendMessage(source, level, Component.literal("Loading pile positions..."));
 +                        spreadAsync(center, spreadDistance, level, randomSource, d, d1, d2, d3, maxHeight, positions, respectTeams);
 +                    } catch (CommandSyntaxException ex) {
 +                        sendFailure(source, level, ex.getMessage());
@@ -45,6 +46,7 @@
 +                        sendFailure(source, level, "An error occurred while spreading players, check console for details");
 +                        net.minecraft.server.MinecraftServer.LOGGER.error("An error occurred while spreading players asynchronously", t);
 +                    }
++                    sendMessage(source, level, Component.literal("Teleporting all entities..."));
 +                    teleportEntities(targets, level, positions, maxHeight, respectTeams);
 +                    sendMessage(source, level, Component.literal(
 +                        "Successfully spread " + positions.length + (positions.length == 1 ? " entity " : " entities ") + "around " + center.x + ", " + center.y + " asynchronously"
@@ -57,7 +59,7 @@
          ServerLevel level = source.getLevel();
          int minY = level.getMinY();
          if (maxHeight < minY) {
-@@ -130,6 +_,181 @@
+@@ -130,6 +_,182 @@
              return positions.length;
          }
      }
@@ -211,9 +213,10 @@
 +                pile = piles[i++];
 +            }
 +
-+            BlockPos pos = new BlockPos((int) Math.round(Math.floor((pile).x)), pile.getSpawnY(world, maxY), (int) Math.round(Math.floor((pile).z)));
++            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos((int) Math.round(Math.floor((pile).x)), 0, (int) Math.round(Math.floor((pile).z)));
 +            world.getServer().regionizedServer.taskQueue.queueTickTaskQueue(
 +                world, pos.getX() >> 4, pos.getZ() >> 4, () -> {
++                    pos.setY(pile.getSpawnY(world, maxY));
 +                    entity.getBukkitEntity().taskScheduler.schedule((_) -> {
 +                        entity.teleportAsync(
 +                            world, pos.getCenter(),

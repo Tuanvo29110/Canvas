@@ -1,5 +1,14 @@
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
+@@ -315,7 +_,7 @@
+             // Spigot start - spawn location event
+             org.bukkit.entity.Player spawnPlayer = player.getBukkitEntity();
+             org.spigotmc.event.player.PlayerSpawnLocationEvent ev = new org.spigotmc.event.player.PlayerSpawnLocationEvent(spawnPlayer, spawnPlayer.getLocation());
+-            //this.cserver.getPluginManager().callEvent(ev); // Folia - region threading - TODO WTF TO DO WITH THIS EVENT?
++            this.cserver.getPluginManager().callEvent(ev); // Folia - region threading - TODO WTF TO DO WITH THIS EVENT? // Canvas - restore event
+ 
+             org.bukkit.Location loc = ev.getSpawnLocation();
+             serverLevel = ((org.bukkit.craftbukkit.CraftWorld) loc.getWorld()).getHandle();
 @@ -340,7 +_,7 @@
              ServerGamePacketListenerImpl serverGamePacketListenerImpl = new ServerGamePacketListenerImpl(this.server, connection, player, cookie);
              // Folia start - rewrite login process
