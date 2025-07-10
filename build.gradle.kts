@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import io.papermc.paperweight.tasks.RebuildGitPatches
 
 plugins {
     java
@@ -124,7 +125,6 @@ subprojects {
 
 repositories {
     mavenCentral()
-    jcenter()
     maven(paperMavenPublicUrl)
 }
 
@@ -188,4 +188,10 @@ tasks.register("buildPublisherJar") {
 // patching scripts
 tasks.register("fixupMinecraftFilePatches") {
     dependsOn(":canvas-server:fixupMinecraftSourcePatches")
+}
+
+allprojects {
+    tasks.withType<RebuildGitPatches>().configureEach {
+        filterPatches = false
+    }
 }
