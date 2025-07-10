@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -1515,14 +_,26 @@
+@@ -1515,14 +_,25 @@
       * internally for {@link #respawn(java.util.function.Consumer, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason)}
       */
      public static final long TELEPORT_FLAGS_PLAYER_RESPAWN    = Long.MIN_VALUE >>> 0;
@@ -19,7 +19,6 @@
 +        if (this.exitEndCreditsCallback != null) {
 +            this.wonGame = false;
 +            this.isDisplayingEndCredits = false;
-+            // queue the task so it's on the appropriate region context
 +            this.exitEndCreditsCallback.run();
 +            this.exitEndCreditsCallback = null;
 +            return;
