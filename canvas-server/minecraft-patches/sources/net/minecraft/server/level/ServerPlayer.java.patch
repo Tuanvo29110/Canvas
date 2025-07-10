@@ -1,5 +1,33 @@
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -1515,14 +_,26 @@
+      * internally for {@link #respawn(java.util.function.Consumer, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason)}
+      */
+     public static final long TELEPORT_FLAGS_PLAYER_RESPAWN    = Long.MIN_VALUE >>> 0;
++    public boolean isDisplayingEndCredits = false; // Canvas - fix end credits
++    private @Nullable Runnable exitEndCreditsCallback = null; // Canvas - fix end credits
+ 
+     public void exitEndCredits() {
+         if (!this.wonGame) {
+             // not in the end credits anymore
+             return;
+         }
+-        this.wonGame = false;
++        // Canvas start - fix end credits
++        if (!this.isDisplayingEndCredits) this.wonGame = false;
+ 
++        if (this.exitEndCreditsCallback != null) {
++            this.wonGame = false;
++            this.isDisplayingEndCredits = false;
++            // queue the task so it's on the appropriate region context
++            this.exitEndCreditsCallback.run();
++            this.exitEndCreditsCallback = null;
++            return;
++        }
++        // Canvas end
+         this.respawn((player) -> {
+             CriteriaTriggers.CHANGED_DIMENSION.trigger(player, Level.END, Level.OVERWORLD);
+         }, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason.END_PORTAL, true);
 @@ -1564,19 +_,38 @@
              ServerPlayer.this.reset();
          }
@@ -53,7 +81,7 @@
                  TELEPORT_FLAG_LOAD_CHUNK | TELEPORT_FLAGS_PLAYER_RESPAWN,
                  passengerTree, // note: we expect this to just be the player, no passengers
                  (entity) -> {
-@@ -1606,6 +_,22 @@
+@@ -1606,8 +_,25 @@
                      }
                  }
              );
@@ -75,7 +103,10 @@
 +            // Canvas end
          });
  
++        Runnable finalizer = () -> { // Canvas - fix end credits
          // find and modify respawn block state
+         if (respawnWorld == null || respawnConfig == null) {
+             // default to regular spawn
 @@ -1623,6 +_,7 @@
                          respawnWorld, respawnConfig, !alive
                      ).orElse(null);
@@ -92,6 +123,23 @@
  
                      // finished now, pass the location on
                      spawnPosComplete.complete(
+@@ -1647,6 +_,16 @@
+                 }
+             );
+         }
++        // Canvas start - fix end credits
++        };
++        if (this.isDisplayingEndCredits) {
++            // we need to assign to callback, we are displaying the credits
++            this.exitEndCreditsCallback = finalizer;
++        } else {
++            // not displaying credits, run finalizer
++            finalizer.run();
++        }
++        // Canvas end
+     }
+ 
+     @Override
 @@ -1675,7 +_,7 @@
      @Override
      protected ServerPlayer transformForAsyncTeleport(ServerLevel destination, Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
@@ -119,3 +167,34 @@
  
              // required to set up the pending teleport stuff to the client, and to actually update
              // the player's position clientside
+@@ -1796,12 +_,25 @@
+                 return false;
+             }
+             this.wonGame = true;
+-            // TODO is there a better solution to this that DOESN'T skip the credits?
+-            this.seenCredits = true;
+-            if (!this.seenCredits) {
+-                this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0.0F));
+-            }
++            // Canvas start - fix end credits
++            // we need to remove the player *first*, and then display
++            // the end credits, or else we get the player stuck in the
++            // void, and they can't escape...
++            // Original 'showEndCredits' method:
++            // this.unRide();
++            // this.level().removePlayerImmediately(this, Entity.RemovalReason.CHANGED_DIMENSION);
++            // if (!this.wonGame) {
++            //     this.wonGame = true;
++            //     this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0.0F));
++            //     this.seenCredits = true;
++            // }
++            this.isDisplayingEndCredits = !this.seenCredits && !this.level().paperConfig().misc.disableEndCredits; // ensure we respect paper config
+             this.exitEndCredits();
++            if (this.isDisplayingEndCredits) {
++                this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0.0F));
++                this.seenCredits = true; // mark seen the end credits
++            }
++            // Canvas end
+             return true;
+         } else {
+             return super.endPortalLogicAsync(portalPos);
