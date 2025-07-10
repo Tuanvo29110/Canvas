@@ -9,7 +9,7 @@ pluginManagement {
 }
 
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 if (!file(".git").exists()) {
@@ -35,7 +35,7 @@ if (!file(".git").exists()) {
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "canvas"
-for (name in listOf("canvas-api", "canvas-server", "canvas-api-generator", "canvas-test-plugin")) {
+for (name in listOf("canvas-api", "canvas-server", "canvas-test-plugin")) {
     val projName = name.lowercase(Locale.ENGLISH)
     include(projName)
     findProject(":$projName")!!.projectDir = file(name)
