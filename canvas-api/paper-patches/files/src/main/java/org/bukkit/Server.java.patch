@@ -1,9 +1,9 @@
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
-@@ -2752,5 +_,15 @@
-      * @return TPS (5s, 15s, 1m, 5m, 15m), or null if the region doesn't exist
+@@ -2872,4 +_,14 @@
       */
-     double @Nullable [] getRegionTPS(@NotNull World world, int chunkX, int chunkZ);
+     void clearBlockHighlights();
+     // Purpur end - Debug Marker API
 +    // Canvas start - expand region api
 +
 +    /**
@@ -14,5 +14,4 @@
 +     */
 +    @Nullable io.canvasmc.canvas.threadedregions.WorldRegionData getCurrentRegion();
 +    // Canvas end
-     // Folia end - region TPS API
  }

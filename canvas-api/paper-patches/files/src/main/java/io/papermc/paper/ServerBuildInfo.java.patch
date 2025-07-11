@@ -1,9 +1,9 @@
 --- a/src/main/java/io/papermc/paper/ServerBuildInfo.java
 +++ b/src/main/java/io/papermc/paper/ServerBuildInfo.java
-@@ -18,6 +_,16 @@
-      * The brand id for Paper.
+@@ -25,6 +_,16 @@
       */
-     Key BRAND_PAPER_ID = Key.key("papermc", "paper");
+     Key BRAND_PURPUR_ID = Key.key("purpurmc", "purpur");
+     // Purpur end
 +    // Canvas start - Rebrand
 +    /**
 +     * The brand id for Folia.
@@ -14,6 +14,6 @@
 +     */
 +    Key BRAND_CANVAS_ID = Key.key("canvasmc", "canvas");
 +    // Canvas end
- 
      /**
       * Gets the {@code ServerBuildInfo}.
+      *
