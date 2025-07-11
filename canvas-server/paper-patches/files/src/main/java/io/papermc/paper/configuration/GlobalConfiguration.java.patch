@@ -1,0 +1,14 @@
+--- a/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
++++ b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
+@@ -337,9 +_,10 @@
+                     _chatExecutorMaxSize = _chatExecutorCoreSize;
+                 }
+ 
+-                java.util.concurrent.ThreadPoolExecutor executor = (java.util.concurrent.ThreadPoolExecutor) net.minecraft.server.MinecraftServer.getServer().chatExecutor;
++                if (net.minecraft.server.MinecraftServer.getServer().chatExecutor instanceof java.util.concurrent.ThreadPoolExecutor executor) { // Canvas - virtual threads
+                 executor.setCorePoolSize(_chatExecutorCoreSize);
+                 executor.setMaximumPoolSize(_chatExecutorMaxSize);
++                } // Canvas - virtual threads
+             }
+         }
+         public int maxJoinsPerTick = 5;

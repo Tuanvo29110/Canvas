@@ -99,3 +99,12 @@
      }
      // CraftBukkit end
  
+@@ -2702,7 +_,7 @@
+         }
+     }
+ 
+-    public final java.util.concurrent.ExecutorService chatExecutor = java.util.concurrent.Executors.newCachedThreadPool(
++    public final java.util.concurrent.ExecutorService chatExecutor = io.canvasmc.canvas.Config.INSTANCE.virtualThreads.chatExecutor ? java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor() : java.util.concurrent.Executors.newCachedThreadPool( // Canvas - virtual threads
+         new com.google.common.util.concurrent.ThreadFactoryBuilder().setDaemon(true).setNameFormat("Async Chat Thread - #%d").setUncaughtExceptionHandler(new net.minecraft.DefaultUncaughtExceptionHandlerWithName(net.minecraft.server.MinecraftServer.LOGGER)).build()); // Paper
+     public final ChatDecorator improvedChatDecorator = new io.papermc.paper.adventure.ImprovedChatDecorator(this); // Paper - adventure
+ 

@@ -22,7 +22,7 @@
 +        Vec3 currPos = this.position();
 +        org.bukkit.Location newLocation;
 +        org.bukkit.Location from = new org.bukkit.Location(this.level().getWorld(), currPos.x, currPos.y, currPos.z, this.getYRot(), this.getXRot());
-+        org.bukkit.Location to = new org.bukkit.Location(destination.getWorld(), pos.x, pos.y, pos.z, yaw, pitch);
++        org.bukkit.Location to = new org.bukkit.Location(destination.getWorld(), pos.x, pos.y, pos.z, yaw == null ? 0.0F : yaw, pitch == null ? 0.0F : pitch);
 +        if (!(this instanceof ServerPlayer player)) {
 +            org.bukkit.event.entity.EntityTeleportEvent entityTeleportEvent = new org.bukkit.event.entity.EntityTeleportEvent(
 +                this.getBukkitEntity(), from, to

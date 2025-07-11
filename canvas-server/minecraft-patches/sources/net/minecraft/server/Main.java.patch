@@ -1,10 +1,10 @@
 --- a/net/minecraft/server/Main.java
 +++ b/net/minecraft/server/Main.java
-@@ -71,6 +_,7 @@
+@@ -69,6 +_,7 @@
+     )
+     @DontObfuscate
      public static void main(final OptionSet optionSet) { // CraftBukkit - replaces main(String[] args)
++        io.canvasmc.canvas.Config.init(); // Canvas - init config
          io.papermc.paper.util.LogManagerShutdownThread.hook(); // Paper - Improved watchdog support
          SharedConstants.tryDetectVersion();
-+        io.canvasmc.canvas.Config.init(); // Canvas - init config
          /* CraftBukkit start - Replace everything
-         OptionParser optionParser = new OptionParser();
-         OptionSpec<Void> optionSpec = optionParser.accepts("nogui");

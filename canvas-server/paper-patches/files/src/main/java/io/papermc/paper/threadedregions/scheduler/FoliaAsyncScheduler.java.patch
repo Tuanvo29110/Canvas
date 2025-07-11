@@ -1,0 +1,11 @@
+--- a/src/main/java/io/papermc/paper/threadedregions/scheduler/FoliaAsyncScheduler.java
++++ b/src/main/java/io/papermc/paper/threadedregions/scheduler/FoliaAsyncScheduler.java
+@@ -24,7 +_,7 @@
+ 
+     private static final Logger LOGGER = LogUtils.getClassLogger();
+ 
+-    private final Executor executors = new ThreadPoolExecutor(Math.max(4, Runtime.getRuntime().availableProcessors() / 2), Integer.MAX_VALUE,
++    private final Executor executors = io.canvasmc.canvas.Config.INSTANCE.virtualThreads.asyncScheduler ? Executors.newVirtualThreadPerTaskExecutor() : new ThreadPoolExecutor(Math.max(4, Runtime.getRuntime().availableProcessors() / 2), Integer.MAX_VALUE, // Canvas - virtual threads
+         30L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+         new ThreadFactory() {
+             private final AtomicInteger idGenerator = new AtomicInteger();

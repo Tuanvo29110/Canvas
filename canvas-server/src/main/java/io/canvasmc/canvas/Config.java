@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-@Configuration("canvas_server")
+@Configuration("canvas-server")
 public class Config {
     public static boolean RUNNING_IN_IDE = Boolean.getBoolean("minecraft.running-in-ide");
     public static ComponentLogger LOGGER = ComponentLogger.logger("Canvas");
@@ -38,6 +38,28 @@ public class Config {
             "up to 60% of your network usage. Disabling this has minimal side effects, such as squids and glow squids swimming upright until attacked."
         })
         public boolean disableClientboundSetEntityMotionPacket = false;
+    }
+
+    @Comment("Configurations for enabling virtual threads for different thread pool executors")
+    public VirtualThreads virtualThreads = new VirtualThreads();
+    public static class VirtualThreads {
+        @Comment("Enables virtual thread usage for the async scheduler executor")
+        public boolean asyncScheduler = false;
+
+        @Comment("Enables virtual thread usage for the chat executor")
+        public boolean chatExecutor = false;
+
+        @Comment("Enables virtual thread usage for the authenticator pool")
+        public boolean authenticatorPool = false;
+
+        @Comment("Enables virtual thread usage for the text filter executor")
+        public boolean serverTextFilter = false;
+
+        @Comment("Enables virtual thread usage for the text filter executor")
+        public boolean tabCompleteExecutor = false;
+
+        @Comment("Enables virtual thread usage for the profile lookup executor")
+        public boolean profileLookupExecutor = false;
     }
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
@@ -76,7 +98,7 @@ public class Config {
     }
 
     public static Config init() {
-        long startNanos = Util.getNanos();
+        long startNanos = System.nanoTime();
         ConfigurationManager.register(Config.class, Config::buildSerializer);
         LOGGER.info("Finished Canvas config init in {}ms", TimeUnit.MILLISECONDS.convert(Util.getNanos() - startNanos, TimeUnit.NANOSECONDS));
         return INSTANCE;
