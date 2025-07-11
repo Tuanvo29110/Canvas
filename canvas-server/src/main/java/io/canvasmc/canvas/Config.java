@@ -3,6 +3,8 @@ package io.canvasmc.canvas;
 import io.canvasmc.canvas.config.*;
 import io.canvasmc.canvas.config.annotation.Comment;
 import io.canvasmc.canvas.config.internal.ConfigurationManager;
+import io.canvasmc.canvas.util.YamlTextFormatter;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.Util;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +88,9 @@ public class Config {
             .runtimeModifier("debug.*", new RuntimeModifier<>(boolean.class, (original) -> RUNNING_IN_IDE || original))
             .post(context -> {
                 INSTANCE = context.configuration();
+                // build and print config tree.
+                YamlTextFormatter formatter = new YamlTextFormatter(4);
+                LOGGER.info(Component.text("Printing configuration tree:").appendNewline().append(formatter.apply(context.contents())));
                 if (RUNNING_IN_IDE) {
                     LOGGER.info("Running Minecraft development server in IDE.");
                 }
