@@ -1,0 +1,51 @@
+--- a/net/minecraft/world/level/chunk/LevelChunk.java
++++ b/net/minecraft/world/level/chunk/LevelChunk.java
+@@ -760,14 +_,46 @@
+     public void postProcessGeneration(ServerLevel level) {
+         ChunkPos pos = this.getPos();
+ 
++        // Canvas start - optimize post process generation
++        io.canvasmc.canvas.chunk.FluidPostProcessingMode postProcessingMode = io.canvasmc.canvas.Config.INSTANCE.chunks.fluidPostProcessingMode;
++        if (postProcessingMode.equals(io.canvasmc.canvas.chunk.FluidPostProcessingMode.FILTERED)) {
++            // filtered
++            int total = 0;
++            int eliminated = 0;
++            for (int i = 0; i < this.postProcessing.length; i++) {
++                if (this.postProcessing[i] != null) {
++                    for (it.unimi.dsi.fastutil.shorts.ShortListIterator iterator = this.postProcessing[i].iterator(); iterator.hasNext(); ) {
++                        final Short _short = iterator.next();
++                        BlockPos blockPos = ProtoChunk.unpackOffsetCoordinates(_short, this.getSectionYFromSectionIndex(i), pos);
++                        BlockState blockState = this.getBlockState(blockPos);
++                        FluidState fluidState = blockState.getFluidState();
++                        if (!fluidState.isEmpty() && fluidState.getType() instanceof net.minecraft.world.level.material.FlowingFluid) {
++                            total++;
++                            if (!io.canvasmc.canvas.util.FlowableFluidUtils.needsPostProcessing(this.level, blockPos, blockState, fluidState)) {
++                                iterator.remove();
++                                eliminated++;
++                            }
++                        }
++                    }
++                }
++            }
++
++            // LOGGER.info(String.format("Eliminated %d/%d (%.2f%%) post processing fluids in chunk %s", eliminated, total, eliminated / (double) total * 100.0, this.chunkPos));
++        }
++        boolean disabled = postProcessingMode.equals(io.canvasmc.canvas.chunk.FluidPostProcessingMode.DISABLED);
++        // Canvas end
+         for (int i = 0; i < this.postProcessing.length; i++) {
+             if (this.postProcessing[i] != null) {
+                 for (Short _short : this.postProcessing[i]) {
+                     BlockPos blockPos = ProtoChunk.unpackOffsetCoordinates(_short, this.getSectionYFromSectionIndex(i), pos);
+                     BlockState blockState = this.getBlockState(blockPos);
+                     FluidState fluidState = blockState.getFluidState();
+-                    if (!fluidState.isEmpty()) {
+-                        fluidState.tick(level, blockPos, blockState);
++                    // Canvas start - optimize post process generation
++                    if (!disabled && !fluidState.isEmpty()) {
++                        if (io.canvasmc.canvas.Config.INSTANCE.chunks.fluidPostProcessingToScheduledTick) {
++                            level.scheduleTick(blockPos, fluidState.getType(), 1);
++                        } else fluidState.tick(level, blockPos, blockState);
++                    // Canvas end
+                     }
+ 
+                     if (!(blockState.getBlock() instanceof LiquidBlock)) {

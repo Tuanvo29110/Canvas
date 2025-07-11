@@ -1,5 +1,6 @@
 package io.canvasmc.canvas;
 
+import io.canvasmc.canvas.chunk.FluidPostProcessingMode;
 import io.canvasmc.canvas.config.*;
 import io.canvasmc.canvas.config.annotation.Comment;
 import io.canvasmc.canvas.config.internal.ConfigurationManager;
@@ -31,6 +32,25 @@ public class Config {
 
         @Comment("The thread priority for Canvas' rewritten chunk system executor")
         public int threadPoolPriority = Thread.NORM_PRIORITY;
+
+        @Comment(value = {
+            "Determines the fluid post processing mode.",
+            "The worldgen processes creates a lot of unnecessary fluid post-processing tasks,",
+            "which can overload the server thread and cause stutters.",
+            "There are 3 accepted values",
+            " - VANILLA - just normal vanilla, no changes",
+            " - DISABLED - disables fluid post processing completely",
+            " - FILTERED - applies a rough filter to filter out fluids that are definitely not going to flow"
+        })
+        public FluidPostProcessingMode fluidPostProcessingMode = FluidPostProcessingMode.VANILLA;
+
+        @Comment(value = {
+            "Whether to turn fluid postprocessing into scheduled tick",
+            "",
+            "Fluid post-processing is very expensive when loading in new chunks, and this can affect",
+            "MSPT significantly. This option delays fluid post-processing to scheduled tick to hopefully mitigate this issue."
+        })
+        public boolean fluidPostProcessingToScheduledTick = false;
     }
 
     public Networking networking = new Networking();
