@@ -97,6 +97,23 @@
              "Build-Number" to (build ?: ""),
              "Build-Time" to buildTime.toString(),
              "Git-Branch" to gitBranch,
+@@ -332,13 +_,11 @@
+         .dir(providers.gradleProperty("paper.runWorkDir").getOrElse("run"))
+         .asFile
+     javaLauncher.set(project.javaToolchains.launcherFor {
+-        languageVersion.set(JavaLanguageVersion.of(21))
+-        vendor.set(JvmVendorSpec.JETBRAINS)
++        languageVersion.set(JavaLanguageVersion.of(22)) // run on java 22
+     })
+-    jvmArgs("-XX:+AllowEnhancedClassRedefinition")
+ 
+-    if (rootProject.childProjects["test-plugin"] != null) {
+-        val testPluginJar = rootProject.project(":test-plugin").tasks.jar.flatMap { it.archiveFile }
++    if (rootProject.childProjects["canvas-test-plugin"] != null) {
++        val testPluginJar = rootProject.project(":canvas-test-plugin").tasks.jar.flatMap { it.archiveFile }
+         inputs.file(testPluginJar)
+         args("-add-plugin=${testPluginJar.get().asFile.absolutePath}")
+     }
 @@ -400,7 +_,7 @@
  }
  
