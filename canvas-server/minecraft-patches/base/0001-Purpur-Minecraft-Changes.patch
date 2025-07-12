@@ -14892,17 +14892,17 @@ index 42f44222a8dd61f70d4583b0ca82a16400baaa5a..41ba9f234e840fadee3c8a52ba9655b9
      }
  
 diff --git a/net/minecraft/world/level/EntityGetter.java b/net/minecraft/world/level/EntityGetter.java
-index 639afaf7c492b43241e919489ba8e7b549dee530..fc0146e431a023382b44798085e0d2e39ff7fb04 100644
+index 639afaf7c492b43241e919489ba8e7b549dee530..7760f4c147b8f9d28547d64bafefdde9c645bfba 100644
 --- a/net/minecraft/world/level/EntityGetter.java
 +++ b/net/minecraft/world/level/EntityGetter.java
-@@ -178,7 +178,7 @@ public interface EntityGetter extends ca.spottedleaf.moonrise.patches.chunk_syst
-     // Paper start - Affects Spawning API
-     default boolean hasNearbyAlivePlayerThatAffectsSpawning(double x, double y, double z, double range) {
+@@ -191,7 +191,7 @@ public interface EntityGetter extends ca.spottedleaf.moonrise.patches.chunk_syst
+ 
+     default boolean hasNearbyAlivePlayer(double x, double y, double z, double distance) {
          for (Player player : this.getLocalPlayers()) { // Folia - region threading
--            if (EntitySelector.PLAYER_AFFECTS_SPAWNING.test(player)) { // combines NO_SPECTATORS and LIVING_ENTITY_STILL_ALIVE with an "affects spawning" check
-+            if (EntitySelector.PLAYER_AFFECTS_SPAWNING.test(player) && EntitySelector.notAfk.test(player)) { // combines NO_SPECTATORS and LIVING_ENTITY_STILL_ALIVE with an "affects spawning" check // Purpur - AFK API
-                 double distanceSqr = player.distanceToSqr(x, y, z);
-                 if (range < 0.0D || distanceSqr < range * range) {
+-            if (EntitySelector.NO_SPECTATORS.test(player) && EntitySelector.LIVING_ENTITY_STILL_ALIVE.test(player)) {
++            if (EntitySelector.NO_SPECTATORS.test(player) && EntitySelector.LIVING_ENTITY_STILL_ALIVE.test(player) && EntitySelector.notAfk.test(player)) { // Purpur - AFK API
+                 double d = player.distanceToSqr(x, y, z);
+                 if (distance < 0.0 || d < distance * distance) {
                      return true;
 diff --git a/net/minecraft/world/level/GameRules.java b/net/minecraft/world/level/GameRules.java
 index d5536dd40a1e9a2e05967652f690abbbca287852..d510503a8ad272255aeba20a916642828023fd19 100644
