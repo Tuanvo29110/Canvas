@@ -9,7 +9,7 @@
      private YamlConfiguration configuration;
      private YamlConfiguration commandsConfiguration;
      private final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
-@@ -1259,7 +_,6 @@
+@@ -1276,7 +_,6 @@
  
      @Override
      public World createWorld(WorldCreator creator) {
@@ -17,7 +17,7 @@
          Preconditions.checkState(this.console.getAllLevels().iterator().hasNext(), "Cannot create additional worlds on STARTUP");
          //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot create a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
          Preconditions.checkArgument(creator != null, "WorldCreator cannot be null");
-@@ -1438,7 +_,20 @@
+@@ -1455,7 +_,20 @@
          }
  
          this.console.addLevel(serverLevel); // Paper - Put world into worldlist before initing the world; move up
@@ -39,7 +39,7 @@
  
          serverLevel.setSpawnSettings(true);
          // Paper - Put world into worldlist before initing the world; move up
-@@ -1457,13 +_,13 @@
+@@ -1474,13 +_,13 @@
  
      @Override
      public boolean unloadWorld(World world, boolean save) {
@@ -54,7 +54,7 @@
  
          if (this.console.getLevel(handle.dimension()) == null) {
              return false;
-@@ -1483,19 +_,19 @@
+@@ -1500,19 +_,19 @@
          }
  
          try {
@@ -82,7 +82,7 @@
          return true;
      }
  
-@@ -2954,7 +_,7 @@
+@@ -3025,7 +_,7 @@
      @Override
      public double getAverageTickTime() {
          // Folia start - region threading
@@ -91,7 +91,7 @@
          if (task == null) {
              // might be on the shutdown thread, try retrieving the current region
              if (io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion() != null) {
-@@ -3027,7 +_,7 @@
+@@ -3110,7 +_,7 @@
      @Override
      public double[] getTPS() {
          // Folia start - region threading
@@ -100,7 +100,7 @@
          if (task == null) {
              // might be on the shutdown thread, try retrieving the current region
              if (io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion() != null) {
-@@ -3295,6 +_,27 @@
+@@ -3379,6 +_,27 @@
  
          return getTPSFromRegion(((CraftWorld)world).getHandle(), chunkX, chunkZ);
      }

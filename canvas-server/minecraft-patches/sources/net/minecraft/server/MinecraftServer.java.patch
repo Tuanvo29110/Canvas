@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1002,7 +_,7 @@
+@@ -1005,7 +_,7 @@
      // CraftBukkit end
  
      // Folia start - region threading
@@ -9,7 +9,7 @@
  
      private void haltServerRegionThreading() {
          if (this.hasStartedShutdownThread.getAndSet(true)) {
-@@ -1737,6 +_,7 @@
+@@ -1773,6 +_,7 @@
          // Send time updates to everyone, it will get the right time from the world the player is in.
          // Paper start - Perf: Optimize time updates
          for (final ServerLevel level : Arrays.asList(region.world)) { // Folia - region threading
@@ -17,7 +17,7 @@
              final boolean doDaylight = level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT);
              final long dayTime = level.getDayTime();
              long worldTime = level.getGameTime();
-@@ -1764,6 +_,48 @@
+@@ -1800,6 +_,48 @@
              }
              // CraftBukkit end */
  
@@ -66,7 +66,7 @@
              try {
                  serverLevel.tick(hasTimeLeft, region); // Folia - region threading
              } catch (Throwable var7) {
-@@ -1836,22 +_,31 @@
+@@ -1872,22 +_,31 @@
  
      @Nullable
      public ServerLevel getLevel(ResourceKey<Level> dimension) {

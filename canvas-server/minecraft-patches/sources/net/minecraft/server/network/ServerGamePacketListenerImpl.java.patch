@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-@@ -2775,7 +_,7 @@
+@@ -2856,7 +_,7 @@
          this.removePlayerFromWorld();
          } finally { // Folia start - rewrite login process - move connection ownership to global region
              io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.player.level().getCurrentWorldData();

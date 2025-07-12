@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -654,6 +_,7 @@
+@@ -674,6 +_,7 @@
      public static final int WORLD_INIT_CHECKED = 2;
      public final java.util.concurrent.atomic.AtomicInteger checkInitialised = new java.util.concurrent.atomic.AtomicInteger(WORLD_INIT_NOT_CHECKED);
      public ChunkPos randomSpawnSelection;
@@ -8,7 +8,7 @@
  
      public static final record PendingTeleport(Entity.EntityTreeNode rootVehicle, Vec3 to) {}
      private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<PendingTeleport> pendingTeleports = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
-@@ -836,10 +_,7 @@
+@@ -856,10 +_,7 @@
  
      @Override
      public boolean shouldTickBlocksAt(long chunkPos) {
@@ -20,7 +20,7 @@
      }
  
      protected void tickTime() {
-@@ -1103,7 +_,7 @@
+@@ -1196,7 +_,7 @@
      }
  
      public ServerWaypointManager getWaypointManager() {
@@ -29,7 +29,7 @@
      }
  
      public void advanceWeatherCycle() { // Folia - region threading - public
-@@ -2561,25 +_,15 @@
+@@ -2656,25 +_,15 @@
      }
  
      public boolean isPositionTickingWithEntitiesLoaded(long chunkPos) {
@@ -58,7 +58,7 @@
      }
  
      public boolean anyPlayerCloseEnoughForSpawning(BlockPos pos) {
-@@ -2591,10 +_,7 @@
+@@ -2686,10 +_,7 @@
      }
  
      public boolean canSpawnEntitiesInChunk(ChunkPos chunkPos) {
@@ -70,7 +70,7 @@
      }
  
      @Override
-@@ -2706,9 +_,7 @@
+@@ -2801,9 +_,7 @@
              // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
              if (entity instanceof ServerPlayer serverPlayer) {
                  ServerLevel.this.players.add(serverPlayer);
@@ -81,7 +81,7 @@
  
                  ServerLevel.this.updateSleepingPlayerList();
              }
-@@ -2793,7 +_,7 @@
+@@ -2888,7 +_,7 @@
              ServerLevel.this.getChunkSource().removeEntity(entity);
              if (entity instanceof ServerPlayer serverPlayer) {
                  ServerLevel.this.players.remove(serverPlayer);

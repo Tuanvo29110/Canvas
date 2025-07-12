@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
-@@ -801,7 +_,7 @@
+@@ -846,7 +_,7 @@
      // Folia start - region ticking
      public final io.papermc.paper.threadedregions.RegionizedData<io.papermc.paper.threadedregions.RegionizedWorldData> worldRegionData
          = new io.papermc.paper.threadedregions.RegionizedData<>(

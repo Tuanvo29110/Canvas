@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
-@@ -96,10 +_,9 @@
+@@ -101,10 +_,9 @@
              this.server.halt(false);
          }
          // Folia start - region threading
@@ -13,7 +13,7 @@
          // Folia end - region threading
      }
  
-@@ -352,12 +_,16 @@
+@@ -392,12 +_,16 @@
              return;
          }
          // Folia start - region threading

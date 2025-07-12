@@ -1,0 +1,2088 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Toffikk <slodkitofik@gmail.com>
+Date: Sat, 12 Jul 2025 01:01:30 +0200
+Subject: [PATCH] Purpur Server Changes
+
+
+diff --git a/src/main/java/com/destroystokyo/paper/Metrics.java b/src/main/java/com/destroystokyo/paper/Metrics.java
+index 90a5178b5025378197b69514d782de5d6090cb6b..ae48b333dd8c076e49606f2610d7f9b71c6fc085 100644
+--- a/src/main/java/com/destroystokyo/paper/Metrics.java
++++ b/src/main/java/com/destroystokyo/paper/Metrics.java
+@@ -593,7 +593,7 @@ public class Metrics {
+             boolean logFailedRequests = config.getBoolean("logFailedRequests", false);
+             // Only start Metrics, if it's enabled in the config
+             if (config.getBoolean("enabled", true)) {
+-                Metrics metrics = new Metrics("Folia", serverUUID, logFailedRequests, Bukkit.getLogger()); // Folia - we have our own bstats page
++                Metrics metrics = new Metrics("Purpur", serverUUID, logFailedRequests, Bukkit.getLogger()); // Folia - we have our own bstats page // Pufferfish // Purpur - Purpur config files
+ 
+                 metrics.addCustomChart(new Metrics.SimplePie("minecraft_version", () -> {
+                     String minecraftVersion = Bukkit.getVersion();
+@@ -602,16 +602,8 @@ public class Metrics {
+                 }));
+ 
+                 metrics.addCustomChart(new Metrics.SingleLineChart("players", () -> Bukkit.getOnlinePlayers().size()));
+-                metrics.addCustomChart(new Metrics.SimplePie("online_mode", () -> Bukkit.getOnlineMode() ? "online" : "offline"));
+-                final String paperVersion;
+-                final String implVersion = org.bukkit.craftbukkit.Main.class.getPackage().getImplementationVersion();
+-                if (implVersion != null) {
+-                    final String buildOrHash = implVersion.substring(implVersion.lastIndexOf('-') + 1);
+-                    paperVersion = "git-Folia-%s-%s".formatted(Bukkit.getServer().getMinecraftVersion(), buildOrHash); // Folia - we have our own bstats page
+-                } else {
+-                    paperVersion = "unknown";
+-                }
+-                metrics.addCustomChart(new Metrics.SimplePie("folia_version", () -> paperVersion)); // Folia - we have our own bstats page
++                metrics.addCustomChart(new Metrics.SimplePie("online_mode", () -> Bukkit.getOnlineMode() ? "online" : (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() ? "bungee" : "offline"))); // Purpur - Purpur config files
++                metrics.addCustomChart(new Metrics.SimplePie("purpur_version", () -> (org.bukkit.craftbukkit.Main.class.getPackage().getImplementationVersion() != null) ? org.bukkit.craftbukkit.Main.class.getPackage().getImplementationVersion() : "unknown")); // Purpur - Purpur config files
+ 
+                 metrics.addCustomChart(new Metrics.DrilldownPie("java_version", () -> {
+                     Map<String, Map<String, Integer>> map = new HashMap<>();
+diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
+index 1783f9ea48154dcc8971fc5ef088f5a8c0f0b2ff..6cda8d9787c1c0c204fa4ef3bd249a691e999bba 100644
+--- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
++++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
+@@ -35,7 +35,10 @@ public class PaperVersionFetcher implements VersionFetcher {
+     private static final Logger LOGGER = LogUtils.getClassLogger();
+     private static final int DISTANCE_ERROR = -1;
+     private static final int DISTANCE_UNKNOWN = -2;
+-    private static final String DOWNLOAD_PAGE = "https://papermc.io/downloads/paper";
++    // Purpur start - Rebrand
++    private static final String DOWNLOAD_PAGE = "https://purpurmc.org/downloads";
++    private static int distance = DISTANCE_UNKNOWN; public int distance() { return distance; }
++    // Purpur end - Rebrand
+ 
+     @Override
+     public long getCacheTime() {
+@@ -49,7 +52,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+         if (build.buildNumber().isEmpty() && build.gitCommit().isEmpty()) {
+             updateMessage = text("You are running a development version without access to version information", color(0xFF5300));
+         } else {
+-            updateMessage = getUpdateStatusMessage("PaperMC/Folia", build); // Folia
++            updateMessage = getUpdateStatusMessage("PurpurMC/Purpur", build); // Folia // Purpur - Rebrand
+         }
+         final @Nullable Component history = this.getHistory();
+ 
+@@ -57,7 +60,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+     }
+ 
+     private static Component getUpdateStatusMessage(final String repo, final ServerBuildInfo build) {
+-        int distance = DISTANCE_ERROR;
++        //int distance = DISTANCE_ERROR; // Purpur - use field - Rebrand
+ 
+         final OptionalInt buildNumber = build.buildNumber();
+         if (buildNumber.isPresent()) {
+@@ -71,10 +74,10 @@ public class PaperVersionFetcher implements VersionFetcher {
+         }
+ 
+         return switch (distance) {
+-            case DISTANCE_ERROR -> text("Error obtaining version information", NamedTextColor.YELLOW);
+-            case 0 -> text("You are running the latest version", NamedTextColor.GREEN);
+-            case DISTANCE_UNKNOWN -> text("Unknown version", NamedTextColor.YELLOW);
+-            default -> text("You are " + distance + " version(s) behind", NamedTextColor.YELLOW)
++            case DISTANCE_ERROR -> text("* Error obtaining version information", NamedTextColor.RED); // Purpur - Rebrand
++            case 0 -> text("* You are running the latest version", NamedTextColor.GREEN); // Purpur - Rebrand
++            case DISTANCE_UNKNOWN -> text("* Unknown version", NamedTextColor.YELLOW); // Purpur - Rebrand
++            default -> text("* You are " + distance + " version(s) behind", NamedTextColor.YELLOW) // Purpur - Rebrand
+                 .append(Component.newline())
+                 .append(text("Download the new version at: ")
+                     .append(text(DOWNLOAD_PAGE, NamedTextColor.GOLD)
+@@ -86,18 +89,15 @@ public class PaperVersionFetcher implements VersionFetcher {
+     private static int fetchDistanceFromSiteApi(final ServerBuildInfo build, final int jenkinsBuild) {
+         try {
+             try (final BufferedReader reader = Resources.asCharSource(
+-                URI.create("https://api.papermc.io/v2/projects/folia/versions/" + build.minecraftVersionId()).toURL(), // Folia
++                URI.create("https://api.purpurmc.org/v2/purpur/" + build.minecraftVersionId()).toURL(), // Folia // Purpur - Rebrand
+                 StandardCharsets.UTF_8
+             ).openBufferedStream()) {
+                 final JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+-                final JsonArray builds = json.getAsJsonArray("builds");
+-                final int latest = StreamSupport.stream(builds.spliterator(), false)
+-                    .mapToInt(JsonElement::getAsInt)
+-                    .max()
+-                    .orElseThrow();
++                //final JsonArray builds = json.getAsJsonArray("builds"); // Purpur - Rebrand
++                final int latest = json.getAsJsonObject("builds").getAsJsonPrimitive("latest").getAsInt(); // Purpur - Rebrand
+                 return latest - jenkinsBuild;
+             } catch (final JsonSyntaxException ex) {
+-                LOGGER.error("Error parsing json from Paper's downloads API", ex);
++                LOGGER.error("Error parsing json from Purpur's downloads API", ex); // Purpur - Rebrand
+                 return DISTANCE_ERROR;
+             }
+         } catch (final IOException e) {
+@@ -141,6 +141,6 @@ public class PaperVersionFetcher implements VersionFetcher {
+             return null;
+         }
+ 
+-        return text("Previous version: " + oldVersion, NamedTextColor.GRAY, TextDecoration.ITALIC);
++        return text("Previous: " + oldVersion, NamedTextColor.GRAY); // Purpur - Rebrand
+     }
+ }
+diff --git a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java b/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
+index 6ee39b534b8d992655bc0cef3c299d12cbae0034..bc7e4e5560708fea89c584b1d8b471f4966f311a 100644
+--- a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
++++ b/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
+@@ -20,7 +20,7 @@ public final class PaperConsole extends SimpleTerminalConsole {
+     @Override
+     protected LineReader buildReader(LineReaderBuilder builder) {
+         builder
+-                .appName("Paper")
++                .appName("Purpur") // Purpur - Rebrand
+                 .variable(LineReader.HISTORY_FILE, java.nio.file.Paths.get(".console_history"))
+                 .completer(new ConsoleCommandCompleter(this.server))
+                 .option(LineReader.Option.COMPLETE_IN_WORD, true);
+diff --git a/src/main/java/com/destroystokyo/paper/entity/ai/MobGoalHelper.java b/src/main/java/com/destroystokyo/paper/entity/ai/MobGoalHelper.java
+index e6ad63a56dc0fc969dbf3ed5bdc36b4187331e30..cfcb04f3b7ef66c68291579eeb318128f9a0d659 100644
+--- a/src/main/java/com/destroystokyo/paper/entity/ai/MobGoalHelper.java
++++ b/src/main/java/com/destroystokyo/paper/entity/ai/MobGoalHelper.java
+@@ -143,6 +143,11 @@ public class MobGoalHelper {
+     private static final Map<String, String> NESTED_CLASS_NAMES = Util.make(new HashMap<>(), map -> {
+         map.put("AbstractSkeleton$1", "AbstractSkeletonMelee");
+ 
++        // Purpur start - Add option to disable zombie aggressiveness towards villagers
++        map.put("Zombie$1", "ZombieAttackVillager");
++        map.put("Drowned$1", "DrownedAttackVillager");
++        // Purpur end - Add option to disable zombie aggressiveness towards villagers
++
+         // remove duplicate
+         map.put("TraderLlama$TraderLlamaDefendWanderingTraderGoal", "TraderLlamaDefendWanderingTraderGoal");
+         map.put("AbstractIllager$RaiderOpenDoorGoal", "RaiderOpenDoorGoal");
+diff --git a/src/main/java/com/destroystokyo/paper/gui/RAMDetails.java b/src/main/java/com/destroystokyo/paper/gui/RAMDetails.java
+index 12b327eea95e0de9e9c39b7d039badee8ec46508..46696cfe1d99e705d383a1fe4e66f5c5646053d2 100644
+--- a/src/main/java/com/destroystokyo/paper/gui/RAMDetails.java
++++ b/src/main/java/com/destroystokyo/paper/gui/RAMDetails.java
+@@ -61,6 +61,7 @@ public class RAMDetails extends JList<String> {
+ 
+         // Follows CraftServer#getTPS
+         double[] tps = new double[] {
++            server.tps5s.getAverage(), // Purpur - Add 5 second tps average in /tps
+             server.tps1.getAverage(),
+             server.tps5.getAverage(),
+             server.tps15.getAverage()
+@@ -73,7 +74,7 @@ public class RAMDetails extends JList<String> {
+         vector.add("Memory use: " + (data.getUsedMem() / 1024L / 1024L) + " mb (" + (data.getFree() * 100L / data.getMax()) + "% free)");
+         vector.add("Heap: " + (data.getTotal() / 1024L / 1024L) + " / " + (data.getMax() / 1024L / 1024L) + " mb");
+         vector.add("Avg tick: " + DECIMAL_FORMAT.format((double)this.server.getAverageTickTimeNanos() / (double) TimeUtil.NANOSECONDS_PER_MILLISECOND) + " ms");
+-        vector.add("TPS from last 1m, 5m, 15m: " + String.join(", ", tpsAvg));
++        vector.add("TPS from last 5s, 1m, 5m, 15m: " + String.join(", ", tpsAvg)); // Purpur - Add 5 second tps average in /tps
+         setListData(vector);
+     }
+ 
+diff --git a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
+index 10a0be7a4db1a51579d113d279af7a9effe7f438..1b0ee48e28aaa68ddb1f28c23d3c5f5f40505c98 100644
+--- a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
++++ b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
+@@ -31,6 +31,7 @@ public record ServerBuildInfoImpl(
+     private static final String ATTRIBUTE_GIT_COMMIT = "Git-Commit";
+ 
+     private static final String BRAND_PAPER_NAME = "Paper";
++    private static final String BRAND_PURPUR_NAME = "Purpur"; // Purpur - Rebrand
+ 
+     private static final String BUILD_DEV = "DEV";
+ 
+@@ -42,9 +43,9 @@ public record ServerBuildInfoImpl(
+         this(
+             getManifestAttribute(manifest, ATTRIBUTE_BRAND_ID)
+                 .map(Key::key)
+-                .orElse(Key.key("papermc", "folia")), // Folia
++                .orElse(BRAND_PURPUR_ID), // Purpur - Rebrand
+             getManifestAttribute(manifest, ATTRIBUTE_BRAND_NAME)
+-                .orElse("Folia"), // Folia
++                .orElse(BRAND_PURPUR_NAME), // Purpur - Rebrand
+             SharedConstants.getCurrentVersion().id(),
+             SharedConstants.getCurrentVersion().name(),
+             getManifestAttribute(manifest, ATTRIBUTE_BUILD_NUMBER)
+@@ -61,7 +62,7 @@ public record ServerBuildInfoImpl(
+ 
+     @Override
+     public boolean isBrandCompatible(final @NotNull Key brandId) {
+-        return brandId.equals(this.brandId);
++        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID); // Purpur - Fix pufferfish issues // Purpur - Rebrand
+     }
+ 
+     @Override
+diff --git a/src/main/java/io/papermc/paper/command/PaperPluginsCommand.java b/src/main/java/io/papermc/paper/command/PaperPluginsCommand.java
+index d0a4e1642d1be33cd9e832f961301ab267e216bc..4a693643a3c51670c3425b8e9c2ab1f0a8e77e48 100644
+--- a/src/main/java/io/papermc/paper/command/PaperPluginsCommand.java
++++ b/src/main/java/io/papermc/paper/command/PaperPluginsCommand.java
+@@ -74,10 +74,10 @@ public class PaperPluginsCommand {
+             .build();
+     }
+ 
+-    private static <T> List<Component> formatProviders(final TreeMap<String, PluginProvider<T>> plugins) {
++    private static <T> List<Component> formatProviders(final TreeMap<String, PluginProvider<T>> plugins, final CommandSender sender) { // Purpur - Improve output of plugins command
+         final List<Component> components = new ArrayList<>(plugins.size());
+         for (final PluginProvider<T> entry : plugins.values()) {
+-            components.add(formatProvider(entry));
++            components.add(formatProvider(entry, sender)); // Purpur - Improve output of plugins command
+         }
+ 
+         boolean isFirst = true;
+@@ -104,15 +104,49 @@ public class PaperPluginsCommand {
+         return formattedSubLists;
+     }
+ 
+-    private static Component formatProvider(final PluginProvider<?> provider) {
++    private static Component formatProvider(final PluginProvider<?> provider, CommandSender sender) { // Purpur - Improve output of plugins command
+         final TextComponent.Builder builder = Component.text();
+         if (provider instanceof final SpigotPluginProvider spigotPluginProvider && CraftMagicNumbers.isLegacy(spigotPluginProvider.getMeta())) {
+             builder.append(LEGACY_PLUGIN_STAR);
+         }
+ 
+         final String name = provider.getMeta().getName();
+-        final Component pluginName = Component.text(name, fromStatus(provider))
+-            .clickEvent(ClickEvent.runCommand("/version " + name));
++        // Purpur start - Improve output of plugins command
++        Component pluginName = Component.text(name, fromStatus(provider))
++            .clickEvent(ClickEvent.suggestCommand("/version " + name));
++
++        if (sender instanceof org.bukkit.entity.Player && sender.hasPermission("bukkit.command.version")) {
++            // Event components
++            String description = provider.getMeta().getDescription();
++            TextComponent.Builder hover = Component.text();
++            hover.append(Component.text("Version: ", NamedTextColor.WHITE)).append(Component.text(provider.getMeta().getVersion(), NamedTextColor.GREEN));
++
++            if (description != null) {
++                hover.append(Component.newline())
++                        .append(Component.text("Description: ", NamedTextColor.WHITE))
++                        .append(Component.text(description, NamedTextColor.GREEN));
++            }
++
++            if (provider.getMeta().getWebsite() != null) {
++                hover.append(Component.newline())
++                        .append(Component.text("Website: ", NamedTextColor.WHITE))
++                        .append(Component.text(provider.getMeta().getWebsite(), NamedTextColor.GREEN));
++            }
++
++            if (!provider.getMeta().getAuthors().isEmpty()) {
++                hover.append(Component.newline());
++                if (provider.getMeta().getAuthors().size() == 1) {
++                    hover.append(Component.text("Author: "));
++                } else {
++                    hover.append(Component.text("Authors: "));
++                }
++
++                hover.append(getAuthors(provider.getMeta()));
++            }
++
++            pluginName = pluginName.hoverEvent(hover.build());
++        }
++        // Purpur end - Improve output of plugins command
+ 
+         builder.append(pluginName);
+ 
+@@ -130,6 +164,23 @@ public class PaperPluginsCommand {
+         return componentHeader.append(Component.text(":")).build();
+     }
+ 
++    // Purpur start - Improve output of plugins command
++    private static TextComponent getAuthors(final PluginMeta pluginMeta) {
++        TextComponent.Builder builder = Component.text();
++        List<String> authors = pluginMeta.getAuthors();
++
++        for (int i = 0; i < authors.size(); i++) {
++            if (i > 0) {
++                builder.append(Component.text(i < authors.size() - 1 ? ", " : " and ", NamedTextColor.WHITE));
++            }
++
++            builder.append(Component.text(authors.get(i), NamedTextColor.GREEN));
++        }
++
++        return builder.build();
++    }
++    // Purpur end - Improve output of plugins command
++
+     private static Component asPlainComponents(final String strings) {
+         final net.kyori.adventure.text.TextComponent.Builder builder = Component.text();
+         for (final String string : strings.split("\n")) {
+@@ -188,25 +239,25 @@ public class PaperPluginsCommand {
+         final int sizePaperPlugins = paperPlugins.size();
+         final int sizeSpigotPlugins = spigotPlugins.size();
+         final int sizePlugins = sizePaperPlugins + sizeSpigotPlugins;
+-        final boolean hasAllPluginTypes = (sizePaperPlugins > 0 && sizeSpigotPlugins > 0);
++        final boolean hasAllPluginTypes = true; // Purpur - Improve output of plugins command
+ 
+         final Component infoMessage = Component.text().append(INFO_ICON_SERVER_PLUGIN).append(Component.text("Server Plugins (%s):".formatted(sizePlugins), NamedTextColor.WHITE)).build();
+ 
+         sender.sendMessage(infoMessage);
+ 
+-        if (!paperPlugins.isEmpty()) {
++        //if (!paperPlugins.isEmpty()) { // Purpur - Improve output of plugins command
+             sender.sendMessage(header("Paper Plugins", 0x0288D1, sizePaperPlugins, hasAllPluginTypes));
+-        }
++        //} // Purpur - Improve output of plugins command
+ 
+-        for (final Component component : formatProviders(paperPlugins)) {
++        for (final Component component : formatProviders(paperPlugins, sender)) { // Purpur - Improve output of plugins command
+             sender.sendMessage(component);
+         }
+ 
+-        if (!spigotPlugins.isEmpty()) {
++        //if (!spigotPlugins.isEmpty()) { // Purpur - Improve output of plugins command
+             sender.sendMessage(header("Bukkit Plugins", 0xED8106, sizeSpigotPlugins, hasAllPluginTypes));
+-        }
++        //} // Purpur - Improve output of plugins command
+ 
+-        for (final Component component : formatProviders(spigotPlugins)) {
++        for (final Component component : formatProviders(spigotPlugins, sender)) { // Purpur - Improve output of plugins command
+             sender.sendMessage(component);
+         }
+ 
+diff --git a/src/main/java/io/papermc/paper/logging/SysoutCatcher.java b/src/main/java/io/papermc/paper/logging/SysoutCatcher.java
+index a8e813ca89b033f061e695288b3383bdcf128531..96a377a07d8396f893954a3ba97fbf88d73faf6d 100644
+--- a/src/main/java/io/papermc/paper/logging/SysoutCatcher.java
++++ b/src/main/java/io/papermc/paper/logging/SysoutCatcher.java
+@@ -54,9 +54,9 @@ public final class SysoutCatcher {
+                 final JavaPlugin plugin = JavaPlugin.getProvidingPlugin(clazz);
+ 
+                 // Instead of just printing the message, send it to the plugin's logger
+-                plugin.getLogger().log(this.level, this.prefix + line);
++                plugin.getLogger().log(this.level, /*this.prefix +*/ line); // Purpur - Enhance SysoutCatcher - prefix not needed
+ 
+-                if (SysoutCatcher.SUPPRESS_NAGS) {
++                if (true || SysoutCatcher.SUPPRESS_NAGS) { // Purpur - Enhance SysoutCatcher - nagging is annoying
+                     return;
+                 }
+                 if (SysoutCatcher.NAG_INTERVAL > 0 || SysoutCatcher.NAG_TIMEOUT > 0) {
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+index 54ab8a0b502a2665027f293e6ddebf6c0a2af215..f967560da343867fdc1c380a42874b0796633777 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+@@ -340,6 +340,12 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+ 
+     @Override
+     public Location getLocation() {
++        // Purpur start - OfflinePlayer API
++        if (this.isOnline()) {
++            return this.getPlayer().getLocation();
++        }
++        // Purpur end - OfflinePlayer API
++
+         CompoundTag data = this.getData();
+         if (data == null) {
+             return null;
+@@ -577,4 +583,183 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+             manager.save();
+         }
+     }
++
++    // Purpur start - OfflinePlayer API
++    @Override
++    public boolean getAllowFlight() {
++        if (this.isOnline()) {
++            return this.getPlayer().getAllowFlight();
++        } else {
++            CompoundTag data = this.getData();
++            if (data == null) return false;
++            if (!(data.get("abilities") instanceof CompoundTag abilities)) return false;
++            return abilities.getByteOr("mayfly", (byte) 0) == (byte) 1;
++        }
++    }
++
++    @Override
++    public void setAllowFlight(boolean flight) {
++        if (this.isOnline()) {
++            this.getPlayer().setAllowFlight(flight);
++        } else {
++            CompoundTag data = this.getData();
++            if (data == null) return;
++            if (!(data.get("abilities") instanceof CompoundTag abilities)) return;
++            abilities.putByte("mayfly", (byte) (flight ? 1 : 0));
++            data.put("abilities", abilities);
++            save(data);
++        }
++    }
++
++    @Override
++    public boolean isFlying() {
++        if (this.isOnline()) {
++            return this.isFlying();
++        } else {
++            CompoundTag data = this.getData();
++            if (data == null) return false;
++            if (!(data.get("abilities") instanceof CompoundTag abilities)) return false;
++            return abilities.getByteOr("flying", (byte) 0) == (byte) 1;
++        }
++    }
++
++    @Override
++    public void setFlying(boolean value) {
++        if (this.isOnline()) {
++            this.getPlayer().setFlying(value);
++        } else {
++            CompoundTag data = this.getData();
++            if (data == null) return;
++            if (!(data.get("abilities") instanceof CompoundTag abilities)) return;
++            abilities.putByte("mayfly", (byte) (value ? 1 : 0));
++            data.put("abilities", abilities);
++            save(data);
++        }
++    }
++
++    @Override
++    public void setFlySpeed(float value) throws IllegalArgumentException {
++        if (value < -1f || value > 1f) throw new IllegalArgumentException("FlySpeed needs to be between -1 and 1");
++        if (this.isOnline()) {
++            this.getPlayer().setFlySpeed(value);
++        } else {
++            CompoundTag data = this.getData();
++            if (data == null) return;
++            if (!(data.get("abilities") instanceof CompoundTag abilities)) return;
++            abilities.putFloat("flySpeed", value);
++            data.put("abilities", abilities);
++            save(data);
++        }
++    }
++
++    @Override
++    public float getFlySpeed() {
++        if (this.isOnline()) {
++            return this.getPlayer().getFlySpeed();
++        } else {
++            CompoundTag data = this.getData();
++            if (data == null) return 0;
++            if (!(data.get("abilities") instanceof CompoundTag abilities)) return 0;
++            return abilities.getFloatOr("flySpeed", 0);
++        }
++    }
++
++    @Override
++    public void setWalkSpeed(float value) throws IllegalArgumentException {
++        if (value < -1f || value > 1f) throw new IllegalArgumentException("WalkSpeed needs to be between -1 and 1");
++        if (this.isOnline()) {
++            this.getPlayer().setWalkSpeed(value);
++        } else {
++            CompoundTag data = this.getData();
++            if (data == null) return;
++            if (!(data.get("abilities") instanceof CompoundTag abilities)) return;
++            abilities.putFloat("walkSpeed", value);
++            data.put("abilities", abilities);
++            save(data);
++        }
++    }
++
++    @Override
++    public float getWalkSpeed() {
++        if (this.isOnline()) {
++            return this.getPlayer().getWalkSpeed();
++        } else {
++            CompoundTag data = this.getData();
++            if (data == null) return 0;
++            if (!(data.get("abilities") instanceof CompoundTag abilities)) return 0;
++            return abilities.getFloatOr("walkSpeed", 0);
++        }
++    }
++
++    @Override
++    public boolean teleportOffline(Location destination) {
++        if (this.isOnline()) {
++            return this.getPlayer().teleport(destination);
++        } else {
++            return setLocation(destination);
++        }
++    }
++
++    @Override
++    public boolean teleportOffline(Location destination, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause){
++        if (this.isOnline()) {
++            return this.getPlayer().teleport(destination, cause);
++        } else {
++            return setLocation(destination);
++        }
++    }
++
++    @Override
++    public java.util.concurrent.CompletableFuture<Boolean> teleportOfflineAsync(Location destination) {
++        if (this.isOnline()) {
++            return this.getPlayer().teleportAsync(destination);
++        } else {
++            return java.util.concurrent.CompletableFuture.completedFuture(setLocation(destination));
++        }
++    }
++
++    @Override
++    public java.util.concurrent.CompletableFuture<Boolean> teleportOfflineAsync(Location destination, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause) {
++        if (this.isOnline()) {
++            return this.getPlayer().teleportAsync(destination, cause);
++        } else {
++            return java.util.concurrent.CompletableFuture.completedFuture(setLocation(destination));
++        }
++    }
++
++    private boolean setLocation(Location location) {
++        CompoundTag data = this.getData();
++        if (data == null) return false;
++        data.putLong("WorldUUIDMost", location.getWorld().getUID().getMostSignificantBits());
++        data.putLong("WorldUUIDLeast", location.getWorld().getUID().getLeastSignificantBits());
++        net.minecraft.nbt.ListTag position = new net.minecraft.nbt.ListTag();
++        position.add(net.minecraft.nbt.DoubleTag.valueOf(location.getX()));
++        position.add(net.minecraft.nbt.DoubleTag.valueOf(location.getY()));
++        position.add(net.minecraft.nbt.DoubleTag.valueOf(location.getZ()));
++        data.put("Pos", position);
++        net.minecraft.nbt.ListTag rotation = new net.minecraft.nbt.ListTag();
++        rotation.add(net.minecraft.nbt.FloatTag.valueOf(location.getYaw()));
++        rotation.add(net.minecraft.nbt.FloatTag.valueOf(location.getPitch()));
++        data.put("Rotation", rotation);
++        save(data);
++        return true;
++    }
++
++    /**
++     * Safely replaces player's .dat file with provided CompoundTag
++     * @param compoundTag
++     */
++    private void save(CompoundTag compoundTag) {
++        File playerDir = server.console.playerDataStorage.getPlayerDir();
++        try {
++            File tempFile = File.createTempFile(this.getUniqueId()+"-", ".dat", playerDir);
++            net.minecraft.nbt.NbtIo.writeCompressed(compoundTag, tempFile.toPath());
++            File playerDataFile = new File(playerDir, this.getUniqueId()+".dat");
++            File playerDataFileOld = new File(playerDir, this.getUniqueId()+".dat_old");
++            net.minecraft.Util.safeReplaceFile(playerDataFile.toPath(), tempFile.toPath(), playerDataFileOld.toPath());
++        } catch (java.io.IOException e) {
++            e.printStackTrace();
++        }
++    }
++    // Purpur end - OfflinePlayer API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index ecab0322ae03b7a3133eae192076aaf463237cd6..5c722052912d002a340e361e2675d75edc162df7 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -428,6 +428,20 @@ public final class CraftServer implements Server {
+         this.paperPluginManager = new io.papermc.paper.plugin.manager.PaperPluginManagerImpl(this, this.commandMap, pluginManager);
+         this.pluginManager.paperPluginManager = this.paperPluginManager;
+          // Paper end
++        // Purpur start - Language API
++        org.purpurmc.purpur.language.Language.setLanguage(new org.purpurmc.purpur.language.Language() {
++            private net.minecraft.locale.Language language = net.minecraft.locale.Language.getInstance();
++            @Override
++            public boolean has(@org.jetbrains.annotations.NotNull String key) {
++                return language.has(key);
++            }
++
++            @Override
++            public @org.jetbrains.annotations.NotNull String getOrDefault(@org.jetbrains.annotations.NotNull String key) {
++                return language.getOrDefault(key);
++            }
++        });
++        // Purpur end - Language API
+ 
+         CraftRegistry.setMinecraftRegistry(console.registryAccess());
+ 
+@@ -1078,6 +1092,7 @@ public final class CraftServer implements Server {
+ 
+         org.spigotmc.SpigotConfig.init((File) this.console.options.valueOf("spigot-settings")); // Spigot
+         this.console.paperConfigurations.reloadConfigs(this.console);
++        org.purpurmc.purpur.PurpurConfig.init((File) console.options.valueOf("purpur-settings")); // Purpur - Purpur config files
+         for (ServerLevel world : this.console.getAllLevels()) {
+             // world.serverLevelData.setDifficulty(config.difficulty); // Paper - per level difficulty
+             world.setSpawnSettings(world.serverLevelData.getDifficulty() != Difficulty.PEACEFUL && config.spawnMonsters); // Paper - per level difficulty (from MinecraftServer#setDifficulty(ServerLevel, Difficulty, boolean))
+@@ -1093,6 +1108,7 @@ public final class CraftServer implements Server {
+                 }
+             }
+             world.spigotConfig.init(); // Spigot
++            world.purpurConfig.init(); // Purpur - Purpur config files
+         }
+ 
+         Plugin[] pluginClone = pluginManager.getPlugins().clone(); // Paper
+@@ -1110,6 +1126,7 @@ public final class CraftServer implements Server {
+         org.spigotmc.SpigotConfig.registerCommands(); // Spigot
+         io.papermc.paper.command.PaperCommands.registerCommands(this.console); // Paper
+         this.spark.registerCommandBeforePlugins(this); // Paper - spark
++        org.purpurmc.purpur.PurpurConfig.registerCommands(); // Purpur - Purpur config files
+         this.overrideAllCommandBlockCommands = this.commandsConfiguration.getStringList("command-block-overrides").contains("*");
+         this.ignoreVanillaPermissions = this.commandsConfiguration.getBoolean("ignore-vanilla-permissions");
+ 
+@@ -1611,6 +1628,60 @@ public final class CraftServer implements Server {
+         return true;
+     }
+ 
++    // Purpur start - Added the ability to add combustible items
++    @Override
++    public void addFuel(org.bukkit.Material material, int burnTime) {
++        Preconditions.checkArgument(burnTime > 0, "BurnTime must be greater than 0");
++
++        net.minecraft.world.item.ItemStack itemStack = net.minecraft.world.item.ItemStack.fromBukkitCopy(new ItemStack(material));
++        MinecraftServer.getServer().fuelValues().values.put(itemStack.getItem(), burnTime);
++    }
++
++    @Override
++    public void removeFuel(org.bukkit.Material material) {
++        net.minecraft.world.item.ItemStack itemStack = net.minecraft.world.item.ItemStack.fromBukkitCopy(new ItemStack(material));
++        MinecraftServer.getServer().fuelValues().values.keySet().removeIf(itemStack::is);
++    }
++    // Purpur end - Added the ability to add combustible items
++
++    // Purpur start - Debug Marker API
++    @Override
++    public void sendBlockHighlight(Location location, int duration) {
++        sendBlockHighlight(location, duration, "", 0x6400FF00);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, int argb) {
++        sendBlockHighlight(location, duration, "", argb);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, String text) {
++        sendBlockHighlight(location, duration, text, 0x6400FF00);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, String text, int argb) {
++        this.worlds.forEach((name, world) -> world.sendBlockHighlight(location, duration, text, argb));
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, org.bukkit.Color color, int transparency) {
++        sendBlockHighlight(location, duration, "", color, transparency);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, String text, org.bukkit.Color color, int transparency) {
++        if (transparency < 0 || transparency > 255) throw new IllegalArgumentException("transparency is outside of 0-255 range");
++        sendBlockHighlight(location, duration, text, transparency << 24 | color.asRGB());
++    }
++
++    @Override
++    public void clearBlockHighlights() {
++        this.worlds.forEach((name, world) -> clearBlockHighlights());
++    }
++    // Purpur end - Debug Marker API
++
+     @Override
+     public List<Recipe> getRecipesFor(ItemStack result) {
+         Preconditions.checkArgument(result != null, "ItemStack cannot be null");
+@@ -2995,6 +3066,18 @@ public final class CraftServer implements Server {
+             return CraftServer.this.console.paperConfigurations.createLegacyObject(CraftServer.this.console);
+         }
+ 
++        // Purpur start - Purpur config files
++        @Override
++        public YamlConfiguration getPurpurConfig() {
++            return org.purpurmc.purpur.PurpurConfig.config;
++        }
++
++        @Override
++        public java.util.Properties getServerProperties() {
++            return getProperties().properties;
++        }
++        // Purpur end - Purpur config files
++
+         @Override
+         public void restart() {
+             CraftServer.this.restart();
+@@ -3042,6 +3125,7 @@ public final class CraftServer implements Server {
+         // 1m, 5m, 15m
+         long currTime = System.nanoTime();
+         return new double[] {
++                tickHandle.getTickReport5s(currTime).tpsData().segmentAll().average(), // Purpur - Add 5 second tps average in /tps
+                 tickHandle.getTickReport1m(currTime).tpsData().segmentAll().average(),
+                 tickHandle.getTickReport5m(currTime).tpsData().segmentAll().average(),
+                 tickHandle.getTickReport15m(currTime).tpsData().segmentAll().average(),
+@@ -3315,4 +3399,17 @@ public final class CraftServer implements Server {
+         }
+     }
+     // Folia end - region TPS API
++    // Purpur start - Bring back server name
++    @Override
++    public String getServerName() {
++        return this.getProperties().serverName;
++    }
++    // Purpur end - Bring back server name
++
++    // Purpur start - Lagging threshold
++    @Override
++    public boolean isLagging() {
++        return getServer().lagging;
++    }
++    // Purpur end - Lagging threshold
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
+index 2298104d9ac29c2c19b81ab136af5272588ffb4e..96453d015e0856cc680055563183ba12f8797b14 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
+@@ -2420,6 +2420,50 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+         return (this.getHandle().getDragonFight() == null) ? null : new CraftDragonBattle(this.getHandle().getDragonFight());
+     }
+ 
++    // Purpur start - Add local difficulty api
++    public float getLocalDifficultyAt(Location location) {
++        return getHandle().getCurrentDifficultyAt(org.bukkit.craftbukkit.util.CraftLocation.toBlockPosition(location)).getEffectiveDifficulty();
++    }
++    // Purpur end - Add local difficulty api
++
++    // Purpur start - Debug Marker API
++    @Override
++    public void sendBlockHighlight(Location location, int duration) {
++        sendBlockHighlight(location, duration, "", 0x6400FF00);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, int argb) {
++        sendBlockHighlight(location, duration, "", argb);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, String text) {
++        sendBlockHighlight(location, duration, text, 0x6400FF00);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, String text, int argb) {
++        net.minecraft.network.protocol.game.DebugPackets.sendGameTestAddMarker(getHandle(), org.bukkit.craftbukkit.util.CraftLocation.toBlockPosition(location), text, argb, duration);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, org.bukkit.Color color, int transparency) {
++        sendBlockHighlight(location, duration, "", color, transparency);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, String text, org.bukkit.Color color, int transparency) {
++        if (transparency < 0 || transparency > 255) throw new IllegalArgumentException("transparency is outside of 0-255 range");
++        sendBlockHighlight(location, duration, text, transparency << 24 | color.asRGB());
++    }
++
++    @Override
++    public void clearBlockHighlights() {
++        net.minecraft.network.protocol.game.DebugPackets.sendGameTestClearPacket(getHandle());
++    }
++    // Purpur end - Debug Marker API
++
+     @Override
+     public Collection<GeneratedStructure> getStructures(int x, int z) {
+         return this.getStructures(x, z, struct -> true);
+diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
+index 7675acdca2162e403f4ff523bcdd6efe0cb42d49..748bd9650da4a209743b7a5dde584b2e19c5a578 100644
+--- a/src/main/java/org/bukkit/craftbukkit/Main.java
++++ b/src/main/java/org/bukkit/craftbukkit/Main.java
+@@ -164,6 +164,14 @@ public class Main {
+                         .defaultsTo(new File[] {})
+                         .describedAs("Jar file");
+ 
++                // Purpur start - Purpur config files
++                this.acceptsAll(asList("purpur", "purpur-settings"), "File for purpur settings")
++                    .withRequiredArg()
++                    .ofType(File.class)
++                    .defaultsTo(new File("purpur.yml"))
++                    .describedAs("Yml file");
++                // Purpur end - Purpur config files
++
+                 this.accepts("server-name", "Name of the server")
+                         .withRequiredArg()
+                         .ofType(String.class)
+@@ -223,7 +231,7 @@ public class Main {
+                     System.setProperty(net.minecrell.terminalconsole.TerminalConsoleAppender.JLINE_OVERRIDE_PROPERTY, "false"); // Paper
+                 }
+ 
+-                if (Main.class.getPackage().getImplementationVendor() != null && System.getProperty("IReallyKnowWhatIAmDoingISwear") == null) {
++                if (false && Main.class.getPackage().getImplementationVendor() != null && System.getProperty("IReallyKnowWhatIAmDoingISwear") == null) { // Purpur - Disable outdated build check
+                     Date buildDate = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").parse(Main.class.getPackage().getImplementationVendor()); // Paper
+ 
+                     Calendar deadline = Calendar.getInstance();
+diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBeehive.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBeehive.java
+index ed4692090a115d3d0a0826b10f77e903058eeec6..205c367fd5e2921d36f78ac7df5999d4adb819d0 100644
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftBeehive.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBeehive.java
+@@ -16,8 +16,15 @@ import org.bukkit.entity.Bee;
+ 
+ public class CraftBeehive extends CraftBlockEntityState<BeehiveBlockEntity> implements Beehive {
+ 
++    private final List<org.purpurmc.purpur.entity.StoredEntity<Bee>> storage = new ArrayList<>(); // Purpur - Stored Bee API
++
+     public CraftBeehive(World world, BeehiveBlockEntity blockEntity) {
+         super(world, blockEntity);
++        // Purpur start - load bees to be able to modify them individually - Stored Bee API
++        for(BeehiveBlockEntity.BeeData data : blockEntity.getStored()) {
++            storage.add(new org.purpurmc.purpur.entity.PurpurStoredBee(data, this, blockEntity));
++        }
++        // Purpur end - Stored Bee API
+     }
+ 
+     protected CraftBeehive(CraftBeehive state, Location location) {
+@@ -76,14 +83,54 @@ public class CraftBeehive extends CraftBlockEntityState<BeehiveBlockEntity> impl
+             }
+         }
+ 
++        storage.clear(); // Purpur - Stored Bee API
+         return bees;
+     }
+ 
++    // Purpur start - Stored Bee API
++    @Override
++    public Bee releaseEntity(org.purpurmc.purpur.entity.StoredEntity<Bee> entity) {
++        ensureNoWorldGeneration();
++
++        if(!getEntities().contains(entity)) {
++            return null;
++        }
++
++        if(isPlaced()) {
++            BeehiveBlockEntity beehive = ((BeehiveBlockEntity) this.getBlockEntityFromWorld());
++            BeehiveBlockEntity.BeeData data = ((org.purpurmc.purpur.entity.PurpurStoredBee) entity).getHandle();
++
++            List<Entity> list = beehive.releaseBee(getHandle(), data, BeeReleaseStatus.BEE_RELEASED, true);
++
++            if (list.size() == 1) {
++                storage.remove(entity);
++
++                return (Bee) list.get(0).getBukkitEntity();
++            }
++        }
++
++        return null;
++    }
++
++    @Override
++    public List<org.purpurmc.purpur.entity.StoredEntity<Bee>> getEntities() {
++        return new ArrayList<>(storage);
++    }
++    // Purpur end - Stored Bee API
++
+     @Override
+     public void addEntity(Bee entity) {
+         Preconditions.checkArgument(entity != null, "Entity must not be null");
+ 
++        int length = this.getSnapshot().getStored().size();  // Purpur - Stored Bee API
+         this.getSnapshot().addOccupant(((CraftBee) entity).getHandle());
++
++        // Purpur start - check if new bee was added, and if yes, add to stored bees - Stored Bee API
++        List<BeehiveBlockEntity.BeeData> storedBeeData = this.getSnapshot().getStored();
++        if(length < storedBeeData.size()) {
++            storage.add(new org.purpurmc.purpur.entity.PurpurStoredBee(storedBeeData.getLast(), this, this.getBlockEntity()));
++        }
++        // Purpur end - Stored Bee API
+     }
+ 
+     @Override
+@@ -100,6 +147,7 @@ public class CraftBeehive extends CraftBlockEntityState<BeehiveBlockEntity> impl
+     @Override
+     public void clearEntities() {
+         getSnapshot().clearBees();
++        storage.clear(); // Purpur - Stored Bee API
+     }
+     // Paper end
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftConduit.java b/src/main/java/org/bukkit/craftbukkit/block/CraftConduit.java
+index 21443c9cbbbc69b81bb34ee63d8d31bd31894d2a..8b7008ca957a52c55f1a2c7bf0bbedc89477884d 100644
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftConduit.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftConduit.java
+@@ -75,7 +75,7 @@ public class CraftConduit extends CraftBlockEntityState<ConduitBlockEntity> impl
+     public int getRange() {
+         this.ensureNoWorldGeneration();
+         ConduitBlockEntity conduit = (ConduitBlockEntity) this.getBlockEntityFromWorld();
+-        return (conduit != null) ? ConduitBlockEntity.getRange(conduit.effectBlocks) : 0;
++        return (conduit != null) ? ConduitBlockEntity.getRange(conduit.effectBlocks, this.world.getHandle()) : 0; // Purpur - Conduit behavior configuration
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
+index 6e2f931b06d4ef702e0abf609a5f5bba780c5b7a..15ae2653c1809041b7ab7cb67015e82c226e9f77 100644
+--- a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
++++ b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
+@@ -21,7 +21,12 @@ public class CraftConsoleCommandSender extends ServerCommandSender implements Co
+ 
+     @Override
+     public void sendMessage(String message) {
+-        this.sendRawMessage(message);
++        // Purpur start - Rebrand
++        String[] parts = message.split("\n");
++        for (String part : parts) {
++        this.sendRawMessage(part);
++        }
++        // Purpur end - Rebrand
+     }
+ 
+     @Override
+@@ -88,7 +93,7 @@ public class CraftConsoleCommandSender extends ServerCommandSender implements Co
+ 
+     @Override
+     public void sendMessage(final net.kyori.adventure.identity.Identity identity, final net.kyori.adventure.text.Component message, final net.kyori.adventure.audience.MessageType type) {
+-        this.sendRawMessage(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(message));
++        this.sendMessage(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(message)); // Purpur - Rebrand
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEndermite.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEndermite.java
+index ab2ee478c53923be85f5a6d4971bed5b5fc64393..fc8a9215cd1b1642447c03a97b5d76f007a83d24 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEndermite.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEndermite.java
+@@ -17,12 +17,12 @@ public class CraftEndermite extends CraftMonster implements Endermite {
+ 
+     @Override
+     public boolean isPlayerSpawned() {
+-        return false;
++        return getHandle().isPlayerSpawned(); // Purpur - Add back player spawned endermite API
+     }
+ 
+     @Override
+     public void setPlayerSpawned(boolean playerSpawned) {
+-        // Nop
++        getHandle().setPlayerSpawned(playerSpawned); // Purpur - Add back player spawned endermite API
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
+index 852e1ffef6a022caad7c8eff34091e50112a2290..bccd4da9a39ca095f698a4433fca0933a645a424 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
+@@ -118,6 +118,25 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+         this.entityType = CraftEntityType.minecraftToBukkit(entity.getType());
+     }
+ 
++    // Purpur start - Fire Immunity API
++    @Override
++    public boolean isImmuneToFire() {
++        return getHandle().fireImmune();
++    }
++
++    @Override
++    public void setImmuneToFire(Boolean fireImmune) {
++        getHandle().immuneToFire = fireImmune;
++    }
++    // Purpur end - Fire Immunity API
++
++    // Purpur start - API for any mob to burn daylight
++    @Override
++    public boolean isInDaylight() {
++        return getHandle().isSunBurnTick();
++    }
++    // Purpur end - API for any mob to burn daylight
++
+     public static <T extends Entity> CraftEntity getEntity(CraftServer server, T entity) {
+         Preconditions.checkArgument(entity != null, "Unknown entity");
+ 
+@@ -313,6 +332,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+         boolean retainPassengers = flagSet.contains(io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+         // Don't allow teleporting between worlds while keeping passengers
+         if (flagSet.contains(io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS) && this.entity.isVehicle() && location.getWorld() != this.getWorld()) {
++            if (!new org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent(entity.getBukkitEntity(), org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent.Reason.IS_VEHICLE, cause).callEvent()) // Purpur - Add EntityTeleportHinderedEvent
+             return false;
+         }
+ 
+@@ -1357,4 +1377,26 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+         return this.entity.get(io.papermc.paper.datacomponent.PaperDataComponentType.bukkitToMinecraft(type)) != null;
+     }
+ 
++    // Purpur start - Ridables
++    @Override
++    public org.bukkit.entity.Player getRider() {
++        net.minecraft.world.entity.player.Player rider = getHandle().getRider();
++        return rider != null ? (org.bukkit.entity.Player) rider.getBukkitEntity() : null;
++    }
++
++    @Override
++    public boolean hasRider() {
++        return getHandle().getRider() != null;
++    }
++
++    @Override
++    public boolean isRidable() {
++        return getHandle().isRidable();
++    }
++
++    @Override
++    public boolean isRidableInWater() {
++        return !getHandle().dismountsUnderwater();
++    }
++    // Purpur end - Ridables
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
+index b6b95157ab3a09dddb86f85eb8b5851b7ffe46d3..19ea31de0e20427468e37cc43ef1a5564fc58776 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
+@@ -302,6 +302,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+     @Override
+     public void recalculatePermissions() {
+         this.perm.recalculatePermissions();
++        getHandle().canPortalInstant = hasPermission("purpur.portal.instant"); // Purpur - Add portal permission bypass
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftIronGolem.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftIronGolem.java
+index 2401342da336e226b1b5ac86edf880b0e3aa4b5a..ac0be008c234e7560b61f009fe47c7fafb93e403 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftIronGolem.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftIronGolem.java
+@@ -23,4 +23,17 @@ public class CraftIronGolem extends CraftGolem implements IronGolem {
+     public void setPlayerCreated(boolean playerCreated) {
+         this.getHandle().setPlayerCreated(playerCreated);
+     }
++
++    // Purpur start - Summoner API
++    @Override
++    @org.jetbrains.annotations.Nullable
++    public java.util.UUID getSummoner() {
++        return getHandle().getSummoner();
++    }
++
++    @Override
++    public void setSummoner(@org.jetbrains.annotations.Nullable java.util.UUID summoner) {
++        getHandle().setSummoner(summoner);
++    }
++    // Purpur end - Summoner API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftItem.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftItem.java
+index 4af0e8b35c91051b25a36cb37b62f7b1e9037ed9..f8511bfc44ac1212db6df5ce93591b677de6d798 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftItem.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftItem.java
+@@ -146,4 +146,53 @@ public class CraftItem extends CraftEntity implements Item {
+     public UUID getThrower() {
+         return Optionull.map(this.getHandle().thrower, EntityReference::getUUID);
+     }
++
++    // Purpur start - Item entity immunities
++    @Override
++    public void setImmuneToCactus(boolean immuneToCactus) {
++        this.getHandle().immuneToCactus = immuneToCactus;
++    }
++
++    @Override
++    public boolean isImmuneToCactus() {
++        return this.getHandle().immuneToCactus;
++    }
++
++    @Override
++    public void setImmuneToExplosion(boolean immuneToExplosion) {
++        this.getHandle().immuneToExplosion = immuneToExplosion;
++    }
++
++    @Override
++    public boolean isImmuneToExplosion() {
++        return this.getHandle().immuneToExplosion;
++    }
++
++    // Purpur start - Fire Immunity API
++    @Override
++    public void setImmuneToFire(@org.jetbrains.annotations.Nullable Boolean immuneToFire) {
++        this.getHandle().immuneToFire = (immuneToFire != null && immuneToFire);
++    }
++    // Purpur end - Fire Immunity API
++
++    @Override
++    public void setImmuneToFire(boolean immuneToFire) {
++        this.setImmuneToFire((Boolean) immuneToFire); // Purpur - Fire Immunity API
++    }
++
++    @Override
++    public boolean isImmuneToFire() {
++        return this.getHandle().immuneToFire;
++    }
++
++    @Override
++    public void setImmuneToLightning(boolean immuneToLightning) {
++        this.getHandle().immuneToLightning = immuneToLightning;
++    }
++
++    @Override
++    public boolean isImmuneToLightning() {
++        return this.getHandle().immuneToLightning;
++    }
++    // Purpur end - Item entity immunities
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
+index eca27a179edfd7a78767bd53d87665e981efb2c2..5fd258ea5788aaae5f68390ef1d6345688e307cb 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
+@@ -515,7 +515,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
+         net.minecraft.server.level.ServerPlayer nmsKiller = killer == null ? null : ((CraftPlayer) killer).getHandle();
+         this.getHandle().setLastHurtByMob(nmsKiller);
+         if (nmsKiller != null) {
+-            this.getHandle().setLastHurtByPlayer(nmsKiller, 100); // value taken from LivingEntity#resolvePlayerResponsibleForDamage
++            this.getHandle().setLastHurtByPlayer(nmsKiller, this.getHandle().level().purpurConfig.mobLastHurtByPlayerTime); // value taken from LivingEntity#resolvePlayerResponsibleForDamage // Purpur - Config for mob last hurt by player time
+         } else {
+             this.getHandle().lastHurtByPlayer = null;
+             this.getHandle().lastHurtByPlayerMemoryTime = 0;
+@@ -1168,4 +1168,16 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
+     public CombatTracker getCombatTracker() {
+         return this.getHandle().getCombatTracker().paperCombatTracker;
+     }
++
++    // Purpur start - API for any mob to burn daylight
++    @Override
++    public boolean shouldBurnInDay() {
++        return this.getHandle().shouldBurnInDay();
++    }
++
++    @Override
++    public void setShouldBurnInDay(final boolean shouldBurnInDay) {
++        this.getHandle().setShouldBurnInDay(shouldBurnInDay);
++    }
++    // Purpur end - API for any mob to burn daylight
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftLlama.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftLlama.java
+index 620cdc4ca5234bc3214ac76f1c6acbc33fb89b5d..8b89cd5b9fbefe05bd3aed0648b6f04d8ece2b27 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLlama.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLlama.java
+@@ -87,4 +87,17 @@ public class CraftLlama extends CraftChestedHorse implements Llama, com.destroys
+     public Llama getCaravanTail() {
+         return this.getHandle().caravanTail == null ? null : (Llama) this.getHandle().caravanTail.getBukkitEntity();
+     }
++    // Paper end
++
++    // Purpur start - Llama API
++    @Override
++    public boolean shouldJoinCaravan() {
++        return getHandle().shouldJoinCaravan;
++    }
++
++    @Override
++    public void setShouldJoinCaravan(boolean shouldJoinCaravan) {
++        getHandle().shouldJoinCaravan = shouldJoinCaravan;
++    }
++    // Purpur end - Llama API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPhantom.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPhantom.java
+index 302f0fd3a8e2641ae312a9f5e5e3f3c715897b0a..5c69681d393c269a3fc7a76e145c58d4341f630a 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPhantom.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPhantom.java
+@@ -36,12 +36,12 @@ public class CraftPhantom extends CraftMob implements Phantom, CraftEnemy {
+ 
+     @Override
+     public boolean shouldBurnInDay() {
+-        return this.getHandle().shouldBurnInDay;
++        return this.getHandle().shouldBurnInDay(); // Purpur - API for any mob to burn daylight
+     }
+ 
+     @Override
+     public void setShouldBurnInDay(boolean shouldBurnInDay) {
+-        this.getHandle().shouldBurnInDay = shouldBurnInDay;
++        this.getHandle().setShouldBurnInDay(shouldBurnInDay); // Purpur - API for any mob to burn daylight
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+index f3e5cb73ce2b32a807156cc0797c6bfac753d50c..87e29a4959c6481105f7bd88799b24446b09d8d9 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+@@ -562,10 +562,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+ 
+     @Override
+     public void setPlayerListName(String name) {
++        // Purpur start - AFK API
++        setPlayerListName(name, false);
++    }
++    public void setPlayerListName(String name, boolean useMM) {
++        // Purpur end - AFK API
+         if (name == null) {
+             name = this.getName();
+         }
+-        this.getHandle().listName = name.equals(this.getName()) ? null : CraftChatMessage.fromStringOrNull(name);
++        this.getHandle().listName = name.equals(this.getName()) ? null : useMM ? io.papermc.paper.adventure.PaperAdventure.asVanilla(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(name)) : CraftChatMessage.fromStringOrNull(name); // Purpur - AFK API
+         if (this.getHandle().connection == null) return; // Paper - Updates are possible before the player has fully joined
+         for (ServerPlayer player : (List<ServerPlayer>) this.server.getHandle().players) {
+             if (player.getBukkitEntity().canSee(this)) {
+@@ -1384,6 +1389,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+         // Paper start - Teleport passenger API
+         // Don't allow teleporting between worlds while keeping passengers
+         if (ignorePassengers && entity.isVehicle() && location.getWorld() != this.getWorld()) {
++            if (!new org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent(entity.getBukkitEntity(), org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent.Reason.IS_VEHICLE, cause).callEvent()) // Purpur - Add EntityTeleportHinderedEvent
+             return false;
+         }
+ 
+@@ -1405,6 +1411,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+         }
+ 
+         if (entity.isVehicle() && !ignorePassengers) { // Paper - Teleport API
++            if (!new org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent(entity.getBukkitEntity(), org.purpurmc.purpur.event.entity.EntityTeleportHinderedEvent.Reason.IS_VEHICLE, cause).callEvent()) // Purpur - Add EntityTeleportHinderedEvent
+             return false;
+         }
+ 
+@@ -2660,6 +2667,28 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+         return this.getHandle().getAbilities().walkingSpeed * 2f;
+     }
+ 
++    // Purpur start - OfflinePlayer API
++    @Override
++    public boolean teleportOffline(Location destination) {
++        return this.teleport(destination);
++    }
++
++    @Override
++    public boolean teleportOffline(Location destination, PlayerTeleportEvent.TeleportCause cause) {
++        return this.teleport(destination, cause);
++    }
++
++    @Override
++    public java.util.concurrent.CompletableFuture<Boolean> teleportOfflineAsync(Location destination) {
++        return this.teleportAsync(destination);
++    }
++
++    @Override
++    public java.util.concurrent.CompletableFuture<Boolean> teleportOfflineAsync(Location destination, PlayerTeleportEvent.TeleportCause cause) {
++        return this.teleportAsync(destination, cause);
++    }
++    // Purpur end - OfflinePlayer API
++
+     private void validateSpeed(float value) {
+         Preconditions.checkArgument(value <= 1f && value >= -1f, "Speed value (%s) need to be between -1f and 1f", value);
+     }
+@@ -3508,4 +3537,76 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+     public PlayerGameConnection getConnection() {
+         return this.getHandle().connection.playerGameConnection;
+     }
++
++    // Purpur start - Purpur client support
++    @Override
++    public boolean usesPurpurClient() {
++        return getHandle().connection.purpurClient;
++    }
++    // Purpur end - Purpur client support
++
++    // Purpur start - AFK API
++    @Override
++    public boolean isAfk() {
++        return getHandle().isAfk();
++    }
++
++    @Override
++    public void setAfk(boolean setAfk) {
++        getHandle().setAfk(setAfk);
++    }
++
++    @Override
++    public void resetIdleTimer() {
++        getHandle().resetLastActionTime();
++    }
++    // Purpur end - AFK API
++
++    // Purpur start - Debug Marker API
++    @Override
++    public void sendBlockHighlight(Location location, int duration) {
++        sendBlockHighlight(location, duration, "", 0x6400FF00);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, int argb) {
++        sendBlockHighlight(location, duration, "", argb);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, String text) {
++        sendBlockHighlight(location, duration, text, 0x6400FF00);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, String text, int argb) {
++        if (this.getHandle().connection == null) return;
++        this.getHandle().connection.send(new net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket(new net.minecraft.network.protocol.common.custom.GameTestAddMarkerDebugPayload(org.bukkit.craftbukkit.util.CraftLocation.toBlockPosition(location), argb, text, duration)));
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, org.bukkit.Color color, int transparency) {
++        sendBlockHighlight(location, duration, "", color, transparency);
++    }
++
++    @Override
++    public void sendBlockHighlight(Location location, int duration, String text, org.bukkit.Color color, int transparency) {
++        if (transparency < 0 || transparency > 255) throw new IllegalArgumentException("transparency is outside of 0-255 range");
++        sendBlockHighlight(location, duration, text, transparency << 24 | color.asRGB());
++    }
++
++    @Override
++    public void clearBlockHighlights() {
++        if (this.getHandle().connection == null) return;
++        this.getHandle().connection.send(new net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket(new net.minecraft.network.protocol.common.custom.GameTestClearMarkersDebugPayload()));
++    }
++    // Purpur end - Debug Marker API
++
++    // Purpur start - Death screen API
++    @Override
++    public void sendDeathScreen(net.kyori.adventure.text.Component message) {
++        if (this.getHandle().connection == null) return;
++        this.getHandle().connection.send(new net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket(getEntityId(), io.papermc.paper.adventure.PaperAdventure.asVanilla(message)));
++    }
++    // Purpur end - Death screen API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftSnowman.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftSnowman.java
+index 4bc3fd92cf0dd821438e72a4256c945a5fba6107..ff128dcaa80a3ad1973f7683f38372e2afc6c41f 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftSnowman.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftSnowman.java
+@@ -25,4 +25,17 @@ public class CraftSnowman extends CraftGolem implements Snowman, com.destroystok
+     public void setDerp(boolean derpMode) {
+         this.getHandle().setPumpkin(!derpMode);
+     }
++
++    // Purpur start - Summoner API
++    @Override
++    @org.jetbrains.annotations.Nullable
++    public java.util.UUID getSummoner() {
++        return getHandle().getSummoner();
++    }
++
++    @Override
++    public void setSummoner(@org.jetbrains.annotations.Nullable java.util.UUID summoner) {
++        getHandle().setSummoner(summoner);
++    }
++    // Purpur end - Summoner API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java
+index 214caca8c9a44349687ac16a14fa3ccee2f1b4ad..73f5813a286ac9797d34315524a8da3b991bcc10 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java
+@@ -259,4 +259,11 @@ public class CraftVillager extends CraftAbstractVillager implements Villager {
+     public void restock() {
+         getHandle().restock();
+     }
++
++    // Purpur start - Lobotomize stuck villagers
++    @Override
++    public boolean isLobotomized() {
++        return getHandle().isLobotomized();
++    }
++    // Purpur end - Lobotomize stuck villagers
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftWither.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftWither.java
+index 52d50e0a83218957caf1eb64f9cd0ac204bf325f..5a86978c7af4c9e36735d1be61ee6c9c67152a98 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftWither.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftWither.java
+@@ -93,4 +93,18 @@ public class CraftWither extends CraftMonster implements Wither, com.destroystok
+     public void enterInvulnerabilityPhase() {
+         this.getHandle().makeInvulnerable();
+     }
++    // Paper end
++
++    // Purpur start - Summoner API
++    @Override
++    @org.jetbrains.annotations.Nullable
++    public java.util.UUID getSummoner() {
++        return getHandle().getSummoner();
++    }
++
++    @Override
++    public void setSummoner(@org.jetbrains.annotations.Nullable java.util.UUID summoner) {
++        getHandle().setSummoner(summoner);
++    }
++    // Purpur end - Summoner API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftWolf.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftWolf.java
+index 4a9e680376c51ca78dd3d868e3709cbe65f92160..d3a8063658106b75b31b1c6f580e64bc4f34cb89 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftWolf.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftWolf.java
+@@ -91,6 +91,18 @@ public class CraftWolf extends CraftTameableAnimal implements Wolf {
+         this.getHandle().setSoundVariant(CraftSoundVariant.bukkitToMinecraftHolder(soundVariant));
+     }
+ 
++    // Purpur start - Configurable chance for wolves to spawn rabid
++    @Override
++    public boolean isRabid() {
++        return getHandle().isRabid();
++    }
++
++    @Override
++    public void setRabid(boolean isRabid) {
++        getHandle().setRabid(isRabid);
++    }
++    // Purpur end - Configurable chance for wolves to spawn rabid
++
+     public static class CraftVariant extends HolderableBase<WolfVariant> implements Variant {
+ 
+         public static Variant minecraftToBukkit(WolfVariant minecraft) {
+diff --git a/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java b/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
+index 7972155606951173c0e4a0c7b937959dacb54d5f..d689cc0daaa52349c7944f806e40f66b287a7616 100644
+--- a/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
++++ b/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
+@@ -525,6 +525,15 @@ public class CraftEventFactory {
+         }
+         craftServer.getPluginManager().callEvent(event);
+ 
++        // Purpur start - Ridables
++        if (player != null) {
++            switch (action) {
++                case LEFT_CLICK_BLOCK, LEFT_CLICK_AIR -> player.processClick(InteractionHand.MAIN_HAND);
++                case RIGHT_CLICK_BLOCK, RIGHT_CLICK_AIR -> player.processClick(InteractionHand.OFF_HAND);
++            }
++        }
++        // Purpur end - Ridables
++
+         return event;
+     }
+ 
+@@ -1057,6 +1066,7 @@ public class CraftEventFactory {
+         EntityDamageEvent event;
+         if (damager != null) {
+             event = new EntityDamageByEntityEvent(damager.getBukkitEntity(), damagee.getBukkitEntity(), cause, bukkitDamageSource, modifiers, modifierFunctions, critical);
++            damager.processClick(InteractionHand.MAIN_HAND); // Purpur - Ridables
+         } else {
+             event = new EntityDamageEvent(damagee.getBukkitEntity(), cause, bukkitDamageSource, modifiers, modifierFunctions);
+         }
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftContainer.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftContainer.java
+index 2f41a92465b9da28e026297cc3528898bb1c8412..83ae4b40e33e0dc58e0fd6aacf22e22ae0cd3684 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftContainer.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftContainer.java
+@@ -148,8 +148,19 @@ public class CraftContainer extends AbstractContainerMenu {
+             case PLAYER:
+             case CHEST:
+             case ENDER_CHEST:
++                // Purpur start - Barrels and enderchests 6 rows
++                this.delegate = new ChestMenu(org.purpurmc.purpur.PurpurConfig.enderChestSixRows ? net.minecraft.world.inventory.MenuType.GENERIC_9x6 : net.minecraft.world.inventory.MenuType.GENERIC_9x3, windowId, bottom, top, top.getContainerSize() / 9);
++                break;
+             case BARREL:
+-                this.delegate = new ChestMenu(net.minecraft.world.inventory.MenuType.GENERIC_9x3, windowId, bottom, top, top.getContainerSize() / 9);
++                this.delegate = new ChestMenu(switch (org.purpurmc.purpur.PurpurConfig.barrelRows) {
++                    case 6 -> net.minecraft.world.inventory.MenuType.GENERIC_9x6;
++                    case 5 -> net.minecraft.world.inventory.MenuType.GENERIC_9x5;
++                    case 4 -> net.minecraft.world.inventory.MenuType.GENERIC_9x4;
++                    case 2 -> net.minecraft.world.inventory.MenuType.GENERIC_9x2;
++                    case 1 -> net.minecraft.world.inventory.MenuType.GENERIC_9x1;
++                    default -> net.minecraft.world.inventory.MenuType.GENERIC_9x3;
++                }, windowId, bottom, top, top.getContainerSize() / 9);
++                // Purpur end - Barrels and enderchests 6 rows
+                 break;
+             case DISPENSER:
+             case DROPPER:
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventory.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventory.java
+index f850e6cea92edc87ed54cf54488b5ebb606913ed..19180c08f41db939c1a9f0caeb62e5beb1117f69 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventory.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventory.java
+@@ -84,7 +84,7 @@ public class CraftInventory implements Inventory {
+ 
+     @Override
+     public void setContents(ItemStack[] items) {
+-        Preconditions.checkArgument(items.length <= this.getSize(), "Invalid inventory size (%s); expected %s or less", items.length, this.getSize());
++        // Preconditions.checkArgument(items.length <= this.getSize(), "Invalid inventory size (%s); expected %s or less", items.length, this.getSize()); // Purpur - Barrels and enderchests 6 rows
+ 
+         for (int i = 0; i < this.getSize(); i++) {
+             if (i >= items.length) {
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventoryAnvil.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventoryAnvil.java
+index 792cb6adf0c7a6335cc5985fce8bed2e0f1149af..5734c5caffda79383ae30df20c3defb51b87f39e 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventoryAnvil.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventoryAnvil.java
+@@ -19,6 +19,10 @@ public class CraftInventoryAnvil extends CraftResultInventory implements AnvilIn
+     private int repairCost;
+     private int repairCostAmount;
+     private int maximumRepairCost;
++    // Purpur start - Anvil API
++    private boolean bypassCost;
++    private boolean canDoUnsafeEnchants;
++    // Purpur end - Anvil API
+ 
+     public CraftInventoryAnvil(Location location, Container inventory, Container resultInventory) {
+         super(inventory, resultInventory);
+@@ -27,6 +31,10 @@ public class CraftInventoryAnvil extends CraftResultInventory implements AnvilIn
+         this.repairCost = CraftInventoryAnvil.DEFAULT_REPAIR_COST;
+         this.repairCostAmount = CraftInventoryAnvil.DEFAULT_REPAIR_COST_AMOUNT;
+         this.maximumRepairCost = CraftInventoryAnvil.DEFAULT_MAXIMUM_REPAIR_COST;
++        // Purpur start - Anvil API
++        this.bypassCost = false;
++        this.canDoUnsafeEnchants = false;
++        // Purpur end - Anvil API
+     }
+ 
+     @Override
+@@ -113,4 +121,30 @@ public class CraftInventoryAnvil extends CraftResultInventory implements AnvilIn
+             consumer.accept(cav);
+         }
+     }
++
++    // Purpur start - Anvil API
++    @Override
++    public boolean canBypassCost() {
++        this.syncWithArbitraryViewValue((cav) -> this.bypassCost = cav.canBypassCost());
++        return this.bypassCost;
++    }
++
++    @Override
++    public void setBypassCost(boolean bypassCost) {
++        this.bypassCost = bypassCost;
++        this.syncViews((cav) -> cav.setBypassCost(bypassCost));
++    }
++
++    @Override
++    public boolean canDoUnsafeEnchants() {
++        this.syncWithArbitraryViewValue((cav) -> this.canDoUnsafeEnchants = cav.canDoUnsafeEnchants());
++        return this.canDoUnsafeEnchants;
++    }
++
++    @Override
++    public void setDoUnsafeEnchants(boolean canDoUnsafeEnchants) {
++        this.canDoUnsafeEnchants = canDoUnsafeEnchants;
++        this.syncViews((cav) -> cav.setDoUnsafeEnchants(canDoUnsafeEnchants));
++    }
++    // Purpur end - Anvil API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+index 4a7b4b603c2c555c320911e618a4392628c2c754..0a3ad330e1d40cbe9e03fc3585ee309fe9f5c930 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+@@ -667,4 +667,285 @@ public final class CraftItemStack extends ItemStack {
+     }
+ 
+     // Paper end - data component API
++
++    // Purpur start - ItemStack convenience methods
++    @Override
++    public String getDisplayName() {
++        return getItemMeta().getDisplayName();
++    }
++
++    @Override
++    public void setDisplayName(String name) {
++        ItemMeta itemMeta = getItemMeta();
++        itemMeta.setDisplayName(name);
++        setItemMeta(itemMeta);
++    }
++
++    @Override
++    public boolean hasDisplayName() {
++        return hasItemMeta() && getItemMeta().hasDisplayName();
++    }
++
++    @Override
++    public String getLocalizedName() {
++        return getItemMeta().getLocalizedName();
++    }
++
++    @Override
++    public void setLocalizedName(String name) {
++        ItemMeta itemMeta = getItemMeta();
++        itemMeta.setLocalizedName(name);
++        setItemMeta(itemMeta);
++    }
++
++    @Override
++    public boolean hasLocalizedName() {
++        return hasItemMeta() && getItemMeta().hasLocalizedName();
++    }
++
++    @Override
++    public boolean hasLore() {
++        return hasItemMeta() && getItemMeta().hasLore();
++    }
++
++    @Override
++    public boolean hasEnchant(Enchantment ench) {
++        return hasItemMeta() && getItemMeta().hasEnchant(ench);
++    }
++
++    @Override
++    public int getEnchantLevel(Enchantment ench) {
++        return getItemMeta().getEnchantLevel(ench);
++    }
++
++    @Override
++    public Map<Enchantment, Integer> getEnchants() {
++        return getItemMeta().getEnchants();
++    }
++
++    @Override
++    public boolean addEnchant(Enchantment ench, int level, boolean ignoreLevelRestriction) {
++        ItemMeta itemMeta = getItemMeta();
++        boolean result = itemMeta.addEnchant(ench, level, ignoreLevelRestriction);
++        setItemMeta(itemMeta);
++        return result;
++    }
++
++    @Override
++    public boolean removeEnchant(Enchantment ench) {
++        ItemMeta itemMeta = getItemMeta();
++        boolean result = itemMeta.removeEnchant(ench);
++        setItemMeta(itemMeta);
++        return result;
++    }
++
++    @Override
++    public boolean hasEnchants() {
++        return hasItemMeta() && getItemMeta().hasEnchants();
++    }
++
++    @Override
++    public boolean hasConflictingEnchant(Enchantment ench) {
++        return hasItemMeta() && getItemMeta().hasConflictingEnchant(ench);
++    }
++
++    @Override
++    public void setCustomModelData(Integer data) {
++        ItemMeta itemMeta = getItemMeta();
++        itemMeta.setCustomModelData(data);
++        setItemMeta(itemMeta);
++    }
++
++    @Override
++    public int getCustomModelData() {
++        return getItemMeta().getCustomModelData();
++    }
++
++    @Override
++    public boolean hasCustomModelData() {
++        return hasItemMeta() && getItemMeta().hasCustomModelData();
++    }
++
++    @Override
++    public boolean hasBlockData() {
++        return hasItemMeta() && ((org.bukkit.inventory.meta.BlockDataMeta) getItemMeta()).hasBlockData();
++    }
++
++    @Override
++    public org.bukkit.block.data.BlockData getBlockData(Material material) {
++        return ((org.bukkit.inventory.meta.BlockDataMeta) getItemMeta()).getBlockData(material);
++    }
++
++    @Override
++    public void setBlockData(org.bukkit.block.data.BlockData blockData) {
++        ItemMeta itemMeta = getItemMeta();
++        ((org.bukkit.inventory.meta.BlockDataMeta) itemMeta).setBlockData(blockData);
++        setItemMeta(itemMeta);
++    }
++
++    @Override
++    public int getRepairCost() {
++        return ((org.bukkit.inventory.meta.Repairable) getItemMeta()).getRepairCost();
++    }
++
++    @Override
++    public void setRepairCost(int cost) {
++        ItemMeta itemMeta = getItemMeta();
++        ((org.bukkit.inventory.meta.Repairable) itemMeta).setRepairCost(cost);
++        setItemMeta(itemMeta);
++    }
++
++    @Override
++    public boolean hasRepairCost() {
++        return hasItemMeta() && ((org.bukkit.inventory.meta.Repairable) getItemMeta()).hasRepairCost();
++    }
++
++    @Override
++    public boolean isUnbreakable() {
++        return hasItemMeta() && getItemMeta().isUnbreakable();
++    }
++
++    @Override
++    public void setUnbreakable(boolean unbreakable) {
++        ItemMeta itemMeta = getItemMeta();
++        itemMeta.setUnbreakable(unbreakable);
++        setItemMeta(itemMeta);
++    }
++
++    @Override
++    public boolean hasAttributeModifiers() {
++        return hasItemMeta() && getItemMeta().hasAttributeModifiers();
++    }
++
++    @Override
++    public com.google.common.collect.Multimap<org.bukkit.attribute.Attribute, org.bukkit.attribute.AttributeModifier> getAttributeModifiers() {
++        return getItemMeta().getAttributeModifiers();
++    }
++
++    @Override
++    public com.google.common.collect.Multimap<org.bukkit.attribute.Attribute, org.bukkit.attribute.AttributeModifier> getAttributeModifiers(org.bukkit.inventory.EquipmentSlot slot) {
++        return getItemMeta().getAttributeModifiers(slot);
++    }
++
++    @Override
++    public java.util.Collection<org.bukkit.attribute.AttributeModifier> getAttributeModifiers(org.bukkit.attribute.Attribute attribute) {
++        return getItemMeta().getAttributeModifiers(attribute);
++    }
++
++    @Override
++    public boolean addAttributeModifier(org.bukkit.attribute.Attribute attribute, org.bukkit.attribute.AttributeModifier modifier) {
++        ItemMeta itemMeta = getItemMeta();
++        boolean result = itemMeta.addAttributeModifier(attribute, modifier);
++        setItemMeta(itemMeta);
++        return result;
++    }
++
++    @Override
++    public void setAttributeModifiers(com.google.common.collect.Multimap<org.bukkit.attribute.Attribute, org.bukkit.attribute.AttributeModifier> attributeModifiers) {
++        ItemMeta itemMeta = getItemMeta();
++        itemMeta.setAttributeModifiers(attributeModifiers);
++        setItemMeta(itemMeta);
++    }
++
++    @Override
++    public boolean removeAttributeModifier(org.bukkit.attribute.Attribute attribute) {
++        ItemMeta itemMeta = getItemMeta();
++        boolean result = itemMeta.removeAttributeModifier(attribute);
++        setItemMeta(itemMeta);
++        return result;
++    }
++
++    @Override
++    public boolean removeAttributeModifier(org.bukkit.inventory.EquipmentSlot slot) {
++        ItemMeta itemMeta = getItemMeta();
++        boolean result = itemMeta.removeAttributeModifier(slot);
++        setItemMeta(itemMeta);
++        return result;
++    }
++
++    @Override
++    public boolean removeAttributeModifier(org.bukkit.attribute.Attribute attribute, org.bukkit.attribute.AttributeModifier modifier) {
++        ItemMeta itemMeta = getItemMeta();
++        boolean result = itemMeta.removeAttributeModifier(attribute, modifier);
++        setItemMeta(itemMeta);
++        return result;
++    }
++
++    @Override
++    public boolean hasDamage() {
++        return hasItemMeta() && ((org.bukkit.inventory.meta.Damageable) getItemMeta()).hasDamage();
++    }
++
++    @Override
++    public int getDamage() {
++        return ((org.bukkit.inventory.meta.Damageable) getItemMeta()).getDamage();
++    }
++
++    @Override
++    public void setDamage(int damage) {
++        ItemMeta itemMeta = getItemMeta();
++        ((org.bukkit.inventory.meta.Damageable) itemMeta).setDamage(damage);
++        setItemMeta(itemMeta);
++    }
++
++    @Override
++    public void repair() {
++        repair(1);
++    }
++
++    @Override
++    public boolean damage() {
++        return damage(1);
++    }
++
++    @Override
++    public void repair(int amount) {
++        damage(-amount);
++    }
++
++    @Override
++    public boolean damage(int amount) {
++        return damage(amount, false);
++    }
++
++    @Override
++    public boolean damage(int amount, boolean ignoreUnbreaking) {
++        org.bukkit.inventory.meta.Damageable damageable = (org.bukkit.inventory.meta.Damageable) getItemMeta();
++        if (amount > 0) {
++            int unbreaking = getEnchantLevel(Enchantment.UNBREAKING);
++            int reduce = 0;
++            for (int i = 0; unbreaking > 0 && i < amount; ++i) {
++                if (reduceDamage(java.util.concurrent.ThreadLocalRandom.current(), unbreaking)) {
++                    ++reduce;
++                }
++            }
++            amount -= reduce;
++            if (amount <= 0) {
++                return isBroke(damageable.getDamage());
++            }
++        }
++        int damage = damageable.getDamage() + amount;
++        damageable.setDamage(damage);
++        setItemMeta((ItemMeta) damageable);
++        return isBroke(damage);
++    }
++
++    private boolean isBroke(int damage) {
++        if (damage > getType().getMaxDurability()) {
++            if (getAmount() > 0) {
++                // ensure it "breaks"
++                setAmount(0);
++            }
++            return true;
++        }
++        return false;
++    }
++
++    private boolean reduceDamage(java.util.Random random, int unbreaking) {
++        if (getType().isArmor()) {
++            return random.nextFloat() < 0.6F;
++        }
++        return random.nextInt(unbreaking + 1) > 0;
++    }
++    // Purpur end - ItemStack convenience methods
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftRecipe.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftRecipe.java
+index 4864e2016cb1d377425297fd1c52b383632cb59e..953d64d128a53eb9ec2ff55140dde5cb80326044 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftRecipe.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftRecipe.java
+@@ -36,6 +36,7 @@ public interface CraftRecipe extends Recipe {
+             stack = Ingredient.of(((RecipeChoice.MaterialChoice) bukkit).getChoices().stream().map((mat) -> CraftItemType.bukkitToMinecraft(mat)));
+         } else if (bukkit instanceof RecipeChoice.ExactChoice) {
+             stack = Ingredient.ofStacks(((RecipeChoice.ExactChoice) bukkit).getChoices().stream().map((mat) -> CraftItemStack.asNMSCopy(mat)).toList());
++            stack.predicate = ((RecipeChoice.ExactChoice) bukkit).getPredicate(); // Purpur - Add predicate to recipe's ExactChoice ingredient
+             // Paper start - support "empty" choices - legacy method that spigot might incorrectly call
+             // Their impl of Ingredient.of() will error, ingredients need at least one entry.
+             // Callers running into this exception may have passed an incorrect empty() recipe choice to a non-empty slot or
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/view/CraftAnvilView.java b/src/main/java/org/bukkit/craftbukkit/inventory/view/CraftAnvilView.java
+index 2b3844f5ecc1bfbf3f5dab1c00d06f8be27f39e9..4e535c287137ceedd4d48047b03f4578c33467b0 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/view/CraftAnvilView.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/view/CraftAnvilView.java
+@@ -73,4 +73,26 @@ public class CraftAnvilView extends CraftInventoryView<AnvilMenu, AnvilInventory
+             this.setMaximumRepairCost(legacy.getMaximumRepairCost());
+         }
+     }
++
++    // Purpur start - Anvil API
++    @Override
++    public boolean canBypassCost() {
++        return this.container.bypassCost;
++    }
++
++    @Override
++    public void setBypassCost(boolean bypassCost) {
++        this.container.bypassCost = bypassCost;
++    }
++
++    @Override
++    public boolean canDoUnsafeEnchants() {
++        return this.container.canDoUnsafeEnchants;
++    }
++
++    @Override
++    public void setDoUnsafeEnchants(boolean canDoUnsafeEnchants) {
++        this.container.canDoUnsafeEnchants = canDoUnsafeEnchants;
++    }
++    // Purpur end - Anvil API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/legacy/CraftLegacy.java b/src/main/java/org/bukkit/craftbukkit/legacy/CraftLegacy.java
+index 0b9b29753984bebaf01e2edc6d325cd5df6c689d..b6d13bd035bc6f0f7ae6d66d7186cdb256b9194c 100644
+--- a/src/main/java/org/bukkit/craftbukkit/legacy/CraftLegacy.java
++++ b/src/main/java/org/bukkit/craftbukkit/legacy/CraftLegacy.java
+@@ -260,6 +260,7 @@ public final class CraftLegacy {
+     }
+ 
+     static {
++        if (!org.purpurmc.purpur.PurpurConfig.loggerSuppressInitLegacyMaterialError) // Purpur - Logger settings (suppressing pointless logs)
+         LOGGER.warn("Initializing Legacy Material Support. Unless you have legacy plugins and/or data this is a bug!"); // Paper - Improve logging and errors; doesn't need to be an error
+         if (MinecraftServer.getServer() != null && MinecraftServer.getServer().isDebugging()) {
+             new Exception().printStackTrace();
+diff --git a/src/main/java/org/bukkit/craftbukkit/legacy/MaterialRerouting.java b/src/main/java/org/bukkit/craftbukkit/legacy/MaterialRerouting.java
+index db8d8e2a07296d62c3097f02b03319e2e1ba9394..4ba4d52961b4ba61fe2db130ee4368ff358920d4 100644
+--- a/src/main/java/org/bukkit/craftbukkit/legacy/MaterialRerouting.java
++++ b/src/main/java/org/bukkit/craftbukkit/legacy/MaterialRerouting.java
+@@ -708,4 +708,32 @@ public class MaterialRerouting {
+         meta.setCanPlaceOn(materials);
+     }
+     // Paper end
++    // Purpur start - Adopt MaterialRerouting
++    // Method added post 1.13, no-op (https://github.com/PurpurMC/Purpur/pull/570)
++    public static void addFuel(Server server, Material material, int burnTime) {
++        server.addFuel(material, burnTime);
++    }
++
++    // Method added post 1.13, no-op (https://github.com/PurpurMC/Purpur/pull/570)
++    public static void removeFuel(Server server, Material material) {
++        server.removeFuel(material);
++    }
++
++    // Method added post 1.13, no-op (https://github.com/PurpurMC/Purpur/pull/570)
++    @RerouteStatic("org/bukkit/Bukkit")
++    public static void addFuel(Material material, int burnTime) {
++        Bukkit.addFuel(material, burnTime);
++    }
++
++    // Method added post 1.13, no-op (https://github.com/PurpurMC/Purpur/pull/570)
++    @RerouteStatic("org/bukkit/Bukkit")
++    public static void removeFuel(Material material) {
++        Bukkit.removeFuel(material);
++    }
++
++    // Method added post 1.13, no-op (https://github.com/PurpurMC/Purpur/commit/607d909efba516893072b782c0393c53d048210e)
++    public static BlockData getBlockData(ItemStack itemStack, Material material) {
++        return itemStack.getBlockData(MaterialRerouting.transformToBlockType(material));
++    }
++    // Purpur end - Adopt MaterialRerouting
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/map/CraftMapRenderer.java b/src/main/java/org/bukkit/craftbukkit/map/CraftMapRenderer.java
+index a573499fb96cb08d96e0b20602fc423bfd0e2f52..eb9cbc29181ffc83acd556f26f2c0b4f227808ab 100644
+--- a/src/main/java/org/bukkit/craftbukkit/map/CraftMapRenderer.java
++++ b/src/main/java/org/bukkit/craftbukkit/map/CraftMapRenderer.java
+@@ -46,4 +46,10 @@ public class CraftMapRenderer extends MapRenderer {
+         }
+     }
+ 
++    // Purpur start - Explorer Map API
++    @Override
++    public boolean isExplorerMap() {
++        return this.worldMap.isExplorerMap;
++    }
++    // Purpur end - Explorer Map API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
+index fad85bea8643a3a88ec5c4194de7a5060e81c136..856616f8ba98580657803a4170b328b748d49a8b 100644
+--- a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
++++ b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
+@@ -491,7 +491,7 @@ public class CraftScheduler implements BukkitScheduler {
+                 this.parsePending();
+             } else {
+                 // this.debugTail = this.debugTail.setNext(new CraftAsyncDebugger(this.currentTick + CraftScheduler.RECENT_TICKS, task.getOwner(), task.getTaskClass())); // Paper
+-                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Paper"); // Paper
++                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Purpur"); // Paper // Purpur - Rebrand
+                 // We don't need to parse pending
+                 // (async tasks must live with race-conditions if they attempt to cancel between these few lines of code)
+             }
+diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
+index 679529d94c16960527e5d76adb61c7e536f55d3e..41e3377296648382d8b96406dd85821f89a570dc 100644
+--- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
++++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
+@@ -487,7 +487,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
+ 
+     @Override
+     public com.destroystokyo.paper.util.VersionFetcher getVersionFetcher() {
+-        return new com.destroystokyo.paper.PaperVersionFetcher();
++        return new com.destroystokyo.paper.PaperVersionFetcher(); // Pufferfish // Purpur - Rebrand
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
+index e9b6ca3aa25e140467ae866d572483050ea3fa0e..aeea928a92e392e245abddcb9cee88eb0db17955 100644
+--- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
++++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
+@@ -11,7 +11,7 @@ public final class Versioning {
+     public static String getBukkitVersion() {
+         String result = "Unknown-Version";
+ 
+-        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/dev.folia/folia-api/pom.properties"); // Folia
++        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Folia // Pufferfish // Purpur - Rebrand
+         Properties properties = new Properties();
+ 
+         if (stream != null) {
+diff --git a/src/main/java/org/bukkit/craftbukkit/util/permissions/CommandPermissions.java b/src/main/java/org/bukkit/craftbukkit/util/permissions/CommandPermissions.java
+index de33ea03508552d0cc7dd548754c626af093dd7c..22f820dcef5a760eff77d5eb75c08125dc7ae367 100644
+--- a/src/main/java/org/bukkit/craftbukkit/util/permissions/CommandPermissions.java
++++ b/src/main/java/org/bukkit/craftbukkit/util/permissions/CommandPermissions.java
+@@ -23,7 +23,15 @@ public final class CommandPermissions {
+         DefaultPermissions.registerPermission(CommandPermissions.PREFIX + "kick", "Allows the user to kick players", PermissionDefault.OP, commands);
+         DefaultPermissions.registerPermission(CommandPermissions.PREFIX + "stop", "Allows the user to stop the server", PermissionDefault.OP, commands);
+         DefaultPermissions.registerPermission(CommandPermissions.PREFIX + "list", "Allows the user to list all online players", PermissionDefault.OP, commands);
+-        DefaultPermissions.registerPermission(CommandPermissions.PREFIX + "gamemode", "Allows the user to change the gamemode of another player", PermissionDefault.OP, commands);
++        // Purpur start - Gamemode extra permissions
++        Permission gamemodeVanilla = DefaultPermissions.registerPermission(PREFIX + "gamemode", "Allows the user to change the gamemode", PermissionDefault.OP, commands);
++        for (net.minecraft.world.level.GameType gametype : net.minecraft.world.level.GameType.values()) {
++            Permission gamemodeSelf = DefaultPermissions.registerPermission(PREFIX + "gamemode." + gametype.getName(), "Allows the user to set " + gametype.getName() + " gamemode for self", PermissionDefault.OP);
++            Permission gamemodeOther = DefaultPermissions.registerPermission(PREFIX + "gamemode." + gametype.getName() + ".other", "Allows the user to set " + gametype.getName() + " gamemode for other players", PermissionDefault.OP);
++            gamemodeSelf.addParent(gamemodeOther, true);
++            gamemodeVanilla.addParent(gamemodeSelf, true);
++        }
++        // Purpur end - Gamemode extra permissions
+         DefaultPermissions.registerPermission(CommandPermissions.PREFIX + "experience", "Allows the user to give themselves or others arbitrary values of experience", PermissionDefault.OP, commands); // Paper - wrong permission; redirects are de-redirected and the root literal name is used, so xp -> experience
+         DefaultPermissions.registerPermission(CommandPermissions.PREFIX + "defaultgamemode", "Allows the user to change the default gamemode of the server", PermissionDefault.OP, commands);
+         DefaultPermissions.registerPermission(CommandPermissions.PREFIX + "seed", "Allows the user to view the seed of the world", PermissionDefault.OP, commands);
+diff --git a/src/main/java/org/spigotmc/TicksPerSecondCommand.java b/src/main/java/org/spigotmc/TicksPerSecondCommand.java
+index 6d4851aa8c53793bfaf650f399fc5e2a98dbbb24..4f3bd0628c224bb2567ddb0d40d16d44b9a6e14d 100644
+--- a/src/main/java/org/spigotmc/TicksPerSecondCommand.java
++++ b/src/main/java/org/spigotmc/TicksPerSecondCommand.java
+@@ -43,7 +43,7 @@ public class TicksPerSecondCommand extends Command {
+         }
+ 
+         TextComponent.Builder builder = text();
+-        builder.append(text("TPS from last 1m, 5m, 15m: ", NamedTextColor.GOLD));
++        builder.append(text("TPS from last 5s, 1m, 5m, 15m: ", NamedTextColor.GOLD)); // Purpur - Add 5 second tps average in /tps
+         builder.append(Component.join(JoinConfiguration.commas(true), tpsAvg));
+         sender.sendMessage(builder.asComponent());
+         if (args.length > 0 && args[0].equals("mem") && sender.hasPermission("bukkit.command.tpsmemory")) {
+diff --git a/src/main/java/org/spigotmc/WatchdogThread.java b/src/main/java/org/spigotmc/WatchdogThread.java
+index eafdb55d7418606dbca0b3bc4787501fed872c0a..f3f23d8771231ab7d6914b69c0e4235b33426ecb 100644
+--- a/src/main/java/org/spigotmc/WatchdogThread.java
++++ b/src/main/java/org/spigotmc/WatchdogThread.java
+@@ -25,7 +25,7 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
+     private volatile boolean stopping;
+ 
+     private WatchdogThread(long timeoutTime, boolean restart) {
+-        super("Paper Watchdog Thread");
++        super("Watchdog Thread"); // Purpur - use a generic name - Rebrand
+         this.timeoutTime = timeoutTime;
+         this.restart = restart;
+         this.earlyWarningEvery = Math.min(GlobalConfiguration.get().watchdog.earlyWarningEvery, timeoutTime);
+@@ -75,14 +75,14 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
+                 this.lastEarlyWarning = currentTime;
+                 if (isLongTimeout) {
+                     logger.log(Level.SEVERE, "------------------------------");
+-                    logger.log(Level.SEVERE, "The server has stopped responding! This is (probably) not a Paper bug."); // Paper
++                    logger.log(Level.SEVERE, "The server has stopped responding! This is (probably) not a Purpur bug."); // Paper // Purpur - Rebrand
+                     logger.log(Level.SEVERE, "If you see a plugin in the Server thread dump below, then please report it to that author");
+                     logger.log(Level.SEVERE, "\t *Especially* if it looks like HTTP or MySQL operations are occurring");
+                     logger.log(Level.SEVERE, "If you see a world save or edit, then it means you did far more than your server can handle at once");
+                     logger.log(Level.SEVERE, "\t If this is the case, consider increasing timeout-time in spigot.yml but note that this will replace the crash with LARGE lag spikes");
+-                    logger.log(Level.SEVERE, "If you are unsure or still think this is a Paper bug, please report this to https://github.com/PaperMC/Paper/issues");
++                    logger.log(Level.SEVERE, "If you are unsure or still think this is a Purpur bug, please report this to https://github.com/PurpurMC/Purpur/issues"); // Purpur - Rebrand
+                     logger.log(Level.SEVERE, "Be sure to include ALL relevant console errors and Minecraft crash reports");
+-                    logger.log(Level.SEVERE, "Paper version: " + Bukkit.getServer().getVersion());
++                    logger.log(Level.SEVERE, "Purpur version: " + Bukkit.getServer().getVersion()); // Purpur - Rebrand
+ 
+                     if (net.minecraft.world.level.Level.lastPhysicsProblem != null) {
+                         logger.log(Level.SEVERE, "------------------------------");
+@@ -102,12 +102,12 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
+                     }
+                     // Paper end
+                 } else {
+-                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PAPER - THIS IS NOT A BUG OR A CRASH  - " + Bukkit.getServer().getVersion() + " ---");
++                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PURPUR - THIS IS NOT A BUG OR A CRASH  - " + Bukkit.getServer().getVersion() + " ---"); // Purpur - Rebrand
+                     logger.log(Level.SEVERE, "The server has not responded for " + (currentTime - lastTick) / 1000 + " seconds! Creating thread dump");
+                 }
+                 // Paper end - Different message for short timeout
+                 logger.log(Level.SEVERE, "------------------------------");
+-                logger.log(Level.SEVERE, "Server thread dump (Look for plugins here before reporting to Paper!):"); // Paper
++                logger.log(Level.SEVERE, "Server thread dump (Look for plugins here before reporting to Purpur!):"); // Paper // Purpur - Rebrand
+                 FeatureHooks.dumpAllChunkLoadInfo(MinecraftServer.getServer(), isLongTimeout); // Paper - log detailed tick information
+                 WatchdogThread.dumpThread(ManagementFactory.getThreadMXBean().getThreadInfo(MinecraftServer.getServer().serverThread.threadId(), Integer.MAX_VALUE), logger);
+                 logger.log(Level.SEVERE, "------------------------------");
+@@ -120,7 +120,7 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
+                         WatchdogThread.dumpThread(thread, logger);
+                     }
+                 } else {
+-                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PAPER - THIS IS NOT A BUG OR A CRASH ---");
++                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PURPUR - THIS IS NOT A BUG OR A CRASH ---"); // Purpur - Rebrand
+                 }
+ 
+                 logger.log(Level.SEVERE, "------------------------------");
+diff --git a/src/main/resources/log4j2.xml b/src/main/resources/log4j2.xml
+index d2a75850af9c6ad2aca66a5f994f1b587d73eac4..a056aa167887abef9e6d531a9edd2cda433567d2 100644
+--- a/src/main/resources/log4j2.xml
++++ b/src/main/resources/log4j2.xml
+@@ -2,7 +2,16 @@
+ <Configuration status="WARN" shutdownHook="disable">
+     <Appenders>
+         <Queue name="ServerGuiConsole">
+-            <PatternLayout pattern="[%d{HH:mm:ss} %level]: %msg{nolookups}%n" />
++            <!-- Purpur start - copied from TerminalConsole -->
++            <PatternLayout>
++                <LoggerNamePatternSelector defaultPattern="%highlightGUIError{[%d{HH:mm:ss} %level]: [%logger] %stripAnsi{%msg}%n%xEx{full}}">
++                    <!-- Log root, Minecraft, Mojang and Bukkit loggers without prefix -->
++                    <!-- Disable prefix for various plugins that bypass the plugin logger -->
++                    <PatternMatch key=",net.minecraft.,Minecraft,com.mojang.,com.sk89q.,ru.tehkode.,Minecraft.AWE"
++                                  pattern="%highlightGUIError{[%d{HH:mm:ss} %level]: %stripAnsi{%msg}%n%xEx{full}}" />
++                </LoggerNamePatternSelector>
++            </PatternLayout>
++            <!-- Purpur end -->
+         </Queue>
+         <TerminalConsole name="TerminalConsole">
+             <PatternLayout>
+diff --git a/src/test/java/io/papermc/paper/permissions/MinecraftCommandPermissionsTest.java b/src/test/java/io/papermc/paper/permissions/MinecraftCommandPermissionsTest.java
+index e374c240a9dadb52933272a09569c60bf86289a2..b8caaeea4f437d8b5d76319d010d38fdcdb4d3e0 100644
+--- a/src/test/java/io/papermc/paper/permissions/MinecraftCommandPermissionsTest.java
++++ b/src/test/java/io/papermc/paper/permissions/MinecraftCommandPermissionsTest.java
+@@ -47,6 +47,7 @@ public class MinecraftCommandPermissionsTest {
+         Set<String> foundPerms = new HashSet<>();
+         for (CommandNode<CommandSourceStack> child : root.getChildren()) {
+             final String vanillaPerm = VanillaCommandWrapper.getPermission(child);
++            if (TO_SKIP.contains(vanillaPerm)) continue; // Purpur - Skip junit tests for purpur commands
+             if (!perms.contains(vanillaPerm)) {
+                 missing.add("Missing permission for " + child.getName() + " (" + vanillaPerm + ") command");
+             } else {
+@@ -59,6 +60,25 @@ public class MinecraftCommandPermissionsTest {
+     }
+ 
+     private static final List<String> TO_SKIP = List.of(
++        // Purpur start - Skip junit tests for purpur commands
++        "minecraft.command.compass",
++        "minecraft.command.credits",
++        "minecraft.command.demo",
++        "minecraft.command.ping",
++        "minecraft.command.ram",
++        "minecraft.command.rambar",
++        "minecraft.command.tpsbar",
++        "minecraft.command.uptime",
++        "minecraft.command.debug",
++        "minecraft.command.gamemode.adventure",
++        "minecraft.command.gamemode.adventure.other",
++        "minecraft.command.gamemode.creative",
++        "minecraft.command.gamemode.creative.other",
++        "minecraft.command.gamemode.spectator",
++        "minecraft.command.gamemode.spectator.other",
++        "minecraft.command.gamemode.survival",
++        "minecraft.command.gamemode.survival.other",
++        // Purpur end - Skip junit tests for purpur commands
+         "minecraft.command.selector"
+     );
+ 
