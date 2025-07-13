@@ -113,6 +113,9 @@ public class Config {
     public static class Entities {
         @Comment("When enabled, hides flames on entities with fire resistance")
         public boolean hideFlamesOnEntitiesWithFireResistance = false;
+
+        @Comment("Filters entity movement packets to reduce the amount of useless move packets sent")
+        public boolean reduceUselessMovePackets = false;
     }
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
