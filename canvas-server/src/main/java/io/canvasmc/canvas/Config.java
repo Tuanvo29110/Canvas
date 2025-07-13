@@ -109,6 +109,12 @@ public class Config {
         public boolean profileLookupExecutor = false;
     }
 
+    public Entities entities = new Entities();
+    public static class Entities {
+        @Comment("When enabled, hides flames on entities with fire resistance")
+        public boolean hideFlamesOnEntitiesWithFireResistance = false;
+    }
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

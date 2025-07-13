@@ -9,6 +9,20 @@
      private final double[] pistonDeltas = new double[]{0.0, 0.0, 0.0};
      private long pistonDeltasGameTime = Long.MIN_VALUE; // Folia - region threading
      protected EntityDimensions dimensions;
+@@ -901,7 +_,13 @@
+ 
+         this.checkBelowWorld();
+         if (!this.level().isClientSide) {
++            // Canvas start - hide flames on entities with fire resistance
++            if (this instanceof net.minecraft.world.entity.LivingEntity livingEntity) {
++                this.setSharedFlagOnFire(this.remainingFireTicks > 0 && (!io.canvasmc.canvas.Config.INSTANCE.entities.hideFlamesOnEntitiesWithFireResistance || !livingEntity.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE)));
++            } else {
++            // Canvas end
+             this.setSharedFlagOnFire(this.remainingFireTicks > 0);
++            } // Canvas - hide flames on entities with fire resistance
+         }
+ 
+         this.firstTick = false;
 @@ -4292,12 +_,50 @@
                  return false;
              }
