@@ -1,18 +1,5 @@
 --- a/io/papermc/paper/threadedregions/RegionizedData.java
 +++ b/io/papermc/paper/threadedregions/RegionizedData.java
-@@ -1,10 +_,12 @@
- package io.papermc.paper.threadedregions;
- 
- import ca.spottedleaf.concurrentutil.util.Validate;
-+import io.papermc.paper.threadedregions.TickRegions.TickRegionData;
- import it.unimi.dsi.fastutil.longs.Long2ReferenceOpenHashMap;
- import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
- import net.minecraft.server.level.ServerLevel;
- import javax.annotation.Nullable;
-+import java.util.function.Function;
- import java.util.function.Supplier;
- 
- /**
 @@ -42,7 +_,7 @@
   *             // callback is left out of this example
   *             // note: world != null here
@@ -36,7 +23,7 @@
  
      private final ServerLevel world;
 -    private final Supplier<T> initialValueSupplier;
-+    private final Function<TickRegionData ,T> initialValueSupplier; // Canvas - rewrite scheduler
++    private final java.util.function.Function<io.papermc.paper.threadedregions.TickRegions.TickRegionData ,T> initialValueSupplier; // Canvas - rewrite scheduler
      private final RegioniserCallback<T> callback;
  
      /**
@@ -45,7 +32,7 @@
       * @param callback Region callback to manage this regionised data.
       */
 -    public RegionizedData(final ServerLevel world, final Supplier<T> supplier, final RegioniserCallback<T> callback) {
-+    public RegionizedData(final ServerLevel world, final Function<TickRegionData,T> supplier, final RegioniserCallback<T> callback) { // Canvas - rewrite scheduler
++    public RegionizedData(final ServerLevel world, final java.util.function.Function<io.papermc.paper.threadedregions.TickRegions.TickRegionData,T> supplier, final RegioniserCallback<T> callback) { // Canvas - rewrite scheduler
          this.world = world;
          this.initialValueSupplier = Validate.notNull(supplier, "Supplier may not be null.");
          this.callback = Validate.notNull(callback, "Regioniser callback may not be null.");
@@ -53,7 +40,7 @@
  
 -    T createNewValue() {
 -        return Validate.notNull(this.initialValueSupplier.get(), "Initial value supplier may not return null");
-+    T createNewValue(final TickRegionData regionData) { // Canvas - rewrite scheduler
++    T createNewValue(final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData) { // Canvas - rewrite scheduler
 +        return Validate.notNull(this.initialValueSupplier.apply(regionData), "Initial value supplier may not return null"); // Canvas - rewrite scheduler
      }
  
@@ -63,7 +50,7 @@
       */
      public @Nullable T get() {
 -        final ThreadedRegionizer.ThreadedRegion<TickRegions.TickRegionData, TickRegions.TickRegionSectionData> region =
-+        final ThreadedRegionizer.ThreadedRegion<TickRegionData, TickRegions.TickRegionSectionData> region = // Canvas - rewrite scheduler
++        final ThreadedRegionizer.ThreadedRegion<io.papermc.paper.threadedregions.TickRegions.TickRegionData, TickRegions.TickRegionSectionData> region = // Canvas - rewrite scheduler
              TickRegionScheduler.getCurrentRegion();
  
          if (region == null) {

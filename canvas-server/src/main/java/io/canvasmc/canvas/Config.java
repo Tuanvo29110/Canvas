@@ -51,6 +51,31 @@ public class Config {
             "MSPT significantly. This option delays fluid post-processing to scheduled tick to hopefully mitigate this issue."
         })
         public boolean fluidPostProcessingToScheduledTick = false;
+
+        @Comment("Whether to enable aquifer optimizations to accelerate overworld worldgen")
+        public boolean optimizeAquifer = false;
+
+        @Comment("Whether to enable End Biome Cache to accelerate The End worldgen")
+        public boolean useEndBiomeCache = false;
+
+        @Comment("The cache capacity for the end biome cache. Only works with 'useEndBiomeCache' enabled")
+        public int endBiomeCacheCapacity = 1024;
+
+        @Comment("Whether to enable Beardifier optimizations to accelerate world generation")
+        public boolean optimizeBeardifier = false;
+
+        @Comment("Whether to enable optimizations to the noise based chunk generator")
+        public boolean optimizeNoiseGeneration = false;
+
+        public BiomeCache biomeCache = new BiomeCache();
+        public static class BiomeCache {
+            @Comment("Enables biome caching, which makes a biome lookup caching layer to reduce expensive biome calculations and queries")
+            public boolean enabled = false;
+            @Comment("Enables advancement-related biome checks for biome caching")
+            public boolean advancement = false;
+            @Comment("Enables biome caching for mob spawning biome lookups")
+            public boolean mobSpawn = false;
+        }
     }
 
     public Networking networking = new Networking();

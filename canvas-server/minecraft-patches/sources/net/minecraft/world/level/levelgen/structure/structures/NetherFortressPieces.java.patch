@@ -1,13 +1,5 @@
 --- a/net/minecraft/world/level/levelgen/structure/structures/NetherFortressPieces.java
 +++ b/net/minecraft/world/level/levelgen/structure/structures/NetherFortressPieces.java
-@@ -1,6 +_,7 @@
- package net.minecraft.world.level.levelgen.structure.structures;
- 
- import com.google.common.collect.Lists;
-+import java.util.Collections;
- import java.util.List;
- import javax.annotation.Nullable;
- import net.minecraft.core.BlockPos;
 @@ -643,7 +_,7 @@
          private static final int WIDTH = 5;
          private static final int HEIGHT = 7;
@@ -98,7 +90,7 @@
          public StartPiece(RandomSource random, int x, int z) {
              super(x, z, getRandomHorizontalDirection(random));
 -            this.availableBridgePieces = Lists.newArrayList();
-+            this.availableBridgePieces = Collections.synchronizedList(Lists.newArrayList()); // Canvas
++            this.availableBridgePieces = java.util.Collections.synchronizedList(Lists.newArrayList()); // Canvas - rewrite moonrise executor - fix threading issues
  
              for (NetherFortressPieces.PieceWeight pieceWeight : NetherFortressPieces.BRIDGE_PIECE_WEIGHTS) {
 -                pieceWeight.placeCount = 0;
@@ -107,7 +99,7 @@
              }
  
 -            this.availableCastlePieces = Lists.newArrayList();
-+            this.availableCastlePieces = Collections.synchronizedList(Lists.newArrayList()); // Canvas
++            this.availableCastlePieces = java.util.Collections.synchronizedList(Lists.newArrayList()); // Canvas - rewrite moonrise executor - fix threading issues
  
              for (NetherFortressPieces.PieceWeight pieceWeight : NetherFortressPieces.CASTLE_PIECE_WEIGHTS) {
 -                pieceWeight.placeCount = 0;

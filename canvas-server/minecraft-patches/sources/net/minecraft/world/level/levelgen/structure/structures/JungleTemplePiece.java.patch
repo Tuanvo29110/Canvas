@@ -1,11 +1,6 @@
 --- a/net/minecraft/world/level/levelgen/structure/structures/JungleTemplePiece.java
 +++ b/net/minecraft/world/level/levelgen/structure/structures/JungleTemplePiece.java
-@@ -26,14 +_,17 @@
- import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
- import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
- import net.minecraft.world.level.storage.loot.BuiltInLootTables;
-+import java.util.concurrent.atomic.AtomicBoolean;
- 
+@@ -30,10 +_,12 @@
  public class JungleTemplePiece extends ScatteredFeaturePiece {
      public static final int WIDTH = 12;
      public static final int DEPTH = 15;
@@ -14,10 +9,10 @@
 -    private boolean placedTrap1;
 -    private boolean placedTrap2;
 +    // Canvas start - rewrite moonrise executor - fix threading issues
-+    private final AtomicBoolean placedMainChest = new AtomicBoolean(false);
-+    private final AtomicBoolean placedHiddenChest = new AtomicBoolean(false);
-+    private final AtomicBoolean placedTrap1 = new AtomicBoolean(false);
-+    private final AtomicBoolean placedTrap2 = new AtomicBoolean(false);
++    private final java.util.concurrent.atomic.AtomicBoolean placedMainChest = new java.util.concurrent.atomic.AtomicBoolean(false);
++    private final java.util.concurrent.atomic.AtomicBoolean placedHiddenChest = new java.util.concurrent.atomic.AtomicBoolean(false);
++    private final java.util.concurrent.atomic.AtomicBoolean placedTrap1 = new java.util.concurrent.atomic.AtomicBoolean(false);
++    private final java.util.concurrent.atomic.AtomicBoolean placedTrap2 = new java.util.concurrent.atomic.AtomicBoolean(false);
 +    // Canvas end
      private static final JungleTemplePiece.MossStoneSelector STONE_SELECTOR = new JungleTemplePiece.MossStoneSelector();
  

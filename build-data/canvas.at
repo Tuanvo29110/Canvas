@@ -39,3 +39,14 @@ public net.minecraft.world.level.pathfinder.SwimNodeEvaluator allowBreaching
 public-f net.minecraft.server.level.ServerPlayer gameMode
 public-f net.minecraft.world.entity.EntityType dimensions
 public-f net.minecraft.world.level.block.state.BlockBehaviour explosionResistance
+public-f net.minecraft.world.level.chunk.LevelChunkSection nonEmptyBlockCount
+public-f net.minecraft.world.level.chunk.LevelChunkSection tickingBlockCount
+public-f net.minecraft.world.level.chunk.LevelChunkSection tickingFluidCount
+public-f net.minecraft.world.level.chunk.PalettedContainer strategy
+public-f net.minecraft.world.level.chunk.PalettedContainer$Data palette
+public-f net.minecraft.world.level.levelgen.LegacyRandomSource$LegacyPositionalRandomFactory seed
+public-f net.minecraft.world.level.levelgen.Xoroshiro128PlusPlus seedHi
+public-f net.minecraft.world.level.levelgen.Xoroshiro128PlusPlus seedLo
+public-f net.minecraft.world.level.levelgen.XoroshiroRandomSource randomNumberGenerator
+public-f net.minecraft.world.level.levelgen.XoroshiroRandomSource$XoroshiroPositionalRandomFactory seedHi
+public-f net.minecraft.world.level.levelgen.XoroshiroRandomSource$XoroshiroPositionalRandomFactory seedLo

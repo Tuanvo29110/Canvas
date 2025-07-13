@@ -1,25 +1,13 @@
 --- a/net/minecraft/world/level/levelgen/structure/structures/DesertPyramidPiece.java
 +++ b/net/minecraft/world/level/levelgen/structure/structures/DesertPyramidPiece.java
-@@ -1,7 +_,11 @@
- package net.minecraft.world.level.levelgen.structure.structures;
- 
- import java.util.ArrayList;
-+import java.util.Collections;
- import java.util.List;
-+import java.util.Set;
-+import java.util.concurrent.atomic.AtomicReferenceArray;
-+import com.google.common.collect.Sets;
- import net.minecraft.core.BlockPos;
- import net.minecraft.core.Direction;
- import net.minecraft.nbt.CompoundTag;
 @@ -23,29 +_,44 @@
  public class DesertPyramidPiece extends ScatteredFeaturePiece {
      public static final int WIDTH = 21;
      public static final int DEPTH = 21;
 -    private final boolean[] hasPlacedChest = new boolean[4];
 -    private final List<BlockPos> potentialSuspiciousSandWorldPositions = new ArrayList<>();
-+    private final AtomicReferenceArray<Boolean> hasPlacedChestAtomic = new AtomicReferenceArray<>(new Boolean[4]); // Canvas - rewrite moonrise executor - fix threading issues - atomic
-+    private final Set<BlockPos> potentialSuspiciousSandWorldPositions = Sets.newConcurrentHashSet(); // Canvas - rewrite moonrise executor - fix threading issues - concurrent
++    private final java.util.concurrent.atomic.AtomicReferenceArray<Boolean> hasPlacedChestAtomic = new java.util.concurrent.atomic.AtomicReferenceArray<>(new Boolean[4]); // Canvas - rewrite moonrise executor - fix threading issues - atomic
++    private final java.util.Set<BlockPos> potentialSuspiciousSandWorldPositions = com.google.common.collect.Sets.newConcurrentHashSet(); // Canvas - rewrite moonrise executor - fix threading issues - concurrent
      private BlockPos randomCollapsedRoofPos = BlockPos.ZERO;
 +    // Canvas start - rewrite moonrise executor - fix threading issues
 +    private void onInit() {
@@ -88,7 +76,7 @@
      }
  
 -    public List<BlockPos> getPotentialSuspiciousSandWorldPositions() {
-+    public Set<BlockPos> getPotentialSuspiciousSandWorldPositions() { // Canvas - rewrite moonrise executor - fix threading issues
++    public java.util.Set<BlockPos> getPotentialSuspiciousSandWorldPositions() { // Canvas - rewrite moonrise executor - fix threading issues
          return this.potentialSuspiciousSandWorldPositions;
      }
  
