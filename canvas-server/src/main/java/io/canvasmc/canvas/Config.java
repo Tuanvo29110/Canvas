@@ -82,6 +82,12 @@ public class Config {
             "WARNING: May cause the sequence of future compose disorder"
         })
         public boolean useFasterStructureGenFutureSequencing = false;
+
+        @Comment(value = {
+            "Makes chunk packet preparation and sending asynchronous to improve server performance.",
+            "This can significantly reduce main thread load when many players are loading chunks."
+        })
+        public boolean asyncChunkSend = false;
     }
 
     public Networking networking = new Networking();

@@ -1,0 +1,63 @@
+--- a/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java
++++ b/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java
+@@ -75,6 +_,52 @@
+         }
+     }
+ 
++    // Canvas start - async chunk sending
++    public ClientboundLevelChunkPacketData(LevelChunk levelChunk, io.papermc.paper.antixray.ChunkPacketInfo<net.minecraft.world.level.block.state.BlockState> chunkPacketInfo, BlockEntity[] blockEntities, Map<Heightmap.Types, long[]> heightmaps) {
++        this.heightmaps = heightmaps;
++
++        if (Thread.currentThread() instanceof io.canvasmc.canvas.chunk.AsyncChunkSend.AsyncChunkSendThread) {
++            int size = calculateChunkSize(levelChunk);
++            ByteBuf buffer = Unpooled.buffer(size);
++            extractChunkData(new FriendlyByteBuf(buffer), levelChunk, chunkPacketInfo);
++            // make sure all sections is latest
++            while (size != buffer.writerIndex()) {
++                buffer.writerIndex(0);
++                size = calculateChunkSize(levelChunk);
++                extractChunkData(new FriendlyByteBuf(buffer), levelChunk, chunkPacketInfo);
++            }
++            byte[] array = it.unimi.dsi.fastutil.bytes.ByteArrays.setLength(buffer.array(), buffer.writerIndex());
++            if (chunkPacketInfo != null) {
++                chunkPacketInfo.setBuffer(array);
++            }
++            this.buffer = array;
++        } else {
++            this.buffer = new byte[calculateChunkSize(levelChunk)];
++            // Paper start - Anti-Xray - Add chunk packet info
++            if (chunkPacketInfo != null) {
++                chunkPacketInfo.setBuffer(this.buffer);
++            }
++            extractChunkData(new FriendlyByteBuf(this.getWriteBuffer()), levelChunk, chunkPacketInfo);
++        }
++
++        this.blockEntitiesData = Lists.newArrayList();
++        int totalTileEntities = 0; // Paper - Handle oversized block entities in chunks
++
++        for (BlockEntity blockEntity : blockEntities) {
++            // Paper start - Handle oversized block entities in chunks
++            if (++totalTileEntities > BLOCK_ENTITY_LIMIT) {
++                net.minecraft.network.protocol.Packet<ClientGamePacketListener> packet = blockEntity.getUpdatePacket();
++                if (packet != null) {
++                    this.extraPackets.add(packet);
++                    continue;
++                }
++            }
++            // Paper end - Handle oversized block entities in chunks
++            this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(blockEntity));
++        }
++    }
++    // Canvas end
++
+     public ClientboundLevelChunkPacketData(RegistryFriendlyByteBuf buffer, int x, int z) {
+         this.heightmaps = HEIGHTMAPS_STREAM_CODEC.decode(buffer);
+         int varInt = buffer.readVarInt();
+@@ -123,6 +_,7 @@
+             // Paper end  - Anti-Xray - Add chunk packet info
+         }
+ 
++        if (Thread.currentThread() instanceof io.canvasmc.canvas.chunk.AsyncChunkSend.AsyncChunkSendThread) return; // Canvas - Async chunk sending
+         if (buffer.writerIndex() != buffer.capacity()) {
+             throw new IllegalStateException("Didn't fill chunk buffer: expected " + buffer.capacity() + " bytes, got " + buffer.writerIndex());
+         }
