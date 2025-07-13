@@ -9,7 +9,7 @@
  
      private void haltServerRegionThreading() {
          if (this.hasStartedShutdownThread.getAndSet(true)) {
-@@ -1728,6 +_,14 @@
+@@ -1728,6 +_,15 @@
          //io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.CALLBACK_MANAGER.handleQueue(this.tickCount); // Paper // Folia - region threading - moved to global tick
          //this.getFunctions().tick(); // Folia - region threading - TODO Purge functions
  
@@ -19,6 +19,7 @@
 +
 +            LOGGER.info("Saving chunks around region around chunk {} in world '{}'", region.region.getCenterChunk(), region.region.regioniser.world.getWorld().getName());
 +            region.region.regioniser.world.moonrise$getChunkTaskScheduler().chunkHolderManager.close(true, false, false, false, false);
++            this.getPlayerList().saveAll();
 +        }
 +        // Canvas end
          // CraftBukkit start
