@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":canvas-server"))
-    implementation(project(":canvas-api"))
+    implementation(projects.canvasServer)
+    implementation(projects.canvasApi)
 }
 
 tasks.register<Copy>("buildAndCopyPlugin") {
