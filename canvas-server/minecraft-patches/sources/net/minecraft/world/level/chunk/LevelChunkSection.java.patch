@@ -1,0 +1,50 @@
+--- a/net/minecraft/world/level/chunk/LevelChunkSection.java
++++ b/net/minecraft/world/level/chunk/LevelChunkSection.java
+@@ -23,6 +_,7 @@
+     public short tickingFluidCount;
+     public final PalettedContainer<BlockState> states;
+     private PalettedContainer<Holder<Biome>> biomes; // CraftBukkit - read/write
++    private boolean modified = false; // Canvas - optimize chunk unload
+ 
+     // Paper start - block counting
+     private static final it.unimi.dsi.fastutil.shorts.ShortArrayList FULL_LIST = new it.unimi.dsi.fastutil.shorts.ShortArrayList(16*16*16);
+@@ -133,6 +_,7 @@
+     // Paper end - block counting
+ 
+     public BlockState setBlockState(int x, int y, int z, BlockState state, boolean useLocks) {
++        this.modified = true; // Canvas - optimize chunk unload
+         BlockState blockState;
+         if (useLocks) {
+             blockState = this.states.getAndSet(x, y, z, state);
+@@ -323,7 +_,31 @@
+         this.biomes = palettedContainer;
+     }
+ 
++    // Canvas start - optimize chunk unload
++    private LevelChunkSection(short nonEmptyBlockCount, short tickingBlockCount, short tickingFluidCount,
++                              PalettedContainer<BlockState> states, PalettedContainer<Holder<Biome>> biomes) {
++        this.nonEmptyBlockCount = nonEmptyBlockCount;
++        this.tickingBlockCount = tickingBlockCount;
++        this.tickingFluidCount = tickingFluidCount;
++        this.states = states;
++        this.biomes = biomes;
++    }
++
++    // Canvas end
+     public LevelChunkSection copy() {
++        // Canvas start - optimize chunk unload
++        // If the section hasn't been modified and no random ticking blocks/fluids,
++        // return a lightweight copy that shares palette data
++        if (!this.modified && this.tickingBlockCount == 0 && this.tickingFluidCount == 0) {
++            return new LevelChunkSection(
++                this.nonEmptyBlockCount,
++                this.tickingBlockCount,
++                this.tickingFluidCount,
++                this.states, // Share reference instead of copying
++                this.biomes  // Share reference instead of copying
++            );
++        }
++        // Canvas end
+         return new LevelChunkSection(this);
+     }
+ }

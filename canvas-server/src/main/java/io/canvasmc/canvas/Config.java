@@ -76,6 +76,12 @@ public class Config {
             @Comment("Enables biome caching for mob spawning biome lookups")
             public boolean mobSpawn = false;
         }
+
+        @Comment(value = {
+            "Once one task is completed then the next task starts immediately, to prevent blocking threads while waiting to complete all tasks",
+            "WARNING: May cause the sequence of future compose disorder"
+        })
+        public boolean useFasterStructureGenFutureSequencing = false;
     }
 
     public Networking networking = new Networking();
