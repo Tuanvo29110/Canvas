@@ -124,6 +124,9 @@ public class Config {
         public boolean reduceUselessMovePackets = false;
     }
 
+    @Comment("Check if a cactus can survive before growing. Heavily optimizes cacti farms")
+    public boolean cactusCheckSurvivalBeforeGrowth = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

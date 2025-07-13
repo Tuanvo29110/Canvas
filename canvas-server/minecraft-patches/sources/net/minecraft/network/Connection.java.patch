@@ -1,0 +1,30 @@
+--- a/net/minecraft/network/Connection.java
++++ b/net/minecraft/network/Connection.java
+@@ -148,6 +_,7 @@
+     public @Nullable net.minecraft.server.level.ServerPlayer savedPlayerForLoginEventLegacy; // Paper - playerloginevent
+     // Paper start - Optimize network
+     public boolean isPending = true;
++    private io.netty.channel.SingleThreadEventLoop eventLoop; // Canvas - optimise packets that are not flushed
+     public boolean queueImmunity;
+     // Paper end - Optimize network
+ 
+@@ -194,6 +_,7 @@
+     public void channelActive(ChannelHandlerContext context) throws Exception {
+         super.channelActive(context);
+         this.channel = context.channel();
++        this.eventLoop = (io.netty.channel.SingleThreadEventLoop) this.channel.eventLoop(); // Canvas - optimise packets that are not flushed
+         this.address = this.channel.remoteAddress();
+         this.preparing = false; // Spigot
+         if (this.delayedDisconnect != null) {
+@@ -510,6 +_,11 @@
+         if (this.channel.eventLoop().inEventLoop()) {
+             this.doSendPacket(packet, channelFutureListener, flag);
+         } else {
++            // Canvas start - optimise packets that are not flushed
++            if (!flag && org.dreeam.leaf.config.modules.network.OptimizeNonFlushPacketSending.enabled) {
++                this.eventLoop.lazyExecute(() -> this.doSendPacket(packet, channelFutureListener, flag));
++            } else
++            // Canvas end
+             this.channel.eventLoop().execute(() -> this.doSendPacket(packet, channelFutureListener, flag));
+         }
+     }
