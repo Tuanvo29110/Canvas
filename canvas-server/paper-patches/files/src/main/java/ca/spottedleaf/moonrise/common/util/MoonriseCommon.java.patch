@@ -1,6 +1,6 @@
 --- a/src/main/java/ca/spottedleaf/moonrise/common/util/MoonriseCommon.java
 +++ b/src/main/java/ca/spottedleaf/moonrise/common/util/MoonriseCommon.java
-@@ -12,30 +_,14 @@
+@@ -12,30 +_,16 @@
  
      private static final Logger LOGGER = LogUtils.getClassLogger();
  
@@ -34,16 +34,20 @@
 +    public static io.canvasmc.canvas.chunk.TheChunkSystem.ExecutorGroup PARALLEL_GEN_GROUP;
 +    public static io.canvasmc.canvas.chunk.TheChunkSystem.ExecutorGroup RADIUS_AWARE_GROUP;
 +    public static io.canvasmc.canvas.chunk.TheChunkSystem.ExecutorGroup LOAD_GROUP;
++    public static int ioWorkerCount = -1;
++    public static int chunkWorkerCount = -1;
 +    // Canvas end
  
      public static void adjustWorkerThreads(final int configWorkerThreads, final int configIoThreads) {
          int defaultWorkerThreads = Runtime.getRuntime().availableProcessors() / 2;
-@@ -54,10 +_,23 @@
+@@ -54,10 +_,25 @@
  
          final int ioThreads = Math.max(1, configIoThreads);
  
 -        WORKER_POOL.adjustThreadCount(workerThreads);
 +        // Canvas start - rewrite moonrise executor
++        ioWorkerCount = ioThreads;
++        chunkWorkerCount = workerThreads;
 +        WORKER_POOL = new io.canvasmc.canvas.chunk.TheChunkSystem(workerThreads, new io.canvasmc.canvas.util.ThreadBuilder() {
 +            @Override
 +            public void accept(final Thread thread) {
