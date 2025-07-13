@@ -33,14 +33,6 @@
              final boolean doDaylight = level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT);
              final long dayTime = level.getDayTime();
              long worldTime = level.getGameTime();
-@@ -1755,6 +_,7 @@
-             }
-         }
- 
-+        region.world.getCurrentWorldData().tpsBarTask.tick(); // Canvas - tpsbar
-         //this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked // Folia - region threading
-         for (ServerLevel serverLevel : Arrays.asList(region.world)) { // Folia - region threading
-             // Folia - region threading
 @@ -1764,6 +_,48 @@
              }
              // CraftBukkit end */

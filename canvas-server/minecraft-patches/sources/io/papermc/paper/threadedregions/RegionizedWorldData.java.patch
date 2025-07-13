@@ -1,11 +1,10 @@
 --- a/io/papermc/paper/threadedregions/RegionizedWorldData.java
 +++ b/io/papermc/paper/threadedregions/RegionizedWorldData.java
-@@ -83,6 +_,8 @@
+@@ -83,6 +_,7 @@
              for (final ServerPlayer player : from.localPlayers) {
                  into.localPlayers.add(player);
                  into.nearbyPlayers.addPlayer(player);
 +                into.waypointManager.addPlayer(player); // Canvas - region threading - restore waypoints
-+                into.tpsBarTask.players.add(player); // Canvas - tpsbar
              }
              for (final Entity entity : from.allEntities) {
                  into.allEntities.add(entity);
@@ -20,7 +19,7 @@
          }
  
          @Override
-@@ -171,8 +_,13 @@
+@@ -171,8 +_,12 @@
                  final ChunkPos pos = player.chunkPosition();
                  // Note: It is impossible for an entity in the world to _not_ be in an entity chunk, which means
                  // the chunk holder must _exist_, and so the region section exists.
@@ -31,7 +30,6 @@
 +                RegionizedWorldData into = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
 +                into.connections.add(conn);
 +                into.waypointManager.addPlayer(player);
-+                into.tpsBarTask.players.add(player); // tpsbar
 +                // Canvas end
              }
              // entities
@@ -81,7 +79,7 @@
  
      // Mob spawning
      public final ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<ServerPlayer> spawnChunkTracker = new ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<>();
-@@ -447,7 +_,35 @@
+@@ -447,7 +_,34 @@
      public final alternate.current.wire.WireHandler wireHandler;
      public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
  
@@ -89,7 +87,6 @@
 +    public final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData; // Canvas - rewrite scheduler
 +    public final ApiHandle apiHandle = new ApiHandle(this); // Canvas - expand region api
 +    public final net.minecraft.server.waypoints.ServerWaypointManager waypointManager = new net.minecraft.server.waypoints.ServerWaypointManager(); // Canvas - region threading - restore waypoints
-+    public final io.canvasmc.canvas.TpsBarTask tpsBarTask = new io.canvasmc.canvas.TpsBarTask(this); // Canvas - tpsbar
 +
 +    // Canvas start - optimize entity/block ticking chunk lookups
 +    // if there's lots of chunks loaded, we don't want to search through that map to find block

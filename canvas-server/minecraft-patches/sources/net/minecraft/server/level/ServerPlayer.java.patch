@@ -1,29 +1,5 @@
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -220,6 +_,7 @@
-     public ServerPlayerGameMode gameMode;
-     private final PlayerAdvancements advancements;
-     private final ServerStatsCounter stats;
-+    public boolean tpsbar = false; // Canvas - tpsbar
-     private float lastRecordedHealthAndAbsorption = Float.MIN_VALUE;
-     private int lastRecordedFoodLevel = Integer.MIN_VALUE;
-     private int lastRecordedAirLevel = Integer.MIN_VALUE;
-@@ -707,6 +_,7 @@
-         this.respawnConfig = input.read("respawn", ServerPlayer.RespawnConfig.CODEC).orElse(null);
-         this.spawnExtraParticlesOnFall = input.getBooleanOr("spawn_extra_particles_on_fall", false);
-         this.raidOmenPosition = input.read("raid_omen_position", BlockPos.CODEC).orElse(null);
-+        this.tpsbar = input.read("tpsbar_shown", Codec.BOOL).orElse(false); // Canvas - tpsbar
-     }
- 
-     @Override
-@@ -722,6 +_,7 @@
-         output.storeNullable("respawn", ServerPlayer.RespawnConfig.CODEC, this.respawnConfig);
-         output.putBoolean("spawn_extra_particles_on_fall", this.spawnExtraParticlesOnFall);
-         output.storeNullable("raid_omen_position", BlockPos.CODEC, this.raidOmenPosition);
-+        output.store("tpsbar_shown", Codec.BOOL, this.tpsbar); // Canvas - tpsbar
-         this.saveEnderPearls(output);
-         this.getBukkitEntity().setExtraData(output); // CraftBukkit
-     }
 @@ -1515,14 +_,25 @@
       * internally for {@link #respawn(java.util.function.Consumer, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason)}
       */

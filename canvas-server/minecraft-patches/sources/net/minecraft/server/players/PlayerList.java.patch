@@ -9,19 +9,3 @@
              // Folia end - rewrite login process
              connection.setupInboundProtocol(
                  GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(this.server.registryAccess()), serverGamePacketListenerImpl),
-@@ -496,6 +_,7 @@
-                     serverLevel.getLightEngine(), (java.util.BitSet)null, (java.util.BitSet) null, true) // Paper - Anti-Xray
-                 );
-             }
-+            player.level().getCurrentWorldData().tpsBarTask.addIfContained(player); // Canvas - tpsbar
-             // Paper end - Send empty chunk
-         }
-     }
-@@ -661,6 +_,7 @@
-         //player.retireScheduler(); // Paper - Folia schedulers // Folia - region threading - move to onDisconnect of common packet listener
-         player.getAdvancements().stopListening();
-         this.players.remove(player);
-+        player.level().getCurrentWorldData().tpsBarTask.players.remove(player); // Canvas - tpsbar
-         this.playersByName.remove(player.getScoreboardName().toLowerCase(java.util.Locale.ROOT)); // Spigot
-         this.server.getCustomBossEvents().onPlayerDisconnect(player);
-         UUID uuid = player.getUUID();
