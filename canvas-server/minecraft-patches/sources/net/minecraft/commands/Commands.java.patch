@@ -53,7 +53,7 @@
          //TeamCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
          //TeamMsgCommand.register(this.dispatcher); // Folia - region threading - TODO later
          TeleportCommand.register(this.dispatcher);
-@@ -243,9 +_,10 @@
+@@ -243,9 +_,11 @@
          TimeCommand.register(this.dispatcher);
          TitleCommand.register(this.dispatcher, context);
          //TriggerCommand.register(this.dispatcher); // Folia - region threading - TODO later
@@ -61,7 +61,8 @@
 +        WaypointCommand.register(this.dispatcher, context);
          WeatherCommand.register(this.dispatcher);
          WorldBorderCommand.register(this.dispatcher);
-+        io.canvasmc.canvas.command.SetMaxPlayersCommand.register(this.dispatcher);
++        io.canvasmc.canvas.command.SetMaxPlayersCommand.register(this.dispatcher); // Canvas - set max players command
++        io.canvasmc.canvas.command.AsyncSaveAllCommand.register(this.dispatcher); // Canvas - async save-all command
          if (JvmProfiler.INSTANCE.isAvailable()) {
              JfrCommand.register(this.dispatcher);
          }

@@ -9,6 +9,21 @@
  
      private void haltServerRegionThreading() {
          if (this.hasStartedShutdownThread.getAndSet(true)) {
+@@ -1728,6 +_,14 @@
+         //io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.CALLBACK_MANAGER.handleQueue(this.tickCount); // Paper // Folia - region threading - moved to global tick
+         //this.getFunctions().tick(); // Folia - region threading - TODO Purge functions
+ 
++        // Canvas start - async save-all command
++        if (region.shouldSaveNextTick) {
++            region.shouldSaveNextTick = false;
++
++            LOGGER.info("Saving chunks around region around chunk {} in world '{}'", region.region.getCenterChunk(), region.region.regioniser.world.getWorld().getName());
++            region.region.regioniser.world.moonrise$getChunkTaskScheduler().chunkHolderManager.close(true, false, false, false, false);
++        }
++        // Canvas end
+         // CraftBukkit start
+         // Run tasks that are waiting on processing
+         if (false) while (!this.processQueue.isEmpty()) { // Folia - region threading
 @@ -1737,6 +_,7 @@
          // Send time updates to everyone, it will get the right time from the world the player is in.
          // Paper start - Perf: Optimize time updates
@@ -27,9 +42,9 @@
 +                final ChunkPos center = region.region.getCenterChunk();
 +                final List<ServerLevel.PendingTeleport> pendingTeleports = serverLevel.removeAllRegionTeleports();
 +                if (!pendingTeleports.isEmpty()) {
-+                    LOGGER.info("Completing " + pendingTeleports.size() + " pending teleports in region around chunk " + center + " in world '" + region.region.regioniser.world.getWorld().getName() + "'");
++                    LOGGER.info("Completing {} pending teleports in region around chunk {} in world '{}'", pendingTeleports.size(), center, region.region.regioniser.world.getWorld().getName());
 +                    for (final ServerLevel.PendingTeleport pendingTeleport : pendingTeleports) {
-+                        LOGGER.info("Completing teleportation to target position " + pendingTeleport.to());
++                        LOGGER.info("Completing teleportation to target position {}", pendingTeleport.to());
 +
 +                        // first, add entities to entity chunk so that they will be saved
 +                        for (final net.minecraft.world.entity.Entity.EntityTreeNode node : pendingTeleport.rootVehicle().getFullTree()) {
@@ -43,7 +58,7 @@
 +                        pendingTeleport.rootVehicle().restore();
 +
 +                        // now we are finished
-+                        LOGGER.info("Completed teleportation to target position " + pendingTeleport.to());
++                        LOGGER.info("Completed teleportation to target position {}", pendingTeleport.to());
 +                    }
 +                }
 +
@@ -54,10 +69,10 @@
 +                    }
 +                }
 +
-+                LOGGER.info("Saving chunks around region around chunk " + center + " in world '" + region.region.regioniser.world.getWorld().getName() + "'");
++                LOGGER.info("Saving chunks around region around chunk {} in world '{}'", center, region.region.regioniser.world.getWorld().getName());
 +                region.region.regioniser.world.moonrise$getChunkTaskScheduler().chunkHolderManager.close(true, true, false, false, false);
 +
-+                LOGGER.info("Descheduling region around chunk " + center + " in world '" + region.region.regioniser.world.getWorld().getName() + "'");
++                LOGGER.info("Descheduling region around chunk {} in world '{}'", center, region.region.regioniser.world.getWorld().getName());
 +                io.papermc.paper.threadedregions.TickRegions.getScheduler().descheduleRegion(region.getRegionSchedulingHandle());
 +                region.markClosed();
 +                continue;
