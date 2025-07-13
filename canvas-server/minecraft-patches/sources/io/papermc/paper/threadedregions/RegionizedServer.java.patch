@@ -87,7 +87,7 @@
 +        if (world.isUnloading) {
 +            // we are unloading, return.
 +            AtomicBoolean isSingularRegionAlive = new AtomicBoolean(false);
-+            world.regioniser.computeForAllRegions((region) -> {
++            world.regioniser.computeForAllRegionsUnsynchronised((region) -> {
 +                if (!region.getData().isClosed) {
 +                    // region still active, possibly still saving or hasn't gotten to that yet
 +                    isSingularRegionAlive.set(true);
