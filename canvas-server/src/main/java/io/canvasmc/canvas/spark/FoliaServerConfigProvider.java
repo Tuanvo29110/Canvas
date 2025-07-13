@@ -111,7 +111,7 @@ public class FoliaServerConfigProvider extends ServerConfigProvider {
                 .put("bukkit.yml", YamlConfigParser.INSTANCE)
                 .put("spigot.yml", YamlConfigParser.INSTANCE)
                 .put("paper.yml", YamlConfigParser.INSTANCE)
-                .put("canvas_server.yml", YamlConfigParser.INSTANCE)
+                .put("canvas-server.yml", YamlConfigParser.INSTANCE)
                 .put("paper/", SplitYamlConfigParser.INSTANCE)
                 .put("purpur.yml", YamlConfigParser.INSTANCE)
                 .put("pufferfish.yml", YamlConfigParser.INSTANCE);
