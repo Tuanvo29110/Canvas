@@ -5,7 +5,7 @@ import io.papermc.paperweight.tasks.RebuildGitPatches
 plugins {
     java
     `maven-publish`
-    id("io.canvasmc.weaver.patcher") version "2.1.1-SNAPSHOT"
+    id("io.canvasmc.weaver.patcher") version "2.1.3-SNAPSHOT"
 }
 
 allprojects {
