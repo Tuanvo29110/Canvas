@@ -1,12 +1,11 @@
 package io.canvasmc.canvas.chunk.flowsched;
 
-import ca.spottedleaf.moonrise.common.util.TickThread;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WorkerThread extends TickThread { // Canvas - extend TickThread
+public class WorkerThread extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("FlowSched Executor Worker Thread");
 
@@ -15,7 +14,6 @@ public class WorkerThread extends TickThread { // Canvas - extend TickThread
     public volatile boolean active = false; // Canvas - add activity boolean for api
 
     public WorkerThread(ExecutorManager executorManager) {
-        super("null_worker"); // Canvas - extend TickThread
         this.executorManager = executorManager;
     }
 
