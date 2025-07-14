@@ -13,9 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TheChunkSystem extends ExecutorManager {
+    private final TheChunkSystem.COWArrayList<TheChunkSystem.ExecutorGroup> executors = new TheChunkSystem.COWArrayList<>(TheChunkSystem.ExecutorGroup.class);
     protected final Logger LOGGER;
     private final String name;
-    private final TheChunkSystem.COWArrayList<TheChunkSystem.ExecutorGroup> executors = new TheChunkSystem.COWArrayList<>(TheChunkSystem.ExecutorGroup.class);
     private boolean shutdown;
 
     public TheChunkSystem(final int workerThreadCount, final ThreadBuilder threadInitializer, final String name) {

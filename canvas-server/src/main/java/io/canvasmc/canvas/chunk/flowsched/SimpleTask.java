@@ -35,4 +35,15 @@ public class SimpleTask implements Task {
     public int priority() {
         return this.priority;
     }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (!(obj instanceof SimpleTask task)) return false;
+        return this.wrapped.equals(task.wrapped);
+    }
 }

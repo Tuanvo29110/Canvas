@@ -1,6 +1,7 @@
 package io.canvasmc.canvas.chunk.flowsched;
 
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
+import net.minecraft.server.MinecraftServer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -26,8 +27,11 @@ public class DynamicPriorityQueue<E> {
     }
 
     public void enqueue(E element, int priority) {
-        if (this.priorityMap.putIfAbsent(element, priority) != null)
-            throw new IllegalArgumentException("Element already in queue");
+        if (this.priorityMap.containsKey(element)) {
+            MinecraftServer.LOGGER.warn("Attempted to double-schedule chunk task to new chunk system");
+            return;
+        }
+        this.priorityMap.put(element, priority);
 
         this.priorities[priority].add(element);
         this.taskCount.incrementAndGet(priority);
