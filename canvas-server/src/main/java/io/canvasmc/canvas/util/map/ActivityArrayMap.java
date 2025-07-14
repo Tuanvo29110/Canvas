@@ -11,7 +11,7 @@ public final class ActivityArrayMap<V> implements Map<Activity, V> {
     public static int BITS = -1;
 
     public int bitset = 0;
-    public final Object[] a = new Object[BITS + 1];
+    public final Object[] a;
     private int size = 0;
 
     private transient KeySet keySet;
@@ -22,6 +22,7 @@ public final class ActivityArrayMap<V> implements Map<Activity, V> {
         if (BITS == -1) {
             BITS = BuiltInRegistries.ACTIVITY.size() - 1;
         }
+        this.a = new Object[BITS + 1];
     }
 
     @Override
