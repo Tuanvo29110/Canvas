@@ -88,6 +88,12 @@ public class Config {
             "This can significantly reduce main thread load when many players are loading chunks."
         })
         public boolean asyncChunkSend = false;
+
+        @Comment(value = {
+            "Changes the maximum view distance for the server, allowing clients to have",
+            "render distances higher than 32"
+        })
+        public int maxViewDistance = 32;
     }
 
     public Networking networking = new Networking();
