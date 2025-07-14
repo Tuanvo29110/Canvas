@@ -145,6 +145,9 @@ public class Config {
     @Comment("Enables creation of tile entity snapshots on retrieving blockstates")
     public boolean tileEntitySnapshotCreation = false;
 
+    @Comment("Determines if end crystals should explode in a chain reaction, similar to how tnt works when exploded")
+    public boolean chainEndCrystalExplosions = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

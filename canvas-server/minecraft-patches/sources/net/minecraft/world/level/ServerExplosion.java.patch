@@ -1,0 +1,30 @@
+--- a/net/minecraft/world/level/ServerExplosion.java
++++ b/net/minecraft/world/level/ServerExplosion.java
+@@ -519,6 +_,27 @@
+                                         dragonPart.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, dragonPart, f1));
+                                     }
+                                 }
++                            // Canvas start
++                            } else if (io.canvasmc.canvas.Config.INSTANCE.chainEndCrystalExplosions && entity instanceof net.minecraft.world.entity.boss.enderdragon.EndCrystal endCrystal) {
++                                int chunkX = endCrystal.chunkPosition().x;
++                                int chunkZ = endCrystal.chunkPosition().z;
++                                net.minecraft.server.MinecraftServer.getServer().regionizedServer.taskQueue.queueTickTaskQueue(
++                                    (ServerLevel) endCrystal.level(),
++                                    chunkX, chunkZ, () -> {
++                                        // copied from EndCrystal#hurtServer
++                                        // we don't modify the method directly in EndCrystal#hurtServer, because the chain would execute *instantly* which we do *NOT* want
++                                        // as this can cause major lag spikes given how large the chain is, so spreading this out over multiple ticks is a more efficient idea
++                                        DamageSource damageSource1 = damageSource.getEntity() != null ? endCrystal.damageSources().explosion(endCrystal, damageSource.getEntity()) : null;
++                                        org.bukkit.event.entity.ExplosionPrimeEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callExplosionPrimeEvent(endCrystal, 6.0F, false);
++                                        if (event.isCancelled()) {
++                                            return;
++                                        }
++
++                                        endCrystal.remove(Entity.RemovalReason.KILLED, org.bukkit.event.entity.EntityRemoveEvent.Cause.EXPLODE); // Paper - add Bukkit remove cause
++                                        level.explode(endCrystal, damageSource1, null, endCrystal.getX(), endCrystal.getY(), endCrystal.getZ(), event.getRadius(), event.getFire(), Level.ExplosionInteraction.BLOCK);
++                                    }
++                                );
++                            // Canvas end
+                             } else {
+                                 entity.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, entity, f1));
+                             }
