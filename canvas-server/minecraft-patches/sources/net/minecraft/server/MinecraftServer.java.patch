@@ -9,8 +9,8 @@
  
      private void haltServerRegionThreading() {
          if (this.hasStartedShutdownThread.getAndSet(true)) {
-@@ -1728,6 +_,15 @@
-         //io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.CALLBACK_MANAGER.handleQueue(this.tickCount); // Paper // Folia - region threading - moved to global tick
+@@ -1729,6 +_,15 @@
+         //io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.DIALOG_CLICK_MANAGER.handleQueue(this.tickCount); // Paper // Folia - region threading - moved to global tick
          //this.getFunctions().tick(); // Folia - region threading - TODO Purge functions
  
 +        // Canvas start - async save-all command
@@ -25,7 +25,7 @@
          // CraftBukkit start
          // Run tasks that are waiting on processing
          if (false) while (!this.processQueue.isEmpty()) { // Folia - region threading
-@@ -1737,6 +_,7 @@
+@@ -1738,6 +_,7 @@
          // Send time updates to everyone, it will get the right time from the world the player is in.
          // Paper start - Perf: Optimize time updates
          for (final ServerLevel level : Arrays.asList(region.world)) { // Folia - region threading
@@ -33,7 +33,7 @@
              final boolean doDaylight = level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT);
              final long dayTime = level.getDayTime();
              long worldTime = level.getGameTime();
-@@ -1764,6 +_,48 @@
+@@ -1765,6 +_,48 @@
              }
              // CraftBukkit end */
  
@@ -82,7 +82,7 @@
              try {
                  serverLevel.tick(hasTimeLeft, region); // Folia - region threading
              } catch (Throwable var7) {
-@@ -1836,22 +_,31 @@
+@@ -1837,22 +_,31 @@
  
      @Nullable
      public ServerLevel getLevel(ResourceKey<Level> dimension) {
@@ -115,7 +115,7 @@
      }
      // CraftBukkit end
  
-@@ -2702,7 +_,7 @@
+@@ -2703,7 +_,7 @@
          }
      }
  

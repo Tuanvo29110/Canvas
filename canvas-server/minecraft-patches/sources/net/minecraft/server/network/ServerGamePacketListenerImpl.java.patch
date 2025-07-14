@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-@@ -834,7 +_,7 @@
+@@ -846,7 +_,7 @@
      }
  
      // Paper start - AsyncTabCompleteEvent
@@ -9,7 +9,7 @@
          new com.google.common.util.concurrent.ThreadFactoryBuilder().setDaemon(true).setNameFormat("Async Tab Complete Thread - #%d").setUncaughtExceptionHandler(new net.minecraft.DefaultUncaughtExceptionHandlerWithName(MinecraftServer.LOGGER)).build());
      // Paper end - AsyncTabCompleteEvent
  
-@@ -2775,7 +_,7 @@
+@@ -2787,7 +_,7 @@
          this.removePlayerFromWorld();
          } finally { // Folia start - rewrite login process - move connection ownership to global region
              io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.player.level().getCurrentWorldData();
