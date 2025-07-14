@@ -9,7 +9,7 @@
 +        @Override
 +        public boolean equals(final Object obj) {
 +            if (!(obj instanceof Task task)) return false;
-+            return this.run.equals(task.run);
++            return this.run != null && this.run.equals(task.run);
 +        }
 +        // Canvas end
      }
