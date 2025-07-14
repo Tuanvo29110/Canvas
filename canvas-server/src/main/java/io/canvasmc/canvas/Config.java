@@ -154,6 +154,15 @@ public class Config {
     @Comment("Makes farmland always moist, never drying out, even if it isn't near water")
     public boolean farmlandAlwaysMoist = false;
 
+    public AsyncLocator asyncLocator = new AsyncLocator();
+    public static class AsyncLocator {
+        @Comment("The amount of threads allocated to the async locator")
+        public int threads = 1;
+
+        @Comment("The keepalive time in seconds for the async locator")
+        public int keepalive = 60;
+    }
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

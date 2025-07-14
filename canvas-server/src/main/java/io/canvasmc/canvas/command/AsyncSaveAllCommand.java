@@ -9,15 +9,16 @@ import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class AsyncSaveAllCommand {
-    public static void register(@NotNull CommandDispatcher<CommandSourceStack> dispatcher) {
+    // moved to net.minecraft.server.commands.SaveAllCommand#register
+    /* public static void register(@NotNull CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("save-async")
                 .requires(commandSourceStack -> commandSourceStack.hasPermission(4, "canvas.admin.command.asyncsaveall"))
                 .executes(commandContext -> saveAll(commandContext.getSource()))
         );
-    }
+    } */
 
-    private static int saveAll(@NotNull CommandSourceStack source) {
+    public static int saveAll(@NotNull CommandSourceStack source) {
         source.sendSuccess(() -> Component.translatable("commands.save.saving"), false);
         MinecraftServer server = source.getServer();
         for (final ServerLevel world : server.getAllLevels()) {

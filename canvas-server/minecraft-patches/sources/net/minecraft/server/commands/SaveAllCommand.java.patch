@@ -1,0 +1,10 @@
+--- a/net/minecraft/server/commands/SaveAllCommand.java
++++ b/net/minecraft/server/commands/SaveAllCommand.java
+@@ -21,6 +_,7 @@
+     }
+ 
+     private static int saveAll(CommandSourceStack source, boolean flush) throws CommandSyntaxException {
++        if (true) return io.canvasmc.canvas.command.AsyncSaveAllCommand.saveAll(source); // Canvas - fix commands with region threading
+         source.sendSuccess(() -> Component.translatable("commands.save.saving"), false);
+         MinecraftServer server = source.getServer();
+         boolean flag = server.saveEverything(true, flush, true);
