@@ -57,6 +57,15 @@
          }
      };
  
+@@ -334,7 +_,7 @@
+     private RegionizedServer.WorldLevelData tickData;
+ 
+     // connections
+-    public final List<Connection> connections = new ArrayList<>();
++    public final List<Connection> connections = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(); // Canvas - optimized collection
+ 
+     // misc. fields
+     private boolean isHandlingTick;
 @@ -348,7 +_,8 @@
      }
  
@@ -67,7 +76,24 @@
      private final NearbyPlayers nearbyPlayers;
      public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList();
      private final ReferenceList<Entity> allEntities = new ReferenceList<>(EMPTY_ENTITY_ARRAY);
-@@ -423,6 +_,11 @@
+@@ -364,8 +_,8 @@
+     private final LevelTicks<Fluid> fluidLevelTicks;
+ 
+     // tile entity ticking
+-    private final List<TickingBlockEntity> pendingBlockEntityTickers = new ArrayList<>();
+-    private final List<TickingBlockEntity> blockEntityTickers = new ArrayList<>();
++    private final List<TickingBlockEntity> pendingBlockEntityTickers = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(); // Canvas - optimized collection
++    private final List<TickingBlockEntity> blockEntityTickers = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(); // Canvas - optimized collection
+     private boolean tickingBlockEntities;
+ 
+     // time
+@@ -418,11 +_,16 @@
+     public boolean shouldSignal = true;
+     public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(64, 0.25f);
+     public final PathTypeCache pathTypesByPosCache = new PathTypeCache();
+-    public final List<LevelChunk> temporaryChunkTickList = new java.util.ArrayList<>();
++    // Canvas - optimize chunk collect
+     public final Set<ChunkHolder> chunkHoldersToBroadcast = new ReferenceLinkedOpenHashSet<>();
  
      // not transient
      public java.util.ArrayDeque<net.minecraft.world.level.block.RedstoneTorchBlock.Toggle> redstoneUpdateInfos;

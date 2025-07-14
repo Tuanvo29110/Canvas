@@ -4,7 +4,7 @@
  
  public class CraftEntityType {
  
-+    private static final java.util.Map<net.minecraft.world.entity.EntityType<?>, EntityType> MINECRAFT_TO_BUKKIT_KEY_CACHE = new java.util.concurrent.ConcurrentHashMap<>(); // Leaf - cache minecraftToBukkit convert
++    private static final java.util.Map<net.minecraft.world.entity.EntityType<?>, EntityType> MINECRAFT_TO_BUKKIT_KEY_CACHE = new java.util.concurrent.ConcurrentHashMap<>(); // Canvas - cache minecraftToBukkit convert
      public static EntityType minecraftToBukkit(net.minecraft.world.entity.EntityType<?> minecraft) {
          Preconditions.checkArgument(minecraft != null);
  

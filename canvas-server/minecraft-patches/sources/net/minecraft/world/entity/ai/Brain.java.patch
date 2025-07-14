@@ -1,0 +1,267 @@
+--- a/net/minecraft/world/entity/ai/Brain.java
++++ b/net/minecraft/world/entity/ai/Brain.java
+@@ -45,14 +_,20 @@
+     static final Logger LOGGER = LogUtils.getLogger();
+     private final Supplier<Codec<Brain<E>>> codec;
+     private static final int SCHEDULE_UPDATE_DELAY = 20;
+-    private final Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = Maps.newHashMap();
+-    private final Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = Maps.newLinkedHashMap();
+-    private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = Maps.newTreeMap();
++    // Canvas start - optimized collection
++    private final Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = new it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap<>();
++    private final Map<SensorType<? extends Sensor<? super E>>, Sensor<? super E>> sensors = new it.unimi.dsi.fastutil.objects.Reference2ReferenceArrayMap<>();
++    private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = new it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap<>();
++    public static final Map[] EMPTY_ARRAY = {};
++    private Map<Activity, Set<BehaviorControl<? super E>>>[] availableBehaviorsByPriorityArray = EMPTY_ARRAY;
++    // Canvas end
+     private Schedule schedule = Schedule.EMPTY;
+-    private final Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements = Maps.newHashMap();
+-    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = Maps.newHashMap();
+-    private Set<Activity> coreActivities = Sets.newHashSet();
+-    private final Set<Activity> activeActivities = Sets.newHashSet();
++    // Canvas start - optimized collection
++    private final Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements = new io.canvasmc.canvas.util.map.ActivityArrayMap<>();
++    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = new io.canvasmc.canvas.util.map.ActivityArrayMap<>();
++    private Set<Activity> coreActivities = new io.canvasmc.canvas.util.map.ActivityBitSet();
++    private final Set<Activity> activeActivities = new io.canvasmc.canvas.util.map.ActivityBitSet();
++    // Canvas end
+     private Activity defaultActivity = Activity.IDLE;
+     private long lastScheduleUpdate = -9999L;
+ 
+@@ -70,13 +_,22 @@
+             (new MapCodec<Brain<E>>() {
+                     @Override
+                     public <T> Stream<T> keys(DynamicOps<T> ops) {
+-                        return memoryTypes.stream()
+-                            .flatMap(
+-                                memoryModuleType -> memoryModuleType.getCodec()
+-                                    .map(codec -> BuiltInRegistries.MEMORY_MODULE_TYPE.getKey((MemoryModuleType<?>)memoryModuleType))
+-                                    .stream()
+-                            )
+-                            .map(resourceLocation -> ops.createString(resourceLocation.toString()));
++                        // Canvas start - remove streams
++                        List<T> results = new java.util.ArrayList<>();
++
++                        for (MemoryModuleType<?> memoryModuleType : memoryTypes) {
++                            final Optional<?> codec = memoryModuleType.getCodec();
++
++                            if (codec.isPresent()) {
++                                final net.minecraft.resources.ResourceLocation resourceLocation = BuiltInRegistries.MEMORY_MODULE_TYPE.getKey(memoryModuleType);
++                                final T opsResult = ops.createString(resourceLocation.toString());
++
++                                results.add(opsResult);
++                            }
++                        }
++
++                        return results.stream();
++                        // Canvas end
+                     }
+ 
+                     @Override
+@@ -111,7 +_,14 @@
+ 
+                     @Override
+                     public <T> RecordBuilder<T> encode(Brain<E> input, DynamicOps<T> ops, RecordBuilder<T> prefix) {
+-                        input.memories().forEach(memoryValue -> memoryValue.serialize(ops, prefix));
++                        // Canvas start - remove streams
++                        for (Entry<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memory : input.memories.entrySet()) {
++                            final Brain.MemoryValue<?> result = Brain.MemoryValue.createUnchecked(memory.getKey(), memory.getValue());
++
++                            result.serialize(ops, prefix);
++                        }
++                        // Canvas end
++
+                         return prefix;
+                     }
+                 })
+@@ -146,6 +_,7 @@
+         for (Brain.MemoryValue<?> memoryValue : memoryValues) {
+             memoryValue.setMemoryInternal(this);
+         }
++        ((it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>>) this.memories).trim(); // Canvas - optimized collection
+     }
+ 
+     public <T> DataResult<T> serializeStart(DynamicOps<T> ops) {
+@@ -162,6 +_,7 @@
+ 
+     public void clearMemories() {
+         this.memories.keySet().forEach(memoryModuleType -> this.memories.put((MemoryModuleType<?>)memoryModuleType, Optional.empty()));
++        this.availableBehaviorsByPriorityArray = EMPTY_ARRAY; // Canvas - optimized collection
+     }
+ 
+     public <U> void eraseMemory(MemoryModuleType<U> type) {
+@@ -346,7 +_,7 @@
+     }
+ 
+     public void addActivity(Activity activity, ImmutableList<? extends Pair<Integer, ? extends BehaviorControl<? super E>>> tasks) {
+-        this.addActivityAndRemoveMemoriesWhenStopped(activity, tasks, ImmutableSet.of(), Sets.newHashSet());
++        this.addActivityAndRemoveMemoriesWhenStopped(activity, tasks, ImmutableSet.of(), new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>()); // Canvas - optimized collection
+     }
+ 
+     public void addActivityWithConditions(
+@@ -379,8 +_,8 @@
+ 
+         for (Pair<Integer, ? extends BehaviorControl<? super E>> pair : tasks) {
+             this.availableBehaviorsByPriority
+-                .computeIfAbsent(pair.getFirst(), integer -> Maps.newHashMap())
+-                .computeIfAbsent(activity, activity1 -> Sets.newLinkedHashSet())
++                .computeIfAbsent(pair.getFirst(), integer -> new io.canvasmc.canvas.util.map.ActivityArrayMap<>()) // Canvas - optimized collection
++                .computeIfAbsent(activity, activity1 -> new io.canvasmc.canvas.util.map.BehaviorControlArraySet<>()) // Canvas - optimized collection
+                 .add((BehaviorControl<? super E>)pair.getSecond());
+         }
+     }
+@@ -388,6 +_,7 @@
+     @VisibleForTesting
+     public void removeAllBehaviors() {
+         this.availableBehaviorsByPriority.clear();
++        this.availableBehaviorsByPriorityArray = EMPTY_ARRAY; // Canvas - optimize brain
+     }
+ 
+     public boolean isActive(Activity activity) {
+@@ -421,16 +_,33 @@
+     }
+ 
+     private void forgetOutdatedMemories() {
+-        for (Entry<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> entry : this.memories.entrySet()) {
+-            if (entry.getValue().isPresent()) {
+-                ExpirableValue<?> expirableValue = (ExpirableValue<?>)entry.getValue().get();
++        // Canvas start - optimize brain
++        boolean flag = false;
++        for (var entry : this.memories.values()) {
++            if (entry.isPresent()) {
++                ExpirableValue<?> expirableValue = entry.get();
+                 if (expirableValue.hasExpired()) {
+-                    this.eraseMemory(entry.getKey());
++                    flag = true;
+                 }
+-
+                 expirableValue.tick();
+             }
+         }
++        if (flag) {
++            eraseOutdatedMemories();
++        }
++    }
++
++    private void eraseOutdatedMemories() {
++        // Canvas end
++        for (Entry<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> entry : this.memories.entrySet()) {
++            if (entry.getValue().isPresent()) {
++                ExpirableValue<?> expirableValue = entry.getValue().get(); // Canvas - optimize brain - remove unneeded casting
++                if (expirableValue.hasExpired()) {
++                    this.eraseMemory(entry.getKey());
++                }
++                // Canvas - optimize brain
++            }
++        }
+     }
+ 
+     public void stopAll(ServerLevel level, E owner) {
+@@ -443,35 +_,94 @@
+         }
+         // Folia end - region threading
+         long gameTime = owner.level().getGameTime();
+-
+-        for (BehaviorControl<? super E> behaviorControl : behaviors) { // Folia - region threading
+-            behaviorControl.doStop(level, owner, gameTime);
+-        }
++        // Canvas start - optimize brain
++
++        if (this.availableBehaviorsByPriorityArray.length != this.availableBehaviorsByPriority.size()) {
++            this.availableBehaviorsByPriorityArray = this.availableBehaviorsByPriority.values().toArray(EMPTY_ARRAY);
++        }
++
++        for (Map<Activity, Set<BehaviorControl<? super E>>> map : availableBehaviorsByPriorityArray) {
++            var map1 = (io.canvasmc.canvas.util.map.ActivityArrayMap<Set<BehaviorControl<? super E>>>) map;
++            for (int index = 0; index <= io.canvasmc.canvas.util.map.ActivityArrayMap.BITS; index++) {
++                if ((map1.bitset & (1 << index)) != 0) {
++                    var behaviorControls = (io.canvasmc.canvas.util.map.BehaviorControlArraySet<? super E>) map1.a[index];
++                    var behaviorControlsRaw = behaviorControls.raw();
++                    var behaviorControlsSize = behaviorControls.size();
++                    for (int i = 0; i < behaviorControlsSize; i++) {
++                        BehaviorControl<? super E> behaviorControl = (BehaviorControl<? super E>) behaviorControlsRaw[i];
++                        if (behaviorControl.getStatus() == Behavior.Status.RUNNING) {
++                            behaviorControl.doStop(level, owner, gameTime);
++                            behaviorControls.dec();
++                        }
++                    }
++                }
++            }
++        }
++        // Canvas end
+     }
+ 
+     private void startEachNonRunningBehavior(ServerLevel level, E entity) {
+         long gameTime = level.getGameTime();
+ 
+-        for (Map<Activity, Set<BehaviorControl<? super E>>> map : this.availableBehaviorsByPriority.values()) {
+-            for (Entry<Activity, Set<BehaviorControl<? super E>>> entry : map.entrySet()) {
+-                Activity activity = entry.getKey();
+-                if (this.activeActivities.contains(activity)) {
+-                    for (BehaviorControl<? super E> behaviorControl : entry.getValue()) {
++        // Canvas start - optimize brain
++        if (this.availableBehaviorsByPriorityArray.length != this.availableBehaviorsByPriority.size()) {
++            this.availableBehaviorsByPriorityArray = this.availableBehaviorsByPriority.values().toArray(EMPTY_ARRAY);
++        }
++        var aact = (io.canvasmc.canvas.util.map.ActivityBitSet) this.activeActivities;
++        for (int index = 0; index <= io.canvasmc.canvas.util.map.ActivityArrayMap.BITS; index++) {
++            if ((aact.bitset & (1 << index)) != 0) {
++                for (Map<Activity, Set<BehaviorControl<? super E>>> map : availableBehaviorsByPriorityArray) {
++                    var map1 = ((io.canvasmc.canvas.util.map.ActivityArrayMap<Set<BehaviorControl<? super E>>>) map);
++                    var ele = map1.a[index];
++                    if (ele == null) {
++                        continue;
++                    }
++                    var behaviorControls = (io.canvasmc.canvas.util.map.BehaviorControlArraySet<? super E>) ele;
++                    var behaviorControlsRaw = behaviorControls.raw();
++                    var behaviorControlsSize = behaviorControls.size();
++                    for (int i = 0; i < behaviorControlsSize; i++) {
++                        BehaviorControl<? super E> behaviorControl = (BehaviorControl<? super E>) behaviorControlsRaw[i];
+                         if (behaviorControl.getStatus() == Behavior.Status.STOPPED) {
+-                            behaviorControl.tryStart(level, entity, gameTime);
++                            if (behaviorControl.tryStart(level, entity, gameTime)) {
++                                behaviorControls.inc();
++                            }
+                         }
+                     }
+                 }
+             }
+         }
++        // Canvas end
+     }
+ 
+     private void tickEachRunningBehavior(ServerLevel level, E entity) {
+         long gameTime = level.getGameTime();
+ 
+-        for (BehaviorControl<? super E> behaviorControl : this.getRunningBehaviors()) {
+-            behaviorControl.tickOrStop(level, entity, gameTime);
+-        }
++        // Canvas start - optimize brain
++        if (this.availableBehaviorsByPriorityArray.length != this.availableBehaviorsByPriority.size()) {
++            this.availableBehaviorsByPriorityArray = this.availableBehaviorsByPriority.values().toArray(new Map[0]);
++        }
++        for (Map<Activity, Set<BehaviorControl<? super E>>> map : availableBehaviorsByPriorityArray) {
++            var map1 = (io.canvasmc.canvas.util.map.ActivityArrayMap<Set<BehaviorControl<? super E>>>) map;
++            for (int index = 0; index <= io.canvasmc.canvas.util.map.ActivityArrayMap.BITS; index++) {
++                if ((map1.bitset & (1 << index)) != 0) {
++                    var behaviorControls = (io.canvasmc.canvas.util.map.BehaviorControlArraySet<? super E>) map1.a[index];
++                    if (behaviorControls.running()) {
++                        var behaviorControlsRaw = behaviorControls.raw();
++                        var behaviorControlsSize = behaviorControls.size();
++                        for (int i = 0; i < behaviorControlsSize; i++) {
++                            BehaviorControl<? super E> behaviorControl = (BehaviorControl<? super E>) behaviorControlsRaw[i];
++                            if (behaviorControl.getStatus() == Behavior.Status.RUNNING) {
++                                behaviorControl.tickOrStop(level, entity, gameTime);
++                                if (behaviorControl.getStatus() == Behavior.Status.STOPPED) {
++                                    behaviorControls.dec();
++                                }
++                            }
++                        }
++                    }
++                }
++            }
++        }
++        // Canvas end
+     }
+ 
+     private boolean activityRequirementsAreMet(Activity activity) {

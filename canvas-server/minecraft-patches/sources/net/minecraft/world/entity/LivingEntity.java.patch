@@ -1,0 +1,28 @@
+--- a/net/minecraft/world/entity/LivingEntity.java
++++ b/net/minecraft/world/entity/LivingEntity.java
+@@ -1022,14 +_,18 @@
+     }
+ 
+     private void updateSynchronizedMobEffectParticles() {
+-        List<ParticleOptions> list = this.activeEffects
+-            .values()
+-            .stream()
+-            .filter(MobEffectInstance::isVisible)
+-            .map(MobEffectInstance::getParticleOptions)
+-            .toList();
++        // Canvas start - remove streams
++        List<ParticleOptions> list = new java.util.ArrayList<>();
++        final Collection<MobEffectInstance> effectsValues = this.activeEffects.values(); // Canvas - optimized collection
++
++        for (MobEffectInstance effect : effectsValues) { // Canvas - optimized collection
++            if (effect.isVisible()) {
++                list.add(effect.getParticleOptions());
++            }
++        }
++        // Canvas end
+         this.entityData.set(DATA_EFFECT_PARTICLES, list);
+-        this.entityData.set(DATA_EFFECT_AMBIENCE_ID, areAllEffectsAmbient(this.activeEffects.values()));
++        this.entityData.set(DATA_EFFECT_AMBIENCE_ID, areAllEffectsAmbient(effectsValues)); // Canvas - optimized collection
+     }
+ 
+     private void updateGlowingStatus() {
