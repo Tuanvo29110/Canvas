@@ -1,5 +1,22 @@
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -19,6 +_,7 @@
+ import java.util.OptionalInt;
+ import java.util.Set;
+ import java.util.UUID;
++import java.util.concurrent.ConcurrentHashMap;
+ import java.util.stream.Collectors;
+ import javax.annotation.Nonnull;
+ import javax.annotation.Nullable;
+@@ -265,7 +_,7 @@
+     private BlockPos raidOmenPosition;
+     private Vec3 lastKnownClientMovement = Vec3.ZERO;
+     private Input lastClientInput = Input.EMPTY;
+-    private final Set<ThrownEnderpearl> enderPearls = new HashSet<>();
++    private final Set<ThrownEnderpearl> enderPearls = ConcurrentHashMap.newKeySet();
+     public final ContainerSynchronizer containerSynchronizer = new ContainerSynchronizer() {
+         private final LoadingCache<TypedDataComponent<?>, Integer> cache = CacheBuilder.newBuilder()
+             .maximumSize(256L)
 @@ -1524,14 +_,25 @@
       * internally for {@link #respawn(java.util.function.Consumer, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason)}
       */
@@ -197,7 +214,7 @@
              return true;
          } else {
              return super.endPortalLogicAsync(portalPos);
-@@ -3280,13 +_,23 @@
+@@ -3280,13 +_,19 @@
          return getInputVector(new Vec3(f, 0.0, f1), 1.0F, this.getYRot());
      }
  
@@ -206,8 +223,6 @@
 -        //this.enderPearls.add(enderPearl); // Folia - region threading - do not track ender pearls
 +        if (io.canvasmc.canvas.Config.INSTANCE.restoreVanillaEnderPearlBehavior) {
 +            this.enderPearls.add(enderPearl);
-+        } else {
-+            //this.enderPearls.add(enderPearl); // Folia - region threading - do not track ender pearls
 +        }
      }
  
@@ -215,8 +230,6 @@
 -        //this.enderPearls.remove(enderPearl); // Folia - region threading - do not track ender pearls
 +        if (io.canvasmc.canvas.Config.INSTANCE.restoreVanillaEnderPearlBehavior) {
 +            this.enderPearls.remove(enderPearl);
-+        } else {
-+            //this.enderPearls.remove(enderPearl); // Folia - region threading - do not track ender pearls
 +        }
      }
 +    // Canvas end - restore vanilla ender pearl behavior
