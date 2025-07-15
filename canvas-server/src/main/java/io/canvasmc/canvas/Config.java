@@ -159,6 +159,9 @@ public class Config {
     @Comment("Disables Minecraft Chat Signing to prevent player reporting")
     public boolean enableNoChatReports = false;
 
+    @Comment("Restores vanilla loading and unloading behavior broken by Folia")
+    public boolean restoreVanillaEnderPearlBehavior = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

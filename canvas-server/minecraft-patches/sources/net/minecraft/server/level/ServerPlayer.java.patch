@@ -197,3 +197,29 @@
              return true;
          } else {
              return super.endPortalLogicAsync(portalPos);
+@@ -3280,13 +_,23 @@
+         return getInputVector(new Vec3(f, 0.0, f1), 1.0F, this.getYRot());
+     }
+ 
++    // Canvas start - restore vanilla ender pearl behavior
+     public void registerEnderPearl(ThrownEnderpearl enderPearl) {
+-        //this.enderPearls.add(enderPearl); // Folia - region threading - do not track ender pearls
++        if (io.canvasmc.canvas.Config.INSTANCE.restoreVanillaEnderPearlBehavior) {
++            this.enderPearls.add(enderPearl);
++        } else {
++            //this.enderPearls.add(enderPearl); // Folia - region threading - do not track ender pearls
++        }
+     }
+ 
+     public void deregisterEnderPearl(ThrownEnderpearl enderPearl) {
+-        //this.enderPearls.remove(enderPearl); // Folia - region threading - do not track ender pearls
++        if (io.canvasmc.canvas.Config.INSTANCE.restoreVanillaEnderPearlBehavior) {
++            this.enderPearls.remove(enderPearl);
++        } else {
++            //this.enderPearls.remove(enderPearl); // Folia - region threading - do not track ender pearls
++        }
+     }
++    // Canvas end - restore vanilla ender pearl behavior
+ 
+     public Set<ThrownEnderpearl> getEnderPearls() {
+         return this.enderPearls;
