@@ -52,16 +52,16 @@
 -        this.radiusAwareGenExecutor = MoonriseCommon.RADIUS_AWARE_GROUP.createExecutor(1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
 -        this.loadExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
 +        // Canvas start - rewrite moonrise executor
-+        this.parallelGenExecutor = MoonriseCommon.PARALLEL_GEN_GROUP.createExecutor();
-+        this.radiusAwareGenExecutor = MoonriseCommon.RADIUS_AWARE_GROUP.createExecutor();
-+        this.loadExecutor = MoonriseCommon.LOAD_GROUP.createExecutor();
++        this.parallelGenExecutor = MoonriseCommon.PARALLEL_GEN_GROUP.createExecutor(MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
++        this.radiusAwareGenExecutor = MoonriseCommon.RADIUS_AWARE_GROUP.createExecutor(MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
++        this.loadExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
          this.radiusAwareScheduler = new RadiusAwarePrioritisedExecutor(this.radiusAwareGenExecutor, 16);
          this.ioExecutor = MoonriseCommon.SERVER_REGION_IO_GROUP.createExecutor(-1, MoonriseCommon.IO_QUEUE_HOLD_TIME, 0);
          // we need a separate executor here so that on shutdown we can continue to process I/O tasks
 -        this.compressionExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
 -        this.saveExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
-+        this.compressionExecutor = MoonriseCommon.LOAD_GROUP.createExecutor();
-+        this.saveExecutor = MoonriseCommon.LOAD_GROUP.createExecutor();
++        this.compressionExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
++        this.saveExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
 +        // Canvas end
          this.chunkHolderManager = new ChunkHolderManager(world, this);
      }
