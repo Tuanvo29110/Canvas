@@ -56,9 +56,6 @@ public class FoliaSparkPlugin implements PaperSparkModule, SparkPlugin {
 
     @Contract("_, _, _, _, _ -> new")
     public static @NotNull PaperSparkModule create(Compatibility compatibility, Server server, Logger logger, PaperScheduler scheduler, PaperClassLookup classLookup) {
-        if (!Config.INSTANCE.useOurSparkPlugin) {
-            return new PaperSparkPlugin(server, logger, scheduler, classLookup);
-        }
         return new FoliaSparkPlugin(server, logger, scheduler, classLookup);
     }
 
