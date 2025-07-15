@@ -1,0 +1,10 @@
+--- a/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -564,6 +_,7 @@
+ 
+     @Override
+     public boolean enforceSecureProfile() {
++        if (io.canvasmc.canvas.Config.INSTANCE.enableNoChatReports) return false; // Canvas - no chat reports
+         DedicatedServerProperties properties = this.getProperties();
+         // Paper start - Add setting for proxy online mode status
+         return properties.enforceSecureProfile

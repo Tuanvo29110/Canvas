@@ -9,3 +9,11 @@
              // Folia end - rewrite login process
              connection.setupInboundProtocol(
                  GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(this.server.registryAccess()), serverGamePacketListenerImpl),
+@@ -1385,6 +_,7 @@
+     }
+ 
+     public boolean verifyChatTrusted(PlayerChatMessage message) {
++        if (io.canvasmc.canvas.Config.INSTANCE.enableNoChatReports) return true; // Canvas - no chat reports
+         return message.hasSignature() && !message.hasExpiredServer(Instant.now());
+     }
+ 

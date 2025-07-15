@@ -156,6 +156,9 @@ public class Config {
         public int keepalive = 60;
     }
 
+    @Comment("Disables Minecraft Chat Signing to prevent player reporting")
+    public boolean enableNoChatReports = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
