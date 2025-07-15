@@ -5,7 +5,7 @@ import io.papermc.paperweight.tasks.RebuildBaseGitPatches
 
 plugins {
     java
-    id("io.canvasmc.weaver.patcher") version "2.1.3-SNAPSHOT"
+    id("io.canvasmc.weaver.patcher") version "2.1.4-SNAPSHOT"
 }
 
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
@@ -122,34 +122,6 @@ project(":canvas-api") {
                     }
                 }
             }
-        }
-    }
-}
-
-// build publication
-tasks.register<Jar>("createMojmapClipboardJar") {
-    dependsOn(":canvas-server:createMojmapPaperclipJar")
-}
-
-tasks.register("buildPublisherJar") {
-    dependsOn(":createMojmapClipboardJar")
-
-    doLast {
-        val buildNumber = System.getenv("BUILD_NUMBER") ?: "local"
-
-        val paperclipJarTask = project(":canvas-server").tasks.getByName("createMojmapPaperclipJar")
-        val outputJar = paperclipJarTask.outputs.files.singleFile
-        val outputDir = outputJar.parentFile
-
-        if (outputJar.exists()) {
-            val newJarName = "canvas-build.$buildNumber.jar"
-            val newJarFile = File(outputDir, newJarName)
-
-            outputDir.listFiles()
-                ?.filter { it.name.startsWith("canvas-build.") && it.name.endsWith(".jar") }
-                ?.forEach { it.delete() }
-            outputJar.renameTo(newJarFile)
-            println("Renamed ${outputJar.name} to $newJarName in ${outputDir.absolutePath}")
         }
     }
 }
