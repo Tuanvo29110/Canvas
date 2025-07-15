@@ -41,7 +41,7 @@ You can download the latest release from the [Downloads Page](https://canvasmc.i
 
 ```bash
 ./gradlew applyAllPatches         # Apply all patches
-./gradlew buildPublisherJar       # Build the server jar
+./gradlew buildMojmapPublisherJar # Build the server jar
 ./gradlew runDevServer            # Run dev server
 ./rebuildPatches                  # Custom script to generate patches for modified directories
 ````
