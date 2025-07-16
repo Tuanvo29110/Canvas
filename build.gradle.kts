@@ -98,7 +98,7 @@ project(":canvas-api") {
                 afterEvaluate {
                     pom {
                         name.set("canvas-api")
-                        description.set(this.description)
+                        description.set("API bundle for the Canvas Minecraft server software")
                         url.set("https://github.com/CraftCanvasMC/Canvas")
                         licenses {
                             license {
