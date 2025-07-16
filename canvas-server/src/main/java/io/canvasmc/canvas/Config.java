@@ -1,5 +1,7 @@
 package io.canvasmc.canvas;
 
+import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
+import ca.spottedleaf.moonrise.patches.chunk_system.util.ParallelSearchRadiusIteration;
 import io.canvasmc.canvas.chunk.FluidPostProcessingMode;
 import io.canvasmc.canvas.config.*;
 import io.canvasmc.canvas.config.annotation.Comment;
@@ -201,6 +203,9 @@ public class Config {
         long startNanos = System.nanoTime();
         ConfigurationManager.register(Config.class, Config::buildSerializer);
         LOGGER.info("Finished Canvas config init in {}ms", TimeUnit.MILLISECONDS.convert(Util.getNanos() - startNanos, TimeUnit.NANOSECONDS));
+        // init parallel search radius iteration early
+        //noinspection ResultOfMethodCallIgnored
+        ParallelSearchRadiusIteration.getSearchIteration(MoonriseConstants.MAX_VIEW_DISTANCE);
         return INSTANCE;
     }
 }
