@@ -1,19 +1,11 @@
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -19,6 +_,7 @@
- import java.util.OptionalInt;
- import java.util.Set;
- import java.util.UUID;
-+import java.util.concurrent.ConcurrentHashMap;
- import java.util.stream.Collectors;
- import javax.annotation.Nonnull;
- import javax.annotation.Nullable;
 @@ -265,7 +_,7 @@
      private BlockPos raidOmenPosition;
      private Vec3 lastKnownClientMovement = Vec3.ZERO;
      private Input lastClientInput = Input.EMPTY;
 -    private final Set<ThrownEnderpearl> enderPearls = new HashSet<>();
-+    private final Set<ThrownEnderpearl> enderPearls = ConcurrentHashMap.newKeySet();
++    private final Set<ThrownEnderpearl> enderPearls = java.util.concurrent.ConcurrentHashMap.newKeySet();
      public final ContainerSynchronizer containerSynchronizer = new ContainerSynchronizer() {
          private final LoadingCache<TypedDataComponent<?>, Integer> cache = CacheBuilder.newBuilder()
              .maximumSize(256L)
