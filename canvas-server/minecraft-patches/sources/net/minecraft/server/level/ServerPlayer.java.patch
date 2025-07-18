@@ -102,7 +102,7 @@
 +                ServerLevel respawnAt = ((org.bukkit.craftbukkit.CraftWorld) respawnEvent.getRespawnLocation().getWorld()).getHandle();
 +                respawnAt.moonrise$loadChunksAsync(
 +                    new BlockPos(spawnLoc.getBlockX(), spawnLoc.getBlockY(), spawnLoc.getBlockZ()),
-+                    16, ca.spottedleaf.concurrentutil.util.Priority.HIGHER, (_) -> finalize.run()
++                    16, ca.spottedleaf.concurrentutil.util.Priority.HIGHER, (entity1) -> finalize.run()
 +                );
 +            } else {
 +                // event didn't modify location, run finalizer

@@ -71,7 +71,7 @@
 +        if (source.isPlayer()) {
 +            net.minecraft.server.level.ServerPlayer serverPlayer = source.getPlayer();
 +            if (serverPlayer != null && !serverPlayer.hasDisconnected()) {
-+                serverPlayer.getBukkitEntity().taskScheduler.schedule((_) -> {
++                serverPlayer.getBukkitEntity().taskScheduler.schedule((entity) -> {
 +                    source.sendFailure(Component.literal(message));
 +                }, null, 0L);
 +            }
@@ -88,7 +88,7 @@
 +        if (source.isPlayer()) {
 +            net.minecraft.server.level.ServerPlayer serverPlayer = source.getPlayer();
 +            if (serverPlayer != null && !serverPlayer.hasDisconnected()) {
-+                serverPlayer.getBukkitEntity().taskScheduler.schedule((_) -> {
++                serverPlayer.getBukkitEntity().taskScheduler.schedule((entity1) -> {
 +                    source.sendSystemMessage(message);
 +                }, null, 0L);
 +            }
@@ -165,7 +165,7 @@
 +                    final java.util.concurrent.CompletableFuture<Void> future = new java.util.concurrent.CompletableFuture<>();
 +                    world.moonrise$getChunkTaskScheduler().scheduleChunkLoad(
 +                        pos.x, pos.z, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true, ca.spottedleaf.concurrentutil.util.Priority.HIGH,
-+                        (_) -> {
++                        (entity) -> {
 +                            if (!pile2.isSafe(world, maxY)) {
 +                                pile2.randomize(random, minX, minZ, maxX, maxZ);
 +                                result.set(true);
@@ -217,7 +217,7 @@
 +            world.getServer().regionizedServer.taskQueue.queueTickTaskQueue(
 +                world, pos.getX() >> 4, pos.getZ() >> 4, () -> {
 +                    pos.setY(pile.getSpawnY(world, maxY));
-+                    entity.getBukkitEntity().taskScheduler.schedule((_) -> {
++                    entity.getBukkitEntity().taskScheduler.schedule((entity1) -> {
 +                        entity.teleportAsync(
 +                            world, pos.getCenter(),
 +                            entity.getYRot(), entity.getXRot(), entity.getDeltaMovement(),

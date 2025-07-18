@@ -124,7 +124,7 @@ public class AnnotationBasedYamlSerializer<T> implements ConfigSerializer<T> {
                     latest = nextMap;
                 }
 
-                currentMap = (Map<String, Object>) currentMap.computeIfAbsent(key, _ -> new LinkedHashMap<>());
+                currentMap = (Map<String, Object>) currentMap.computeIfAbsent(key, unnamed -> new LinkedHashMap<>());
             }
 
             if (alwaysAtTopKey != null) {
@@ -152,7 +152,7 @@ public class AnnotationBasedYamlSerializer<T> implements ConfigSerializer<T> {
             switch (value) {
                 case null -> {
                 }
-                case Map _ -> forEach((Map<String, Object>) value, fields, fullKey, consumer);
+                case Map unnamed -> forEach((Map<String, Object>) value, fields, fullKey, consumer);
                 case List<?> list -> {
                     if (!list.isEmpty()) {
                         for (Object item : list) {

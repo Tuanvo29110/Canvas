@@ -103,7 +103,7 @@
 +                } else {
 +                    // we are not on the right thread for this player, we must schedule
 +                    // this to the correct thread context
-+                    serverPlayer.getBukkitEntity().taskScheduler.schedule((_) -> {
++                    serverPlayer.getBukkitEntity().taskScheduler.schedule((entity) -> {
 +                        task.run();
 +                    }, null, 0L);
 +                }
@@ -130,7 +130,7 @@
 +            } else {
 +                // we are not on the right thread for this entity, we must schedule
 +                // this to the correct thread context
-+                entity.getBukkitEntity().taskScheduler.schedule((_) -> {
++                entity.getBukkitEntity().taskScheduler.schedule((entity1) -> {
 +                    task.run();
 +                }, null, 0L);
 +            }

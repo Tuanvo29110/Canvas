@@ -67,7 +67,7 @@ public interface ConfigSerializer<T> {
     }
 
     default <T, K, U> Collector<T, ?, Map<K, U>> toLinkedMap(Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends U> valueMapper) {
-        return Collectors.toMap(keyMapper, valueMapper, (u, _) -> {
+        return Collectors.toMap(keyMapper, valueMapper, (u, unnamed) -> {
             throw new IllegalStateException(String.format("Duplicate key %s", u));
         }, LinkedHashMap::new);
     }
