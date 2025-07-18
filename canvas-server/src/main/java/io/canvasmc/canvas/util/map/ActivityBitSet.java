@@ -1,10 +1,12 @@
 package io.canvasmc.canvas.util.map;
 
+import java.util.AbstractCollection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.schedule.Activity;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 public final class ActivityBitSet extends AbstractCollection<Activity> implements Set<Activity> {
     public static int BITS = -1;

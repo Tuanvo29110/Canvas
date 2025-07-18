@@ -3,16 +3,23 @@ package io.canvasmc.canvas;
 import ca.spottedleaf.moonrise.common.util.MoonriseConstants;
 import ca.spottedleaf.moonrise.patches.chunk_system.util.ParallelSearchRadiusIteration;
 import io.canvasmc.canvas.chunk.FluidPostProcessingMode;
-import io.canvasmc.canvas.config.*;
+import io.canvasmc.canvas.config.AnnotationBasedYamlSerializer;
+import io.canvasmc.canvas.config.ConfigHandlers;
+import io.canvasmc.canvas.config.ConfigSerializer;
+import io.canvasmc.canvas.config.Configuration;
+import io.canvasmc.canvas.config.ConfigurationUtils;
+import io.canvasmc.canvas.config.RuntimeModifier;
+import io.canvasmc.canvas.config.SerializationBuilder;
 import io.canvasmc.canvas.config.annotation.Comment;
 import io.canvasmc.canvas.config.internal.ConfigurationManager;
 import io.canvasmc.canvas.util.YamlTextFormatter;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.Util;
 import org.jetbrains.annotations.NotNull;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @Configuration("canvas-server")
 public class Config {

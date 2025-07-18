@@ -1,11 +1,10 @@
 package io.canvasmc.canvas.util;
 
+import java.util.function.Function;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.biome.Biome;
-
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class PositionalBiomeGetter implements Supplier<Holder<Biome>> {
 

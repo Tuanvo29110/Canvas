@@ -19,7 +19,7 @@ public class SetMaxPlayersCommand {
     public static void register(@NotNull CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             literal("setmaxplayers")
-                .requires(commandSourceStack -> commandSourceStack.hasPermission(3, "canvas.admin.command.setmaxplayers"))
+                .requires(commandSourceStack -> commandSourceStack.hasPermission(3, "canvas.command.setmaxplayers"))
                 .then(argument("count", IntegerArgumentType.integer(0))
                     .executes(context -> {
                         final Integer newSize = context.getArgument("count", Integer.class);

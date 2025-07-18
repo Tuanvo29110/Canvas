@@ -1,10 +1,25 @@
 --- a/net/minecraft/server/commands/SaveAllCommand.java
 +++ b/net/minecraft/server/commands/SaveAllCommand.java
-@@ -21,6 +_,7 @@
+@@ -21,14 +_,16 @@
      }
  
      private static int saveAll(CommandSourceStack source, boolean flush) throws CommandSyntaxException {
-+        if (true) return io.canvasmc.canvas.command.AsyncSaveAllCommand.saveAll(source); // Canvas - fix commands with region threading
++        // Canvas start - fix commands with region threading
          source.sendSuccess(() -> Component.translatable("commands.save.saving"), false);
          MinecraftServer server = source.getServer();
-         boolean flag = server.saveEverything(true, flush, true);
+-        boolean flag = server.saveEverything(true, flush, true);
+-        if (!flag) {
+-            throw ERROR_FAILED.create();
+-        } else {
+-            source.sendSuccess(() -> Component.translatable("commands.save.success"), true);
+-            return 1;
++        for (final net.minecraft.server.level.ServerLevel world : server.getAllLevels()) {
++            world.regioniser.computeForAllRegions((region) -> {
++                region.getData().shouldSaveNextTick = true;
++            });
+         }
++        source.sendSuccess(() -> Component.literal("Marked all running regions for save asynchronously"), true);
++        return 1;
++        // Canvas end
+     }
+ }

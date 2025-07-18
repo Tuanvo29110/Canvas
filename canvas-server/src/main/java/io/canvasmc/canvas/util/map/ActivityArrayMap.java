@@ -1,11 +1,18 @@
 package io.canvasmc.canvas.util.map;
 
+import java.util.AbstractCollection;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.AbstractSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.schedule.Activity;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
-import java.util.AbstractMap.SimpleEntry;
 
 public final class ActivityArrayMap<V> implements Map<Activity, V> {
     public static int BITS = -1;

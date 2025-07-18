@@ -2,6 +2,9 @@ package io.canvasmc.canvas.util;
 
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
@@ -12,10 +15,6 @@ import net.minecraft.world.level.chunk.MissingPaletteEntryException;
 import net.minecraft.world.level.chunk.Palette;
 import net.minecraft.world.level.chunk.PaletteResize;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Predicate;
 
 import static it.unimi.dsi.fastutil.Hash.FAST_LOAD_FACTOR;
 

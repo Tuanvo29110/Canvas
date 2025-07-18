@@ -1,18 +1,6 @@
 package io.canvasmc.canvas.spark;
 
 import io.papermc.paper.threadedregions.RegionizedServer;
-import me.lucko.spark.paper.common.platform.world.AbstractChunkInfo;
-import me.lucko.spark.paper.common.platform.world.CountMap;
-import me.lucko.spark.paper.common.platform.world.WorldInfoProvider;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.GameRule;
-import org.bukkit.Server;
-import org.bukkit.World;
-import org.bukkit.craftbukkit.CraftWorld;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,6 +12,17 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import me.lucko.spark.paper.common.platform.world.AbstractChunkInfo;
+import me.lucko.spark.paper.common.platform.world.CountMap;
+import me.lucko.spark.paper.common.platform.world.WorldInfoProvider;
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.GameRule;
+import org.bukkit.Server;
+import org.bukkit.World;
+import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 
 public class FoliaWorldInfoProvider implements WorldInfoProvider {
     private final FoliaSparkPlugin plugin;

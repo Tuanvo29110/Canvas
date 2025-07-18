@@ -36,3 +36,31 @@
          return message.hasSignature() && !message.hasExpiredServer(Instant.now());
      }
  
+@@ -1435,7 +_,12 @@
+ 
+         for (ServerLevel serverLevel : this.server.getAllLevels()) {
+             if (serverLevel != null) {
+-                serverLevel.getChunkSource().setViewDistance(viewDistance);
++                // Canvas start - per world distance
++                io.canvasmc.canvas.chunk.PerWorldDistanceConfig distanceConfig = serverLevel.serverLevelData.distanceConfig;
++                if (!distanceConfig.isViewDistanceOverridden()) {
++                    serverLevel.getChunkSource().setViewDistance(viewDistance);
++                }
++                // Canvas end
+             }
+         }
+     }
+@@ -1446,7 +_,12 @@
+ 
+         for (ServerLevel serverLevel : this.server.getAllLevels()) {
+             if (serverLevel != null) {
+-                serverLevel.getChunkSource().setSimulationDistance(simulationDistance);
++                // Canvas start - per world distance
++                io.canvasmc.canvas.chunk.PerWorldDistanceConfig distanceConfig = serverLevel.serverLevelData.distanceConfig;
++                if (!distanceConfig.isSimulationDistanceOverridden()) {
++                    serverLevel.getChunkSource().setSimulationDistance(simulationDistance);
++                }
++                // Canvas end
+             }
+         }
+     }

@@ -2,7 +2,6 @@ package io.canvasmc.canvas.util.map;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 
 public class BehaviorControlArraySet<E extends LivingEntity> extends ObjectArraySet<BehaviorControl<? super E>> {

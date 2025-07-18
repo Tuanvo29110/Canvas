@@ -1,5 +1,13 @@
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
+@@ -733,6 +_,7 @@
+                     );
+                 }
+             }
++            LOGGER.info("Using world distance config of {} for world '{}'", serverLevel.serverLevelData.distanceConfig, serverLevel); // Canvas - per world distance
+             // Folia end - region threading
+ 
+             // Paper - Put world into worldlist before initing the world; move up
 @@ -1002,7 +_,7 @@
      // CraftBukkit end
  

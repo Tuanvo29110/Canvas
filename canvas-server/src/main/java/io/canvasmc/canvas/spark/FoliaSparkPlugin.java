@@ -1,17 +1,17 @@
 package io.canvasmc.canvas.spark;
 
 import com.google.common.collect.ImmutableSet;
-import io.canvasmc.canvas.Config;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
 import me.lucko.spark.api.Spark;
-import me.lucko.spark.paper.PaperClassSourceLookup;
 import me.lucko.spark.paper.PaperCommandSender;
-import me.lucko.spark.paper.PaperPlatformInfo;
-import me.lucko.spark.paper.PaperPlayerPingProvider;
-import me.lucko.spark.paper.PaperServerConfigProvider;
-import me.lucko.spark.paper.PaperSparkPlugin;
 import me.lucko.spark.paper.PaperTickHook;
 import me.lucko.spark.paper.PaperTickReporter;
-import me.lucko.spark.paper.PaperWorldInfoProvider;
 import me.lucko.spark.paper.api.Compatibility;
 import me.lucko.spark.paper.api.PaperClassLookup;
 import me.lucko.spark.paper.api.PaperScheduler;
@@ -30,19 +30,11 @@ import me.lucko.spark.paper.common.sampler.source.SourceMetadata;
 import me.lucko.spark.paper.common.tick.TickHook;
 import me.lucko.spark.paper.common.tick.TickReporter;
 import me.lucko.spark.paper.common.util.classfinder.ClassFinder;
-import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 public class FoliaSparkPlugin implements PaperSparkModule, SparkPlugin {
     private final Server server;

@@ -1,13 +1,13 @@
 package io.canvasmc.canvas.chunk;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import net.minecraft.Util;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import net.minecraft.Util;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AsyncChunkSend {
 

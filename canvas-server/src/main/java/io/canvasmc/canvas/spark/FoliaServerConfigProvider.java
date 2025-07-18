@@ -7,17 +7,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializer;
-import me.lucko.spark.paper.common.platform.serverconfig.ConfigParser;
-import me.lucko.spark.paper.common.platform.serverconfig.ExcludedConfigFilter;
-import me.lucko.spark.paper.common.platform.serverconfig.PropertiesConfigParser;
-import me.lucko.spark.paper.common.platform.serverconfig.ServerConfigProvider;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.configuration.MemorySection;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,6 +17,16 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import me.lucko.spark.paper.common.platform.serverconfig.ConfigParser;
+import me.lucko.spark.paper.common.platform.serverconfig.ExcludedConfigFilter;
+import me.lucko.spark.paper.common.platform.serverconfig.PropertiesConfigParser;
+import me.lucko.spark.paper.common.platform.serverconfig.ServerConfigProvider;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.configuration.MemorySection;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 public class FoliaServerConfigProvider extends ServerConfigProvider {
 

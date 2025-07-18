@@ -1,13 +1,7 @@
 package io.canvasmc.canvas.spark;
 
 import me.lucko.spark.paper.common.platform.PlatformInfo;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.dedicated.DedicatedServer;
-import org.bukkit.Bukkit;
 import org.bukkit.Server;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 public class FoliaPlatformInfo implements PlatformInfo {
     private final Server server;

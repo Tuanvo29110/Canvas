@@ -1,10 +1,10 @@
 package io.canvasmc.canvas.spark;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 import me.lucko.spark.paper.common.monitor.ping.PlayerPingProvider;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
-import java.util.Map;
 
 public class FoliaPlayerPingProvider implements PlayerPingProvider {
 
