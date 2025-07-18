@@ -2,6 +2,7 @@ package io.canvasmc.canvas.chunk;
 
 import ca.spottedleaf.concurrentutil.executor.PrioritisedExecutor;
 import ca.spottedleaf.concurrentutil.executor.queue.PrioritisedTaskQueue;
+import ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool;
 import ca.spottedleaf.concurrentutil.util.Priority;
 import ca.spottedleaf.concurrentutil.util.TimeUtil;
 import io.canvasmc.canvas.util.ThreadBuilder;
@@ -13,11 +14,10 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TheChunkSystem {
+public class TheChunkSystem extends PrioritisedThreadPool {
 
     private final Logger LOGGER;
 
-    private final Consumer<Thread> threadModifier;
     private final TheChunkSystem.COWArrayList<TheChunkSystem.ExecutorGroup> executors = new TheChunkSystem.COWArrayList<>(TheChunkSystem.ExecutorGroup.class);
     private final TheChunkSystem.COWArrayList<TheChunkSystem.PrioritisedThread> threads = new TheChunkSystem.COWArrayList<>(TheChunkSystem.PrioritisedThread.class);
     private final TheChunkSystem.COWArrayList<TheChunkSystem.PrioritisedThread> aliveThreads = new TheChunkSystem.COWArrayList<>(TheChunkSystem.PrioritisedThread.class);
@@ -28,13 +28,9 @@ public class TheChunkSystem {
     private boolean shutdown;
 
     public TheChunkSystem(final int workerThreadCount, final ThreadBuilder threadInitializer, final String name) {
+        super(threadInitializer);
         LOGGER = LoggerFactory.getLogger("TheChunkSystem/" + name);
         LOGGER.info("Initialized new LS ChunkSystem '{}' with {} allocated threads", name, workerThreadCount);
-
-        this.threadModifier = threadInitializer;
-        if (threadInitializer == null) {
-            throw new NullPointerException("Thread factory may not be null");
-        }
         this.adjustThreadCount(workerThreadCount);
     }
 
@@ -92,41 +88,6 @@ public class TheChunkSystem {
      */
     public boolean joinInterruptable(final long msToWait) throws InterruptedException {
         return this.join(msToWait, true);
-    }
-
-    protected final boolean join(final long msToWait, final boolean interruptable) throws InterruptedException {
-        final long nsToWait = msToWait * (1000 * 1000);
-        final long start = System.nanoTime();
-        final long deadline = start + nsToWait;
-        boolean interrupted = false;
-        try {
-            for (final TheChunkSystem.PrioritisedThread thread : this.aliveThreads.getArray()) {
-                for (;;) {
-                    if (!thread.isAlive()) {
-                        break;
-                    }
-                    final long current = System.nanoTime();
-                    if (current >= deadline && msToWait > 0L) {
-                        return false;
-                    }
-
-                    try {
-                        thread.join(msToWait <= 0L ? 0L : Math.max(1L, (deadline - current) / (1000 * 1000)));
-                    } catch (final InterruptedException ex) {
-                        if (interruptable) {
-                            throw ex;
-                        }
-                        interrupted = true;
-                    }
-                }
-            }
-
-            return true;
-        } finally {
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-        }
     }
 
     /**
