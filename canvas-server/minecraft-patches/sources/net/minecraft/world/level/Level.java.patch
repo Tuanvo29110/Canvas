@@ -9,3 +9,37 @@
          io.papermc.paper.threadedregions.RegionizedWorldData.REGION_CALLBACK
      );
      public volatile io.papermc.paper.threadedregions.RegionizedServer.WorldLevelData tickData;
+@@ -1882,6 +_,33 @@
+     public List<Entity> getPushableEntities(Entity entity, AABB boundingBox) {
+         return this.getEntities(entity, boundingBox, EntitySelector.pushableBy(entity));
+     }
++    // Canvas start - only players push config
++
++    public it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.server.level.ServerPlayer> getIntersectingPlayers(Entity calling, AABB boundingBox, Predicate<Entity> predicate) {
++        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerPlayer> players = ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel) this).moonrise$getNearbyPlayers().getPlayers(
++            calling.blockPosition, ca.spottedleaf.moonrise.common.misc.NearbyPlayers.NearbyMapType.GENERAL_REALLY_REALLY_SMALL
++        );
++
++        if (players == null) {
++            return new it.unimi.dsi.fastutil.objects.ObjectArrayList<>();
++        }
++
++        final net.minecraft.server.level.ServerPlayer[] arr = players.getRawDataUnchecked();
++        final it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.server.level.ServerPlayer> serverPlayers = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>();
++        for (int i = 0; i < arr.length; i++) {
++            net.minecraft.server.level.ServerPlayer player = arr[i];
++            if (
++                player != calling
++                && boundingBox.intersects(player.getBoundingBox())
++                && predicate.test(player)
++            ) {
++                serverPlayers.add(player);
++            }
++        }
++
++        return serverPlayers;
++    }
++    // Canvas end - only players push config
+ 
+     @Nullable
+     public abstract Entity getEntity(int id);

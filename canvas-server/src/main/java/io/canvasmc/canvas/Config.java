@@ -177,6 +177,9 @@ public class Config {
     @Comment("Enables eggs being able to knockback players")
     public boolean eggCanKnockback = false;
 
+    @Comment("Whether to only have players pushable by entities")
+    public boolean onlyPushablePlayers = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
