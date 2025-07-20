@@ -77,49 +77,13 @@ subprojects {
             events(TestLogEvent.STANDARD_OUT)
         }
     }
-}
-
-project(":canvas-api") {
     extensions.configure<PublishingExtension> {
         repositories {
             maven("https://central.sonatype.com/repository/maven-snapshots/") {
                 name = "central"
-	            credentials(PasswordCredentials::class) {
+	            credentials {
                     username = System.getenv("PUBLISH_USER")
                     password = System.getenv("PUBLISH_TOKEN")
-                }
-            }
-        }
-
-        publications {
-            create<MavenPublication>("mavenJava") {
-                from(components["java"])
-
-                afterEvaluate {
-                    pom {
-                        name.set("canvas-api")
-                        description.set("API bundle for the Canvas Minecraft server software")
-                        url.set("https://github.com/CraftCanvasMC/Canvas")
-                        licenses {
-                            license {
-                                name.set("GNU Affero General Public License v3.0")
-                                url.set("https://github.com/CraftCanvasMC/Canvas/blob/HEAD/LICENSE")
-                                distribution.set("repo")
-                            }
-                        }
-                        developers {
-                            developer {
-                                id.set("canvas-team")
-                                name.set("Canvas Team")
-                                organization.set("CanvasMC")
-                                organizationUrl.set("https://canvasmc.io")
-                                roles.add("developer")
-                            }
-                        }
-                        scm {
-                            url.set("https://github.com/CraftCanvasMC/Canvas")
-                        }
-                    }
                 }
             }
         }

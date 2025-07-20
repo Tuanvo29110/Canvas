@@ -22,3 +22,37 @@
          }
      }
  }
+@@ -146,7 +_,33 @@
+             suppressPomMetadataWarningsFor(it)
+         }
+         from(components["java"])
++        // Canvas start - add more info to the publication
++        pom {
++            name.set("canvas-api")
++            description.set("API bundle for the Canvas Minecraft server software")
++            url.set("https://github.com/CraftCanvasMC/Canvas")
++            licenses {
++                license {
++                    name.set("GNU Affero General Public License v3.0")
++                    url.set("https://github.com/CraftCanvasMC/Canvas/blob/HEAD/LICENSE")
++                    distribution.set("repo")
++                }
++            }
++            developers {
++                developer {
++                    id.set("canvas-team")
++                    name.set("Canvas Team")
++                    organization.set("CanvasMC")
++                    organizationUrl.set("https://canvasmc.io")
++                    roles.add("developer")
++                }
++            }
++            scm {
++                url.set("https://github.com/CraftCanvasMC/Canvas")
++            }
++        }
+     }
++    // Canvas end - add more info to the publication
+ }
+ 
+ val generateApiVersioningFile by tasks.registering {
