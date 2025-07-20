@@ -1,5 +1,42 @@
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
+@@ -771,6 +_,36 @@
+      * @throws IllegalStateException when {@link #isTickingWorlds() isTickingWorlds} is true
+      */
+     public boolean unloadWorld(@NotNull World world, boolean save);
++    // Canvas start - fix world loading/unloading - expand API
++
++    /**
++     * Unloads a world with the given name.
++     * <p>
++     * Do note that un/loading worlds mid-tick may have potential side effects, we strongly recommend
++     * ensuring that you're not un/loading worlds midtick by checking {@link Bukkit#isTickingWorlds()}
++     *
++     * This will mark the world for asynchronous unloading
++     *
++     * @param name Name of the world to unload
++     * @param save whether to save the chunks before unloading
++     * @return {@code java.util.concurrent.CompletableFuture<Boolean>} when completed(true), or if it failed(false), the world will have been fully unloaded. DO NOT BLOCK ON THIS, IT MAY CAUSE DEADLOCKS WITH THE SERVER
++     */
++    public java.util.concurrent.CompletableFuture<Boolean> unloadWorldAsync(@NotNull String name, boolean save);
++
++    /**
++     * Unloads the given world.
++     * <p>
++     * Do note that un/loading worlds mid-tick may have potential side effects, we strongly recommend
++     * ensuring that you're not un/loading worlds midtick by checking {@link Bukkit#isTickingWorlds()}
++     *
++     * This will mark the world for asynchronous unloading
++     *
++     * @param world the world to unload
++     * @param save whether to save the chunks before unloading
++     * @return {@code java.util.concurrent.CompletableFuture<Boolean>} when completed(true), or if it failed(false), the world will have been fully unloaded. DO NOT BLOCK ON THIS, IT MAY CAUSE DEADLOCKS WITH THE SERVER
++     */
++    public java.util.concurrent.CompletableFuture<Boolean> unloadWorldAsync(@NotNull World world, boolean save);
++    // Canvas end - fix world loading/unloading - expand API
+ 
+     /**
+      * Gets the world with the given name.
 @@ -2752,5 +_,15 @@
       * @return TPS (5s, 15s, 1m, 5m, 15m), or null if the region doesn't exist
       */

@@ -39,22 +39,49 @@
  
          serverLevel.setSpawnSettings(true);
          // Paper - Put world into worldlist before initing the world; move up
-@@ -1457,13 +_,13 @@
+@@ -1451,53 +_,79 @@
+     }
  
      @Override
-     public boolean unloadWorld(World world, boolean save) {
+-    public boolean unloadWorld(String name, boolean save) {
+-        return this.unloadWorld(this.getWorld(name), save);
++    public java.util.concurrent.CompletableFuture<Boolean> unloadWorldAsync(@NotNull String name, boolean save) { // Canvas - fix world loading/unloading - expand API
++        return this.unloadWorldAsync(this.getWorld(name), save); // Canvas - fix world loading/unloading - expand API
+     }
+ 
+     @Override
+-    public boolean unloadWorld(World world, boolean save) {
 -        if (true) throw new UnsupportedOperationException(); // Folia - not implemented properly yet
++    public java.util.concurrent.CompletableFuture<Boolean> unloadWorldAsync(@NotNull World world, boolean save) { // Canvas - fix world loading/unloading - expand API
++        java.util.concurrent.CompletableFuture<Boolean> future = new java.util.concurrent.CompletableFuture<>(); // Canvas - fix world loading/unloading - expand API
          //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot unload a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
          if (world == null) {
-             return false;
+-            return false;
++            return complete(false, future); // Canvas - fix world loading/unloading - expand API
          }
  
          ServerLevel handle = ((CraftWorld) world).getHandle();
-+        if (handle.isUnloading) return false; // Canvas - fix world loading/unloading - we are already unloading
++        if (handle.isUnloading) return complete(false, future); // Canvas - fix world loading/unloading - we are already unloading - expand API
  
          if (this.console.getLevel(handle.dimension()) == null) {
-             return false;
-@@ -1483,19 +_,19 @@
+-            return false;
++            return complete(false, future); // Canvas - fix world loading/unloading - expand API
+         }
+ 
+         if (handle.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+-            return false;
++            return complete(false, future); // Canvas - fix world loading/unloading - expand API
+         }
+ 
+         if (!handle.players().isEmpty()) {
+-            return false;
++            return complete(false, future); // Canvas - fix world loading/unloading - expand API
+         }
+ 
+         WorldUnloadEvent event = new WorldUnloadEvent(handle.getWorld());
+         if (!event.callEvent()) {
+-            return false;
++            return complete(false, future); // Canvas - fix world loading/unloading - expand API
          }
  
          try {
@@ -62,7 +89,7 @@
 -                handle.save(null, true, false); // Paper - Fix saving in unloadWorld
 -            }
 +            // Canvas start - fix world loading/unloading
-+            if (this.console.hasStartedShutdownThread.get()) return false; // don't unload during shutdown
++            if (this.console.hasStartedShutdownThread.get()) return complete(false, future); // don't unload during shutdown - expand API
 +            MinecraftServer.LOGGER.info("Beginning unload for World '" + world.getName() + "'");
 +            handle.isUnloading = true;
 +            // moved to regions
@@ -78,10 +105,39 @@
  
 -        this.worlds.remove(world.getName().toLowerCase(Locale.ROOT));
 -        this.console.removeLevel(handle);
+-        return true;
+-    }
 +        // Canvas - fix world loading/unloading - moved to global tick
-         return true;
-     }
++        return future; // Canvas - fix world loading/unloading - expand API
++    }
++    // Canvas start - fix world loading/unloading - expand API
++
++    private java.util.concurrent.CompletableFuture<Boolean> complete(boolean result, java.util.concurrent.CompletableFuture<Boolean> future) {
++        future.complete(result);
++        return future;
++    }
++
++    @Override
++    public boolean unloadWorld(@NotNull String name, boolean save) {
++        return this.unloadWorld(this.getWorld(name), save);
++    }
++
++    @Override
++    public boolean unloadWorld(@NotNull World world, boolean save) {
++        java.util.concurrent.CompletableFuture<Boolean> future = this.unloadWorldAsync(world, save);
++        if (future.isDone()) {
++            try {
++                return future.get();
++            } catch (Exception exception) {
++                throw new RuntimeException("Unable to get unload result");
++            }
++        }
++        return true; // it was marked for unload successfully
++    }
++    // Canvas end - fix world loading/unloading - expand API
  
+     public DedicatedServer getServer() {
+         return this.console;
 @@ -2954,7 +_,7 @@
      @Override
      public double getAverageTickTime() {

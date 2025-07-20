@@ -79,7 +79,7 @@
          }
      }
  
-@@ -414,6 +_,41 @@
+@@ -414,6 +_,42 @@
      // A global tick only updates things like weather / worldborder, basically anything in the world that is
      // NOT tied to a specific region, but rather shared amongst all of them.
      private void globalTick(final ServerLevel world, final int tickCount) {
@@ -114,6 +114,7 @@
 +                MinecraftServer.getServer().removeLevel(world);
 +                MinecraftServer.getServer().server.worlds.remove(world.getWorld().getName().toLowerCase(java.util.Locale.ROOT));
 +                LOGGER.info("Completed unload of world '{}'", world.getWorld().getName());
++                world.unloadFuture.complete(true);
 +            }
 +            return;
 +        }

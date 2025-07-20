@@ -14,11 +14,12 @@
      }
  
      // Folia start - region threading
-@@ -654,6 +_,7 @@
+@@ -654,6 +_,8 @@
      public static final int WORLD_INIT_CHECKED = 2;
      public final java.util.concurrent.atomic.AtomicInteger checkInitialised = new java.util.concurrent.atomic.AtomicInteger(WORLD_INIT_NOT_CHECKED);
      public ChunkPos randomSpawnSelection;
 +    public volatile boolean isUnloading = false; // Canvas - fix world loading/unloading
++    public volatile java.util.concurrent.CompletableFuture<Boolean> unloadFuture = null; // Canvas - fix world loading/unloading - expand API
  
      public static final record PendingTeleport(Entity.EntityTreeNode rootVehicle, Vec3 to) {}
      private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<PendingTeleport> pendingTeleports = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
