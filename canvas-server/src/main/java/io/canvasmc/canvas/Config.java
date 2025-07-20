@@ -12,6 +12,7 @@ import io.canvasmc.canvas.config.RuntimeModifier;
 import io.canvasmc.canvas.config.SerializationBuilder;
 import io.canvasmc.canvas.config.annotation.Comment;
 import io.canvasmc.canvas.config.internal.ConfigurationManager;
+import io.canvasmc.canvas.entity.EntityCollisionMode;
 import io.canvasmc.canvas.util.YamlTextFormatter;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -177,8 +178,19 @@ public class Config {
     @Comment("Enables eggs being able to knockback players")
     public boolean eggCanKnockback = false;
 
-    @Comment("Whether to only have players pushable by entities")
-    public boolean onlyPushablePlayers = false;
+    @Comment(value = {
+        "The entity collision mode for the server",
+        "",
+        "Acceptable values:",
+        " - VANILLA - default, all entities have collisions",
+        " - ONLY_PUSHABLE_PLAYERS_LARGE - only players are pushable by entities, we search in a large radius(8 chunks)",
+        "        for colliding players. This is primarily used for if servers have very large entities via the scale attribute",
+        "        or custom entities plugin",
+        " - ONLY_PUSHABLE_PLAYERS_SMALL - only players are pushable by entities, we search in a small radius(2 chunks)",
+        "        for colliding players. This is used for if the server will have no large entities exceeding 2 chunks of width",
+        " - NO_COLLISIONS - all entities have no collisions"
+    })
+    public EntityCollisionMode entityCollisionMode = EntityCollisionMode.VANILLA;
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
