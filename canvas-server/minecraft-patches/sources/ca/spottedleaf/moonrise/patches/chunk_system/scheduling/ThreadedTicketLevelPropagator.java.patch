@@ -4,7 +4,7 @@
              final int decodeOffsetZ = -this.encodeOffsetZ;
              final int encodeOffset = this.coordinateOffset;
              final int sectionOffset = this.sectionIndexOffset;
-+            final Section[] sectionsArray = this.sections; // Canvas - Optimize ThreadedTicketLevelPropagator
++            final Section[] sectionsArray = this.sections; // Leaf - Optimize ThreadedTicketLevelPropagator
  
              final Long2ByteLinkedOpenHashMap updatedPositions = this.updatedPositions;
  
@@ -13,20 +13,20 @@
  
                  if ((queueValue & FLAG_RECHECK_LEVEL) != 0L) {
 -                    if (this.getLevel(posX, posZ) != propagatedLevel) {
-+                    // Canvas start - Optimize ThreadedTicketLevelPropagator
++                    // Leaf start - Optimize ThreadedTicketLevelPropagator
 +                    final int sectionX = posX >> SECTION_SHIFT;
 +                    final int sectionZ = posZ >> SECTION_SHIFT;
 +                    final Section section = sectionsArray[sectionX + (sectionZ * SECTION_CACHE_WIDTH) + sectionOffset];
 +                    final int localIdx = (posX & (SECTION_SIZE - 1)) | ((posZ & (SECTION_SIZE - 1)) << SECTION_SHIFT);
 +                    if ((section.levels[localIdx] & 0xFF) != propagatedLevel) {
-+                    // Canvas end - Optimize ThreadedTicketLevelPropagator
++                    // Leaf end - Optimize ThreadedTicketLevelPropagator
                          // not at the level we expect, so something changed.
                          continue;
                      }
                  } else if ((queueValue & FLAG_WRITE_LEVEL) != 0L) {
                      // these are used to restore sources after a propagation decrease
 -                    this.setLevel(posX, posZ, propagatedLevel);
-+                    // Canvas start - Optimize ThreadedTicketLevelPropagator
++                    // Leaf start - Optimize ThreadedTicketLevelPropagator
 +                    final int sectionX = posX >> SECTION_SHIFT;
 +                    final int sectionZ = posZ >> SECTION_SHIFT;
 +                    final Section section = sectionsArray[sectionX + (sectionZ * SECTION_CACHE_WIDTH) + sectionOffset];
@@ -34,7 +34,7 @@
 +                    final short currentLevel = section.levels[localIdx];
 +                    section.levels[localIdx] = (short) ((currentLevel & ~0xFF) | (propagatedLevel & 0xFF));
 +                    updatedPositions.put(CoordinateUtils.getChunkKey(posX, posZ), (byte) propagatedLevel);
-+                    // Canvas end - Optimize ThreadedTicketLevelPropagator
++                    // Leaf end - Optimize ThreadedTicketLevelPropagator
                  }
  
                  // this bitset represents the values that we have not propagated to
@@ -43,7 +43,7 @@
  
                      // now try to propagate
 -                    final Section section = this.sections[sectionIndex];
-+                    final Section section = sectionsArray[sectionIndex]; // Canvas - Optimize ThreadedTicketLevelPropagator
++                    final Section section = sectionsArray[sectionIndex]; // Leaf - Optimize ThreadedTicketLevelPropagator
  
                      // lower 8 bits are current level, next upper 7 bits are source level, next 1 bit is updated source flag
                      final short currentStoredLevel = section.levels[localIndex];
@@ -51,7 +51,7 @@
              final int decodeOffsetZ = -this.encodeOffsetZ;
              final int encodeOffset = this.coordinateOffset;
              final int sectionOffset = this.sectionIndexOffset;
-+            final Section[] sectionsArray = this.sections; // Canvas - Optimize ThreadedTicketLevelPropagator
++            final Section[] sectionsArray = this.sections; // Leaf - Optimize ThreadedTicketLevelPropagator
  
              final Long2ByteLinkedOpenHashMap updatedPositions = this.updatedPositions;
  
@@ -60,7 +60,7 @@
  
                      // now try to propagate
 -                    final Section section = this.sections[sectionIndex];
-+                    final Section section = sectionsArray[sectionIndex]; // Canvas - Optimize ThreadedTicketLevelPropagator
++                    final Section section = sectionsArray[sectionIndex]; // Leaf - Optimize ThreadedTicketLevelPropagator
  
                      // lower 8 bits are current level, next upper 7 bits are source level, next 1 bit is updated source flag
                      final short currentStoredLevel = section.levels[localIndex];

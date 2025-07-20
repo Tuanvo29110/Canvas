@@ -4,7 +4,7 @@
          }
      }
  
-+    // Canvas start - async chunk sending
++    // Leaf start - async chunk sending
 +    public ClientboundLevelChunkPacketData(LevelChunk levelChunk, io.papermc.paper.antixray.ChunkPacketInfo<net.minecraft.world.level.block.state.BlockState> chunkPacketInfo, BlockEntity[] blockEntities, Map<Heightmap.Types, long[]> heightmaps) {
 +        this.heightmaps = heightmaps;
 +
@@ -48,7 +48,7 @@
 +            this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(blockEntity));
 +        }
 +    }
-+    // Canvas end - async chunk sending
++    // Leaf end - async chunk sending
 +
      public ClientboundLevelChunkPacketData(RegistryFriendlyByteBuf buffer, int x, int z) {
          this.heightmaps = HEIGHTMAPS_STREAM_CODEC.decode(buffer);
@@ -57,7 +57,7 @@
              // Paper end  - Anti-Xray - Add chunk packet info
          }
  
-+        if (Thread.currentThread() instanceof io.canvasmc.canvas.chunk.AsyncChunkSend.AsyncChunkSendThread) return; // Canvas - async chunk sending
++        if (Thread.currentThread() instanceof io.canvasmc.canvas.chunk.AsyncChunkSend.AsyncChunkSendThread) return; // Leaf - async chunk sending
          if (buffer.writerIndex() != buffer.capacity()) {
              throw new IllegalStateException("Didn't fill chunk buffer: expected " + buffer.capacity() + " bytes, got " + buffer.writerIndex());
          }

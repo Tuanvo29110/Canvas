@@ -4,7 +4,7 @@
      protected static final int INIT_STATE_INIT   = 2; // initialised
      protected static final int INIT_STATE_HIDDEN = 3; // initialised, but conversion to Vanilla data should be treated as if NULL
  
-+    // Canvas start - optimize chunk unload
++    // Leaf start - optimize chunk unload
 +    private volatile boolean cachedIsAllZero = false;
 +    private boolean cachedIsAllZeroValid = false;
 +
@@ -16,14 +16,14 @@
 +    static final ThreadLocal<ArrayDeque<byte[]>> WORKING_BYTES_POOL = ThreadLocal.withInitial(() -> {
 +        return new ArrayDeque<>(8); // Limit pool size to avoid memory leaks
 +    });
-+    // Canvas end - optimize chunk unload
++    // Leaf end - optimize chunk unload
  
      private static byte[] allocateBytes() {
 -        final byte[] inPool = WORKING_BYTES_POOL.get().pollFirst();
-+        // Canvas start - optimize chunk unload
++        // Leaf start - optimize chunk unload
 +        final ArrayDeque<byte[]> queue = WORKING_BYTES_POOL.get();
 +        final byte[] inPool = queue.pollFirst();
-+        // Canvas end - optimize chunk unload
++        // Leaf end - optimize chunk unload
          if (inPool != null) {
              return inPool;
          }
@@ -32,12 +32,12 @@
  
      private static void freeBytes(final byte[] bytes) {
 -        WORKING_BYTES_POOL.get().addFirst(bytes);
-+        // Canvas start - optimize chunk unload
++        // Leaf start - optimize chunk unload
 +        final ArrayDeque<byte[]> queue = WORKING_BYTES_POOL.get();
 +        if (queue.size() < 8) {  // Limit pool size to prevent memory leaks
 +            queue.addFirst(bytes);
 +        }
-+        // Canvas end - optimize chunk unload
++        // Leaf end - optimize chunk unload
      }
  
      public static SWMRNibbleArray fromVanilla(final DataLayer nibble) {
@@ -53,7 +53,7 @@
 -                return new SaveState(null, state);
 -            }
 -            final boolean zero = isAllZero(data);
-+            // Canvas start - optimize chunk unload
++            // Leaf start - optimize chunk unload
 +                // Use array-based cache instead of WeakHashMap
 +                SaveState[] cache = SAVE_STATE_CACHE.get();
 +                SaveState cachedState = cache[INIT_STATE_UNINIT];
@@ -86,7 +86,7 @@
 +                    }
 +                    return cachedState;
 +                }
-+            // Canvas end - optimize chunk unload
++            // Leaf end - optimize chunk unload
                  return state == INIT_STATE_INIT ? new SaveState(null, INIT_STATE_UNINIT) : null;
              } else {
                  return new SaveState(data.clone(), state);
@@ -105,7 +105,7 @@
 -                return false;
 -            }
 -        }
-+        // Canvas start - optimize chunk unload
++        // Leaf start - optimize chunk unload
 +        // Check in 8-byte chunks
 +        final int longLength = ARRAY_SIZE >>> 3;
 +        for (int i = 0; i < longLength; i++) {
@@ -126,7 +126,7 @@
 +                return false;
 +            }
 +        }
-+        // Canvas end - optimize chunk unload
++        // Leaf end - optimize chunk unload
  
          return true;
      }
@@ -134,7 +134,7 @@
              }
              this.updatingDirty = false;
              this.stateVisible = this.stateUpdating;
-+            this.cachedIsAllZeroValid = false; // Canvas - optimize chunk unload - invalidate cache on update
++            this.cachedIsAllZeroValid = false; // Leaf - optimize chunk unload - invalidate cache on update
          }
  
          return true;
@@ -143,7 +143,7 @@
          final int i = index >>> 1;
  
 -        this.storageUpdating[i] = (byte)((this.storageUpdating[i] & (0xF0 >>> shift)) | (value << shift));
-+        // Canvas start - optimize chunk unload
++        // Leaf start - optimize chunk unload
 +        byte oldValue = this.storageUpdating[i];
 +        byte newValue = (byte)((oldValue & (0xF0 >>> shift)) | (value << shift));
 +
@@ -152,7 +152,7 @@
 +            this.storageUpdating[i] = newValue;
 +            this.cachedIsAllZeroValid = false;
 +        }
-+        // Canvas end - optimize chunk unload
++        // Leaf end - optimize chunk unload
      }
  
      public static final class SaveState {

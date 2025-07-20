@@ -4,7 +4,7 @@
  
  public class ClientboundLightUpdatePacketData {
      private static final StreamCodec<ByteBuf, byte[]> DATA_LAYER_STREAM_CODEC = ByteBufCodecs.byteArray(2048);
-+    // Canvas start - rewrite ClientboundLightUpdatePacketData
++    // Leaf start - rewrite ClientboundLightUpdatePacketData
 +
 +    // Static constants to avoid allocations
 +    private static final byte[][] EMPTY_ARRAY = new byte[0][];
@@ -26,7 +26,7 @@
 +    private final byte[][] blockUpdates;
 +    private final int skyUpdateCount;
 +    private final int blockUpdateCount;
-+    // Canvas end - rewrite ClientboundLightUpdatePacketData
++    // Leaf end - rewrite ClientboundLightUpdatePacketData
  
      public ClientboundLightUpdatePacketData(ChunkPos chunkPos, LevelLightEngine lightEngine, @Nullable BitSet skyLight, @Nullable BitSet blockLight) {
 -        this.skyYMask = new BitSet();
@@ -37,7 +37,7 @@
 -        this.blockUpdates = Lists.newArrayList();
 -
 -        for (int i = 0; i < lightEngine.getLightSectionCount(); i++) {
-+        // Canvas start - rewrite ClientboundLightUpdatePacketData
++        // Leaf start - rewrite ClientboundLightUpdatePacketData
 +        int sectionCount = lightEngine.getLightSectionCount();
 +
 +        // Round up to nearest long boundary (64 bits) to prevent BitSet expansion
@@ -124,7 +124,7 @@
 +
 +        this.skyUpdateCount = skyCount;
 +        this.blockUpdateCount = blockCount;
-+        // Canvas end - rewrite ClientboundLightUpdatePacketData
++        // Leaf end - rewrite ClientboundLightUpdatePacketData
      }
  
      public ClientboundLightUpdatePacketData(FriendlyByteBuf buffer, int x, int z) {
@@ -135,7 +135,7 @@
 -        this.skyUpdates = buffer.readList(DATA_LAYER_STREAM_CODEC);
 -        this.blockUpdates = buffer.readList(DATA_LAYER_STREAM_CODEC);
 +
-+        // Canvas start - rewrite ClientboundLightUpdatePacketData
++        // Leaf start - rewrite ClientboundLightUpdatePacketData
 +        // Read lists directly as arrays to avoid intermediate collections
 +        List<byte[]> skyList = buffer.readList(DATA_LAYER_STREAM_CODEC);
 +        List<byte[]> blockList = buffer.readList(DATA_LAYER_STREAM_CODEC);
@@ -157,7 +157,7 @@
 +
 +        this.skyUpdateCount = skySize;
 +        this.blockUpdateCount = blockSize;
-+        // Canvas end - rewrite ClientboundLightUpdatePacketData
++        // Leaf end - rewrite ClientboundLightUpdatePacketData
      }
  
      public void write(FriendlyByteBuf buffer) {
@@ -183,7 +183,7 @@
 -            }
 -        }
 +
-+        // Canvas start - rewrite ClientboundLightUpdatePacketData
++        // Leaf start - rewrite ClientboundLightUpdatePacketData
 +        // Avoid creating unnecessary objects when writing
 +        if (this.skyUpdateCount > 0) {
 +            // Use direct array access for efficiency
@@ -204,7 +204,7 @@
 +        } else {
 +            buffer.writeVarInt(0);
 +        }
-+        // Canvas end - rewrite ClientboundLightUpdatePacketData
++        // Leaf end - rewrite ClientboundLightUpdatePacketData
      }
  
      public BitSet getSkyYMask() {
@@ -213,7 +213,7 @@
  
      public List<byte[]> getSkyUpdates() {
 -        return this.skyUpdates;
-+        return this.skyUpdateCount > 0 ? java.util.Arrays.asList(this.skyUpdates) : List.of(); // Canvas - rewrite ClientboundLightUpdatePacketData
++        return this.skyUpdateCount > 0 ? java.util.Arrays.asList(this.skyUpdates) : List.of(); // Leaf - rewrite ClientboundLightUpdatePacketData
      }
  
      public BitSet getBlockYMask() {
@@ -222,6 +222,6 @@
  
      public List<byte[]> getBlockUpdates() {
 -        return this.blockUpdates;
-+        return this.blockUpdateCount > 0 ? java.util.Arrays.asList(this.blockUpdates) : List.of(); // Canvas - rewrite ClientboundLightUpdatePacketData
++        return this.blockUpdateCount > 0 ? java.util.Arrays.asList(this.blockUpdates) : List.of(); // Leaf - rewrite ClientboundLightUpdatePacketData
      }
  }

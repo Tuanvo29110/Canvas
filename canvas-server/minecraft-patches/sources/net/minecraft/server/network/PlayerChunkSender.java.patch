@@ -5,7 +5,7 @@
                          ServerGamePacketListenerImpl serverGamePacketListenerImpl = player.connection;
                          this.unacknowledgedBatches++;
 -                        serverGamePacketListenerImpl.send(ClientboundChunkBatchStartPacket.INSTANCE);
-+                        // Canvas start - async chunk sending
++                        // Leaf start - async chunk sending
 +                        if (io.canvasmc.canvas.Config.INSTANCE.chunks.asyncChunkSend) {
 +                            io.canvasmc.canvas.chunk.AsyncChunkSend.POOL.execute(
 +                                () -> serverGamePacketListenerImpl.send(ClientboundChunkBatchStartPacket.INSTANCE)
@@ -13,14 +13,14 @@
 +                        } else {
 +                            serverGamePacketListenerImpl.send(ClientboundChunkBatchStartPacket.INSTANCE);
 +                        }
-+                        // Canvas end - async chunk sending
++                        // Leaf end - async chunk sending
  
                          for (LevelChunk levelChunk : list) {
                              sendChunk(serverGamePacketListenerImpl, serverLevel, levelChunk);
                          }
  
 -                        serverGamePacketListenerImpl.send(new ClientboundChunkBatchFinishedPacket(list.size()));
-+                        // Canvas start - async chunk sending
++                        // Leaf start - async chunk sending
 +                        if (io.canvasmc.canvas.Config.INSTANCE.chunks.asyncChunkSend) {
 +                            io.canvasmc.canvas.chunk.AsyncChunkSend.POOL.execute(
 +                                () -> serverGamePacketListenerImpl.send(new ClientboundChunkBatchFinishedPacket(list.size()))
@@ -28,7 +28,7 @@
 +                        } else {
 +                            serverGamePacketListenerImpl.send(new ClientboundChunkBatchFinishedPacket(list.size()));
 +                        }
-+                        // Canvas end - async chunk sending
++                        // Leaf end - async chunk sending
                          this.batchQuota = this.batchQuota - list.size();
                      }
                  }
@@ -37,7 +37,7 @@
      public static void sendChunk(ServerGamePacketListenerImpl packetListener, ServerLevel level, LevelChunk chunk) {
          final boolean shouldModify = level.chunkPacketBlockController.shouldModify(packetListener.player, chunk);
 -        packetListener.send(new ClientboundLevelChunkWithLightPacket(chunk, level.getLightEngine(), null, null, shouldModify));
-+        // Canvas start - async chunk sending
++        // Leaf start - async chunk sending
 +        if (io.canvasmc.canvas.Config.INSTANCE.chunks.asyncChunkSend) {
 +            var blockEntities = chunk.blockEntities.values().toArray(new net.minecraft.world.level.block.entity.BlockEntity[0]);
 +            java.util.Map<net.minecraft.world.level.levelgen.Heightmap.Types, long[]> heightmaps = new java.util.concurrent.ConcurrentHashMap<>();
@@ -53,7 +53,7 @@
 +        } else {
 +            packetListener.send(new ClientboundLevelChunkWithLightPacket(chunk, level.getLightEngine(), null, null, shouldModify));
 +        }
-+        // Canvas end - async chunk sending
++        // Leaf end - async chunk sending
          // Paper end - Anti-Xray
          // Paper start - PlayerChunkLoadEvent
          if (io.papermc.paper.event.packet.PlayerChunkLoadEvent.getHandlerList().getRegisteredListeners().length > 0) {

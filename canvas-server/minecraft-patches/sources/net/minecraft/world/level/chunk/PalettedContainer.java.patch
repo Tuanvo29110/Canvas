@@ -4,7 +4,7 @@
  import net.minecraft.util.ZeroBitStorage;
  
  public class PalettedContainer<T> implements PaletteResize<T>, PalettedContainerRO<T> {
-+    // Canvas start - faster chunk serialization
++    // Leaf start - faster chunk serialization
 +
 +    private static final ThreadLocal<short[]> CACHED_ARRAY_4096 = ThreadLocal.withInitial(() -> new short[4096]);
 +    private static final ThreadLocal<short[]> CACHED_ARRAY_64 = ThreadLocal.withInitial(() -> new short[64]);
@@ -19,7 +19,7 @@
 +        };
 +    }
 +
-+    // Canvas end - faster chunk serialization
++    // Leaf end - faster chunk serialization
      private static final int MIN_PALETTE_BITS = 0;
      private final PaletteResize<T> dummyPaletteResize = (bits, objectAdded) -> 0;
      public final IdMap<T> registry;
@@ -28,7 +28,7 @@
          this.acquire();
  
 -        PalettedContainerRO.PackedData var12;
-+        // Canvas start - faster chunk serialization
++        // Leaf start - faster chunk serialization
 +        Optional<LongStream> data = Optional.empty();
 +        List<T> elements = null;
          try {
@@ -91,7 +91,7 @@
  
 -        return var12;
 +        return new PalettedContainerRO.PackedData<>(elements, data);
-+        // Canvas end - faster chunk serialization
++        // Leaf end - faster chunk serialization
      }
  
      private static <T> void swapPalette(int[] bits, IntUnaryOperator operator) {
@@ -106,7 +106,7 @@
 -            this.data.storage.getAll(id -> map.addTo(id, 1));
 -            map.int2IntEntrySet().forEach(idEntry -> countConsumer.accept(this.data.palette.valueFor(idEntry.getIntKey()), idEntry.getIntValue()));
 -        }
-+        // Canvas start - faster chunk serialization
++        // Leaf start - faster chunk serialization
 +        int len = this.data.palette().getSize();
 +
 +        // Do not allocate huge arrays if we're using a large palette
@@ -132,7 +132,7 @@
 +                countConsumer.accept(obj, counts[i]);
 +            }
 +        }
-+        // Canvas end - faster chunk serialization
++        // Leaf end - faster chunk serialization
      }
  
      record Configuration<T>(Palette.Factory factory, int bits) {
