@@ -9,7 +9,7 @@
 +            // TODO fix later
 +            return;
 +        }
-+        // Canvas end
++        // Canvas end - rewrite scheduler
          final long start = time.tickStart();
  
          TickRegionScheduler.TickTime first;

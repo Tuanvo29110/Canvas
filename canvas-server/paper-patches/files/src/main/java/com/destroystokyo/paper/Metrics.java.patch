@@ -19,7 +19,7 @@
 +                    paperVersion = "Canvas-V3-" +
 +                        buildInfo.minecraftVersionName() + "-" +
 +                        (buildInfo.buildNumber().isPresent() ? buildInfo.buildNumber().getAsInt() : "DEV");
-+                    // Canvas end
++                    // Canvas end - new versioning schem for bstats
                  } else {
                      paperVersion = "unknown";
                  }
@@ -160,7 +160,7 @@
 +
 +                metrics.addCustomChart(new Metrics.SimplePie("ls_chunk_system_io_count", () -> String.valueOf(ca.spottedleaf.moonrise.common.util.MoonriseCommon.ioWorkerCount)));
 +                metrics.addCustomChart(new Metrics.SimplePie("ls_chunk_system_worker_count", () -> String.valueOf(ca.spottedleaf.moonrise.common.util.MoonriseCommon.chunkWorkerCount)));
-+                // Canvas end
++                // Canvas end - expand metrics
              }
  
          }

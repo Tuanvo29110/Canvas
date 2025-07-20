@@ -60,7 +60,7 @@
 +            nmsEntity.navigation.stop();
 +        }, null, 1L);
 +        return true;
-+        // Canvas end
++        // Canvas end - fix folia issues
      }
  
      private boolean canTeleportTo(BlockPos pos) {
@@ -90,7 +90,7 @@
 +
 +        BlockPos blockPos = pos.subtract(this.blockPosition());
 +        return this.level().noCollision(this, this.getBoundingBox().move(blockPos));
-+        // Canvas end
++        // Canvas end - fix folia issues
      }
  
      public final boolean unableToMoveToOwner() {

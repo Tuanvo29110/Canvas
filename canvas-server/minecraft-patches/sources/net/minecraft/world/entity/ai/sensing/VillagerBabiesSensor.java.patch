@@ -19,7 +19,7 @@
 +        }
 +
 +        return babies.build();
-+        // Canvas end
++        // Canvas end - optimize baby villager sensor
      }
  
      private boolean isVillagerBaby(LivingEntity livingEntity) {

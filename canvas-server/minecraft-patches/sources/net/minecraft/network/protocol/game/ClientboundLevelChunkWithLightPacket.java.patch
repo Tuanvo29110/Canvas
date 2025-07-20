@@ -14,7 +14,7 @@
 +        this.lightData = new ClientboundLightUpdatePacketData(pos, lightEngine, skyLight, blockLight);
 +        chunk.getLevel().chunkPacketBlockController.modifyBlocks(this, chunkPacketInfo); // Paper - Anti-Xray - Modify blocks
 +    }
-+    // Canvas end
++    // Canvas end - async chunk sending
  
      private ClientboundLevelChunkWithLightPacket(RegistryFriendlyByteBuf buffer) {
          this.x = buffer.readInt();

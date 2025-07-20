@@ -19,7 +19,7 @@
 -            return false;
          }
 +        return false;
-+        // Canvas end
++        // Canvas end - fix folia issues
      }
  
      public static void updateActivity(Axolotl axolotl) {

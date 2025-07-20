@@ -19,7 +19,7 @@
 +                    final Section section = sectionsArray[sectionX + (sectionZ * SECTION_CACHE_WIDTH) + sectionOffset];
 +                    final int localIdx = (posX & (SECTION_SIZE - 1)) | ((posZ & (SECTION_SIZE - 1)) << SECTION_SHIFT);
 +                    if ((section.levels[localIdx] & 0xFF) != propagatedLevel) {
-+                    // Canvas end
++                    // Canvas end - Optimize ThreadedTicketLevelPropagator
                          // not at the level we expect, so something changed.
                          continue;
                      }
@@ -34,7 +34,7 @@
 +                    final short currentLevel = section.levels[localIdx];
 +                    section.levels[localIdx] = (short) ((currentLevel & ~0xFF) | (propagatedLevel & 0xFF));
 +                    updatedPositions.put(CoordinateUtils.getChunkKey(posX, posZ), (byte) propagatedLevel);
-+                    // Canvas end
++                    // Canvas end - Optimize ThreadedTicketLevelPropagator
                  }
  
                  // this bitset represents the values that we have not propagated to

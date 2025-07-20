@@ -16,14 +16,14 @@
 +    static final ThreadLocal<ArrayDeque<byte[]>> WORKING_BYTES_POOL = ThreadLocal.withInitial(() -> {
 +        return new ArrayDeque<>(8); // Limit pool size to avoid memory leaks
 +    });
-+    // Canvas end
++    // Canvas end - optimize chunk unload
  
      private static byte[] allocateBytes() {
 -        final byte[] inPool = WORKING_BYTES_POOL.get().pollFirst();
 +        // Canvas start - optimize chunk unload
 +        final ArrayDeque<byte[]> queue = WORKING_BYTES_POOL.get();
 +        final byte[] inPool = queue.pollFirst();
-+        // Canvas end
++        // Canvas end - optimize chunk unload
          if (inPool != null) {
              return inPool;
          }
@@ -37,7 +37,7 @@
 +        if (queue.size() < 8) {  // Limit pool size to prevent memory leaks
 +            queue.addFirst(bytes);
 +        }
-+        // Canvas end
++        // Canvas end - optimize chunk unload
      }
  
      public static SWMRNibbleArray fromVanilla(final DataLayer nibble) {
@@ -86,7 +86,7 @@
 +                    }
 +                    return cachedState;
 +                }
-+            // Canvas end
++            // Canvas end - optimize chunk unload
                  return state == INIT_STATE_INIT ? new SaveState(null, INIT_STATE_UNINIT) : null;
              } else {
                  return new SaveState(data.clone(), state);
@@ -126,7 +126,7 @@
 +                return false;
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - optimize chunk unload
  
          return true;
      }
@@ -152,7 +152,7 @@
 +            this.storageUpdating[i] = newValue;
 +            this.cachedIsAllZeroValid = false;
 +        }
-+        // Canvas end
++        // Canvas end - optimize chunk unload
      }
  
      public static final class SaveState {

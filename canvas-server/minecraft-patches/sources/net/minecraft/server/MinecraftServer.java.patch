@@ -29,7 +29,7 @@
 +            region.region.regioniser.world.moonrise$getChunkTaskScheduler().chunkHolderManager.close(true, false, false, false, false);
 +            this.getPlayerList().saveAll();
 +        }
-+        // Canvas end
++        // Canvas end - async save-all command
          // CraftBukkit start
          // Run tasks that are waiting on processing
          if (false) while (!this.processQueue.isEmpty()) { // Folia - region threading
@@ -86,7 +86,7 @@
 +                region.markClosed();
 +                continue;
 +            }
-+            // Canvas end
++            // Canvas end - fix world loading/unloading
              try {
                  serverLevel.tick(hasTimeLeft, region); // Folia - region threading
              } catch (Throwable var7) {
@@ -99,7 +99,7 @@
 +        ServerLevel serverLevel = this.levels.get(dimension);
 +        if (serverLevel != null && serverLevel.isUnloading) return null;
 +        return serverLevel;
-+        // Canvas end
++        // Canvas end - fix world loading/unloading
      }
  
      // CraftBukkit start

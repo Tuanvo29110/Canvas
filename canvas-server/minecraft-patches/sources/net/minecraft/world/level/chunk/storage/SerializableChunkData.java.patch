@@ -16,7 +16,7 @@
 +            // Pre-allocate with correct capacity to avoid resizing
 +            final int expectedSectionCount = maxLightSection - minLightSection + 1;
 +            List<SerializableChunkData.SectionData> list = new ArrayList<>(expectedSectionCount);
-+            // Canvas end
++            // Canvas end - optimize chunk unload
  
              final LevelChunkSection[] chunkSections = chunk.getSections();
              final ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray[] blockNibbles = ((ca.spottedleaf.moonrise.patches.starlight.chunk.StarlightChunk)chunk).starlight$getBlockNibbles();
@@ -35,7 +35,7 @@
 +                    skyDataLayer = new DataLayer(skyNibble.data);
 +                }
 +
-+                // Canvas end
++                // Canvas end - optimize chunk unload
                  final SerializableChunkData.SectionData sectionData = new SerializableChunkData.SectionData(
 -                    lightSection, chunkSection,
 -                    blockNibble == null ? null : (blockNibble.data == null ? null : new DataLayer(blockNibble.data)),
@@ -60,7 +60,7 @@
 +            List<CompoundTag> list1 = blockEntityCount > 0 ? new ArrayList<>(blockEntityCount) : java.util.Collections.emptyList();
  
 +            if (blockEntityCount > 0)
-+            // Canvas end
++            // Canvas end - optimize chunk unload
              for (BlockPos blockPos : chunk.getBlockEntitiesPos()) {
                  CompoundTag blockEntityNbtForSaving = chunk.getBlockEntityNbtForSaving(blockPos, level.registryAccess());
                  if (blockEntityNbtForSaving != null) {
@@ -84,7 +84,7 @@
 +                } else {
 +                    list2 = java.util.Collections.emptyList();
 +                }
-+            // Canvas end
++            // Canvas end - optimize chunk unload
                  CarvingMask carvingMask = protoChunk.getCarvingMask();
                  if (carvingMask != null) {
                      longs = carvingMask.toArray();
@@ -121,7 +121,7 @@
 +                    }
 +                }
 +            }
-+            // Canvas end
++            // Canvas end - optimize chunk unload - remove stream
              CompoundTag compoundTag = packStructureData(
                  StructurePieceSerializationContext.fromLevel(level), pos, chunk.getAllStarts(), chunk.getAllReferences()
              );

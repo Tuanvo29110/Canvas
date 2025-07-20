@@ -15,7 +15,7 @@
 +        }
 +
 +        return func;
-+        // Canvas end
++        // Canvas end - reduce worldgen allocations
      }
  
      private DensityFunction wrapNew(DensityFunction densityFunction) {

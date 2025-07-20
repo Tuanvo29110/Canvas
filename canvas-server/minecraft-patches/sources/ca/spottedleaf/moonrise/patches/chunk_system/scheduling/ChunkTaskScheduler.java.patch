@@ -29,7 +29,7 @@
 -    public final PrioritisedThreadPool.ExecutorGroup.ThreadPoolExecutor saveExecutor;
 +    public final io.canvasmc.canvas.chunk.TheChunkSystem.ExecutorGroup.ThreadPoolExecutor compressionExecutor;
 +    public final io.canvasmc.canvas.chunk.TheChunkSystem.ExecutorGroup.ThreadPoolExecutor saveExecutor;
-+    // Canvas end
++    // Canvas end - rewrite moonrise executor
  
      // Folia - regionised ticking
  
@@ -62,7 +62,7 @@
 -        this.saveExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(-1, MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
 +        this.compressionExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
 +        this.saveExecutor = MoonriseCommon.LOAD_GROUP.createExecutor(MoonriseCommon.WORKER_QUEUE_HOLD_TIME, 0);
-+        // Canvas end
++        // Canvas end - rewrite moonrise executor
          this.chunkHolderManager = new ChunkHolderManager(world, this);
      }
  

@@ -9,7 +9,7 @@
 +            this.trySearchForExit(level, pos);
 +            return null;
 +        }
-+        // Canvas end
++        // Canvas end - ensure tick thread
          if (this.exitPortal == null && level.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.END) { // CraftBukkit - work in alternate worlds
              BlockPos blockPos = findOrCreateValidTeleportPos(level, pos);
              blockPos = blockPos.above(10);

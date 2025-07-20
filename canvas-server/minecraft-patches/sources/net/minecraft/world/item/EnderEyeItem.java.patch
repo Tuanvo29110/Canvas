@@ -36,7 +36,7 @@
 +                        eyeOfEnder.life = Integer.MAX_VALUE - 100;
 +                    }
 +                });
-+                // Canvas end
++                // Canvas end - async locator
                  eyeOfEnder.setItem(itemInHand);
 -                eyeOfEnder.signalTo(Vec3.atLowerCornerOf(blockPos));
 +                // Canvas - async locator

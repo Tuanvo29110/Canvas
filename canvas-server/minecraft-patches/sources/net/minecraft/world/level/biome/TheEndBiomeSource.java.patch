@@ -33,7 +33,7 @@
 +    }
 +
 +    private Holder<Biome> getVanillaNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
-+    // Canvas end
++    // Canvas end - end biome cache
          int blockPosX = QuartPos.toBlock(x);
          int blockPosY = QuartPos.toBlock(y);
          int blockPosZ = QuartPos.toBlock(z);

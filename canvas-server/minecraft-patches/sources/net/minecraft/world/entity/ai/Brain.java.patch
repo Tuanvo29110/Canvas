@@ -13,7 +13,7 @@
 +    private final Map<Integer, Map<Activity, Set<BehaviorControl<? super E>>>> availableBehaviorsByPriority = new it.unimi.dsi.fastutil.objects.Object2ObjectRBTreeMap<>();
 +    public static final Map[] EMPTY_ARRAY = {};
 +    private Map<Activity, Set<BehaviorControl<? super E>>>[] availableBehaviorsByPriorityArray = EMPTY_ARRAY;
-+    // Canvas end
++    // Canvas end - optimized collection
      private Schedule schedule = Schedule.EMPTY;
 -    private final Map<Activity, Set<Pair<MemoryModuleType<?>, MemoryStatus>>> activityRequirements = Maps.newHashMap();
 -    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = Maps.newHashMap();
@@ -24,7 +24,7 @@
 +    private final Map<Activity, Set<MemoryModuleType<?>>> activityMemoriesToEraseWhenStopped = new io.canvasmc.canvas.util.map.ActivityArrayMap<>();
 +    private Set<Activity> coreActivities = new io.canvasmc.canvas.util.map.ActivityBitSet();
 +    private final Set<Activity> activeActivities = new io.canvasmc.canvas.util.map.ActivityBitSet();
-+    // Canvas end
++    // Canvas end - optimized collection
      private Activity defaultActivity = Activity.IDLE;
      private long lastScheduleUpdate = -9999L;
  
@@ -54,7 +54,7 @@
 +                        }
 +
 +                        return results.stream();
-+                        // Canvas end
++                        // Canvas end - remove streams
                      }
  
                      @Override
@@ -69,8 +69,8 @@
 +
 +                            result.serialize(ops, prefix);
 +                        }
-+                        // Canvas end
 +
++                        // Canvas end - remove streams
                          return prefix;
                      }
                  })

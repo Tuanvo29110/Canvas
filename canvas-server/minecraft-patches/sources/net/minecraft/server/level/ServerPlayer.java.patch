@@ -32,7 +32,7 @@
 +            this.exitEndCreditsCallback = null;
 +            return;
 +        }
-+        // Canvas end
++        // Canvas end - fix end credits
          this.respawn((player) -> {
              CriteriaTriggers.CHANGED_DIMENSION.trigger(player, Level.END, Level.OVERWORLD);
          }, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason.END_PORTAL, true);
@@ -76,7 +76,7 @@
 +            ServerPlayer.this.setYRot(spawnLocAtomic.get().getYaw());
 +            ServerPlayer.this.setYHeadRot(spawnLocAtomic.get().getYaw());
 +            ServerPlayer.this.setXRot(spawnLocAtomic.get().getPitch());
-+            // Canvas end
++            // Canvas end - fix events with region threading
              ServerPlayer.this.setDeltaMovement(Vec3.ZERO);
              // placeInAsync will update the world
  
@@ -108,7 +108,7 @@
 +                // event didn't modify location, run finalizer
 +                finalize.run();
 +            }
-+            // Canvas end
++            // Canvas end - fix events with region threading
          });
  
 +        Runnable finalizer = () -> { // Canvas - fix end credits
@@ -144,7 +144,7 @@
 +            // not displaying credits, run finalizer
 +            finalizer.run();
 +        }
-+        // Canvas end
++        // Canvas end - fix end credits
      }
  
      @Override
@@ -202,7 +202,7 @@
 +                this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0.0F));
 +                this.seenCredits = true; // mark seen the end credits
 +            }
-+            // Canvas end
++            // Canvas end - fix end credits
              return true;
          } else {
              return super.endPortalLogicAsync(portalPos);

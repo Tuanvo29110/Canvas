@@ -15,7 +15,7 @@
 +            // Canvas start - optimize entity/block ticking chunk lookups
 +            into.blockTickingChunkHolders.addAll(from.blockTickingChunkHolders);
 +            into.entityTickingChunkHolders.addAll(from.entityTickingChunkHolders);
-+            // Canvas end
++            // Canvas end - optimize entity/block ticking chunk lookups
          }
  
          @Override
@@ -30,7 +30,7 @@
 +                RegionizedWorldData into = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
 +                into.connections.add(conn);
 +                into.waypointManager.addPlayer(player);
-+                // Canvas end
++                // Canvas end - region threading - restore waypoints
              }
              // entities
              for (final ServerPlayer player : from.localPlayers) {
@@ -53,7 +53,7 @@
 +                    worldData.entityTickingChunkHolders.add(chunkKey);
 +                }
 +            }
-+            // Canvas end
++            // Canvas end - optimize entity/block ticking chunk lookups
          }
      };
  
@@ -71,7 +71,7 @@
  
      // entities
 -    private final List<ServerPlayer> localPlayers = new ArrayList<>();
-+    // this is copy on write to allow packet processing to iterate safely // Canvas - rewrite scheduler
++    // this is copy on write to allow packet processing to iterate safely
 +    private final java.util.concurrent.CopyOnWriteArrayList<ServerPlayer> localPlayers = new java.util.concurrent.CopyOnWriteArrayList<>(); // Canvas - rewrite scheduler
      private final NearbyPlayers nearbyPlayers;
      public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList();
@@ -92,7 +92,7 @@
      public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(64, 0.25f);
      public final PathTypeCache pathTypesByPosCache = new PathTypeCache();
 -    public final List<LevelChunk> temporaryChunkTickList = new java.util.ArrayList<>();
-+    // Canvas - optimize chunk collect
++    // Canvas - optimize chunk collect - remove 'temporaryChunkTickList'
      public final Set<ChunkHolder> chunkHoldersToBroadcast = new ReferenceLinkedOpenHashSet<>();
  
      // not transient
@@ -101,7 +101,7 @@
 +    // this is transient
 +    public it.unimi.dsi.fastutil.longs.LongSet slopeDistanceCacheVisited = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(512);
 +    public net.minecraft.world.level.material.FlowingFluid.SlopeDistanceNodeDeque slopeDistanceCacheQueue = new net.minecraft.world.level.material.FlowingFluid.SlopeDistanceNodeDeque();
-+    // Canvas end
++    // Canvas end - optimize fluid spread
  
      // Mob spawning
      public final ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<ServerPlayer> spawnChunkTracker = new ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<>();
@@ -136,7 +136,7 @@
 +    public void markNonEntityTickingIfPossible(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
 +        this.entityTickingChunkHolders.remove(newChunkHolder.getCachedLongPos());
 +    }
-+    // Canvas end
++    // Canvas end - optimize entity/block ticking chunk lookups
 +    public RegionizedWorldData(final ServerLevel world, final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData) { // Canvas - rewrite scheduler
          this.world = world;
          this.blockLevelTicks = new LevelTicks<>(world::isPositionTickingWithEntitiesLoaded, world, true);
@@ -164,7 +164,7 @@
 +        this.waypointManager.removePlayer(serverPlayer); // Canvas - region threading - restore waypoints
 +    }
 +
-+    // Canvas end
++    // Canvas end - rewrite tick scheduler
      // connections
      public void tickConnections() {
          final List<Connection> connections = new ArrayList<>(this.connections);
@@ -248,5 +248,5 @@
 +            this.worldData = worldData;
 +        }
 +    }
-+    // Canvas end
++    // Canvas end - expand region API
  }

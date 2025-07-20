@@ -191,7 +191,7 @@
 +            return q;
 +        }
 +
-+        // Canvas end
++        // Canvas end - optimize aquifer
          private static final int[][] SURFACE_SAMPLING_OFFSETS_IN_CHUNKS = new int[][]{
              {0, 0}, {-2, -1}, {-1, -1}, {0, -1}, {1, -1}, {-3, 0}, {-2, 0}, {-1, 0}, {1, 0}, {-2, 1}, {-1, 1}, {0, 1}, {1, 1}
          };
@@ -230,7 +230,7 @@
 +                    }
 +                }
 +            }
-+            // Canvas end
++            // Canvas end - optimize aquifer
          }
  
          private int getIndex(int gridX, int gridY, int gridZ) {
@@ -257,7 +257,7 @@
 +                    }
 +                }
 +            }
-+            // Canvas end
++            // Canvas end - optimize aquifer
              int i = context.blockX();
              int i1 = context.blockY();
              int i2 = context.blockZ();
@@ -284,11 +284,11 @@
 +                    return 2.0;
 +                }
 +            }
-+            // Canvas end
++            // Canvas end - optimize aquifer
              int i = context.blockY();
              BlockState blockState = firstFluid.at(i);
              BlockState blockState1 = secondFluid.at(i);
-@@ -351,6 +_,24 @@
+@@ -351,6 +_,25 @@
          }
  
          private Aquifer.FluidStatus getAquiferStatus(long packedPos) {
@@ -310,6 +310,7 @@
 +                    return fluidLevel2;
 +                }
 +            }
++            // Canvas end - optimize aquifer
              int x = BlockPos.getX(packedPos);
              int y = BlockPos.getY(packedPos);
              int z = BlockPos.getZ(packedPos);

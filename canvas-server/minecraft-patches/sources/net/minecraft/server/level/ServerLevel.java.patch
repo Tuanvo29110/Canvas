@@ -10,7 +10,7 @@
 +
 +        int simulationDistance = this.serverLevelData.distanceConfig.simulationDistanceOrDefault();
 +        this.chunkSource.setSimulationDistance(simulationDistance - 1);
-+        // Canvas end
++        // Canvas end - per world distance
      }
  
      // Folia start - region threading

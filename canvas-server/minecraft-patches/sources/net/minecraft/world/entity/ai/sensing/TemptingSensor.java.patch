@@ -24,7 +24,7 @@
 +            }
 +        }
 +
-+        // Canvas end
++        // Canvas end - remove streams
          if (!list.isEmpty()) {
 +            list.sort(Comparator.comparingDouble(entity::distanceToSqr)); // Canvas - remove streams
              Player player = list.get(0);

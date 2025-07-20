@@ -23,7 +23,7 @@
 +            list.add(serverPlayer);
 +        }
 +        list.sort(Comparator.comparingDouble(entity::distanceToSqr));
-+        // Canvas end
++        // Canvas end - remove streams
          Brain<?> brain = entity.getBrain();
          brain.setMemory(MemoryModuleType.NEAREST_PLAYERS, list);
 -        List<Player> list1 = list.stream().filter(player -> isEntityTargetable(level, entity, player)).collect(Collectors.toList());
@@ -34,7 +34,7 @@
 +                list1.add(player);
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - remove streams
          brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_PLAYER, list1.isEmpty() ? null : list1.get(0));
 -        List<Player> list2 = list1.stream().filter(player -> isEntityAttackable(level, entity, player)).toList();
 +        // Canvas start - remove streams
@@ -44,7 +44,7 @@
 +                list2.add(player);
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - remove streams
          brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYERS, list2);
          brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYER, list2.isEmpty() ? null : list2.get(0));
      }

@@ -14,7 +14,7 @@
 +        if (io.canvasmc.canvas.Config.INSTANCE.enableCachedMTBEntityTypeConvert && asBukkit != null) {
 +            return asBukkit;
 +        }
-+        // Canvas end
++        // Canvas end - cache minecraftToBukkit convert
          net.minecraft.core.Registry<net.minecraft.world.entity.EntityType<?>> registry = CraftRegistry.getMinecraftRegistry(Registries.ENTITY_TYPE);
          EntityType bukkit = Registry.ENTITY_TYPE.get(CraftNamespacedKey.fromMinecraft(registry.getResourceKey(minecraft).orElseThrow().location()));
  

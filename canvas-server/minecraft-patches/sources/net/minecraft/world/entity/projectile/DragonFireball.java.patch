@@ -13,7 +13,7 @@
 +                    }
 +                }
 +
-+                // Canvas end
++                // Canvas end - ensure entities are owned by this region
                  AreaEffectCloud areaEffectCloud = new AreaEffectCloud(this.level(), this.getX(), this.getY(), this.getZ());
                  Entity owner = this.getOwner();
                  if (owner instanceof LivingEntity) {

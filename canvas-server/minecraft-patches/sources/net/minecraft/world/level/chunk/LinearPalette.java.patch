@@ -7,7 +7,7 @@
 +    // Canvas start - optimize LinearPalette
 +    private final int[] byteSizes;
 +    private final int[] idCache; // Cached registry IDs for values
-+    // Canvas end
++    // Canvas end - optimize LinearPalette
      private final PaletteResize<T> resizeHandler;
      private final int bits;
      private int size;
@@ -18,7 +18,7 @@
 +        // Canvas start - optimize LinearPalette
 +        this.idCache = new int[1 << bits];
 +        this.byteSizes = new int[1 << bits]; // Initialize byteSizes
-+        // Canvas end
++        // Canvas end - optimize LinearPalette
          this.bits = bits;
          this.resizeHandler = resizeHandler;
          Validate.isTrue(values.size() <= this.values.length, "Can't initialize LinearPalette of size %d with %d entries", this.values.length, values.size());
@@ -31,7 +31,7 @@
 +            int id = registry.getId(value);
 +            this.idCache[i] = id;
 +            this.byteSizes[i] = VarInt.getByteSize(id); // Precompute byte size
-+            // Canvas end
++            // Canvas end - optimize LinearPalette
          }
  
          this.size = values.size();
@@ -50,7 +50,7 @@
 +        for (int i = 0; i < idCache.length; i++) {
 +            this.byteSizes[i] = VarInt.getByteSize(idCache[i]);
 +        }
-+        // Canvas end
++        // Canvas end - optimize LinearPalette
      }
  
      public static <A> Palette<A> create(int bits, IdMap<A> registry, PaletteResize<A> resizeHandler, List<A> values) {
@@ -62,7 +62,7 @@
 +            int id = registry.getId(state);
 +            this.idCache[ix] = id;
 +            this.byteSizes[ix] = VarInt.getByteSize(id); // Cache byte size
-+            // Canvas end
++            // Canvas end - optimize LinearPalette
              this.size++;
              return ix;
          } else {
@@ -76,7 +76,7 @@
 +            this.values[i] = this.registry.byIdOrThrow(id);
 +            this.idCache[i] = id;
 +            this.byteSizes[i] = VarInt.getByteSize(id); // Precompute during read
-+            // Canvas end
++            // Canvas end - optimize LinearPalette
          }
      }
  
@@ -100,7 +100,7 @@
 +        for (int i = 0; i < this.size; i++) {
 +            byteSize += this.byteSizes[i]; // Use cached byte sizes
          }
-+        // Canvas end
++        // Canvas end - optimize LinearPalette
  
          return byteSize;
      }
@@ -159,6 +159,6 @@
 +            this.bits,
 +            this.size
 +        );
-+        // Canvas end
++        // Canvas end - optimize LinearPalette
      }
  }

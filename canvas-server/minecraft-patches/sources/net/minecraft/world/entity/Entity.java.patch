@@ -17,7 +17,7 @@
 +            if (this instanceof net.minecraft.world.entity.LivingEntity livingEntity) {
 +                this.setSharedFlagOnFire(this.remainingFireTicks > 0 && (!io.canvasmc.canvas.Config.INSTANCE.entities.hideFlamesOnEntitiesWithFireResistance || !livingEntity.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE)));
 +            } else {
-+            // Canvas end
++            // Canvas end - hide flames on entities with fire resistance
              this.setSharedFlagOnFire(this.remainingFireTicks > 0);
 +            } // Canvas - hide flames on entities with fire resistance
          }
@@ -66,7 +66,7 @@
 +        pos = new Vec3(
 +            newLocation.getX(), newLocation.getY(), newLocation.getZ()
 +        );
-+        // Canvas end
++        // Canvas end - fix events with region threading
  
          // check for same region
          if (destination == this.level()) {

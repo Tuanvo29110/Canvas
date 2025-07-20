@@ -24,7 +24,7 @@
  
 -        return state.setValue(this.property, this.values.sample(random));
 +        return blockState.trySetValue(propertyLocal, Integer.valueOf(this.values.sample(random)));
-+        // Canvas end
++        // Canvas end - rewrite moonrise executor - threading fixes
      }
  
      @Nullable

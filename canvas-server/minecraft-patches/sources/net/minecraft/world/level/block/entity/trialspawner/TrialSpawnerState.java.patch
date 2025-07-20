@@ -29,7 +29,7 @@
 +                list.add(player);
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - remove streams
          if (list.isEmpty()) {
              return Optional.empty();
          } else {
@@ -67,7 +67,7 @@
 +                return player.size() == 1 ? player.getFirst() : Util.getRandom(player, level.random);
 +            }
          }
-+        // Canvas end
++        // Canvas end - remove streams
      }
  
      private boolean timeToSpawnItemSpawner(ServerLevel level, TrialSpawnerStateData data) {

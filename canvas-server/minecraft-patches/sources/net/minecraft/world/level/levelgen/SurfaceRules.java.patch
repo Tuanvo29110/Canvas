@@ -14,7 +14,7 @@
 +                this.biome = getter = new io.canvasmc.canvas.util.PositionalBiomeGetter(this.biomeGetter, this.pos);
 +            }
 +            ((io.canvasmc.canvas.util.PositionalBiomeGetter) getter).update(blockX, blockY, blockZ);
-+            // Canvas end
++            // Canvas end - reduce worldgen allocations
              this.blockY = blockY;
              this.waterHeight = waterHeight;
              this.stoneDepthBelow = stoneDepthBelow;
@@ -30,7 +30,7 @@
 +            //noinspection ForLoopReplaceableByForEach
 +            for (int i = 0; i < size; i++) {
 +                BlockState blockState = this.rules.get(i).tryApply(x, y, z);
-+            // Canvas end
++            // Canvas end - reduce worldgen allocations
                  if (blockState != null) {
                      return blockState;
                  }

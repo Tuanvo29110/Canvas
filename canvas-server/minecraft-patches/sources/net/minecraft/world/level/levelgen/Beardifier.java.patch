@@ -13,7 +13,7 @@
 +        this.junctionArray = com.google.common.collect.Iterators.toArray(this.junctionIterator, JigsawJunction.class);
 +        this.junctionIterator.back(Integer.MAX_VALUE);
 +    }
-+    // Canvas end
++    // Canvas end - optimize beardifier
  
      public static Beardifier forStructuresInChunk(StructureManager structureManager, ChunkPos chunkPos) {
          int minBlockX = chunkPos.getMinBlockX();
@@ -58,7 +58,7 @@
 +
 +            return d;
 +        }
-+        // Canvas end
++        // Canvas end - optimize beardifier
          int i = context.blockX();
          int i1 = context.blockY();
          int i2 = context.blockZ();

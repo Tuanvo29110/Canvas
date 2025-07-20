@@ -8,7 +8,7 @@
 +    default Holder<Biome> getBiomeCached(@Nullable net.minecraft.world.level.chunk.LevelChunk chunk, BlockPos pos) {
 +        return this.getBiomeManager().getBiomeCached(chunk, pos);
 +    }
-+    // Canvas end
++    // Canvas end - cache getBiome
 +
      default Stream<BlockState> getBlockStatesIfLoaded(AABB aabb) {
          int floor = Mth.floor(aabb.minX);

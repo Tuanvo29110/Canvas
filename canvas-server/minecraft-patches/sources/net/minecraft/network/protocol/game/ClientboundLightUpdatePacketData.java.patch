@@ -26,7 +26,7 @@
 +    private final byte[][] blockUpdates;
 +    private final int skyUpdateCount;
 +    private final int blockUpdateCount;
-+    // Canvas end
++    // Canvas end - rewrite ClientboundLightUpdatePacketData
  
      public ClientboundLightUpdatePacketData(ChunkPos chunkPos, LevelLightEngine lightEngine, @Nullable BitSet skyLight, @Nullable BitSet blockLight) {
 -        this.skyYMask = new BitSet();
@@ -124,7 +124,7 @@
 +
 +        this.skyUpdateCount = skyCount;
 +        this.blockUpdateCount = blockCount;
-+        // Canvas end
++        // Canvas end - rewrite ClientboundLightUpdatePacketData
      }
  
      public ClientboundLightUpdatePacketData(FriendlyByteBuf buffer, int x, int z) {
@@ -157,7 +157,7 @@
 +
 +        this.skyUpdateCount = skySize;
 +        this.blockUpdateCount = blockSize;
-+        // Canvas end
++        // Canvas end - rewrite ClientboundLightUpdatePacketData
      }
  
      public void write(FriendlyByteBuf buffer) {
@@ -204,7 +204,7 @@
 +        } else {
 +            buffer.writeVarInt(0);
 +        }
-+        // Canvas end
++        // Canvas end - rewrite ClientboundLightUpdatePacketData
      }
  
      public BitSet getSkyYMask() {

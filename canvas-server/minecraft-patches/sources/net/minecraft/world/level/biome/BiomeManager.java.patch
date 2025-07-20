@@ -8,7 +8,7 @@
 +    // Canvas start - cache getBiome
 +    private final Holder<Biome>[] biomeCache;
 +    private final long[] biomeCachePos;
-+    // Canvas end
++    // Canvas end - cache getBiome
  
      public BiomeManager(BiomeManager.NoiseBiomeSource noiseBiomeSource, long biomeZoomSeed) {
          this.noiseBiomeSource = noiseBiomeSource;
@@ -21,7 +21,7 @@
 +            biomeCache = null;
 +            biomeCachePos = null;
 +        }
-+        // Canvas end
++        // Canvas end - cache getBiome
      }
  
      public static long obfuscateSeed(long seed) {
@@ -125,9 +125,9 @@
 +            return chunk.getNoiseBiome(x1, y1, z1);
 +        }
 +        return this.noiseBiomeSource.getNoiseBiome(x1, y1, z1);
-+        // Canvas end
++        // Canvas end - optimize getBiome
 +    }
-+    // Canvas end
++    // Canvas end - cache getBiome
 +
      public Holder<Biome> getBiome(BlockPos pos) {
 -        int i = pos.getX() - 2;
@@ -221,7 +221,7 @@
 +            (smallestX & 2) == 0 ? y : y + 1,
 +            (smallestX & 1) == 0 ? z : z + 1
 +        );
-+        // Canvas end
++        // Canvas end - optimize getBiome
      }
  
      public Holder<Biome> getNoiseBiomeAtPosition(double x, double y, double z) {
@@ -242,7 +242,7 @@
 +        return FIDDLE_TABLE[(int)(seed >>> 24) & 1023];
 +        //return (double)(((seed >> 24) & (1024 - 1)) - (1024/2)) * (0.9 / 1024.0); // Paper - avoid floorMod, fp division, and fp subtraction
      }
-+    // Canvas end
++    // Canvas end - optimize getBiome
  
      public interface NoiseBiomeSource {
          Holder<Biome> getNoiseBiome(int x, int y, int z);

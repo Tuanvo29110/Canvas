@@ -8,7 +8,7 @@
 +        if (!level.hasChunkAt(pos)) {
 +            return false;
 +        }
-+        // Canvas end
++        // Canvas end - fix folia issues
          return level.getBlockState(pos).is(BlockTags.BEDS);
      }
  

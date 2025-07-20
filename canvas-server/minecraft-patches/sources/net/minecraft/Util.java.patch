@@ -18,7 +18,7 @@
 +        return sequence(futures, false);
 +    }
 +    public static <V> CompletableFuture<List<V>> sequence(List<? extends CompletableFuture<V>> futures, boolean useFaster) {
-+    // Canvas end
++    // Canvas end - faster sequencing of futures for chunk structure gen
          if (futures.isEmpty()) {
              return CompletableFuture.completedFuture(List.of());
          } else if (futures.size() == 1) {
@@ -44,7 +44,7 @@
 +                }
 +            ));
 +    }
-+    // Canvas end
++    // Canvas end - faster sequencing of futures for chunk structure gen
  
      public static <V> CompletableFuture<List<V>> sequenceFailFast(List<? extends CompletableFuture<? extends V>> completableFutures) {
          CompletableFuture<List<V>> completableFuture = new CompletableFuture<>();

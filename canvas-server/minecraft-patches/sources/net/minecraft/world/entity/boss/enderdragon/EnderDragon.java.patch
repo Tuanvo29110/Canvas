@@ -38,7 +38,7 @@
 +                    if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.level(), BlockPos.containing(neckBox.getCenter()))) {
 +                        this.hurt(serverLevel2, serverLevel2.getEntities(this, neckBox, EntitySelector.NO_CREATIVE_OR_SPECTATOR));
 +                    }
-+                    // Canvas end
++                    // Canvas end - ensure each body part is within the running region for knockback and hurt to avoid thread ownership issues
                  }
  
                  float sin2 = Mth.sin(this.getYRot() * (float) (Math.PI / 180.0) - this.yRotA * 0.01F);

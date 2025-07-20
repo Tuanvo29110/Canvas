@@ -44,5 +44,5 @@
 +        }
 +    }
 +
-+    // Canvas end
++    // Canvas end - faster chunk serialization
  }

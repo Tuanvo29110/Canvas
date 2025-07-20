@@ -34,7 +34,7 @@
 +        }
 +
 +        return closestSection;
-+        // Canvas end
++        // Canvas end - remove streams
      }
  
      public static boolean isWithinAttackRange(Mob mob, LivingEntity target, int cooldown) {

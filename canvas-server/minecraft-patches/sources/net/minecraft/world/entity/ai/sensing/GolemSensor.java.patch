@@ -13,7 +13,7 @@
 +                    break;
 +                }
 +            }
-+            // Canvas end
++            // Canvas end - remove streams
              if (flag) {
                  golemDetected(livingEntity);
              }

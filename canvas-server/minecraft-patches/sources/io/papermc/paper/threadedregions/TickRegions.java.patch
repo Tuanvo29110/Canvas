@@ -19,7 +19,7 @@
 +
 +    public static void start() {
 +        final GlobalConfiguration.ThreadedRegions config = GlobalConfiguration.get().threadedRegions;
-+    // Canvas end
++    // Canvas end - rewrite scheduler
          int tickThreads;
          if (config.threads <= 0) {
              tickThreads = Runtime.getRuntime().availableProcessors() / 2;
@@ -90,7 +90,7 @@
 +            TickRegions.getScheduler().setHasTasks(this.tickHandle);
 +        }
 +
-+        // Canvas end
++        // Canvas end - rewrite scheduler
          public RegionStats getRegionStats() {
              return this.regionStats;
          }
@@ -121,7 +121,7 @@
 +                if (this.hasPackets.getOpaque()) {
 +                    data.hasPackets.setOpaque(true);
 +                }
-+                // Canvas end
++                // Canvas end - rewrite scheduler
              }
  
              // generic regionised data
@@ -134,7 +134,7 @@
 +            if (this.hasPackets.getOpaque()) {
 +                data.hasPackets.setOpaque(true);
 +            }
-+            // Canvas end
++            // Canvas end - rewrite scheduler
  
              // generic regionised data
              final long fromTickOffset = currentTickTo - currentTickFrom; // see merge jd
@@ -149,7 +149,7 @@
 +        public void markClosed() {
 +            this.isClosed = true;
 +        }
-+        // Canvas end
++        // Canvas end - fix world loading/unloading
      }
  
      public static final class ConcreteRegionTickHandle extends TickRegionScheduler.RegionScheduleHandle { // Folia - watchdog
@@ -212,7 +212,7 @@
 +
 +                processedChunkTask |= executeChunkTask;
              } while ((executeChunkTask | executeTickTask) && canContinue.getAsBoolean());
-+            // Canvas end
++            // Canvas end - rewrite scheduler
  
              if (processedChunkTask) {
                  // if we processed any chunk tasks, try to process ticket level updates for full status changes

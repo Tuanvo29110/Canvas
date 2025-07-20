@@ -18,7 +18,7 @@
 +        // Null out the slot at 'endIndex'.
 +        // If 'index == endIndex', this was the slot of the removed element.
 +        // If 'index != endIndex', this was the original slot of the moved element 'end'.
-+        // Canvas end
++        // Canvas end - optimize ref list
          this.references[endIndex] = null;
  
          return true;

@@ -4,7 +4,7 @@
      public final double yo;
      public final double zo;
  
-+    // Canvas start
++    // Canvas start - inline math & small optimization: remove frequent type conversions and redundant ops
 +    private static final double[] FLAT_SIMPLEX_GRAD = new double[]{
 +        1, 1, 0, 0,
 +        -1, 1, 0, 0,
@@ -23,7 +23,7 @@
 +        -1, 1, 0, 0,
 +        0, -1, -1, 0,
 +    };
-+    // Canvas end
++    // Canvas end - inline math & small optimization: remove frequent type conversions and redundant ops
 +
      public ImprovedNoise(RandomSource random) {
          this.xo = random.nextDouble() * 256.0;
@@ -39,7 +39,7 @@
 +        double floor = Math.floor(d);
 +        double floor1 = Math.floor(d1);
 +        double floor2 = Math.floor(d2);
-+        // Canvas end
++        // Canvas end - optimize: remove frequent type conversions
          double d3 = d - floor;
          double d4 = d1 - floor1;
          double d5 = d2 - floor2;
@@ -68,7 +68,7 @@
 +        double floor = Math.floor(d);
 +        double floor1 = Math.floor(d1);
 +        double floor2 = Math.floor(d2);
-+        // Canvas end
++        // Canvas end - optimize: remove frequent type conversions
          double d3 = d - floor;
          double d4 = d1 - floor1;
          double d5 = d2 - floor2;
@@ -161,7 +161,7 @@
 +        final double var120 = var113 + var118;
 +        final double var121 = var115 + var119;
 +        return var120 + (var103 * (var121 - var120));
-+        // Canvas end
++        // Canvas end - inline math & small optimization: remove frequent type conversions and redundant ops
      }
  
      private double sampleWithDerivative(int gridX, int gridY, int gridZ, double deltaX, double deltaY, double deltaZ, double[] noiseValues) {

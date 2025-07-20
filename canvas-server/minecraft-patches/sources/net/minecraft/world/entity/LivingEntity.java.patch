@@ -19,7 +19,7 @@
 +                list.add(effect.getParticleOptions());
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - remove streams
          this.entityData.set(DATA_EFFECT_PARTICLES, list);
 -        this.entityData.set(DATA_EFFECT_AMBIENCE_ID, areAllEffectsAmbient(this.activeEffects.values()));
 +        this.entityData.set(DATA_EFFECT_AMBIENCE_ID, areAllEffectsAmbient(effectsValues)); // Canvas - optimized collection

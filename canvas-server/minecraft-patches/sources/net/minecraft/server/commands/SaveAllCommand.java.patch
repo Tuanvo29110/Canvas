@@ -20,6 +20,6 @@
          }
 +        source.sendSuccess(() -> Component.literal("Marked all running regions for save asynchronously"), true);
 +        return 1;
-+        // Canvas end
++        // Canvas end - fix commands with region threading
      }
  }

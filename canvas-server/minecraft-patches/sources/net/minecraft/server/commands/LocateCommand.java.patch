@@ -32,7 +32,7 @@
 +
 +            return 0;
 +        }
-+        // Canvas end
++        // Canvas end - async locator
          Pair<BlockPos, Holder<Structure>> pair = level.getChunkSource().getGenerator().findNearestMapStructure(level, holderSet, blockPos, 100, false);
          stopwatch.stop();
          if (pair == null) {

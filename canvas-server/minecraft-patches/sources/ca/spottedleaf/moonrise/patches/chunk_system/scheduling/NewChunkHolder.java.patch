@@ -10,7 +10,7 @@
 +    public long getCachedLongPos() {
 +        return cachedLongPos;
 +    }
-+    // Canvas end
++    // Canvas end - optimize entity/block ticking chunk lookups
  
      // load/unload state
  
@@ -37,7 +37,7 @@
 +        } else {
 +            this.world.getCurrentWorldData().markNonEntityTickingIfPossible(this);
 +        }
-+        // Canvas end
++        // Canvas end - optimize entity/block ticking chunk lookups
      }
  
      // only to be called on the main thread, no locks need to be held

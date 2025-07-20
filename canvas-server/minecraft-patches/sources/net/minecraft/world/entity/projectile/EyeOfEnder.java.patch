@@ -16,7 +16,7 @@
 +        if (this.asyncLocator$locateTaskOngoing) {
 +            return;
 +        }
-+        // Canvas end
++        // Canvas end - async locator
          Vec3 vec3 = this.position().add(this.getDeltaMovement());
          if (!this.level().isClientSide() && this.target != null) {
              this.setDeltaMovement(updateDeltaMovement(this.getDeltaMovement(), vec3, this.target));

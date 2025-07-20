@@ -47,7 +47,7 @@
 +        }
 +    }
 +
-+    // Canvas end
++    // Canvas end - bulk writes to writeLongArray during chunk loading
      public long[] readLongArray() {
          return readLongArray(this);
      }

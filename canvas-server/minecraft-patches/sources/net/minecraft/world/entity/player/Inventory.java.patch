@@ -5,7 +5,7 @@
          }
  
 -        for (EquipmentSlot equipmentSlot : EQUIPMENT_SLOT_MAPPING.values()) {
-+        // Canvas start - remove streams
++        // Canvas start - optimized iterators
 +        for (EquipmentSlot equipmentSlot : EQUIPMENT_SLOTS_SORTED_BY_INDEX) {
              ItemStack itemStack = this.equipment.get(equipmentSlot);
              if (itemStack == stack) {
@@ -13,7 +13,7 @@
                  return;
              }
          }
-+        // Canvas end
++        // Canvas end - optimized iterators
      }
  
      @Override
@@ -22,7 +22,7 @@
      @Override
      public boolean isEmpty() {
 -        for (ItemStack itemStack : this.items) {
-+        // Canvas start - remove streams
++        // Canvas start - optimized iterators
 +        for (int i = 0; i < this.items.size(); i++) {
 +            ItemStack itemStack = this.items.get(i);
              if (!itemStack.isEmpty()) {
@@ -36,7 +36,7 @@
                  return false;
              }
          }
-+        // Canvas end
++        // Canvas end - optimized iterators
  
          return true;
      }
@@ -49,7 +49,7 @@
 -                return true;
 -            }
 -        }
-+        // Canvas start - remove streams
++        // Canvas start - optimized iterators
 +        for (int i = 0; i < this.items.size(); i++) {
 +            ItemStack itemStack = this.items.get(i);
 +            if (!itemStack.isEmpty() && ItemStack.isSameItemSameComponents(itemStack, stack)) {
@@ -62,7 +62,7 @@
 +                return true;
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - optimized iterators
  
          return false;
      }
@@ -73,7 +73,7 @@
 -                return true;
 -            }
 -        }
-+        // Canvas start - remove streams
++        // Canvas start - optimized iterators
 +        for (int i = 0; i < this.items.size(); i++) {
 +            ItemStack itemStack = this.items.get(i);
 +            if (!itemStack.isEmpty() && itemStack.is(tag)) {
@@ -86,7 +86,7 @@
 +                return true;
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - optimized iterators
  
          return false;
      }
@@ -97,7 +97,7 @@
 -                return true;
 -            }
 -        }
-+        // Canvas start - remove streams
++        // Canvas start - optimized iterators
 +        for (int i = 0; i < this.items.size(); i++) {
 +            ItemStack itemStack = this.items.get(i);
 +            if (predicate.test(itemStack)) {
@@ -110,7 +110,7 @@
 +                return true;
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - optimized iterators
  
          return false;
      }
@@ -119,12 +119,12 @@
  
      public void fillStackedContents(StackedItemContents contents) {
 -        for (ItemStack itemStack : this.items) {
-+        // Canvas start - remove streams
++        // Canvas start - optimized iterators
 +        for (int i = 0; i < this.items.size(); i++) {
 +            ItemStack itemStack = this.items.get(i);
              contents.accountSimpleStack(itemStack);
          }
-+        // Canvas end
++        // Canvas end - optimized iterators
      }
  
      public ItemStack removeFromSelected(boolean removeStack) {

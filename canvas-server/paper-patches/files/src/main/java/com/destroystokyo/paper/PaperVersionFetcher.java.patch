@@ -35,7 +35,7 @@
              case DISTANCE_ERROR -> text("Error obtaining version information", NamedTextColor.YELLOW);
              case 0 -> text("You are running the latest version", NamedTextColor.GREEN);
              case DISTANCE_UNKNOWN -> text("Unknown version", NamedTextColor.YELLOW);
-@@ -85,19 +_,13 @@
+@@ -85,19 +_,15 @@
  
      private static int fetchDistanceFromSiteApi(final ServerBuildInfo build, final int jenkinsBuild) {
          try {
@@ -52,6 +52,7 @@
 -                return latest - jenkinsBuild;
 -            } catch (final JsonSyntaxException ex) {
 -                LOGGER.error("Error parsing json from Paper's downloads API", ex);
++            // Canvas start - Rebrand
 +            final String jenkinsApiUrl = "https://jenkins.canvasmc.io/job/Canvas/lastSuccessfulBuild/api/json";
 +            try (final BufferedReader reader = Resources.asCharSource(URI.create(jenkinsApiUrl).toURL(), StandardCharsets.UTF_8).openBufferedStream()) {
 +                final JsonObject jsonObject = new Gson().fromJson(reader, JsonObject.class);
@@ -59,6 +60,7 @@
 +                return latestBuild - jenkinsBuild;
 +            } catch (JsonSyntaxException throwable) {
 +                LOGGER.error("Error parsing version information from CanvasMC's Jenkins API", throwable);
++            // Canvas end - Rebrand
                  return DISTANCE_ERROR;
              }
          } catch (final IOException e) {

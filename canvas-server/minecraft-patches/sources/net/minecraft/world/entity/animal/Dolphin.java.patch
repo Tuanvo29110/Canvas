@@ -7,7 +7,7 @@
 +        // Canvas start - async locator
 +        @Nullable
 +        private io.canvasmc.canvas.chunk.structure.AsyncLocator.LocateTask<?> asyncLocator$locateTask;
-+        // Canvas end
++        // Canvas end - async locator
  
          DolphinSwimToTreasureGoal(Dolphin dolphin) {
              this.dolphin = dolphin;
@@ -19,7 +19,7 @@
 +            if (this.asyncLocator$locateTask != null) {
 +                return true;
 +            }
-+            // Canvas end
++            // Canvas end - async locator
              BlockPos blockPos = this.dolphin.treasurePos;
              return blockPos != null
                  && !BlockPos.containing(blockPos.getX(), this.dolphin.getY(), blockPos.getZ()).closerToCenterThan(this.dolphin.position(), 4.0)
@@ -43,7 +43,7 @@
 +
 +                    return;
 +                }
-+                // Canvas end
++                // Canvas end - async locator
                  BlockPos blockPos1 = serverLevel.findNearestMapStructure(StructureTags.DOLPHIN_LOCATED, blockPos, 50, false);
                  if (blockPos1 != null) {
                      this.dolphin.treasurePos = blockPos1;
@@ -56,7 +56,7 @@
 +                this.asyncLocator$locateTask.cancel();
 +                this.asyncLocator$locateTask = null;
 +            }
-+            // Canvas end
++            // Canvas end - async locator
              BlockPos blockPos = this.dolphin.treasurePos;
              if (blockPos == null
                  || BlockPos.containing(blockPos.getX(), this.dolphin.getY(), blockPos.getZ()).closerToCenterThan(this.dolphin.position(), 4.0)
@@ -68,7 +68,7 @@
 +            if (this.asyncLocator$locateTask != null) {
 +                return;
 +            }
-+            // Canvas end
++            // Canvas end - async locator
              if (this.dolphin.treasurePos != null) {
                  Level level = this.dolphin.level();
                  if (this.dolphin.closeToNextPos() || this.dolphin.getNavigation().isDone()) {

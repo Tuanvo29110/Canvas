@@ -25,7 +25,7 @@
 +
 +    public void setThreads(final int threads) {
 +        this.scheduler.setCoreThreads(threads);
-+    // Canvas end
++    // Canvas end - rewrite scheduler
      }
  
      public int getTotalThreadCount() {
@@ -76,7 +76,7 @@
 +        }
 +
 +        return this.scheduler.join(maxWaitNS == 0L ? 0L : Math.max(1L, TimeUnit.NANOSECONDS.toMillis(maxWaitNS)));
-+        // Canvas end
++        // Canvas end - rewrite scheduler
      }
  
      void dumpAliveThreadTraces(final String reason) {

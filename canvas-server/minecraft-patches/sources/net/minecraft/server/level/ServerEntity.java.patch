@@ -17,7 +17,7 @@
 +                    list.add(entity.getUUID());
 +                }
 +            }
-+            // Canvas end
++            // Canvas end - remove streams
              this.broadcastWithIgnore.accept(new ClientboundSetPassengersPacket(this.entity), list);
              // Paper start - Allow riding players
              if (this.entity instanceof ServerPlayer player) {
@@ -56,7 +56,7 @@
 +                    if (io.canvasmc.canvas.Config.INSTANCE.entities.reduceUselessMovePackets && isUselessMoveEntityPacket(packet)) {
 +                        packet = null;
 +                    }
-+                // Canvas end
++                // Canvas end - reduce useless move packets
                  }
  
                  if (this.entity.hasImpulse || this.trackDelta || this.entity instanceof LivingEntity && ((LivingEntity)this.entity).isFallFlying()) {
@@ -96,7 +96,7 @@
 +            default -> false;
 +        };
 +    }
-+    // Canvas end
++    // Canvas end - reduce useless move packets
  
      private Stream<Entity> mountedOrDismounted(List<Entity> entities) {
          return Streams.concat(

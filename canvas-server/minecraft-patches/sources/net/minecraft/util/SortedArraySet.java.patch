@@ -73,7 +73,7 @@
 +        return -(low + 1);
 +    }
 +
-+    // Canvas end
++    // Canvas end - Improve sorting in SortedArraySet
      private static int getInsertionPosition(int index) {
          return -index - 1;
      }

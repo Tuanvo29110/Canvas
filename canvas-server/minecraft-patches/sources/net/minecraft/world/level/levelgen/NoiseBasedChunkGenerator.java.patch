@@ -12,7 +12,7 @@
 +
 +                return chunkWithNoise;
 +            }
-+            // Canvas end
++            // Canvas end - optimize noise gen
              int sectionIndex = chunk.getSectionIndex(i1 * noiseSettings.getCellHeight() - 1 + minY);
              int sectionIndex1 = chunk.getSectionIndex(minY);
              Set<LevelChunkSection> set = Sets.newHashSet();
@@ -24,7 +24,7 @@
 +                                    // Canvas start - optimize noise gen
 +                                    if (!io.canvasmc.canvas.Config.INSTANCE.chunks.optimizeNoiseGeneration) section.setBlockState(i11, i8, i14, interpolatedState, false);
 +                                    else populateNoiseWrapSetBlockStateOperation(section, i11, i8, i14, interpolatedState, false);
-+                                    // Canvas end
++                                    // Canvas end - optimize noise gen
                                      heightmapUnprimed.update(i11, i7, i14, interpolatedState);
                                      heightmapUnprimed1.update(i11, i7, i14, interpolatedState);
                                      if (aquifer.shouldScheduleFluidUpdate() && !interpolatedState.getFluidState().isEmpty()) {
@@ -53,7 +53,7 @@
 +
 +        return blockState;
 +    }
-+    // Canvas end
++    // Canvas end - optimize noise gen
  
      private BlockState debugPreliminarySurfaceLevel(NoiseChunk chunk, int x, int y, int z, BlockState state) {
          return state;

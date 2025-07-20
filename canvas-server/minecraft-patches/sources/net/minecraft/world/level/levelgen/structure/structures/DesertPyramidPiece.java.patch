@@ -17,7 +17,7 @@
 +            }
 +        }
 +    }
-+    // Canvas end
++    // Canvas end - rewrite moonrise executor - fix threading issues
  
      public DesertPyramidPiece(RandomSource random, int x, int z) {
          super(StructurePieceType.DESERT_PYRAMID_PIECE, x, 64, z, 21, 15, 21, getRandomHorizontalDirection(random));
@@ -36,7 +36,7 @@
 +        this.hasPlacedChestAtomic.set(2, tag.getBooleanOr("hasPlacedChest2", false));
 +        this.hasPlacedChestAtomic.set(3, tag.getBooleanOr("hasPlacedChest3", false));
 +        onInit();
-+        // Canvas end
++        // Canvas end - rewrite moonrise executor - fix threading issues
      }
  
      @Override
@@ -51,7 +51,7 @@
 +        tag.putBoolean("hasPlacedChest1", this.hasPlacedChestAtomic.get(1));
 +        tag.putBoolean("hasPlacedChest2", this.hasPlacedChestAtomic.get(2));
 +        tag.putBoolean("hasPlacedChest3", this.hasPlacedChestAtomic.get(3));
-+        // Canvas end
++        // Canvas end - rewrite moonrise executor - fix threading issues
      }
  
      @Override

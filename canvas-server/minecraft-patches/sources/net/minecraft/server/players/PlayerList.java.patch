@@ -46,7 +46,7 @@
 +                if (!distanceConfig.isViewDistanceOverridden()) {
 +                    serverLevel.getChunkSource().setViewDistance(viewDistance);
 +                }
-+                // Canvas end
++                // Canvas end - per world distance
              }
          }
      }
@@ -60,7 +60,7 @@
 +                if (!distanceConfig.isSimulationDistanceOverridden()) {
 +                    serverLevel.getChunkSource().setSimulationDistance(simulationDistance);
 +                }
-+                // Canvas end
++                // Canvas end - per world distance
              }
          }
      }

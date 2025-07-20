@@ -31,7 +31,7 @@
 +            // LOGGER.info(String.format("Eliminated %d/%d (%.2f%%) post processing fluids in chunk %s", eliminated, total, eliminated / (double) total * 100.0, this.chunkPos));
 +        }
 +        boolean disabled = postProcessingMode.equals(io.canvasmc.canvas.chunk.FluidPostProcessingMode.DISABLED);
-+        // Canvas end
++        // Canvas end - optimize post process generation
          for (int i = 0; i < this.postProcessing.length; i++) {
              if (this.postProcessing[i] != null) {
                  for (Short _short : this.postProcessing[i]) {
@@ -45,7 +45,7 @@
 +                        if (io.canvasmc.canvas.Config.INSTANCE.chunks.fluidPostProcessingToScheduledTick) {
 +                            level.scheduleTick(blockPos, fluidState.getType(), 1);
 +                        } else fluidState.tick(level, blockPos, blockState);
-+                    // Canvas end
++                    // Canvas end - optimize post process generation
                      }
  
                      if (!(blockState.getBlock() instanceof LiquidBlock)) {

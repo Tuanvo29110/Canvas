@@ -14,7 +14,7 @@
 +            }, null, 0L);
 +            return;
 +        }
-+        // Canvas end
++        // Canvas end - region threading - restore waypoints
          level.getWaypointManager().untrackWaypoint(waypoint);
          mutator.accept(waypoint.waypointIcon());
          level.getWaypointManager().trackWaypoint(waypoint);

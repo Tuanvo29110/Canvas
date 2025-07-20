@@ -19,7 +19,7 @@
 +        };
 +    }
 +
-+    // Canvas end
++    // Canvas end - faster chunk serialization
      private static final int MIN_PALETTE_BITS = 0;
      private final PaletteResize<T> dummyPaletteResize = (bits, objectAdded) -> 0;
      public final IdMap<T> registry;
@@ -91,7 +91,7 @@
  
 -        return var12;
 +        return new PalettedContainerRO.PackedData<>(elements, data);
-+        // Canvas end
++        // Canvas end - faster chunk serialization
      }
  
      private static <T> void swapPalette(int[] bits, IntUnaryOperator operator) {
@@ -132,7 +132,7 @@
 +                countConsumer.accept(obj, counts[i]);
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - faster chunk serialization
      }
  
      record Configuration<T>(Palette.Factory factory, int bits) {

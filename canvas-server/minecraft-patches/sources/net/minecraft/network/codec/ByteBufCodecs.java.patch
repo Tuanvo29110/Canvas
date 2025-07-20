@@ -13,7 +13,7 @@
 +                    Utf8String.write(buffer, string, 32767);
 +                    return;
 +                }
-+                // Canvas end
++                // Canvas end - no chat reports
                  String string = GSON.toJson(value);
                  Utf8String.write(buffer, string, maxLength);
              }
@@ -32,7 +32,7 @@
 +
 +                return version.has("name") && version.has("protocol");
 +            }
-+            // Canvas end
++            // Canvas end - no chat reports
          };
      }
  }

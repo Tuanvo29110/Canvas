@@ -21,7 +21,7 @@
 +        BlockState blockState = pathRegion.getBlockState(belowPos);
 +
 +        return blockState.isAir() ? vec.y : WalkNodeEvaluator.getFloorLevel(this.level, blockPos);
-+        // Canvas end
++        // Canvas end - fix folia issues
      }
  
      protected void followThePath() {

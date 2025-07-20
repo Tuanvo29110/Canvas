@@ -35,7 +35,7 @@
 +            }
 +        }
 +        // this.console.initWorld(serverLevel, primaryLevelData, primaryLevelData, primaryLevelData.worldGenOptions());
-+        // Canvas end
++        // Canvas end - fix world loading/unloading
  
          serverLevel.setSpawnSettings(true);
          // Paper - Put world into worldlist before initing the world; move up
@@ -71,7 +71,7 @@
 -            io.papermc.paper.FeatureHooks.closeEntityManager(handle, save); // SPIGOT-6722: close entityManager // Paper - chunk system
 -            handle.levelStorageAccess.close();
 +            // moved to global tick
-+            // Canvas end
++            // Canvas end - fix world loading/unloading
          } catch (Exception ex) {
              this.getLogger().log(Level.SEVERE, null, ex);
          }
@@ -124,7 +124,7 @@
 +            return regionizedWorldData.apiHandle;
 +        }
 +    }
-+    // Canvas end
++    // Canvas end - expand region api
  
      private static double[] getTPSFromRegion(ServerLevel world, int chunkX, int chunkZ) {
          io.papermc.paper.threadedregions.ThreadedRegionizer.ThreadedRegion<io.papermc.paper.threadedregions.TickRegions.TickRegionData, io.papermc.paper.threadedregions.TickRegions.TickRegionSectionData>

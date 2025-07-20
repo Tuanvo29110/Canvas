@@ -11,6 +11,6 @@
 +            if (!(obj instanceof Task task)) return false;
 +            return this.run != null && this.run.equals(task.run);
 +        }
-+        // Canvas end
++        // Canvas end - rewrite moonrise executor
      }
  }

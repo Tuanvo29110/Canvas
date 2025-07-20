@@ -24,7 +24,7 @@
 +                return;
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - no chat reports
          this.send(packet, null);
      }
  
@@ -44,7 +44,7 @@
 +                return;
 +            }
 +        }
-+        // Canvas end
++        // Canvas end - no chat reports
          // CraftBukkit start
          if (packet == null || this.processedDisconnect) { // Spigot
              return;

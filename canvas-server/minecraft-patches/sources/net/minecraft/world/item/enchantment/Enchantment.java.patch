@@ -13,7 +13,7 @@
 +        }
 +
 +        return false;
-+        // Canvas end
++        // Canvas end - remove streams
      }
  
      public boolean isPrimaryItem(ItemStack stack) {

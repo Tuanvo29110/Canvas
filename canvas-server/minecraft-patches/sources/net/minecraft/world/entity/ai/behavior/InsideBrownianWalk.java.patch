@@ -36,7 +36,7 @@
 +                                    break;
 +                                }
 +                            }
-+                            // Canvas end
++                            // Canvas end - remove streams
 +
                              return true;
                          }

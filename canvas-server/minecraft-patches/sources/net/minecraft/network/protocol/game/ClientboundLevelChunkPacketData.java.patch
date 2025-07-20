@@ -48,7 +48,7 @@
 +            this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(blockEntity));
 +        }
 +    }
-+    // Canvas end
++    // Canvas end - async chunk sending
 +
      public ClientboundLevelChunkPacketData(RegistryFriendlyByteBuf buffer, int x, int z) {
          this.heightmaps = HEIGHTMAPS_STREAM_CODEC.decode(buffer);
@@ -57,7 +57,7 @@
              // Paper end  - Anti-Xray - Add chunk packet info
          }
  
-+        if (Thread.currentThread() instanceof io.canvasmc.canvas.chunk.AsyncChunkSend.AsyncChunkSendThread) return; // Canvas - Async chunk sending
++        if (Thread.currentThread() instanceof io.canvasmc.canvas.chunk.AsyncChunkSend.AsyncChunkSendThread) return; // Canvas - async chunk sending
          if (buffer.writerIndex() != buffer.capacity()) {
              throw new IllegalStateException("Didn't fill chunk buffer: expected " + buffer.capacity() + " bytes, got " + buffer.writerIndex());
          }

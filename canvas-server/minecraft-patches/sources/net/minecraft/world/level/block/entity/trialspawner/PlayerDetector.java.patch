@@ -61,7 +61,7 @@
 +        }
 +        return result;
      };
-+    // Canvas end
++    // Canvas end - remove streams
  
      List<UUID> detect(ServerLevel level, PlayerDetector.EntitySelector entitySelector, BlockPos pos, double maxDistance, boolean flag);
  
@@ -78,7 +78,7 @@
 +                        }
 +                    }
 +                    return result;
-+                    // Canvas end
++                    // Canvas end - remove streams
                  }
  
                  @Override
@@ -95,7 +95,7 @@
 +                        }
 +                    }
 +                    return result;
-+                    // Canvas end
++                    // Canvas end - remove streams
                  }
              };
          }

@@ -9,7 +9,7 @@
          List<ItemStack> list = Lists.newArrayListWithCapacity(items.size());
 +        Runnable task = () -> {
 +            try {
-+        // Canvas end
++        // Canvas end - fix commands with region threading
 +        Container container = getContainer(source, pos);
 +        // Canvas - fix commands with region threading - move up
  
@@ -35,7 +35,7 @@
 +                pos.getX() >> 4, pos.getZ() >> 4, task
 +            );
 +        }
-+        // Canvas end
++        // Canvas end - fix commands with region threading
          return list.size();
      }
  
@@ -47,7 +47,7 @@
 +        List<ItemStack> list = Lists.newArrayListWithCapacity(items.size());
 +        Runnable task = () -> {
 +            try {
-+        // Canvas end
++        // Canvas end - fix commands with region threading
          Container container = getContainer(source, pos);
          int containerSize = container.getContainerSize();
          if (slot >= 0 && slot < containerSize) {
@@ -83,7 +83,7 @@
 +            );
 +        }
 +        return list.size();
-+        // Canvas end
++        // Canvas end - fix commands with region threading
      }
  
      private static boolean canMergeItems(ItemStack first, ItemStack second) {
@@ -107,7 +107,7 @@
 +                        task.run();
 +                    }, null, 0L);
 +                }
-+                // Canvas end
++                // Canvas end - fix commands with region threading
              }
          }
  
@@ -134,7 +134,7 @@
 +                    task.run();
 +                }, null, 0L);
 +            }
-+            // Canvas end
++            // Canvas end - fix commands with region threading
          }
  
          callback.accept(list);
@@ -159,7 +159,7 @@
 +                    net.minecraft.util.Mth.floor(pos.x) >> 4, net.minecraft.util.Mth.floor(pos.z) >> 4, task
 +                );
 +            }
-+            // Canvas end
++            // Canvas end - fix commands with region threading
          });
          callback.accept(items);
          return items.size();
@@ -194,7 +194,7 @@
 +            );
 +        }
 +        return 0;
-+        // Canvas end
++        // Canvas end - fix commands with region threading
      }
  
      private static int dropKillLoot(CommandContext<CommandSourceStack> context, Entity entity, LootCommand.DropConsumer dropConsumer) throws CommandSyntaxException {

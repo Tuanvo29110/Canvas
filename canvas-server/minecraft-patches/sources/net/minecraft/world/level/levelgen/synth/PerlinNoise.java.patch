@@ -4,10 +4,10 @@
      private final double lowestFreqValueFactor;
      private final double lowestFreqInputFactor;
      private final double maxValue;
-+    // Canvas start
++    // Canvas start - optimize noise generation
 +    private final int octaveSamplersCount;
 +    private final double [] amplitudesArray;
-+    // Canvas end
++    // Canvas end - optimize noise generation
  
      @Deprecated
      public static PerlinNoise createLegacyForBlendedNoise(RandomSource random, IntStream octaves) {
@@ -15,10 +15,10 @@
          this.lowestFreqInputFactor = Math.pow(2.0, -i);
          this.lowestFreqValueFactor = Math.pow(2.0, size - 1) / (Math.pow(2.0, size) - 1.0);
          this.maxValue = this.edgeValue(2.0);
-+        // Canvas start
++        // Canvas start - optimize noise generation
 +        this.octaveSamplersCount = this.noiseLevels.length;
 +        this.amplitudesArray = this.amplitudes.toDoubleArray();
-+        // Canvas end
++        // Canvas end - optimize noise generation
      }
  
      protected double maxValue() {
@@ -47,7 +47,7 @@
 +        }
 +
 +        return d;
-+        // Canvas end
++        // Canvas end - optimize for common cases
      }
  
      @Deprecated

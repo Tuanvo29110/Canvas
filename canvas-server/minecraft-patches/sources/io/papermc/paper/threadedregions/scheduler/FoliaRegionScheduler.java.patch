@@ -7,7 +7,7 @@
 +        // Canvas start - rewrite scheduler
 +        private Scheduler(final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData) {}
 +
-+        // Canvas end
++        // Canvas end - rewrite scheduler
          private static final RegionizedData.RegioniserCallback<Scheduler> REGIONISER_CALLBACK = new RegionizedData.RegioniserCallback<>() {
              @Override
              public void merge(final Scheduler from, final Scheduler into, final long fromTickOffset) {

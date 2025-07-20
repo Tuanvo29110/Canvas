@@ -24,7 +24,7 @@
 +        }
 +
 +        return anyPlayerSleeping && count >= this.sleepersNeeded(requiredSleepPercentage);
-+        // Canvas end
++        // Canvas end - remove streams
          // CraftBukkit end
      }
  

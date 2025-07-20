@@ -36,7 +36,7 @@
 +    public static io.canvasmc.canvas.chunk.TheChunkSystem.ExecutorGroup LOAD_GROUP;
 +    public static int ioWorkerCount = -1;
 +    public static int chunkWorkerCount = -1;
-+    // Canvas end
++    // Canvas end - rewrite moonrise executor
  
      public static void adjustWorkerThreads(final int configWorkerThreads, final int configIoThreads) {
          int defaultWorkerThreads = Runtime.getRuntime().availableProcessors() / 2;
@@ -65,7 +65,7 @@
 -
 -        LOGGER.info(PlatformHooks.get().getBrand() + " is using " + workerThreads + " worker threads, " + ioThreads + " I/O threads");
 +        LOGGER.info("Running LS ChunkSystem with {} worker threads and {} io threads", workerThreads, ioThreads);
-+        // Canvas end
++        // Canvas end - rewrite moonrise executor
      }
  
      public static final PrioritisedThreadPool IO_POOL = new PrioritisedThreadPool(

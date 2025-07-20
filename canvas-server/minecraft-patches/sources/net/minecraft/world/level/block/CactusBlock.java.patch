@@ -14,7 +14,7 @@
 +
 +        final int y = pos.getY();
 +        if (chunk.getBlockState(x, y + 1, z).isAir()) {
-+        // Canvas end
++        // Canvas end - decrease chunk/block lookups
              int i = 1;
              int ageValue = state.getValue(AGE);
  
@@ -29,7 +29,7 @@
 +            // Canvas start - decrease chunk/block lookups
 +            BlockPos blockPos = null;
 +            if (ageValue == 8 && this.canSurvive(this.defaultBlockState(), level, blockPos = pos.above())) {
-+            // Canvas end
++            // Canvas end - decrease chunk/block lookups
                  double d = i >= level.paperConfig().maxGrowthHeight.cactus ? 0.25 : 0.1; // Paper - Configurable cactus/bamboo/reed growth height
                  if (random.nextDouble() <= d) {
                      org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, blockPos, Blocks.CACTUS_FLOWER.defaultBlockState(), 3);
@@ -45,7 +45,7 @@
 +                    level.setBlock(pos, state.setValue(CactusBlock.AGE, 0), Block.UPDATE_NONE);
 +                    return;
 +                }
-+                // Canvas end
++                // Canvas end - check if the cactus can even survive being placed
                  // Paper start
 -                if (!org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, blockPos, this.defaultBlockState(), 3)) {
 +                if (!org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(level, blockPos == null ? blockPos = pos.above() : blockPos, this.defaultBlockState(), 3)) { // Canvas - decrease chunk/block lookups
@@ -60,7 +60,7 @@
 +        return canSurvive(level, pos);
 +    }
 +    protected boolean canSurvive(LevelReader level, BlockPos pos) {
-+    // Canvas end
++    // Canvas end - check if the cactus can even survive being placed
          for (Direction direction : Direction.Plane.HORIZONTAL) {
              BlockState blockState = level.getBlockState(pos.relative(direction));
              if (blockState.isSolid() || level.getFluidState(pos.relative(direction)).is(FluidTags.LAVA)) {

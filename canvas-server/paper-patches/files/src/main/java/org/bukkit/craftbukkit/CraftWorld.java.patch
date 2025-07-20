@@ -10,5 +10,5 @@
 +    public io.canvasmc.canvas.threadedregions.ServerRegionizer getRegionizer() {
 +        return this.getHandle().regioniser.apiRegionizer;
 +    }
-+    // Canvas end
++    // Canvas end - expand region api
  }

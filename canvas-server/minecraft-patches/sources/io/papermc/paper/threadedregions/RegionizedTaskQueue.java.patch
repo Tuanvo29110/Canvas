@@ -11,7 +11,7 @@
 +        }
 +
 +        public boolean executeGlobalChunkTask() {
-+        // Canvas end
++        // Canvas end - rewrite scheduler
              final Runnable run = this.globalChunkTask.poll();
              if (run != null) {
                  run.run();
@@ -53,7 +53,7 @@
 +            this.queue = queue;
 +        }
 +
-+        // Canvas end
++        // Canvas end - rewrite scheduler
          private boolean isDestroyed;
  
          public int getScheduledTasks() {

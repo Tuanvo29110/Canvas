@@ -19,7 +19,7 @@
 +        }
 +
 +        return result;
-+        // Canvas end
++        // Canvas end - remove streams
      }
  
      private static void throwHalfStack(Villager villager, Set<Item> stack, LivingEntity entity) {

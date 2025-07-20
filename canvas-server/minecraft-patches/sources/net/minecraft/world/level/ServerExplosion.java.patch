@@ -4,7 +4,7 @@
                                          dragonPart.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, dragonPart, f1));
                                      }
                                  }
-+                            // Canvas start
++                            // Canvas start - chain end crystal explosions config
 +                            } else if (io.canvasmc.canvas.Config.INSTANCE.chainEndCrystalExplosions && entity instanceof net.minecraft.world.entity.boss.enderdragon.EndCrystal endCrystal) {
 +                                int chunkX = endCrystal.chunkPosition().x;
 +                                int chunkZ = endCrystal.chunkPosition().z;
@@ -24,7 +24,7 @@
 +                                        level.explode(endCrystal, damageSource1, null, endCrystal.getX(), endCrystal.getY(), endCrystal.getZ(), event.getRadius(), event.getFire(), Level.ExplosionInteraction.BLOCK);
 +                                    }
 +                                );
-+                            // Canvas end
++                            // Canvas end - chain end crystal explosions config
                              } else {
                                  entity.hurtServer(this.level, this.damageSource, this.damageCalculator.getEntityDamageAmount(this, entity, f1));
                              }

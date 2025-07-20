@@ -36,7 +36,7 @@
 +        this.biomes = biomes;
 +    }
 +
-+    // Canvas end
++    // Canvas end - optimize chunk unload
      public LevelChunkSection copy() {
 +        // Canvas start - optimize chunk unload
 +        // If the section hasn't been modified and no random ticking blocks/fluids,
@@ -50,7 +50,7 @@
 +                this.biomes  // Share reference instead of copying
 +            );
 +        }
-+        // Canvas end
++        // Canvas end - optimize chunk unload
          return new LevelChunkSection(this);
      }
  }

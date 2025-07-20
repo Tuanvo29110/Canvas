@@ -15,7 +15,7 @@
 +        }
 +
 +        return sum;
-+        // Canvas end
++        // Canvas end - remove streams
      }
  
      public boolean hasFarmSeeds() {

@@ -11,7 +11,7 @@
 +        return io.canvasmc.canvas.Config.INSTANCE.enableNoChatReports ? ArgumentSignatures.EMPTY : argumentSignatures;
 +    }
 +
-+    // Canvas end
++    // Canvas end - no chat reports
      public static final StreamCodec<FriendlyByteBuf, ServerboundChatCommandSignedPacket> STREAM_CODEC = Packet.codec(
          ServerboundChatCommandSignedPacket::write, ServerboundChatCommandSignedPacket::new
      );

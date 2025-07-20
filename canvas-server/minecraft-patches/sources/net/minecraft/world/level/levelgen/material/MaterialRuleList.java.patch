@@ -21,6 +21,6 @@
  
 -        return null;
 +        return blockState;
-+        // Canvas end
++        // Canvas end - reduce worldgen allocations
      }
  }

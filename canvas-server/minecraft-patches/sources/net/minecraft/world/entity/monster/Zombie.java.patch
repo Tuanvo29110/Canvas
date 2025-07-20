@@ -8,7 +8,7 @@
 +                    if (this.level().getChunkIfLoadedImmediately(blockPos.getX() >> 4, blockPos.getZ() >> 4) == null) {
 +                        continue;
 +                    }
-+                    // Canvas end
++                    // Canvas end - prevent reinforcement checks from loading chunks
                      if (SpawnPlacements.isSpawnPositionOk(type, level, blockPos)
                          && SpawnPlacements.checkSpawnRules(type, level, EntitySpawnReason.REINFORCEMENT, blockPos, level.random)) {
                          zombie.setPos(i1, i2, i3);

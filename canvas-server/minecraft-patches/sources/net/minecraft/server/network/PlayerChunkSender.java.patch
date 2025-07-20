@@ -13,7 +13,7 @@
 +                        } else {
 +                            serverGamePacketListenerImpl.send(ClientboundChunkBatchStartPacket.INSTANCE);
 +                        }
-+                        // Canvas end
++                        // Canvas end - async chunk sending
  
                          for (LevelChunk levelChunk : list) {
                              sendChunk(serverGamePacketListenerImpl, serverLevel, levelChunk);
@@ -28,7 +28,7 @@
 +                        } else {
 +                            serverGamePacketListenerImpl.send(new ClientboundChunkBatchFinishedPacket(list.size()));
 +                        }
-+                        // Canvas end
++                        // Canvas end - async chunk sending
                          this.batchQuota = this.batchQuota - list.size();
                      }
                  }
@@ -53,7 +53,7 @@
 +        } else {
 +            packetListener.send(new ClientboundLevelChunkWithLightPacket(chunk, level.getLightEngine(), null, null, shouldModify));
 +        }
-+        // Canvas end
++        // Canvas end - async chunk sending
          // Paper end - Anti-Xray
          // Paper start - PlayerChunkLoadEvent
          if (io.papermc.paper.event.packet.PlayerChunkLoadEvent.getHandlerList().getRegisteredListeners().length > 0) {

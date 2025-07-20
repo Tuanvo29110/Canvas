@@ -10,7 +10,7 @@
 +        10L, java.util.concurrent.TimeUnit.SECONDS,
 +        new java.util.concurrent.LinkedBlockingQueue<>(8)
 +    );
-+    // Canvas end
++    // Canvas end - fix commands with region threading
      private static final int MAX_ITERATION_COUNT = 10000;
      private static final Dynamic4CommandExceptionType ERROR_FAILED_TO_SPREAD_TEAMS = new Dynamic4CommandExceptionType(
          (teamCount, x, z, suggestedSpread) -> Component.translatableEscape("commands.spreadplayers.failed.teams", teamCount, x, z, suggestedSpread)
@@ -55,7 +55,7 @@
 +            }
 +            return 0;
 +        }
-+        // Canvas end
++        // Canvas end - fix commands with region threading
          ServerLevel level = source.getLevel();
          int minY = level.getMinY();
          if (maxHeight < minY) {
@@ -237,7 +237,7 @@
 +            }
 +        }
 +    }
-+    // Canvas end
++    // Canvas end - fix commands with region threading
  
      private static int getNumberOfTeams(Collection<? extends Entity> entities) {
          Set<Team> set = Sets.newHashSet();

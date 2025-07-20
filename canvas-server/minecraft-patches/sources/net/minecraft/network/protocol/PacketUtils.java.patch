@@ -10,7 +10,7 @@
 +                else {
 +                    gamePacketListener.player.queuePacketTask(run);
 +                }
-+                // Canvas end
++                // Canvas end - fix end credits
              } else if (processor instanceof net.minecraft.server.network.ServerConfigurationPacketListenerImpl configurationPacketListener) {
                  io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(run);
              } else if (processor instanceof net.minecraft.server.network.ServerLoginPacketListenerImpl loginPacketListener) {
