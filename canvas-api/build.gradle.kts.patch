@@ -22,7 +22,7 @@
          }
      }
  }
-@@ -146,7 +_,33 @@
+@@ -146,6 +_,32 @@
              suppressPomMetadataWarningsFor(it)
          }
          from(components["java"])
@@ -51,8 +51,7 @@
 +                url.set("https://github.com/CraftCanvasMC/Canvas")
 +            }
 +        }
++        // Canvas end - add more info to the publication
      }
-+    // Canvas end - add more info to the publication
  }
  
- val generateApiVersioningFile by tasks.registering {
