@@ -171,6 +171,12 @@ public class Config {
     @Comment("Restores vanilla loading and unloading behavior broken by Folia")
     public boolean restoreVanillaEnderPearlBehavior = false;
 
+    @Comment("Enables snowballs being able to knockback players")
+    public boolean snowballCanKnockback = false;
+
+    @Comment("Enables eggs being able to knockback players")
+    public boolean eggCanKnockback = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

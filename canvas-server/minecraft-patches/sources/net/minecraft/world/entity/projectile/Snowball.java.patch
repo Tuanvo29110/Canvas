@@ -1,0 +1,14 @@
+--- a/net/minecraft/world/entity/projectile/Snowball.java
++++ b/net/minecraft/world/entity/projectile/Snowball.java
+@@ -54,6 +_,11 @@
+         Entity entity = result.getEntity();
+         int i = entity instanceof Blaze ? 3 : 0;
+         entity.hurt(this.damageSources().thrown(this, this.getOwner()), i);
++        // Canvas start - snowball can knockback player config
++        if (io.canvasmc.canvas.Config.INSTANCE.snowballCanKnockback && entity instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
++            serverPlayer.knockback(0.4000000059604645D, this.getX() - entity.getX(), this.getZ() - entity.getZ());
++        }
++        // Canvas end - snowball can knockback player config
+     }
+ 
+     @Override
