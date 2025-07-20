@@ -33,7 +33,7 @@ public class ConfigHandlers {
     @RegisteredHandler("experimental")
     public static class ExperimentalProcessor implements AnnotationContextProvider<Experimental> {
         @Override
-        public void apply(final @NotNull StringWriter yamlWriter, final String indent, final String fullKey, final Field field, final @NotNull Experimental comment) {
+        public void apply(final @NotNull StringWriter yamlWriter, final String indent, final String fullKey, final Field field, final @NotNull Experimental annotation) {
             yamlWriter.append(indent).append("## ").append("=== EXPERIMENTAL FEATURE ===").append("\n");
         }
 
