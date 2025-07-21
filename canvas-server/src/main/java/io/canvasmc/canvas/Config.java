@@ -330,6 +330,18 @@ public class Config {
         public boolean mc258859 = false;
     }
 
+    @Comment({
+        "Enables better XP orb merging and removes the XP pickup delay",
+        "Can be very useful for heavy XP farms",
+        "This completely changes how orbs are merged, allowing for 1 single orb",
+        "to contain an infinite amount of experience and is fully collected instantly",
+        "rather than 1 xp per tick like with Vanilla. This is because we change the",
+        "criteria for orbs to be merged, and instead of increasing the count, we",
+        "increase the value of the orb. This way orbs are collected instantly, there",
+        "will be no \"ghost orbs\", and all xp merging is as efficient as possible"
+    })
+    public boolean fastOrbs = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
