@@ -94,11 +94,17 @@ public class AsyncLocator {
         int searchRadius,
         boolean skipExistingChunks
     ) {
-        BlockPos foundPos = level.findNearestMapStructure(structureTag, pos, searchRadius, skipExistingChunks);
+        BlockPos foundPos = null;
+        try {
+            foundPos = level.findNearestMapStructure(structureTag, pos, searchRadius, skipExistingChunks);
+        } catch (Exception e) {
+            MinecraftServer.LOGGER.error("Unable to locate structure async", e);
+        }
+        final BlockPos finalFoundPos = foundPos;
         completableFuture.complete(new LocationRepresentable<>() {
             @Override
             public BlockPos get() {
-                return foundPos;
+                return finalFoundPos;
             }
 
             @Override
@@ -121,12 +127,18 @@ public class AsyncLocator {
         int searchRadius,
         boolean skipExistingChunks
     ) {
-        Pair<BlockPos, Holder<Structure>> foundPair = level.getChunkSource().getGenerator()
-            .findNearestMapStructure(level, structureSet, pos, searchRadius, skipExistingChunks);
+        Pair<BlockPos, Holder<Structure>> foundPair = null;
+        try {
+            foundPair = level.getChunkSource().getGenerator()
+                .findNearestMapStructure(level, structureSet, pos, searchRadius, skipExistingChunks);
+        } catch (Exception e) {
+            MinecraftServer.LOGGER.error("Unable to locate structure async", e);
+        }
+        final Pair<BlockPos, Holder<Structure>> finalFoundPair = foundPair;
         completableFuture.complete(new LocationRepresentable<>() {
             @Override
             public Pair<BlockPos, Holder<Structure>> get() {
-                return foundPair;
+                return finalFoundPair;
             }
 
             @Override

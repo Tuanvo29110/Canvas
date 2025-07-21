@@ -206,6 +206,16 @@
              return true;
          } else {
              return super.endPortalLogicAsync(portalPos);
+@@ -2648,6 +_,9 @@
+             this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.CHANGE_GAME_MODE, gameMode.getId()));
+             if (gameMode == GameType.SPECTATOR) {
+                 this.removeEntitiesOnShoulder();
++                if (io.canvasmc.canvas.Config.INSTANCE.fixes.mc119417) this.stopSleeping(); // Canvas - MC-119417
++                if (io.canvasmc.canvas.Config.INSTANCE.fixes.mc129909) this.releaseUsingItem(); // Canvas - MC-129909
++                if (io.canvasmc.canvas.Config.INSTANCE.fixes.mc69216 && this.fishing != null) this.fishing.discard(); // Canvas - MC-69216
+                 this.stopRiding();
+                 EnchantmentHelper.stopLocationBasedEffects(this);
+             } else {
 @@ -3280,13 +_,19 @@
          return getInputVector(new Vec3(f, 0.0, f1), 1.0F, this.getYRot());
      }

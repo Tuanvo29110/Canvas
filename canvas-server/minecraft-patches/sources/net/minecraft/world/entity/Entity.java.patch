@@ -23,6 +23,22 @@
          }
  
          this.firstTick = false;
+@@ -2546,6 +_,7 @@
+             }
+ 
+             this.addAdditionalSaveData(output, includeAll); // CraftBukkit - pass on includeAll
++            if (io.canvasmc.canvas.Config.INSTANCE.fixes.mc2025) output.store("AABB", io.canvasmc.canvas.util.Codecs.AABB_CODEC, this.getBoundingBox()); // Canvas - MC-2025
+             if (this.isVehicle()) {
+                 ValueOutput.ValueOutputList valueOutputList = output.childrenList("Passengers");
+ 
+@@ -2649,6 +_,7 @@
+                 this.tags.clear();
+                 input.read("Tags", TAG_LIST_CODEC).ifPresent(this.tags::addAll);
+                 this.readAdditionalSaveData(input);
++                if (io.canvasmc.canvas.Config.INSTANCE.fixes.mc2025) input.read("AABB", io.canvasmc.canvas.util.Codecs.AABB_CODEC).ifPresent(this::setBoundingBox); // Canvas - MC-2025
+                 if (this.repositionEntityAfterLoad()) {
+                     this.reapplyPosition();
+                 }
 @@ -4291,12 +_,50 @@
                  return false;
              }

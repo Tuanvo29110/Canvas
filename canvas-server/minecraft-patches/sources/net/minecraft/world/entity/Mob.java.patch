@@ -1,0 +1,10 @@
+--- a/net/minecraft/world/entity/Mob.java
++++ b/net/minecraft/world/entity/Mob.java
+@@ -333,6 +_,7 @@
+             this.resetAmbientSoundTime();
+             this.playAmbientSound();
+         }
++        if (io.canvasmc.canvas.Config.INSTANCE.fixes.mc183990 && this.target != null && this.target.isDeadOrDying()) this.setTarget(null); // Canvas - MC-183990
+     }
+ 
+     @Override

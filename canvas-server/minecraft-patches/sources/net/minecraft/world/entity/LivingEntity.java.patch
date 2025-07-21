@@ -9,6 +9,27 @@
      private final Map<EquipmentSlot, ItemStack> lastEquipmentItems = Util.makeEnumMap(EquipmentSlot.class, slot -> ItemStack.EMPTY);
      public boolean swinging;
      private boolean discardFriction = false;
+@@ -392,7 +_,7 @@
+         if (this.level() instanceof ServerLevel serverLevel && onGround && this.fallDistance > 0.0) {
+             this.onChangedBlock(serverLevel, pos);
+             double d = Math.max(0, Mth.floor(this.calculateFallPower(this.fallDistance)));
+-            if (d > 0.0 && !state.isAir()) {
++            if (d > 0.0 && !(state.isAir() || (io.canvasmc.canvas.Config.INSTANCE.fixes.mc30391 && (this instanceof net.minecraft.world.entity.animal.Chicken || this instanceof net.minecraft.world.entity.monster.Blaze || this instanceof WitherBoss)))) { // Canvas - MC-30391
+                 double x = this.getX();
+                 double y1 = this.getY();
+                 double z = this.getZ();
+@@ -552,9 +_,9 @@
+     }
+ 
+     protected void tryAddFrost() {
+-        if (!this.getBlockStateOnLegacy().isAir()) {
++        if (true) { // Canvas - check frozen ticks before landing block
+             int ticksFrozen = this.getTicksFrozen();
+-            if (ticksFrozen > 0) {
++            if (ticksFrozen > 0 && !this.getBlockStateOnLegacy().isAir()) { // Canvas - check frozen ticks before landing block
+                 AttributeInstance attribute = this.getAttribute(Attributes.MOVEMENT_SPEED);
+                 if (attribute == null) {
+                     return;
 @@ -1022,14 +_,18 @@
      }
  
@@ -35,6 +56,23 @@
      }
  
      private void updateGlowingStatus() {
+@@ -2717,6 +_,7 @@
+     }
+ 
+     protected void updateSwingTime() {
++        if (!this.swinging && this.swingTime == 0) return; // Canvas - skip unnecessary calculations if player is not flying or swing
+         int currentSwingDuration = this.getCurrentSwingDuration();
+         if (this.swinging) {
+             this.swingTime++;
+@@ -3031,7 +_,7 @@
+                 f2 *= 0.5F;
+             }
+ 
+-            if (f2 > 0.0F) {
++            if (f2 > 0.0F && (!io.canvasmc.canvas.Config.INSTANCE.fixes.mc136249 || autoSpinAttackTicks == 0)) { // Canvas - MC-136249
+                 f += (0.54600006F - f) * f2;
+                 f1 += (this.getSpeed() - f1) * f2;
+             }
 @@ -3569,7 +_,7 @@
              this.checkAutoSpinAttack(boundingBox, this.getBoundingBox());
          }
@@ -44,6 +82,14 @@
          // Paper start - Add EntityMoveEvent
          if (((ServerLevel) this.level()).getCurrentWorldData().hasEntityMoveEvent && !(this instanceof Player)) { // Folia - region threading
              if (this.xo != this.getX() || this.yo != this.getY() || this.zo != this.getZ() || this.yRotO != this.getYRot() || this.xRotO != this.getXRot()) {
+@@ -3605,6 +_,7 @@
+     protected void updateFallFlying() {
+         this.checkFallDistanceAccumulation();
+         if (!this.level().isClientSide) {
++            if (!this.isFallFlying() && this.fallFlyTicks == 0) return; // Canvas - skip unnecessary calculations if player is not flying or swing
+             if (!this.canGlide()) {
+                 if (this.getSharedFlag(7) != false && !CraftEventFactory.callToggleGlideEvent(this, false).isCancelled()) // CraftBukkit
+                 this.setSharedFlag(7, false);
 @@ -3646,6 +_,12 @@
      }
  

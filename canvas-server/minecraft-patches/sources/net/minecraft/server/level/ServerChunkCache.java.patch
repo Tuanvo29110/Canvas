@@ -37,3 +37,11 @@
          }
  
          this.iterateTickingChunksFaster(); // Paper - chunk tick iteration optimisations
+@@ -858,6 +_,7 @@
+ 
+         @Override
+         public boolean pollTask() {
++            if (!io.papermc.paper.threadedregions.TickRegionScheduler.isTickRunner()) return false; // Canvas - if not tick runner, don't poll
+             // Folia start - region threading
+             if (ServerChunkCache.this.level != io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData().world) {
+                 throw new IllegalStateException("Polling tasks from non-owned region");

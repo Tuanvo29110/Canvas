@@ -1,0 +1,17 @@
+--- a/net/minecraft/world/entity/projectile/FishingHook.java
++++ b/net/minecraft/world/entity/projectile/FishingHook.java
+@@ -607,6 +_,14 @@
+         if (owner != null) {
+             Vec3 vec3 = new Vec3(owner.getX() - this.getX(), owner.getY() - this.getY(), owner.getZ() - this.getZ()).scale(0.1);
+             entity.setDeltaMovement(entity.getDeltaMovement().add(vec3));
++            // Canvas start - MC-100991
++            if (io.canvasmc.canvas.Config.INSTANCE.fixes.mc100991 && entity instanceof net.minecraft.world.entity.LivingEntity livingEntity) {
++                livingEntity.getCombatTracker().recordDamage(
++                    level().damageSources().thrown(this, owner),
++                    livingEntity.getHealth()
++                );
++            }
++            // Canvas end - MC-100991
+         }
+     }
+ 

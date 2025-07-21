@@ -3,12 +3,15 @@ package io.canvasmc.canvas.util;
 import com.google.common.util.concurrent.AtomicDouble;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReference;
+import net.minecraft.Util;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 
 public interface Codecs {
@@ -54,4 +57,11 @@ public interface Codecs {
             AtomicReference::get
         );
     }
+
+    Codec<AABB> AABB_CODEC = Codec.DOUBLE
+        .listOf()
+        .comapFlatMap(
+            list -> Util.fixedSize(list, 6).map(listx -> new AABB(listx.getFirst(), listx.get(1), listx.get(2), listx.get(3), listx.get(4), listx.get(5))),
+            aabb -> List.of(aabb.minX, aabb.minY, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ)
+        );
 }

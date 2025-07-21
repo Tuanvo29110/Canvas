@@ -36,7 +36,7 @@ public class Config {
         @Comment("The thread priority for Canvas' rewritten chunk system executor")
         public int threadPoolPriority = Thread.NORM_PRIORITY;
 
-        @Comment(value = {
+        @Comment({
             "Determines the fluid post processing mode.",
             "The worldgen processes creates a lot of unnecessary fluid post-processing tasks,",
             "which can overload the server thread and cause stutters.",
@@ -47,7 +47,7 @@ public class Config {
         })
         public FluidPostProcessingMode fluidPostProcessingMode = FluidPostProcessingMode.VANILLA;
 
-        @Comment(value = {
+        @Comment({
             "Whether to turn fluid postprocessing into scheduled tick",
             "",
             "Fluid post-processing is very expensive when loading in new chunks, and this can affect",
@@ -80,19 +80,19 @@ public class Config {
             public boolean mobSpawn = false;
         }
 
-        @Comment(value = {
+        @Comment({
             "Once one task is completed then the next task starts immediately, to prevent blocking threads while waiting to complete all tasks",
             "WARNING: May cause the sequence of future compose disorder"
         })
         public boolean useFasterStructureGenFutureSequencing = false;
 
-        @Comment(value = {
+        @Comment({
             "Makes chunk packet preparation and sending asynchronous to improve server performance.",
             "This can significantly reduce main thread load when many players are loading chunks."
         })
         public boolean asyncChunkSend = false;
 
-        @Comment(value = {
+        @Comment({
             "Changes the maximum view distance for the server, allowing clients to have",
             "render distances higher than 32"
         })
@@ -101,7 +101,7 @@ public class Config {
 
     public Networking networking = new Networking();
     public static class Networking {
-        @Comment(value = {
+        @Comment({
             "The clientbound set entity motion packet can often cause high network (Netty) usage and consumes (on larger production servers)",
             "up to 60% of your network usage. Disabling this has minimal side effects, such as squids and glow squids swimming upright until attacked."
         })
@@ -178,7 +178,7 @@ public class Config {
     @Comment("Enables eggs being able to knockback players")
     public boolean eggCanKnockback = false;
 
-    @Comment(value = {
+    @Comment({
         "The entity collision mode for the server",
         "",
         "Acceptable values:",
@@ -191,6 +191,144 @@ public class Config {
         " - NO_COLLISIONS - all entities have no collisions"
     })
     public EntityCollisionMode entityCollisionMode = EntityCollisionMode.VANILLA;
+
+    // TODO - check these on minecraft updates
+    public Fixes fixes = new Fixes();
+    public static class Fixes {
+        @Comment({
+            "Fixes MC-298464 - https://bugs.mojang.com/browse/MC/issues/MC-298464",
+            "Memory leak in hoglin farm due to CHANGED_DIMENSION entity removal"
+        })
+        public boolean mc298464 = false;
+
+        @Comment({
+            "Fixes MC-223153 - https://bugs.mojang.com/browse/MC/issues/MC-223153",
+            "Block of Raw Copper uses stone sounds instead of copper sounds"
+        })
+        public boolean mc223153 = false;
+
+        @Comment({
+            "Fixes MC-119417 - https://bugs.mojang.com/browse/MC/issues/MC-119417",
+            "A spectator can occupy a bed if they enter it and then are switched to spectator mode"
+        })
+        public boolean mc119417 = false;
+
+        @Comment({
+            "Fixes MC-200418 - https://bugs.mojang.com/browse/MC/issues/MC-200418",
+            "Cured baby zombie villagers stay as jockey variant"
+        })
+        public boolean mc200418 = false;
+
+        @Comment({
+            "Fixes MC-200418 - https://bugs.mojang.com/browse/MC/issues/MC-94054",
+            "Cave spiders spin around when walking"
+        })
+        public boolean mc94054 = false;
+
+        @Comment({
+            "Fixes MC-245394 - https://bugs.mojang.com/browse/MC/issues/MC-245394",
+            "The sounds of raid horns blaring aren't controlled by the correct sound slider"
+        })
+        public boolean mc245394 = false;
+
+        @Comment({
+            "Fixes MC-231743 - https://bugs.mojang.com/browse/MC/issues/MC-231743",
+            "minecraft.used:minecraft.POTTABLE_PLANT doesn't increase when placing plants into flower pots"
+        })
+        public boolean mc231743 = false;
+
+        @Comment({
+            "Fixes MC-227337 - https://bugs.mojang.com/browse/MC/issues/MC-227337",
+            "When a shulker bullet hits an entity, the explodes sound is not played and particles are not produced"
+        })
+        public boolean mc227337 = false;
+
+        @Comment({
+            "Fixes MC-221257 - https://bugs.mojang.com/browse/MC/issues/MC-221257",
+            "Shulker bullets don't produce bubble particles when moving through water"
+        })
+        public boolean mc221257 = false;
+
+        @Comment({
+            "Fixes MC-206922 - https://bugs.mojang.com/browse/MC/issues/MC-206922",
+            "Items dropped by entities that are killed by lightning instantly disappear"
+        })
+        public boolean mc206922 = false;
+
+        @Comment({
+            "Fixes MC-155509 - https://bugs.mojang.com/browse/MC/issues/MC-155509",
+            "Puffed pufferfish can hurt the player while dying"
+        })
+        public boolean mc155509 = false;
+
+        @Comment({
+            "Fixes MC-132878 - https://bugs.mojang.com/browse/MC/issues/MC-132878",
+            "Armor stands destroyed by explosions/lava/fire don't produce particles"
+        })
+        public boolean mc132878 = false;
+
+        @Comment({
+            "Fixes MC-129909 - https://bugs.mojang.com/browse/MC/issues/MC-129909",
+            "Players in spectator mode continue to consume foods and liquids shortly after switching game modes",
+            "This also fixes MC-81773 - https://bugs.mojang.com/browse/MC/issues/MC-81773",
+            "Bows and tridents drawn in survival/creative/adventure mode can be released in spectator mode"
+        })
+        public boolean mc129909 = false;
+
+        @Comment({
+            "Fixes MC-121706 - https://bugs.mojang.com/browse/MC/issues/MC-121706",
+            "Skeletons and illusioners aren't looking up / down at their target while strafing"
+        })
+        public boolean mc121706 = false;
+
+        @Comment({
+            "Fixes MC-119754 - https://bugs.mojang.com/browse/MC/issues/MC-119754",
+            "Firework boosting on elytra continues in spectator mode"
+        })
+        public boolean mc119754 = false;
+
+        @Comment({
+            "Fixes MC-100991 - https://bugs.mojang.com/browse/MC/issues/MC-100991",
+            "Killing entities with a fishing rod doesn't count as a kill"
+        })
+        public boolean mc100991 = false;
+
+        @Comment({
+            "Fixes MC-69216 - https://bugs.mojang.com/browse/MC/issues/MC-69216",
+            "Switching to spectator mode while fishing keeps rod cast"
+        })
+        public boolean mc69216 = false;
+
+        @Comment({
+            "Fixes MC-30391 - https://bugs.mojang.com/browse/MC/issues/MC-30391",
+            "Chickens, blazes and the wither emit particles when landing from a height, despite falling slowly"
+        })
+        public boolean mc30391 = false;
+
+        @Comment({
+            "Fixes MC-2025 - https://bugs.mojang.com/browse/MC/issues/MC-2025",
+            "Mobs going out of fenced areas/suffocate in blocks when loading chunks"
+        })
+        public boolean mc2025 = false;
+
+        @Comment({
+            "Fixes MC-183990 - https://bugs.mojang.com/browse/MC/issues/MC-183990",
+            "Group AI of some mobs breaks when their target dies"
+        })
+        public boolean mc183990 = false;
+
+        @Comment({
+            "Fixes MC-136249 - https://bugs.mojang.com/browse/MC/issues/MC-136249",
+            "Wearing boots enchanted with depth strider decreases the strength of the riptide enchantment"
+        })
+        public boolean mc136249 = false;
+
+        @Comment({
+            "Fixes MC-258859 - https://bugs.mojang.com/browse/MC/issues/MC-258859",
+            "Steep surface rule condition only works on the north and east faces of slopes"
+        })
+        public boolean mc258859 = false;
+    }
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);

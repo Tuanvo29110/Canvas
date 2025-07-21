@@ -43,6 +43,23 @@
          final Thread currThread = Thread.currentThread();
          if (!(currThread instanceof TickThreadRunner tickThreadRunner)) {
              throw new IllegalStateException("Must be tick thread runner");
+@@ -104,6 +_,16 @@
+         }
+         return tickThreadRunner.currentTickingRegion;
+     }
++    // Canvas start - add check for if the current running region is a tick runner
++
++    /**
++     * Returns if the current thread is a tick thread runner
++     */
++    public static boolean isTickRunner() {
++        final Thread currThread = Thread.currentThread();
++        return currThread instanceof TickThreadRunner;
++    }
++    // Canvas end
+ 
+     /**
+      * Returns the current ticking region's world regionised data, or {@code null} if there is no ticking region.
 @@ -122,7 +_,7 @@
       * Returns the current ticking task, or {@code null} if there is no ticking region.
       * If this thread is not a TickThread, then returns {@code null}.
