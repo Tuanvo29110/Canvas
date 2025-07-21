@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/entity/monster/Strider.java
++++ b/net/minecraft/world/entity/monster/Strider.java
+@@ -351,7 +_,7 @@
+ 
+     @Override
+     protected boolean canAddPassenger(Entity passenger) {
+-        return !this.isVehicle() && !this.isEyeInFluid(FluidTags.LAVA);
++        return !this.isVehicle() && !isEyeInLava(); // Canvas - optimize fluidOnEyes
+     }
+ 
+     @Override

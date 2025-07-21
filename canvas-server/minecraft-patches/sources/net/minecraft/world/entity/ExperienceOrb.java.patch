@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/entity/ExperienceOrb.java
++++ b/net/minecraft/world/entity/ExperienceOrb.java
+@@ -153,7 +_,7 @@
+         } else {
+             super.tick();
+             boolean flag = !this.level().noCollision(this.getBoundingBox());
+-            if (this.isEyeInFluid(FluidTags.WATER)) {
++            if (this.isEyeInWater()) { // Canvas - optimize fluidOnEyes
+                 this.setUnderwaterMovement();
+             } else if (!flag) {
+                 this.applyGravity();

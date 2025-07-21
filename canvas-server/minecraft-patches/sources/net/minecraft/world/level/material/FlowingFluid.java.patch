@@ -29,7 +29,7 @@
 -        }
 -
 -        return i;
-+    // Canvas start - optimize fluid spread
++    // Leaf start - optimize fluid spread
 +    protected int getSlopeDistance(LevelReader level, BlockPos startPos, int initialDepth, Direction excludedDirection, BlockState startState, FlowingFluid.SpreadContext spreadContext) {
 +        it.unimi.dsi.fastutil.longs.LongSet visited = ((ServerLevel) level).getCurrentWorldData().slopeDistanceCacheVisited;
 +        SlopeDistanceNodeDeque queue = ((ServerLevel) level).getCurrentWorldData().slopeDistanceCacheQueue;
@@ -145,7 +145,7 @@
 +    }
 +
 +    private record SlopeDistanceNode(BlockPos pos, int depth, Direction excludedDir, BlockState state) {
-+    // Canvas end - optimize fluid spread
++    // Leaf end - optimize fluid spread
      }
  
      public boolean isWaterHole(BlockGetter level, BlockPos pos, BlockState state, BlockPos belowPos, BlockState belowState) {

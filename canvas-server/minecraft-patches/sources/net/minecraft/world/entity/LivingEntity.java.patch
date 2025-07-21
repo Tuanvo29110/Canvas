@@ -18,6 +18,15 @@
                  double x = this.getX();
                  double y1 = this.getY();
                  double z = this.getZ();
+@@ -465,7 +_,7 @@
+                 }
+             }
+ 
+-            if (this.isEyeInFluid(FluidTags.WATER)
++            if (this.isEyeInWater() // Canvas - optimize fluidOnEyes
+                 && !serverLevel1.getBlockState(BlockPos.containing(this.getX(), this.getEyeY(), this.getZ())).is(Blocks.BUBBLE_COLUMN)) {
+                 boolean flag1 = !this.canBreatheUnderwater()
+                     && !MobEffectUtil.hasWaterBreathing(this)
 @@ -552,9 +_,9 @@
      }
  

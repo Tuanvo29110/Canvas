@@ -1,5 +1,14 @@
 --- a/net/minecraft/world/entity/monster/Zombie.java
 +++ b/net/minecraft/world/entity/monster/Zombie.java
+@@ -217,7 +_,7 @@
+                     this.doUnderWaterConversion();
+                 }
+             } else if (this.convertsInWater()) {
+-                if (this.isEyeInFluid(FluidTags.WATER)) {
++                if (this.isEyeInWater()) { // Canvas - optimize fluidOnEyes
+                     this.inWaterTime++;
+                     if (this.inWaterTime >= 600) {
+                         this.startUnderWaterConversion(300);
 @@ -352,6 +_,11 @@
                      int i2 = floor1 + Mth.nextInt(this.random, 7, 40) * Mth.nextInt(this.random, -1, 1);
                      int i3 = floor2 + Mth.nextInt(this.random, 7, 40) * Mth.nextInt(this.random, -1, 1);

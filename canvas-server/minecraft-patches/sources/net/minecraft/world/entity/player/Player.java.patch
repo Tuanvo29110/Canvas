@@ -1,0 +1,29 @@
+--- a/net/minecraft/world/entity/player/Player.java
++++ b/net/minecraft/world/entity/player/Player.java
+@@ -361,7 +_,7 @@
+             this.lastItemInMainHand = mainHandItem.copy();
+         }
+ 
+-        if (!this.isEyeInFluid(FluidTags.WATER) && this.isEquipped(Items.TURTLE_HELMET)) {
++        if (!isEyeInWater() && this.isEquipped(Items.TURTLE_HELMET)) { // Canvas - optimize fluidOnEyes
+             this.turtleHelmetTick();
+         }
+ 
+@@ -390,7 +_,7 @@
+     }
+ 
+     protected boolean updateIsUnderwater() {
+-        this.wasUnderwater = this.isEyeInFluid(FluidTags.WATER);
++        this.wasUnderwater = this.isEyeInWater(); // Canvas - optimize fluidOnEyes
+         return this.wasUnderwater;
+     }
+ 
+@@ -790,7 +_,7 @@
+         }
+ 
+         destroySpeed *= (float)this.getAttributeValue(Attributes.BLOCK_BREAK_SPEED);
+-        if (this.isEyeInFluid(FluidTags.WATER)) {
++        if (this.isEyeInWater()) { // Canvas - optimize fluidOnEyes
+             destroySpeed *= (float)this.getAttribute(Attributes.SUBMERGED_MINING_SPEED).getValue();
+         }
+ 

@@ -1,5 +1,19 @@
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
+@@ -285,7 +_,12 @@
+     public boolean wasTouchingWater;
+     protected Object2DoubleMap<TagKey<Fluid>> fluidHeight = new Object2DoubleArrayMap<>(2);
+     protected boolean wasEyeInWater;
+-    private final Set<TagKey<Fluid>> fluidOnEyes = new HashSet<>();
++    // Canvas start - optimize fluidOnEyes
++    // private final Set<TagKey<Fluid>> fluidOnEyes = new HashSet<>();
++    private int fluidOnEyesMask = 0;
++    private static final int EYE_IN_WATER = 1 << 0;
++    private static final int EYE_IN_LAVA  = 1 << 1;
++    // Canvas end
+     public int invulnerableTime;
+     protected boolean firstTick = true;
+     protected final SynchedEntityData entityData;
 @@ -316,7 +_,7 @@
      protected UUID uuid = Mth.createInsecureUUID(this.random);
      protected String stringUUID = this.uuid.toString();
@@ -23,6 +37,108 @@
          }
  
          this.firstTick = false;
+@@ -1667,6 +_,11 @@
+ 
+     private void checkInsideBlocks(Vec3 vec3, Vec3 vec31, InsideBlockEffectApplier.StepBasedCollector stepBasedCollector, LongSet set) {
+         AABB aabb = this.makeBoundingBox(vec31).deflate(1.0E-5F);
++        // Canvas start - optimize checkInsideBlocks
++        // use element array for lambdas
++        final net.minecraft.world.level.chunk.ChunkAccess[] cachedChunk = new  net.minecraft.world.level.chunk.ChunkAccess[] { null };
++        final long[] lastChunkPos = { Long.MIN_VALUE };
++        // Canvas end - optimize checkInsideBlocks
+         BlockGetter.forEachBlockIntersectedBetween(
+             vec3,
+             vec31,
+@@ -1675,7 +_,22 @@
+                 if (!this.isAlive()) {
+                     return false;
+                 } else {
+-                    BlockState blockState = this.level().getBlockState(pos);
++                    // Canvas start - optimize checkInsideBlocks
++                    final int chunkX = pos.getX() >> 4;
++                    final int chunkZ = pos.getZ() >> 4;
++                    final long chunkLongPos = ((long) chunkZ << 32) | (chunkX & 0xFFFFFFFFL);
++                    if (lastChunkPos[0] != chunkLongPos) {
++                        // update cache, this is a different chunk than previous
++                        lastChunkPos[0] = chunkLongPos;
++                        cachedChunk[0] = this.level.getChunkIfLoaded(chunkX, chunkZ);
++                    }
++                    net.minecraft.world.level.chunk.ChunkAccess chunk = cachedChunk[0];
++                    if (chunk == null) {
++                        // return as if it were air
++                        return true;
++                    }
++                    BlockState blockState = chunk.getBlockState(pos);
++                    // Canvas end - optimize checkInsideBlocks
+                     if (blockState.isAir()) {
+                         this.debugBlockIntersection(pos, false, false);
+                         return true;
+@@ -1718,6 +_,7 @@
+     }
+ 
+     public boolean collidedWithFluid(FluidState fluid, BlockPos pos, Vec3 from, Vec3 to) {
++        if (fluid.isEmpty()) return false; // Canvas - optimize checkInsideBlocks
+         AABB aabb = fluid.getAABB(this.level(), pos);
+         return aabb != null && this.collidedWithShapeMovingFrom(from, to, List.of(aabb));
+     }
+@@ -1983,8 +_,8 @@
+     }
+ 
+     private void updateFluidOnEyes() {
+-        this.wasEyeInWater = this.isEyeInFluid(FluidTags.WATER);
+-        this.fluidOnEyes.clear();
++        this.wasEyeInWater = this.isEyeInWater(); // Canvas - optimize fluidOnEyes
++        this.fluidOnEyesMask = 0; // Canvas - optimize fluidOnEyes
+         double eyeY = this.getEyeY();
+         if (!(
+             this.getVehicle() instanceof AbstractBoat abstractBoat
+@@ -1996,10 +_,29 @@
+             FluidState fluidState = this.level().getFluidState(blockPos);
+             double d = blockPos.getY() + fluidState.getHeight(this.level(), blockPos);
+             if (d > eyeY) {
+-                fluidState.getTags().forEach(this.fluidOnEyes::add);
++                // Canvas start - optimize fluidOnEyes - remove stream and use bitmask
++                TagKey<Fluid>[] tags = fluidState.getTagsArray();
++                for (TagKey<Fluid> tag : tags) {
++                    if (tag == FluidTags.WATER) {
++                        this.fluidOnEyesMask |= EYE_IN_WATER;
++                    } else if (tag == FluidTags.LAVA) {
++                        this.fluidOnEyesMask |= EYE_IN_LAVA;
++                    }
++                }
++                // Canvas end - optimize fluidOnEyes - remove stream and use bitmask
+             }
+         }
+     }
++    // Canvas start - optimize fluidOnEyes
++
++    public boolean isEyeInWater() {
++        return (this.fluidOnEyesMask & EYE_IN_WATER) != 0;
++    }
++
++    public boolean isEyeInLava() {
++        return (this.fluidOnEyesMask & EYE_IN_LAVA) != 0;
++    }
++    // Canvas end - optimize fluidOnEyes
+ 
+     protected void doWaterSplashEffect() {
+         Entity entity = Objects.requireNonNullElse(this.getControllingPassenger(), this);
+@@ -2077,7 +_,14 @@
+     }
+ 
+     public boolean isEyeInFluid(TagKey<Fluid> fluidTag) {
+-        return this.fluidOnEyes.contains(fluidTag);
++        // Canvas start - optimize fluidOnEyes
++        if (fluidTag == FluidTags.WATER) {
++            return (this.fluidOnEyesMask & EYE_IN_WATER) != 0;
++        } else if (fluidTag == FluidTags.LAVA) {
++            return (this.fluidOnEyesMask & EYE_IN_LAVA) != 0;
++        }
++        return false;
++        // Canvas end
+     }
+ 
+     public boolean isInLava() {
 @@ -2546,6 +_,7 @@
              }
  
