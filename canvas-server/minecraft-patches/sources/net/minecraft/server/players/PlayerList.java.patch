@@ -1,5 +1,13 @@
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
+@@ -112,6 +_,7 @@
+     private static final ThreadLocal<SimpleDateFormat> BAN_DATE_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z")); // Folia - region threading - SDF is not thread-safe
+     private final MinecraftServer server;
+     public final List<ServerPlayer> players = new java.util.concurrent.CopyOnWriteArrayList(); // CraftBukkit - ArrayList -> CopyOnWriteArrayList: Iterator safety
++    public final List<ServerPlayer> seeingEndCredits = new java.util.concurrent.CopyOnWriteArrayList<>(); // Canvas - fix end credits
+     private final Map<UUID, ServerPlayer> playersByUUID = new java.util.concurrent.ConcurrentHashMap<>(); // Folia - region threading - change to CHM - Note: we do NOT expect concurrency PER KEY!
+     private final UserBanList bans = new UserBanList(USERBANLIST_FILE);
+     private final IpBanList ipBans = new IpBanList(IPBANLIST_FILE);
 @@ -340,7 +_,7 @@
              ServerGamePacketListenerImpl serverGamePacketListenerImpl = new ServerGamePacketListenerImpl(this.server, connection, player, cookie);
              // Folia start - rewrite login process

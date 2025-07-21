@@ -9,7 +9,7 @@
      public final ContainerSynchronizer containerSynchronizer = new ContainerSynchronizer() {
          private final LoadingCache<TypedDataComponent<?>, Integer> cache = CacheBuilder.newBuilder()
              .maximumSize(256L)
-@@ -1524,14 +_,25 @@
+@@ -1524,14 +_,26 @@
       * internally for {@link #respawn(java.util.function.Consumer, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason)}
       */
      public static final long TELEPORT_FLAGS_PLAYER_RESPAWN    = Long.MIN_VALUE >>> 0;
@@ -28,6 +28,7 @@
 +        if (this.exitEndCreditsCallback != null) {
 +            this.wonGame = false;
 +            this.isDisplayingEndCredits = false;
++            this.level().getServer().getPlayerList().seeingEndCredits.remove(this);
 +            this.exitEndCreditsCallback.run();
 +            this.exitEndCreditsCallback = null;
 +            return;
@@ -175,7 +176,7 @@
  
              // required to set up the pending teleport stuff to the client, and to actually update
              // the player's position clientside
-@@ -1805,12 +_,25 @@
+@@ -1805,12 +_,26 @@
                  return false;
              }
              this.wonGame = true;
@@ -201,6 +202,7 @@
 +            if (this.isDisplayingEndCredits) {
 +                this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0.0F));
 +                this.seenCredits = true; // mark seen the end credits
++                this.level().getServer().getPlayerList().seeingEndCredits.add(this);
 +            }
 +            // Canvas end - fix end credits
              return true;

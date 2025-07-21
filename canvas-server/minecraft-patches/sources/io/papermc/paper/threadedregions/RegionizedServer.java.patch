@@ -122,3 +122,22 @@
          // needs
          // worldborder tick
          // advancing the weather cycle
+@@ -442,6 +_,18 @@
+ 
+         // time ticking (TODO API synchronisation?)
+         this.tickTime(world, tickCount);
++        // Canvas start - fix end credits
++        List<net.minecraft.server.level.ServerPlayer> players = world.getServer().getPlayerList().seeingEndCredits;
++        for (java.util.Iterator<net.minecraft.server.level.ServerPlayer> iterator = players.iterator(); iterator.hasNext(); ) {
++            final net.minecraft.server.level.ServerPlayer serverPlayer = iterator.next();
++            if (serverPlayer.hasDisconnected()) {
++                iterator.remove();
++                LOGGER.info("Player disconnected while viewing end credits, removing from fallback keepalive");
++                continue;
++            }
++            serverPlayer.connection.keepConnectionAlive();
++        }
++        // Canvas end
+ 
+         world.updateTickData();
+ 

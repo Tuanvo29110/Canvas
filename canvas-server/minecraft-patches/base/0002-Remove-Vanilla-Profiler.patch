@@ -1022,7 +1022,7 @@ index cd6f937fa4eaba6033bfc230e3483b6b9e1ae607..c27938b888121031653e4dad152bed13
              for (Entity entity : passengerEntity.getPassengers()) {
                  this.tickPassenger(passengerEntity, entity, isActive); // Paper - EAR 2
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 81db215d81690c3e4a934e408058c6ebe6c9f577..b5406754dd80a4d94e512ed94c10b058459d362d 100644
+index 8a05b26b57f1b14d55f20ddbe1858d6647efc454..c1d583e2be5f86e2bfe1621ee02962ff770a01e8 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -106,8 +106,6 @@ import net.minecraft.util.HashOps;
@@ -1058,7 +1058,7 @@ index 81db215d81690c3e4a934e408058c6ebe6c9f577..b5406754dd80a4d94e512ed94c10b058
                  this.stopUsingItem();
                  this.connection.send(new ClientboundPlayerAbilitiesPacket(this.getAbilities()));
 diff --git a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
-index 714813cba67da4a737682fe9276cb0d96fea336d..74f402c3a471b81d3afb24e24b155195a6bd3ef1 100644
+index fd4632fbc7fd17a1b46a84510a6745c848e59dac..0b0aab1d5450f9b09f79d45a5466287055b82717 100644
 --- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 @@ -26,7 +26,6 @@ import net.minecraft.network.protocol.cookie.ServerboundCookieResponsePacket;
@@ -1072,7 +1072,7 @@ index 714813cba67da4a737682fe9276cb0d96fea336d..74f402c3a471b81d3afb24e24b155195
 @@ -271,7 +270,6 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
      }
  
-     protected void keepConnectionAlive() {
+     public void keepConnectionAlive() {
 -        Profiler.get().push("keepAlive");
          long millis = Util.getMillis();
          // Paper start - improve keepalives
@@ -1177,7 +1177,7 @@ index 64b0508ef21952c65b0b967b756b2a4c64d96899..bc469a2a7452e82cc181fec654710dd1
  
      protected abstract T prepare(ResourceManager resourceManager, ProfilerFiller profiler);
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index f342840dacf77ebe7de7c289657198495af9eb1f..8bc158b13338afb52dd535717fb1c7061b711a65 100644
+index ac90a1a7800efa0585f64a19f092d20f8b3c1840..10ceb0cc7e66d964db7b60b02dcead9ae82a223f 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -80,8 +80,6 @@ import net.minecraft.tags.TagKey;
@@ -1301,7 +1301,7 @@ index f342840dacf77ebe7de7c289657198495af9eb1f..8bc158b13338afb52dd535717fb1c706
          }
      }
 diff --git a/net/minecraft/world/entity/LivingEntity.java b/net/minecraft/world/entity/LivingEntity.java
-index 2cb06dbf7a1d172ff124e39cb150696708d55460..e0e6d1175357c63b18d0399fb2f0d818b361d781 100644
+index b6a980d26ff3e30fd5a3795cd461d10253a880c4..01381b613069819d4e9d4aba50d1622b85aec7d6 100644
 --- a/net/minecraft/world/entity/LivingEntity.java
 +++ b/net/minecraft/world/entity/LivingEntity.java
 @@ -69,8 +69,6 @@ import net.minecraft.tags.FluidTags;
