@@ -12,79 +12,119 @@ import java.util.Objects;
 import java.util.Set;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.schedule.Activity;
-import org.jetbrains.annotations.NotNull;
 
 public final class ActivityArrayMap<V> implements Map<Activity, V> {
-    public static int BITS = -1;
 
-    public int bitset = 0;
-    public final Object[] a;
+    public int[] k;
+    public V[] v;
     private int size = 0;
-
+    private int bitset = 0;
     private transient KeySet keySet;
-    private transient Values valuesCollection;
+    private transient Values values;
     private transient EntrySet entrySet;
 
-    public ActivityArrayMap() {
-        if (BITS == -1) {
-            BITS = BuiltInRegistries.ACTIVITY.size() - 1;
+    public ActivityArrayMap(V[] arr) {
+        this.k = new int[arr.length];
+        this.v = arr;
+    }
+
+    private int findIndex(int activity) {
+        int mask = 1 << activity;
+        if ((bitset & mask) == 0) {
+            return -1;
         }
-        this.a = new Object[BITS + 1];
+        for (int i = 0; i < size; i++) {
+            if (k[i] == activity) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void ensureCap() {
+        if (size >= k.length) {
+            int newCapacity = Math.max(2, k.length + k.length / 2);
+            k = Arrays.copyOf(k, newCapacity);
+            v = Arrays.copyOf(v, newCapacity);
+        }
+    }
+
+    private void removeAtIndex(int index) {
+        if (index < 0 || index >= size) {
+            return;
+        }
+        bitset &= ~(1 << k[index]);
+        System.arraycopy(k, index + 1, k, index, size - index - 1);
+        System.arraycopy(v, index + 1, v, index, size - index - 1);
+
+        size--;
+        v[size] = null;
     }
 
     @Override
-    public V put(@NotNull Activity key, V value) {
-        int index = key.id;
-        int mask = 1 << index;
-        @SuppressWarnings("unchecked")
-        V oldValue = (V) a[index];
-        boolean hadValue = oldValue != null;
-        a[index] = value;
-        if (!hadValue && value != null) {
+    public V put(Activity key, V value) {
+        int index = findIndex(key.id);
+        if (index >= 0) {
+            final V oldValue = v[index];
+            if (value == null) {
+                removeAtIndex(index);
+            } else {
+                v[index] = value;
+            }
+            return oldValue;
+        } else if (value != null) {
+            ensureCap();
+            k[size] = key.id;
+            v[size] = value;
+            bitset |= (1 << key.id);
             size++;
-            bitset |= mask;
         }
-        if (hadValue && value == null) {
-            size--;
-            bitset &= ~mask;
-        }
-        return oldValue;
+        return null;
     }
 
     @Override
     public V get(Object key) {
         if (key instanceof Activity activity) {
-            @SuppressWarnings("unchecked")
-            V value = (V) a[activity.id];
-            return value;
+            int index = findIndex(activity.id);
+            if (index >= 0) {
+                return v[index];
+            }
+        }
+        return null;
+    }
+
+    public V getValue(int key) {
+        int index = findIndex(key);
+        if (index >= 0) {
+            return v[index];
         }
         return null;
     }
 
     @Override
     public boolean containsKey(Object key) {
-        return key instanceof Activity activity && a[activity.id] != null;
+        if (!(key instanceof Activity activity)) {
+            return false;
+        }
+        return (bitset & 1 << activity.id) != 0;
     }
 
     @Override
     public V remove(Object key) {
         if (key instanceof Activity activity) {
-            int index = activity.id;
-            @SuppressWarnings("unchecked")
-            V oldValue = (V) a[index];
-            if (oldValue != null) {
-                a[index] = null;
-                bitset &= ~(1 << index);
-                size--;
+            int index = findIndex(activity.id);
+            if (index >= 0) {
+                V oldValue = v[index];
+                removeAtIndex(index);
+                return oldValue;
             }
-            return oldValue;
         }
         return null;
     }
 
     @Override
     public void clear() {
-        Arrays.fill(a, null);
+        Arrays.fill(v, 0, size, null);
         size = 0;
         bitset = 0;
     }
@@ -101,14 +141,16 @@ public final class ActivityArrayMap<V> implements Map<Activity, V> {
 
     @Override
     public boolean containsValue(Object value) {
-        for (Object v : a) {
-            if (Objects.equals(v, value)) return true;
+        for (int i = 0; i < size; i++) {
+            if (Objects.equals(v[i], value)) {
+                return true;
+            }
         }
         return false;
     }
 
     @Override
-    public void putAll(@NotNull Map<? extends Activity, ? extends V> m) {
+    public void putAll(Map<? extends Activity, ? extends V> m) {
         for (Entry<? extends Activity, ? extends V> e : m.entrySet()) {
             put(e.getKey(), e.getValue());
         }
@@ -124,10 +166,10 @@ public final class ActivityArrayMap<V> implements Map<Activity, V> {
 
     @Override
     public Collection<V> values() {
-        if (valuesCollection == null) {
-            valuesCollection = new Values();
+        if (values == null) {
+            values = new Values();
         }
-        return valuesCollection;
+        return values;
     }
 
     @Override
@@ -138,32 +180,56 @@ public final class ActivityArrayMap<V> implements Map<Activity, V> {
         return entrySet;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Map<?, ?> other)) return false;
+        if (this.size() != other.size()) return false;
+
+        for (Entry<Activity, V> entry : this.entrySet()) {
+            Activity key = entry.getKey();
+            V value = entry.getValue();
+            if (!Objects.equals(value, other.get(key))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        for (int i = 0; i < size; i++) {
+            hash += Objects.hashCode(k[i]) ^ Objects.hashCode(v[i]);
+        }
+        return hash;
+    }
+
     private final class KeySet extends AbstractSet<Activity> {
         @Override
-        public @NotNull Iterator<Activity> iterator() {
+        public Iterator<Activity> iterator() {
             return new Iterator<>() {
-                private int index = -1;
-
-                private void advance() {
-                    do index++;
-                    while (index <= BITS && (bitset & (1 << index)) == 0);
-                }
-
-                {
-                    advance();
-                }
+                private int index = 0;
+                private int lastReturned = -1;
 
                 @Override
                 public boolean hasNext() {
-                    return index <= BITS;
+                    return index < size;
                 }
 
                 @Override
                 public Activity next() {
                     if (!hasNext()) throw new NoSuchElementException();
-                    Activity activity = BuiltInRegistries.ACTIVITY.byIdOrThrow(index);
-                    advance();
-                    return activity;
+                    lastReturned = index;
+                    return BuiltInRegistries.ACTIVITY.byIdOrThrow(k[index++]);
+                }
+
+                @Override
+                public void remove() {
+                    if (lastReturned < 0) throw new IllegalStateException();
+                    ActivityArrayMap.this.removeAtIndex(lastReturned);
+                    index = lastReturned;
+                    lastReturned = -1;
                 }
             };
         }
@@ -186,31 +252,19 @@ public final class ActivityArrayMap<V> implements Map<Activity, V> {
 
     private final class Values extends AbstractCollection<V> {
         @Override
-        public @NotNull Iterator<V> iterator() {
+        public Iterator<V> iterator() {
             return new Iterator<>() {
-                private int index = -1;
-
-                private void advance() {
-                    do index++;
-                    while (index <= BITS && (bitset & (1 << index)) == 0);
-                }
-
-                {
-                    advance();
-                }
+                private int index = 0;
 
                 @Override
                 public boolean hasNext() {
-                    return index <= BITS;
+                    return index < size;
                 }
 
                 @Override
                 public V next() {
                     if (!hasNext()) throw new NoSuchElementException();
-                    @SuppressWarnings("unchecked")
-                    V value = (V) a[index];
-                    advance();
-                    return value;
+                    return v[index++];
                 }
             };
         }
@@ -233,45 +287,32 @@ public final class ActivityArrayMap<V> implements Map<Activity, V> {
 
     private final class EntrySet extends AbstractSet<Entry<Activity, V>> {
         @Override
-        public @NotNull Iterator<Entry<Activity, V>> iterator() {
+        public Iterator<Entry<Activity, V>> iterator() {
             return new Iterator<>() {
-                private int index = -1;
-                private int last = -1;
-
-                private void advance() {
-                    do index++;
-                    while (index <= BITS && (bitset & (1 << index)) == 0);
-                }
-
-                {
-                    advance();
-                }
+                private int index = 0;
+                private int lastReturned = -1;
 
                 @Override
                 public boolean hasNext() {
-                    return index <= BITS;
+                    return index < size;
                 }
 
                 @Override
                 public Entry<Activity, V> next() {
                     if (!hasNext()) throw new NoSuchElementException();
-                    last = index;
-                    Activity activity = BuiltInRegistries.ACTIVITY.byIdOrThrow(index);
-                    @SuppressWarnings("unchecked")
-                    V value = (V) a[index];
-                    advance();
-                    return new SimpleEntry<>(activity, value);
+                    lastReturned = index;
+                    int key = k[index];
+                    V value = v[index];
+                    index++;
+                    return new SimpleEntry<>(BuiltInRegistries.ACTIVITY.byIdOrThrow(key), value);
                 }
 
                 @Override
                 public void remove() {
-                    if (last == -1) throw new IllegalStateException();
-                    if (a[last] != null) {
-                        a[last] = null;
-                        bitset &= ~(1 << last);
-                        size--;
-                    }
-                    last = -1;
+                    if (lastReturned < 0) throw new IllegalStateException();
+                    ActivityArrayMap.this.removeAtIndex(lastReturned);
+                    index = lastReturned;
+                    lastReturned = -1;
                 }
             };
         }
@@ -284,9 +325,10 @@ public final class ActivityArrayMap<V> implements Map<Activity, V> {
         @Override
         public boolean contains(Object o) {
             if (o instanceof Entry<?, ?> entry && entry.getKey() instanceof Activity activity) {
-                @SuppressWarnings("unchecked")
-                V value = (V) a[activity.id];
-                return Objects.equals(value, entry.getValue());
+                int index = findIndex(activity.id);
+                if (index >= 0) {
+                    return Objects.equals(v[index], entry.getValue());
+                }
             }
             return false;
         }
@@ -295,30 +337,5 @@ public final class ActivityArrayMap<V> implements Map<Activity, V> {
         public void clear() {
             ActivityArrayMap.this.clear();
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Map<?, ?> other)) return false;
-        if (this.size() != other.size()) return false;
-
-        for (Entry<Activity, V> entry : this.entrySet()) {
-            Activity key = entry.getKey();
-            V value = entry.getValue();
-            if (!Objects.equals(value, other.get(key))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        for (Entry<Activity, V> entry : entrySet()) {
-            hash += entry.hashCode();
-        }
-        return hash;
     }
 }

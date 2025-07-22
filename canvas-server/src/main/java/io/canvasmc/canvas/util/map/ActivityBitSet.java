@@ -1,26 +1,34 @@
 package io.canvasmc.canvas.util.map;
 
-import java.util.AbstractCollection;
-import java.util.Iterator;
+import it.unimi.dsi.fastutil.objects.AbstractObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.schedule.Activity;
 import org.jetbrains.annotations.NotNull;
 
-public final class ActivityBitSet extends AbstractCollection<Activity> implements Set<Activity> {
-    public static int BITS = -1;
+public final class ActivityBitSet extends AbstractObjectSet<Activity> {
+    public static final int ACTIVITY_SIZE = BuiltInRegistries.ACTIVITY.size();
 
-    public int bitset = 0;
+    private int bitset = 0;
+    private boolean dirty = true;
 
-    public ActivityBitSet() {
-        if (BITS == -1) {
-            BITS = BuiltInRegistries.ACTIVITY.size() - 1;
+    private static Activity map(int i) {
+        return BuiltInRegistries.ACTIVITY.byIdOrThrow(i);
+    }
+
+    public boolean unsetDirty() {
+        if (dirty) {
+            dirty = false;
+            return true;
+        } else {
+            return false;
         }
     }
 
-    private static @NotNull Activity map(int i) {
-        return BuiltInRegistries.ACTIVITY.byIdOrThrow(i);
+    public int bitSet() {
+        return bitset;
     }
 
     @Override
@@ -28,6 +36,7 @@ public final class ActivityBitSet extends AbstractCollection<Activity> implement
         int mask = 1 << activity.id;
         if ((bitset & mask) != 0) return false;
         bitset |= mask;
+        dirty = true;
         return true;
     }
 
@@ -37,6 +46,7 @@ public final class ActivityBitSet extends AbstractCollection<Activity> implement
             int mask = 1 << activity.id;
             if ((bitset & mask) != 0) {
                 bitset &= ~mask;
+                dirty = true;
                 return true;
             }
         }
@@ -49,27 +59,28 @@ public final class ActivityBitSet extends AbstractCollection<Activity> implement
     }
 
     @Override
-    public @NotNull Iterator<Activity> iterator() {
-        return new Iterator<>() {
+    public @NotNull ObjectIterator<Activity> iterator() {
+        return new ObjectIterator<>() {
             private int index = 0;
 
-            private void advance() {
-                while (index < BITS && (bitset & (1 << index)) == 0) index++;
-            }
             {
-                advance();
+                while (index < ACTIVITY_SIZE && (bitset & (1 << index)) == 0) {
+                    index++;
+                }
             }
 
             @Override
             public boolean hasNext() {
-                return index < BITS;
+                return index < ACTIVITY_SIZE;
             }
 
             @Override
             public Activity next() {
                 if (!hasNext()) throw new NoSuchElementException();
                 Activity act = map(index++);
-                advance();
+                while (index < ACTIVITY_SIZE && (bitset & (1 << index)) == 0) {
+                    index++;
+                }
                 return act;
             }
         };
@@ -83,6 +94,7 @@ public final class ActivityBitSet extends AbstractCollection<Activity> implement
     @Override
     public void clear() {
         bitset = 0;
+        dirty = true;
     }
 
     @Override
@@ -96,7 +108,7 @@ public final class ActivityBitSet extends AbstractCollection<Activity> implement
     @Override
     public int hashCode() {
         int hash = 0;
-        for (int i = 0; i < BITS; i++) {
+        for (int i = 0; i < ACTIVITY_SIZE; i++) {
             if ((bitset & (1 << i)) != 0) {
                 hash += map(i).hashCode();
             }

@@ -1,34 +1,57 @@
 --- a/net/minecraft/world/entity/ai/behavior/InsideBrownianWalk.java
 +++ b/net/minecraft/world/entity/ai/behavior/InsideBrownianWalk.java
-@@ -20,16 +_,31 @@
+@@ -20,16 +_,53 @@
                              return false;
                          } else {
                              BlockPos blockPos = mob.blockPosition();
 -                            List<BlockPos> list = BlockPos.betweenClosedStream(blockPos.offset(-1, -1, -1), blockPos.offset(1, 1, 1))
 -                                .map(BlockPos::immutable)
 -                                .collect(Util.toMutableList());
-+                            // Canvas start - remove streams
-+                            BlockPos minPos = blockPos.offset(-1, -1, -1);
-+                            BlockPos maxPos = blockPos.offset(1, 1, 1);
-+                            List<BlockPos> list = new java.util.ArrayList<>();
-+
-+                            for (int x = minPos.getX(); x <= maxPos.getX(); x++) {
-+                                for (int y = minPos.getY(); y <= maxPos.getY(); y++) {
-+                                    for (int z = minPos.getZ(); z <= maxPos.getZ(); z++) {
-+                                        list.add(new BlockPos(x, y, z).immutable());
-+                                    }
-+                                }
-+                            }
-+
-                             Collections.shuffle(list);
+-                            Collections.shuffle(list);
 -                            list.stream()
 -                                .filter(pos -> !level.canSeeSky(pos))
 -                                .filter(pos -> level.loadedAndEntityCanStandOn(pos, mob))
 -                                .filter(pos -> level.noCollision(mob))
 -                                .findFirst()
 -                                .ifPresent(pos -> walkTarget.set(new WalkTarget(pos, speedModifier, 0)));
++                            // Canvas start - remove streams
++                            BlockPos minPos = blockPos.offset(-1, -1, -1);
++                            BlockPos maxPos = blockPos.offset(1, 1, 1);
++                            // Canvas start - optimize InsideBrownianWalk
++                            // remove list, use BlockPos[], precompute total size
++                            int minX = minPos.getX();
++                            int minY = minPos.getY();
++                            int minZ = minPos.getZ();
++                            int maxX = maxPos.getX();
++                            int maxY = maxPos.getY();
++                            int maxZ = maxPos.getZ();
 +
-+                            for (BlockPos pos : list) {
++                            int sizeX = maxX - minX + 1;
++                            int sizeY = maxY - minY + 1;
++                            int sizeZ = maxZ - minZ + 1;
++                            int arrSize = sizeX * sizeY * sizeZ;
++
++                            BlockPos[] positions = new BlockPos[arrSize];
++                            int index = 0;
++
++                            for (int x = minX; x <= maxX; x++) {
++                                for (int y = minY; y <= maxY; y++) {
++                                    for (int z = minZ; z <= maxZ; z++) {
++                                        positions[index++] = new BlockPos(x, y, z).immutable();
++                                    }
++                                }
++                            }
++
++                            // copied from it.unimi.dsi.fastutil.objects.ObjectArrays.shuffle() and modified to use 'mob.random'
++                            for (int i = positions.length; i-- != 0;) {
++                                final int p = mob.random.nextInt(i + 1);
++                                final BlockPos t = positions[i];
++                                positions[i] = positions[p];
++                                positions[p] = t;
++                            }
++
++                            for (BlockPos pos : positions) {
++                            // Canvas end - optimize InsideBrownianWalk
 +                                if (!level.canSeeSky(pos) &&
 +                                    level.loadedAndEntityCanStandOn(pos, mob) &&
 +                                    level.noCollision(mob)) {

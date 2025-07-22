@@ -18,12 +18,13 @@
                  this.merge(experienceOrb);
              }
          }
-@@ -262,6 +_,23 @@
+@@ -262,6 +_,24 @@
      }
      public static void awardWithDirection(ServerLevel level, Vec3 pos, Vec3 direction, int amount, @Nullable org.bukkit.entity.ExperienceOrb.SpawnReason reason, @Nullable Entity triggerId, @Nullable Entity sourceId) {
      // Paper end - add reason to orbs
 +        // Canvas start - fast orbs
 +        if (io.canvasmc.canvas.Config.INSTANCE.fastOrbs) {
++            if (amount <= 0) return; // skip if count is 0
 +            int experienceValue = getExperienceValue(amount);
 +            AABB aabb = AABB.ofSize(pos, 1.0, 1.0, 1.0);
 +            List<ExperienceOrb> entities = level.getEntities(
