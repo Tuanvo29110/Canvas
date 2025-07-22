@@ -10,6 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
@@ -27,11 +29,19 @@ public class TpsBarCommand {
                         return 0;
                     }
                     player.setTpsBarEnabled(!player.localEntry.enabled());
+                    context.getSource().sendSuccess(() -> Component.literal(
+                        (player.localEntry.enabled() ? "Enabled" : "Disabled") +
+                            " player " + player.getName().getString() + " tpsbar"), true);
                     return 1;
-                }).then(argument("player", EntityArgument.player())
+                }).then(argument("players", EntityArgument.players())
                     .executes((context) -> {
-                        final ServerPlayer player = EntityArgument.getPlayer(context, "player");
-                        player.setTpsBarEnabled(!player.localEntry.enabled());
+                        final Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                        for (final ServerPlayer player : players) {
+                            player.setTpsBarEnabled(!player.localEntry.enabled());
+                            context.getSource().sendSuccess(() -> Component.literal(
+                                (player.localEntry.enabled() ? "Enabled" : "Disabled") +
+                                    " player " + player.getName().getString() + " tpsbar"), true);
+                        }
                         return 1;
                     }).then(argument("placement", StringArgumentType.word())
                         .suggests((context, builder) -> {
@@ -41,13 +51,18 @@ public class TpsBarCommand {
                         })
                         .executes((context) -> {
                             CommandSourceStack source = context.getSource();
-                            final ServerPlayer player = EntityArgument.getPlayer(context, "player");
-                            switch (StringArgumentType.getString(context, "placement").toLowerCase()) {
-                                case "action_bar" -> player.setTpsBarPlacement(RegionizedTpsBar.Placement.ACTION_BAR);
-                                case "boss_bar" -> player.setTpsBarPlacement(RegionizedTpsBar.Placement.BOSS_BAR);
-                                default -> {
-                                    source.sendFailure(Component.literal("Not valid placement"));
+                            final Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                            final String placement = StringArgumentType.getString(context, "placement").toLowerCase();
+                            for (final ServerPlayer player : players) {
+                                switch (placement) {
+                                    case "action_bar" -> player.setTpsBarPlacement(RegionizedTpsBar.Placement.ACTION_BAR);
+                                    case "boss_bar" -> player.setTpsBarPlacement(RegionizedTpsBar.Placement.BOSS_BAR);
+                                    default -> {
+                                        source.sendFailure(Component.literal("Not valid placement"));
+                                        return 0;
+                                    }
                                 }
+                                source.sendSuccess(() -> Component.literal("Set player " + player.getName().getString() + " tpsbar placement to " + placement), true);
                             }
                             return 1;
                         })
