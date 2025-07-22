@@ -17,6 +17,14 @@
  
      private void haltServerRegionThreading() {
          if (this.hasStartedShutdownThread.getAndSet(true)) {
+@@ -1619,6 +_,7 @@
+         // Folia end - region threading
+         //this.tickCount++; // Folia - region threading
+         //this.tickRateManager.tick(); // Folia - region threading
++        region.world.getCurrentWorldData().tpsbar.tick(); // Canvas - tpsbar
+         this.tickChildren(hasTimeLeft, region); // Folia - region threading
+         if (false && nanos - this.lastServerStatus >= STATUS_EXPIRE_TIME_NANOS) { // Folia - region threading
+             this.lastServerStatus = nanos;
 @@ -1729,6 +_,15 @@
          //io.papermc.paper.adventure.providers.ClickCallbackProviderImpl.DIALOG_CLICK_MANAGER.handleQueue(this.tickCount); // Paper // Folia - region threading - moved to global tick
          //this.getFunctions().tick(); // Folia - region threading - TODO Purge functions

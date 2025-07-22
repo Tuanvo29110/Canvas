@@ -17,6 +17,18 @@
              // Folia end - rewrite login process
              connection.setupInboundProtocol(
                  GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(this.server.registryAccess()), serverGamePacketListenerImpl),
+@@ -496,6 +_,11 @@
+                     serverLevel.getLightEngine(), (java.util.BitSet)null, (java.util.BitSet) null, true) // Paper - Anti-Xray
+                 );
+             }
++            // Canvas start - tpsbar
++            if (player.localEntry.enabled() && player.localEntry.placement().equals(io.canvasmc.canvas.RegionizedTpsBar.Placement.BOSS_BAR)) {
++                player.tpsBar.addViewer(player.getBukkitEntity());
++            }
++            // Canvas end - tpsbar
+             // Paper end - Send empty chunk
+         }
+     }
 @@ -650,7 +_,17 @@
          for (ThrownEnderpearl thrownEnderpearl : new java.util.ArrayList<>(player.getEnderPearls())) { // Paper - copy, setOwner will remove from list;
              // Paper start - Allow using old ender pearl behavior

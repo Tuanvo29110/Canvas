@@ -342,6 +342,13 @@ public class Config {
     })
     public boolean fastOrbs = false;
 
+    @Comment({
+        "Enables a regionized TPS-Bar implementation for Canvas",
+        "This function is per-player, with this as a global setting to disable it",
+        "To enable the tps-bar per-player, use the '/tpsbar' command"
+    })
+    public boolean enableTpsBar = true;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

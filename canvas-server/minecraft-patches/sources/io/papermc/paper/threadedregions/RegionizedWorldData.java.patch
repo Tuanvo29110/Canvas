@@ -105,11 +105,12 @@
  
      // Mob spawning
      public final ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<ServerPlayer> spawnChunkTracker = new ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<>();
-@@ -447,7 +_,34 @@
+@@ -447,7 +_,35 @@
      public final alternate.current.wire.WireHandler wireHandler;
      public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
  
 -    public RegionizedWorldData(final ServerLevel world) {
++    public final io.canvasmc.canvas.RegionizedTpsBar tpsbar; // Canvas - tpsbar
 +    public final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData; // Canvas - rewrite scheduler
 +    public final ApiHandle apiHandle = new ApiHandle(this); // Canvas - expand region api
 +    public final net.minecraft.server.waypoints.ServerWaypointManager waypointManager = new net.minecraft.server.waypoints.ServerWaypointManager(); // Canvas - region threading - restore waypoints
@@ -141,11 +142,12 @@
          this.world = world;
          this.blockLevelTicks = new LevelTicks<>(world::isPositionTickingWithEntitiesLoaded, world, true);
          this.fluidLevelTicks = new LevelTicks<>(world::isPositionTickingWithEntitiesLoaded, world, false);
-@@ -455,6 +_,7 @@
+@@ -455,6 +_,8 @@
          this.nearbyPlayers = new NearbyPlayers(world);
          this.wireHandler = new alternate.current.wire.WireHandler(world);
          this.turbo = new io.papermc.paper.redstone.RedstoneWireTurbo((RedStoneWireBlock)Blocks.REDSTONE_WIRE);
 +        this.regionData = regionData; // Canvas - rewrite scheduler
++        this.tpsbar = new io.canvasmc.canvas.RegionizedTpsBar(this); // Canvas - tpsbar
  
          // tasks may be drained before the region ticks, so we must set up the tick data early just in case
          this.updateTickData();
