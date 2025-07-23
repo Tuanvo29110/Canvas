@@ -50,7 +50,7 @@
 +            this.wakeUpNow();
 +        }
 +    }
-+    // Canva send
++    // Canvas end - block entity sleeping
  
      protected AbstractFurnaceBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState, RecipeType<? extends AbstractCookingRecipe> recipeType) {
          super(type, pos, blockState);
