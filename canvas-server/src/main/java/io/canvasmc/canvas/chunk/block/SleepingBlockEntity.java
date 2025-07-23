@@ -1,7 +1,6 @@
 package io.canvasmc.canvas.chunk.block;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
@@ -30,7 +29,6 @@ public interface SleepingBlockEntity {
         }
         this.lithium$setSleepingTicker(tickWrapper.ticker);
         tickWrapper.rebind(new SleepingTicker(this));
-        MinecraftServer.LOGGER.info("Sleeping");
     }
 
     default void sleepOnlyCurrentTick() {
@@ -51,7 +49,6 @@ public interface SleepingBlockEntity {
         }
         this.setTicker(sleepingTicker);
         this.lithium$setSleepingTicker(null);
-        MinecraftServer.LOGGER.info("Waking");
     }
 
     default void setTicker(TickingBlockEntity delegate) {
