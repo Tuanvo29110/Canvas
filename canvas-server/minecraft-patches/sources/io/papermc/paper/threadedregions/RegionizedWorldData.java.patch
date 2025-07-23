@@ -8,6 +8,21 @@
              }
              for (final Entity entity : from.allEntities) {
                  into.allEntities.add(entity);
+@@ -120,7 +_,13 @@
+             }
+             for (final TickingBlockEntity tileEntityWrapped : from.blockEntityTickers) {
+                 into.blockEntityTickers.add(tileEntityWrapped);
+-                final BlockEntity tileEntity = tileEntityWrapped.getTileEntity();
++                // Canvas start - block entity sleeping
++                final BlockEntity tileEntity;
++                if (tileEntityWrapped instanceof net.minecraft.world.level.chunk.LevelChunk.RebindableTickingBlockEntityWrapper rebindable
++                    && rebindable.ticker instanceof io.canvasmc.canvas.chunk.block.SleepingBlockEntity.SleepingTicker sleepingTicker) {
++                    tileEntity = sleepingTicker.getTileEntityForRegionOperation(); // ensure we still update the entity ticks
++                } else tileEntity = tileEntityWrapped.getTileEntity();
++                // Canvas end - block entity sleeping
+                 if (tileEntity != null) {
+                     tileEntity.updateTicks(fromTickOffset, fromRedstoneTimeOffset);
+                 }
 @@ -159,6 +_,10 @@
              for (final ChunkHolder chunkHolder : from.chunkHoldersToBroadcast) {
                  into.chunkHoldersToBroadcast.add(chunkHolder);
@@ -34,6 +49,26 @@
              }
              // entities
              for (final ServerPlayer player : from.localPlayers) {
+@@ -252,7 +_,18 @@
+                   //       marked as removed. So if there is no section, it's probably removed!
+             }
+             for (final TickingBlockEntity tileEntity : from.blockEntityTickers) {
+-                final BlockPos pos = tileEntity.getPos();
++                // Canvas start - block entity sleeping
++                final BlockPos pos;
++                if (tileEntity instanceof net.minecraft.world.level.chunk.LevelChunk.RebindableTickingBlockEntityWrapper rebindable
++                    && rebindable.ticker instanceof io.canvasmc.canvas.chunk.block.SleepingBlockEntity.SleepingTicker sleepingTicker) {
++                    pos = sleepingTicker.getPosForRegionOperation(); // ensure non-null, since the sleeping ticker has getPos() return null, which will crash the server on split
++                } else {
++                    pos = tileEntity.getPos();
++                }
++                if (pos == null) {
++                    throw new IllegalStateException("Pos cannot be null, class: " + tileEntity.getClass().getName());
++                }
++                // Canvas end - block entity sleeping
+                 final int chunkX = pos.getX() >> 4;
+                 final int chunkZ = pos.getZ() >> 4;
+ 
 @@ -326,6 +_,22 @@
                      into.chunkHoldersToBroadcast.add(chunkHolder);
                  }
@@ -87,6 +122,14 @@
      private boolean tickingBlockEntities;
  
      // time
+@@ -394,6 +_,7 @@
+     public boolean skipPullModeEventFire = false;
+     public boolean skipPushModeEventFire = false;
+     public boolean skipHopperEvents = false;
++    public boolean skipHopperSearchItemEvents = false; // Canvas - optimize hoppers
+     // Paper end - Optimize Hoppers
+     public long lastMidTickExecute;
+     public long lastMidTickExecuteFailure;
 @@ -418,11 +_,16 @@
      public boolean shouldSignal = true;
      public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(64, 0.25f);
@@ -119,8 +162,8 @@
 +    // if there's lots of chunks loaded, we don't want to search through that map to find block
 +    // ticking holders or entity ticking holders, so we cache the ones that are valid to limit the search.
 +    // the DynamicChunkPosLongSet is the fastest option for 'contains' operations(via tests conducted in V2)
-+    public final Set<Long> blockTickingChunkHolders = new io.canvasmc.canvas.chunk.DynamicChunkPosLongSet();
-+    public final Set<Long> entityTickingChunkHolders = new io.canvasmc.canvas.chunk.DynamicChunkPosLongSet();
++    public final io.canvasmc.canvas.chunk.DynamicChunkPosLongSet blockTickingChunkHolders = new io.canvasmc.canvas.chunk.DynamicChunkPosLongSet();
++    public final io.canvasmc.canvas.chunk.DynamicChunkPosLongSet entityTickingChunkHolders = new io.canvasmc.canvas.chunk.DynamicChunkPosLongSet();
 +
 +    public void markBlockTicking(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
 +        this.blockTickingChunkHolders.add(newChunkHolder.getCachedLongPos());
@@ -151,6 +194,14 @@
  
          // tasks may be drained before the region ticks, so we must set up the tick data early just in case
          this.updateTickData();
+@@ -483,6 +_,7 @@
+         this.skipHopperEvents = this.world.paperConfig().hopper.disableMoveEvent || org.bukkit.event.inventory.InventoryMoveItemEvent.getHandlerList().getRegisteredListeners().length == 0; // Paper - Perf: Optimize Hoppers
+         // always subtract from server init so that the tick starts at zero, allowing us to cast to int without much worry
+         this.lagCompensationTick = (System.nanoTime() - MinecraftServer.SERVER_INIT) / TickRegionScheduler.TIME_BETWEEN_TICKS;
++        this.skipHopperSearchItemEvents = org.bukkit.event.inventory.HopperInventorySearchEvent.getHandlerList().getRegisteredListeners().length == 0; // Canvas - optimize hoppers
+     }
+ 
+     public NearbyPlayers getNearbyPlayers() {
 @@ -500,6 +_,18 @@
          );
      }

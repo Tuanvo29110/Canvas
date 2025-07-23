@@ -44,6 +44,14 @@
      }
  
      public void advanceWeatherCycle() { // Folia - region threading - public
+@@ -2414,6 +_,7 @@
+ 
+         for (TickingBlockEntity tickingBlockEntity : (Iterable<? extends net.minecraft.world.level.block.entity.TickingBlockEntity>)null) { // Folia - region threading
+             BlockPos pos = tickingBlockEntity.getPos();
++            if (tickingBlockEntity instanceof net.minecraft.world.level.chunk.LevelChunk.RebindableTickingBlockEntityWrapper rebindable && rebindable.ticker instanceof io.canvasmc.canvas.chunk.block.SleepingBlockEntity.SleepingTicker sleepingTicker) pos = sleepingTicker.getPosForRegionOperation(); // Canvas - block entity sleeping
+             csvOutput.writeRow(pos.getX(), pos.getY(), pos.getZ(), tickingBlockEntity.getType());
+         }
+     }
 @@ -2561,25 +_,15 @@
      }
  

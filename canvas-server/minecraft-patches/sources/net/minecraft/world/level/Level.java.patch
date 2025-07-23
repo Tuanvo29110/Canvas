@@ -27,6 +27,15 @@
          io.papermc.paper.threadedregions.RegionizedWorldData.REGION_CALLBACK
      );
      public volatile io.papermc.paper.threadedregions.RegionizedServer.WorldLevelData tickData;
+@@ -1496,7 +_,7 @@
+             // Spigot end
+             if (tickingBlockEntity.isRemoved()) {
+                 toRemove.add(tickingBlockEntity); // Paper - Fix MC-117075; use removeAll
+-            } else if (runsNormally && this.shouldTickBlocksAt(tickingBlockEntity.getPos())) {
++            } else if (runsNormally && tickingBlockEntity.getPos() != null && regionizedWorldData.blockTickingChunkHolders.containsLong(ChunkPos.asLong(tickingBlockEntity.getPos()))) { // Canvas - block entity sleeping
+                 tickingBlockEntity.tick();
+                 // Paper start - rewrite chunk system
+                 if ((++tickedEntities & 7) == 0) {
 @@ -1882,6 +_,35 @@
      public List<Entity> getPushableEntities(Entity entity, AABB boundingBox) {
          return this.getEntities(entity, boundingBox, EntitySelector.pushableBy(entity));

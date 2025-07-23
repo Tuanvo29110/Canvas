@@ -1,5 +1,17 @@
 --- a/net/minecraft/world/level/block/entity/BlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/BlockEntity.java
+@@ -237,6 +_,11 @@
+             if (IGNORE_TILE_UPDATES.get().booleanValue()) return; // Paper - Perf: Optimize Hoppers // Folia - region threading
+             setChanged(this.level, this.worldPosition, this.blockState);
+         }
++        // Canvas start - block entity sleeping
++        if (this instanceof io.canvasmc.canvas.chunk.block.SleepingBlockEntity sleepingBlockEntity) {
++            sleepingBlockEntity.onChange();
++        }
++        // Canvas end - block entity sleeping
+     }
+ 
+     protected static void setChanged(Level level, BlockPos pos, BlockState state) {
 @@ -383,7 +_,7 @@
  
      // CraftBukkit start - add method
