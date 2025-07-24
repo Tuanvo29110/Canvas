@@ -522,12 +522,23 @@
          );
          // CraftBukkit end
      }
-@@ -806,11 +_,16 @@
+@@ -796,7 +_,7 @@
+     @Nullable
+     private static Container getContainerAt(Level level, BlockPos pos, BlockState state, double x, double y, double z, final boolean optimizeEntities) {
+         // Paper end - Perf: Optimize Hoppers
+-        Container blockContainer = getBlockContainer(level, pos, state);
++        Container blockContainer = state.hasBlockEntity() ? getBlockContainer(level, pos, state) : null; // Canvas - optimize hoppers - if there is no block entity, don't bother with this - helps when the hopper is pulling from a non-block-entity-block(air, dirt, etc)
+         if (blockContainer == null && (!optimizeEntities || !level.paperConfig().hopper.ignoreOccludingBlocks || !state.getBukkitMaterial().isOccluding())) { // Paper - Perf: Optimize Hoppers
+             blockContainer = getEntityContainer(level, x, y, z);
+         }
+@@ -806,13 +_,20 @@
  
      @Nullable
      private static Container getBlockContainer(Level level, BlockPos pos, BlockState state) {
 -        if (!level.spigotConfig.hopperCanLoadChunks && !level.hasChunkAt(pos)) return null; // Spigot
 +        // Canvas start - optimize hoppers
++        // the calling method already checks if it has a block entity, so
++        // we can assume that this does have a block entity for us to check
 +        final int chunkX = pos.getX() >> 4;
 +        final int chunkZ = pos.getZ() >> 4;
 +        net.minecraft.world.level.chunk.LevelChunk chunk = level.spigotConfig.hopperCanLoadChunks ? level.getChunk(chunkX, chunkZ) : (net.minecraft.world.level.chunk.LevelChunk) level.getChunkIfLoadedImmediately(chunkX, chunkZ);
@@ -537,10 +548,13 @@
          if (block instanceof WorldlyContainerHolder) {
              return ((WorldlyContainerHolder)block).getContainer(state, level, pos);
 -        } else if (state.hasBlockEntity() && level.getBlockEntity(pos) instanceof Container container) {
-+        } else if (state.hasBlockEntity() && chunk.getBlockEntity(pos) instanceof Container container) { // Canvas - optimize hoppers
++        } else if (chunk.getBlockEntity(pos) instanceof Container container) { // Canvas - optimize hoppers
              if (container instanceof ChestBlockEntity && block instanceof ChestBlock) {
-                 container = ChestBlock.getContainer((ChestBlock)block, state, level, pos, true);
+-                container = ChestBlock.getContainer((ChestBlock)block, state, level, pos, true);
++                container = ChestBlock.getContainerForHoppers((ChestBlock)block, state, level, pos, true, container); // Canvas - optimize hoppers
              }
+ 
+             return container;
 @@ -879,7 +_,7 @@
          if (entity instanceof ItemEntity itemEntity
              && !itemEntity.getItem().isEmpty()

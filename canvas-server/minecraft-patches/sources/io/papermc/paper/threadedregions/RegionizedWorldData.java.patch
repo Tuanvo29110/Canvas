@@ -130,6 +130,17 @@
      // Paper end - Optimize Hoppers
      public long lastMidTickExecute;
      public long lastMidTickExecuteFailure;
+@@ -402,8 +_,8 @@
+     public final NeighborUpdater neighborUpdater;
+     public boolean captureBlockStates = false;
+     public boolean captureTreeGeneration = false;
+-    public final Map<BlockPos, CraftBlockState> capturedBlockStates = new java.util.LinkedHashMap<>(); // Paper
+-    public final Map<BlockPos, BlockEntity> capturedTileEntities = new java.util.LinkedHashMap<>(); // Paper
++    public final Map<BlockPos, CraftBlockState> capturedBlockStates = new it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap<>(); // Paper // Canvas - optimized collection
++    public final Map<BlockPos, BlockEntity> capturedTileEntities = new it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap<>(); // Paper // Canvas - optimized collection
+     public List<ItemEntity> captureDrops;
+     // Paper start
+     public int wakeupInactiveRemainingAnimals;
 @@ -418,11 +_,16 @@
      public boolean shouldSignal = true;
      public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(64, 0.25f);

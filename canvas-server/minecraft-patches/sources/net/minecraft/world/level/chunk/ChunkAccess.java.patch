@@ -1,16 +1,20 @@
 --- a/net/minecraft/world/level/chunk/ChunkAccess.java
 +++ b/net/minecraft/world/level/chunk/ChunkAccess.java
-@@ -77,8 +_,8 @@
+@@ -77,10 +_,10 @@
      protected BlendingData blendingData;
      public final Map<Heightmap.Types, Heightmap> heightmaps = Maps.newEnumMap(Heightmap.Types.class);
      // Paper - rewrite chunk system
 -    private final Map<Structure, StructureStart> structureStarts = Maps.newHashMap();
 -    private final Map<Structure, LongSet> structuresRefences = Maps.newHashMap();
+-    protected final Map<BlockPos, CompoundTag> pendingBlockEntities = Maps.newHashMap();
+-    public final Map<BlockPos, BlockEntity> blockEntities = new Object2ObjectOpenHashMap<>();
 +    private final Map<Structure, StructureStart> structureStarts = new it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap<>(); // Canvas - optimized collection
 +    private final Map<Structure, LongSet> structuresRefences = new it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap<>(); // Canvas - optimized collection
-     protected final Map<BlockPos, CompoundTag> pendingBlockEntities = Maps.newHashMap();
-     public final Map<BlockPos, BlockEntity> blockEntities = new Object2ObjectOpenHashMap<>();
++    protected final Map<BlockPos, CompoundTag> pendingBlockEntities = new Object2ObjectOpenHashMap<>(); // Canvas - optimized collection
++    public final Map<BlockPos, BlockEntity> blockEntities = new it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap<>(new io.canvasmc.canvas.chunk.block.BlockPosStrategy()); // Canvas - optimized collection
      protected final LevelHeightAccessor levelHeightAccessor;
+     protected final LevelChunkSection[] sections;
+     // CraftBukkit start - SPIGOT-6814: move to IChunkAccess to account for 1.17 to 1.18 chunk upgrading.
 @@ -288,7 +_,7 @@
      }
  
