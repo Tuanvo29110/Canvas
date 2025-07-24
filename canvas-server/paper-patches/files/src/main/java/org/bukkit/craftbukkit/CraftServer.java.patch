@@ -39,7 +39,7 @@
  
          serverLevel.setSpawnSettings(true);
          // Paper - Put world into worldlist before initing the world; move up
-@@ -1451,53 +_,79 @@
+@@ -1451,53 +_,80 @@
      }
  
      @Override
@@ -92,6 +92,7 @@
 +            if (this.console.hasStartedShutdownThread.get()) return complete(false, future); // don't unload during shutdown - expand API
 +            MinecraftServer.LOGGER.info("Beginning unload for World '" + world.getName() + "'");
 +            handle.isUnloading = true;
++            handle.unloadFuture = future;
 +            // moved to regions
  
 -            handle.getChunkSource().close(save);

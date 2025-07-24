@@ -2,8 +2,10 @@ package io.canvasmc.testplugin;
 
 import com.destroystokyo.paper.event.player.PlayerTeleportEndGatewayEvent;
 import java.util.List;
+import java.util.Objects;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.util.RandomSource;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
@@ -66,6 +68,24 @@ public class TestPlugin extends JavaPlugin implements Listener {
                 .keepSpawnLoaded(TriState.FALSE)
                 .type(WorldType.FLAT)
         );
+        getServer().createWorld(
+            // safe blank world to test hoppers
+            new WorldCreator("world_api_test")
+                .environment(World.Environment.NORMAL)
+                .bonusChest(false)
+                .hardcore(false)
+                .type(WorldType.AMPLIFIED)
+        );
+        getServer().getGlobalRegionScheduler().runDelayed(this, (task) -> {
+            World apiTest = Bukkit.getWorld("world_api_test");
+            Bukkit.unloadWorldAsync(Objects.requireNonNull(apiTest, "World cannot be null"), true).thenAccept((success) -> {
+                if (success) {
+                    getLogger().info("Successfully unloaded the world load/unload api test");
+                } else {
+                    getLogger().info("Couldn't unload the world load/unload api test");
+                }
+            });
+        }, 20 * 20); // 20 seconds
     }
 
     public int build(@NotNull RandomSource randomSource) {
