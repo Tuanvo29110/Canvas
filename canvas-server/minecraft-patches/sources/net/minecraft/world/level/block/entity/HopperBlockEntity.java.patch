@@ -17,25 +17,63 @@
              if (!result && blockEntity.level.spigotConfig.hopperCheck > 1) {
                  blockEntity.setCooldown(blockEntity.level.spigotConfig.hopperCheck);
              }
-@@ -190,7 +_,7 @@
+@@ -153,52 +_,15 @@
+         }
      }
-     // Paper end - Perf: Optimize Hoppers
  
+-    // Paper start - Perf: Optimize Hoppers
+-    private static final int HOPPER_EMPTY = 0;
+-    private static final int HOPPER_HAS_ITEMS = 1;
+-    private static final int HOPPER_IS_FULL = 2;
+-
+-    private static int getFullState(final HopperBlockEntity hopper) {
+-        hopper.unpackLootTable(null);
+-
+-        final List<ItemStack> hopperItems = hopper.items;
+-
+-        boolean empty = true;
+-        boolean full = true;
+-
+-        for (int i = 0, len = hopperItems.size(); i < len; ++i) {
+-            final ItemStack stack = hopperItems.get(i);
+-            if (stack.isEmpty()) {
+-                full = false;
+-                continue;
+-            }
+-
+-            if (!full) {
+-                // can't be full
+-                return HOPPER_HAS_ITEMS;
+-            }
+-
+-            empty = false;
+-
+-            if (stack.getCount() != stack.getMaxStackSize()) {
+-                // can't be full or empty
+-                return HOPPER_HAS_ITEMS;
+-            }
+-        }
+-
+-        return empty ? HOPPER_EMPTY : (full ? HOPPER_IS_FULL : HOPPER_HAS_ITEMS);
+-    }
+-    // Paper end - Perf: Optimize Hoppers
+-
 -    private static boolean tryMoveItems(Level level, BlockPos pos, BlockState state, HopperBlockEntity blockEntity, BooleanSupplier validator) {
 +    private static boolean tryMoveItems(Level level, BlockPos pos, BlockState state, HopperBlockEntity blockEntity, BooleanSupplier validator, io.papermc.paper.threadedregions.RegionizedWorldData worldData) { // Canvas - optimize hoppers
          if (level.isClientSide) {
              return false;
          } else {
-@@ -198,7 +_,7 @@
+             if (!blockEntity.isOnCooldown() && state.getValue(HopperBlock.ENABLED)) {
                  boolean flag = false;
-                 final int fullState = getFullState(blockEntity); // Paper - Perf: Optimize Hoppers
+-                final int fullState = getFullState(blockEntity); // Paper - Perf: Optimize Hoppers
++                final int fullState = blockEntity.getState(); // Paper - Perf: Optimize Hoppers // Canvas - optimize hoppers
                  if (fullState != HOPPER_EMPTY) { // Paper - Perf: Optimize Hoppers
 -                    flag = ejectItems(level, pos, blockEntity);
 +                    flag = ejectItems(level, pos, blockEntity, worldData); // Canvas - optimize hoppers
                  }
  
                  if (fullState != HOPPER_IS_FULL || flag) { // Paper - Perf: Optimize Hoppers
-@@ -226,148 +_,22 @@
+@@ -226,148 +_,23 @@
          return true;
      }
  
@@ -183,6 +221,7 @@
 -
 +    // Canvas start - optimize hoppers
 +    /*
++        // TODO - update benchmarks when deaf returns from event
 +        The optimizations included in this patch(primarily this file) return the following results
 +        in an environment of a void world with 161,604 hoppers in 1 region. All tests with chests
 +        place a chest  above every hopper, which also means it's touching the hopper above, if there is one
@@ -200,16 +239,61 @@
      private static org.bukkit.inventory.Inventory getInventory(final Container container) {
          final org.bukkit.inventory.Inventory sourceInventory;
          if (container instanceof net.minecraft.world.CompoundContainer compoundContainer) {
-@@ -383,53 +_,9 @@
+@@ -383,53 +_,116 @@
          return sourceInventory;
      }
  
--    private static void applyCooldown(final Hopper hopper) {
--        if (hopper instanceof HopperBlockEntity blockEntity && blockEntity.getLevel() != null) {
--            blockEntity.setCooldown(blockEntity.getLevel().spigotConfig.hopperTransfer);
--        }
--    }
--
++    private static final int HOPPER_EMPTY = 0;
++    private static final int HOPPER_HAS_ITEMS = 1;
++    private static final int HOPPER_IS_FULL = 2;
++    private int state = Integer.MIN_VALUE;
++
++    public void recomputeState() {
++        this.unpackLootTable(null);
++
++        final List<ItemStack> hopperItems = this.items;
++
++        boolean empty = true;
++        boolean full = true;
++
++        for (int i = 0, len = hopperItems.size(); i < len; ++i) {
++            final ItemStack stack = hopperItems.get(i);
++            if (stack.isEmpty()) {
++                full = false;
++                continue;
++            }
++
++            if (!full) {
++                // can't be full
++                state = HOPPER_HAS_ITEMS;
++                return;
++            }
++
++            empty = false;
++
++            if (stack.getCount() != stack.getMaxStackSize()) {
++                // can't be full or empty
++                state = HOPPER_HAS_ITEMS;
++                return;
++            }
++        }
++
++        state = empty ? HOPPER_EMPTY : (full ? HOPPER_IS_FULL : HOPPER_HAS_ITEMS);
++    }
++
++    public int getState() {
++        if (this.state == Integer.MIN_VALUE) {
++            this.recomputeState();
++        }
++        return this.state;
++    }
++
+     private static void applyCooldown(final Hopper hopper) {
+         if (hopper instanceof HopperBlockEntity blockEntity && blockEntity.getLevel() != null) {
+             blockEntity.setCooldown(blockEntity.getLevel().spigotConfig.hopperTransfer);
+         }
+     }
+ 
 -    private static boolean allMatch(Container container, Direction direction, java.util.function.BiPredicate<ItemStack, Integer> test) {
 -        if (container instanceof WorldlyContainer) {
 -            for (int slot : ((WorldlyContainer) container).getSlotsForFace(direction)) {
@@ -251,13 +335,69 @@
 -
 -    private static boolean ejectItems(Level level, BlockPos pos, HopperBlockEntity blockEntity) {
 -        Container attachedContainer = getAttachedContainer(level, pos, blockEntity);
++    @Override
++    public void setChanged() {
++        super.setChanged();
++        this.recomputeState();
++    }
++
++    @Nullable
++    private static ItemStack callPullMoveEvent(final Hopper hopper, final Container container, final ItemStack itemstack) {
++        io.papermc.paper.threadedregions.RegionizedWorldData worldData = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData(); // Folia - region threading
++        final org.bukkit.inventory.Inventory sourceInventory = getInventory(container);
++        final org.bukkit.inventory.Inventory destination = getInventory(hopper);
++
++        // Mirror is safe as no plugins ever use this item
++        final io.papermc.paper.event.inventory.PaperInventoryMoveItemEvent event = new io.papermc.paper.event.inventory.PaperInventoryMoveItemEvent(sourceInventory, org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(itemstack), destination, false);
++        final boolean result = event.callEvent();
++        if (!event.calledGetItem && !event.calledSetItem) {
++            worldData.skipPullModeEventFire = true; // Folia - region threading
++        }
++        if (!result) {
++            applyCooldown(hopper);
++            return null;
++        }
++
++        if (event.calledSetItem) {
++            return org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(event.getItem());
++        } else {
++            return itemstack;
++        }
++    }
++
++    @Nullable
++    private static ItemStack callPushMoveEvent(Container destination, ItemStack itemStack, HopperBlockEntity hopper) {
++        io.papermc.paper.threadedregions.RegionizedWorldData worldData = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData(); // Folia - region threading
++        final org.bukkit.inventory.Inventory destinationInventory = getInventory(destination);
++        final io.papermc.paper.event.inventory.PaperInventoryMoveItemEvent event = new io.papermc.paper.event.inventory.PaperInventoryMoveItemEvent(
++            hopper.getOwner(false).getInventory(),
++            org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(itemStack),
++            destinationInventory,
++            true
++        );
++        final boolean result = event.callEvent();
++        if (!event.calledGetItem && !event.calledSetItem) {
++            worldData.skipPushModeEventFire = true; // Folia - region threading
++        }
++        if (!result) {
++            applyCooldown(hopper);
++            return null;
++        }
++
++        if (event.calledSetItem) {
++            return org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(event.getItem());
++        } else {
++            return itemStack;
++        }
++    }
++
 +    private static boolean ejectItems(Level level, BlockPos pos, HopperBlockEntity blockEntity, io.papermc.paper.threadedregions.RegionizedWorldData worldData) {
 +        Container attachedContainer = getAttachedContainer(level, pos, blockEntity, worldData);
 +    // Canvas end - optimize hoppers
          if (attachedContainer == null) {
              return false;
          } else {
-@@ -437,60 +_,49 @@
+@@ -437,60 +_,51 @@
              if (isFullContainer(attachedContainer, opposite)) {
                  return false;
              } else {
@@ -315,49 +455,51 @@
 -
 -                //return false;
 -                // Paper end - Perf: Optimize Hoppers
++                // Canvas start - optimize hoppers - inline
++                worldData.skipPushModeEventFire = worldData.skipHopperEvents; // Folia - region threading
++                boolean foundItem = false;
 +                for (int i = 0; i < blockEntity.getContainerSize(); i++) {
-+                   ItemStack item = blockEntity.getItem(i);
-+                   if (!item.isEmpty()) {
-+                       int count = item.getCount();
-+                       // CraftBukkit start - Call event when pushing items into other inventories
-+                       ItemStack original = item.copy();
-+                       org.bukkit.craftbukkit.inventory.CraftItemStack oitemstack = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(
-+                           blockEntity.removeItem(i, level.spigotConfig.hopperAmount)
-+                       ); // Spigot
++                    final ItemStack item = blockEntity.getItem(i);
++                    if (!item.isEmpty()) {
++                        foundItem = true;
++                        ItemStack origItemStack = item;
++                        ItemStack movedItem = origItemStack;
 +
-+                       org.bukkit.inventory.Inventory destinationInventory = getInventory(attachedContainer); // Canvas - optimize hoppers
++                        final int originalItemCount = origItemStack.getCount();
++                        final int movedItemCount = Math.min(level.spigotConfig.hopperAmount, originalItemCount);
++                        origItemStack.setCount(movedItemCount);
 +
-+                       org.bukkit.event.inventory.InventoryMoveItemEvent event = new org.bukkit.event.inventory.InventoryMoveItemEvent(
-+                           blockEntity.getOwner().getInventory(),
-+                           oitemstack,
-+                           destinationInventory,
-+                           true
-+                       );
-+                       if (!event.callEvent()) {
-+                           blockEntity.setItem(i, original);
-+                           blockEntity.setCooldown(level.spigotConfig.hopperTransfer); // Delay hopper checks // Spigot
-+                           return false;
-+                       }
-+                       int origCount = event.getItem().getAmount(); // Spigot
-+                       ItemStack itemStack = HopperBlockEntity.addItem(blockEntity, attachedContainer, org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(event.getItem()), opposite);
-+                       // CraftBukkit end
++                        // We only need to fire the event once to give protection plugins a chance to cancel this event
++                        // Because nothing uses getItem, every event call should end up the same result.
++                        if (!worldData.skipPushModeEventFire) { // Folia - region threading
++                            movedItem = callPushMoveEvent(attachedContainer, movedItem, blockEntity);
++                            if (movedItem == null) { // cancelled
++                                origItemStack.setCount(originalItemCount);
++                                return false;
++                            }
++                        }
 +
-+                       if (itemStack.isEmpty()) {
-+                           attachedContainer.setChanged();
-+                           return true;
-+                       }
-+
-+                       item.setCount(count);
-+                       // Spigot start
-+                       item.shrink(origCount - itemStack.getCount());
-+                       if (count <= level.spigotConfig.hopperAmount) {
-+                           // Spigot end
-+                           blockEntity.setItem(i, item);
-+                       }
-+                   }
++                        final ItemStack remainingItem = addItem(blockEntity, attachedContainer, movedItem, opposite);
++                        final int remainingItemCount = remainingItem.getCount();
++                        if (remainingItemCount != movedItemCount) {
++                            origItemStack = origItemStack.copy(true);
++                            origItemStack.setCount(originalItemCount);
++                            if (!origItemStack.isEmpty()) {
++                                origItemStack.setCount(originalItemCount - movedItemCount + remainingItemCount);
++                            }
++                            blockEntity.setItem(i, origItemStack);
++                            attachedContainer.setChanged();
++                            return true;
++                        }
++                        origItemStack.setCount(originalItemCount);
++                    }
 +                }
 +
++                if (foundItem && level.paperConfig().hopper.cooldownWhenFull) { // Inventory was full - cooldown
++                    blockEntity.setCooldown(level.spigotConfig.hopperTransfer);
++                }
 +                return false;
++                // Canvas - optimize hoppers - inline
              }
          }
      }
@@ -370,7 +512,7 @@
          if (sourceContainer != null) {
              Direction direction = Direction.DOWN;
              worldData.skipPullModeEventFire = worldData.skipHopperEvents; // Paper - Perf: Optimize Hoppers // Folia - region threading
-@@ -572,58 +_,47 @@
+@@ -572,58 +_,48 @@
      private static boolean tryTakeInItemFromSlot(Hopper hopper, Container container, int slot, Direction direction, Level level) { // Spigot
          ItemStack item = container.getItem(slot);
          if (!item.isEmpty() && canTakeItemFromContainer(hopper, container, item, slot, direction)) {
@@ -426,47 +568,48 @@
 -            //    container.setItem(slot, item);
 -            //}
 -            // Paper end - Perf: Optimize Hoppers
-+            int count = item.getCount();
-+            // CraftBukkit start - Call event on collection of items from inventories into the hopper
-+            ItemStack original = item.copy();
-+            org.bukkit.craftbukkit.inventory.CraftItemStack oitemstack = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(
-+               container.removeItem(slot, level.spigotConfig.hopperAmount) // Spigot
-+            );
++            // Canvas start - optimize hoppers - inline
++            io.papermc.paper.threadedregions.RegionizedWorldData worldData = level.getCurrentWorldData(); // Folia - region threading
++            ItemStack movedItem = item;
++            final int originalItemCount = item.getCount();
++            final int movedItemCount = Math.min(level.spigotConfig.hopperAmount, originalItemCount);
++            container.setChanged(); // original logic always marks source inv as changed even if no move happens.
++            movedItem.setCount(movedItemCount);
 +
-+            org.bukkit.inventory.Inventory sourceInventory = getInventory(container); // Canvas - optimize hoppers
-+
-+            org.bukkit.event.inventory.InventoryMoveItemEvent event = new org.bukkit.event.inventory.InventoryMoveItemEvent(
-+               sourceInventory,
-+               oitemstack,
-+               hopper.getOwner().getInventory(),
-+               false
-+            );
-+
-+            if (!event.callEvent()) {
-+               container.setItem(slot, original);
-+
-+               if (hopper instanceof final HopperBlockEntity hopperBlockEntity) {
-+                   hopperBlockEntity.setCooldown(level.spigotConfig.hopperTransfer); // Spigot
-+               }
-+
-+               return false;
-+            }
-+            int origCount = event.getItem().getAmount(); // Spigot
-+            ItemStack itemStack = HopperBlockEntity.addItem(container, hopper, org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(event.getItem()), null);
-+            // CraftBukkit end
-+
-+            if (itemStack.isEmpty()) {
-+               container.setChanged();
-+               return true;
++            if (!worldData.skipPullModeEventFire) { // Folia - region threading
++                movedItem = callPullMoveEvent(hopper, container, movedItem);
++                if (movedItem == null) { // cancelled
++                    item.setCount(originalItemCount);
++                    // Drastically improve performance by returning true.
++                    // No plugin could have relied on the behavior of false as the other call
++                    // site for IMIE did not exhibit the same behavior
++                    return true;
++                }
 +            }
 +
-+            item.setCount(count);
-+            // Spigot start
-+            item.shrink(origCount - itemStack.getCount());
-+            if (count <= level.spigotConfig.hopperAmount) {
-+               // Spigot end
-+               container.setItem(slot, item);
++            final ItemStack remainingItem = addItem(container, hopper, movedItem, null);
++            final int remainingItemCount = remainingItem.getCount();
++            if (remainingItemCount != movedItemCount) {
++                item = item.copy(true);
++                item.setCount(originalItemCount);
++                if (!item.isEmpty()) {
++                    item.setCount(originalItemCount - movedItemCount + remainingItemCount);
++                }
++
++                IGNORE_TILE_UPDATES.set(true); // Folia - region threading
++                container.setItem(slot, item);
++                IGNORE_TILE_UPDATES.set(false); // Folia - region threading
++                container.setChanged();
++                return true;
 +            }
++            item.setCount(originalItemCount);
++
++            if (level.paperConfig().hopper.cooldownWhenFull) {
++                applyCooldown(hopper);
++            }
++
++            return false;
++            // Canvas end - optimize hoppers - inline
          }
  
          return false;
@@ -555,7 +698,14 @@
              }
  
              return container;
-@@ -879,7 +_,7 @@
+@@ -873,13 +_,14 @@
+     @Override
+     protected void setItems(NonNullList<ItemStack> items) {
+         this.items = items;
++        this.recomputeState(); // Canvas - optimize hoppers
+     }
+ 
+     public static void entityInside(Level level, BlockPos pos, BlockState state, Entity entity, HopperBlockEntity blockEntity) {
          if (entity instanceof ItemEntity itemEntity
              && !itemEntity.getItem().isEmpty()
              && entity.getBoundingBox().move(-pos.getX(), -pos.getY(), -pos.getZ()).intersects(blockEntity.getSuckAabb())) {
