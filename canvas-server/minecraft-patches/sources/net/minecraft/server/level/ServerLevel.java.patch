@@ -23,18 +23,6 @@
  
      public static final record PendingTeleport(Entity.EntityTreeNode rootVehicle, Vec3 to) {}
      private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<PendingTeleport> pendingTeleports = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
-@@ -836,10 +_,7 @@
- 
-     @Override
-     public boolean shouldTickBlocksAt(long chunkPos) {
--        // Paper start - rewrite chunk system
--        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder holder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(chunkPos);
--        return holder != null && holder.isTickingReady();
--        // Paper end - rewrite chunk system
-+        return this.getCurrentWorldData().blockTickingChunkHolders.contains(chunkPos); // Canvas - optimize entity/block ticking chunk lookups
-     }
- 
-     protected void tickTime() {
 @@ -1103,7 +_,7 @@
      }
  
@@ -52,47 +40,6 @@
              csvOutput.writeRow(pos.getX(), pos.getY(), pos.getZ(), tickingBlockEntity.getType());
          }
      }
-@@ -2561,25 +_,15 @@
-     }
- 
-     public boolean isPositionTickingWithEntitiesLoaded(long chunkPos) {
--        // Paper start - rewrite chunk system
--        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(chunkPos);
--        // isTicking implies the chunk is loaded, and the chunk is loaded now implies the entities are loaded
--        return chunkHolder != null && chunkHolder.isTickingReady();
--        // Paper end - rewrite chunk system
-+        return this.getCurrentWorldData().blockTickingChunkHolders.contains(chunkPos); // Canvas - optimize entity/block ticking chunk lookups
-     }
- 
-     public boolean isPositionEntityTicking(BlockPos pos) {
--        // Paper start - rewrite chunk system
--        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(pos));
--        return chunkHolder != null && chunkHolder.isEntityTickingReady();
--        // Paper end - rewrite chunk system
-+        return this.getCurrentWorldData().entityTickingChunkHolders.contains(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(pos)); // Canvas - optimize entity/block ticking chunk lookups
-     }
- 
-     public boolean areEntitiesActuallyLoadedAndTicking(ChunkPos chunkPos) {
--        // Paper start - rewrite chunk system
--        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkPos));
--        return chunkHolder != null && chunkHolder.isEntityTickingReady();
--        // Paper end - rewrite chunk system
-+        return this.getCurrentWorldData().entityTickingChunkHolders.contains(chunkPos.longKey); // Canvas - optimize entity/block ticking chunk lookups
-     }
- 
-     public boolean anyPlayerCloseEnoughForSpawning(BlockPos pos) {
-@@ -2591,10 +_,7 @@
-     }
- 
-     public boolean canSpawnEntitiesInChunk(ChunkPos chunkPos) {
--        // Paper start - rewrite chunk system
--        final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkHolder = this.moonrise$getChunkTaskScheduler().chunkHolderManager.getChunkHolder(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkKey(chunkPos));
--        return chunkHolder != null && chunkHolder.isEntityTickingReady() && this.getWorldBorder().isWithinBounds(chunkPos);
--        // Paper end - rewrite chunk system
-+        return areEntitiesActuallyLoadedAndTicking(chunkPos) && this.getWorldBorder().isWithinBounds(chunkPos); // Canvas - optimize entity/block ticking chunk lookups
-     }
- 
-     @Override
 @@ -2706,9 +_,7 @@
              // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
              if (entity instanceof ServerPlayer serverPlayer) {

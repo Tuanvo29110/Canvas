@@ -11,6 +11,7 @@ import io.canvasmc.canvas.config.ConfigurationUtils;
 import io.canvasmc.canvas.config.RuntimeModifier;
 import io.canvasmc.canvas.config.SerializationBuilder;
 import io.canvasmc.canvas.config.annotation.Comment;
+import io.canvasmc.canvas.config.annotation.NamespacedKey;
 import io.canvasmc.canvas.config.internal.ConfigurationManager;
 import io.canvasmc.canvas.entity.EntityCollisionMode;
 import io.canvasmc.canvas.util.YamlTextFormatter;
@@ -20,6 +21,10 @@ import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.Util;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 @Configuration("canvas-server")
@@ -349,6 +354,25 @@ public class Config {
     })
     public boolean enableTpsBar = true;
 
+    @Comment(value = {
+        "The default respawn dimension for the server.",
+        "This can assist for servers that need this changed to a different world",
+        "due to setup reasoning, like needing to send the players to the spawn world",
+        "or the wilderness world, etc.",
+        "This needs a NamedspacedKey string pattern, like 'namespace:key' that points",
+        "to the dimension you want to use. The default is 'minecraft:overworld'",
+        "",
+        "This also applies to the end portal and nether portal, in replacement of the overworld",
+        "For example, if you set this to 'minecraft:the_nether', all entities entering the",
+        "end portal from the end will respawn in the nether rather than the overworld"
+    })
+    @NamespacedKey
+    public String defaultRespawnDimensionKey = "minecraft:overworld";
+
+    public ResourceKey<Level> fetchRespawnDimensionKey() {
+        return ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(this.defaultRespawnDimensionKey));
+    }
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
@@ -370,6 +394,7 @@ public class Config {
             .validator(ConfigHandlers.NonNegativeProcessor::new)
             .validator(ConfigHandlers.NonPositiveProcessor::new)
             .validator(ConfigHandlers.PatternProcessor::new)
+            .validator(ConfigHandlers.NamespacedKeyProcessor::new)
             .runtimeModifier("debug.*", new RuntimeModifier<>(boolean.class, (original) -> RUNNING_IN_IDE || original))
             .post(context -> {
                 INSTANCE = context.configuration();

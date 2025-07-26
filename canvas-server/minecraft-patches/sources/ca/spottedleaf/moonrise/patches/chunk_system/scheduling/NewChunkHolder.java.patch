@@ -22,22 +22,3 @@
          this.scheduler = scheduler;
          this.vanillaChunkHolder = new ChunkHolder(
                  new ChunkPos(chunkX, chunkZ), ChunkHolderManager.MAX_TICKET_LEVEL, world,
-@@ -1216,6 +_,18 @@
- 
-     private void updateCurrentState(final FullChunkStatus to) {
-         this.currentFullChunkStatus = to;
-+        // Canvas start - optimize entity/block ticking chunk lookups
-+        if (to.isOrAfter(FullChunkStatus.BLOCK_TICKING)) {
-+            this.world.getCurrentWorldData().markBlockTicking(this);
-+        } else {
-+            this.world.getCurrentWorldData().markNonBlockTickingIfPossible(this);
-+        }
-+        if (to.isOrAfter(FullChunkStatus.ENTITY_TICKING)) {
-+            this.world.getCurrentWorldData().markEntityTicking(this);
-+        } else {
-+            this.world.getCurrentWorldData().markNonEntityTickingIfPossible(this);
-+        }
-+        // Canvas end - optimize entity/block ticking chunk lookups
-     }
- 
-     // only to be called on the main thread, no locks need to be held

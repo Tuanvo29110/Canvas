@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/level/block/NetherPortalBlock.java
++++ b/net/minecraft/world/level/block/NetherPortalBlock.java
+@@ -141,7 +_,7 @@
+     @Override
+     public TeleportTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos) {
+         // CraftBukkit start
+-        ResourceKey<Level> resourceKey = level.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER ? Level.OVERWORLD : Level.NETHER;
++        ResourceKey<Level> resourceKey = level.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER ? io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey() : Level.NETHER; // Canvas - default respawn dimension config
+         ServerLevel level1 = level.getServer().getLevel(resourceKey);
+         // Paper start - Add EntityPortalReadyEvent
+         io.papermc.paper.event.entity.EntityPortalReadyEvent portalReadyEvent = new io.papermc.paper.event.entity.EntityPortalReadyEvent(entity.getBukkitEntity(), level1 == null ? null : level1.getWorld(), org.bukkit.PortalType.NETHER);

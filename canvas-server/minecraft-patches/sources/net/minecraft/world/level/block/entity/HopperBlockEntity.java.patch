@@ -670,7 +670,7 @@
      private static Container getContainerAt(Level level, BlockPos pos, BlockState state, double x, double y, double z, final boolean optimizeEntities) {
          // Paper end - Perf: Optimize Hoppers
 -        Container blockContainer = getBlockContainer(level, pos, state);
-+        Container blockContainer = state.hasBlockEntity() ? getBlockContainer(level, pos, state) : null; // Canvas - optimize hoppers - if there is no block entity, don't bother with this - helps when the hopper is pulling from a non-block-entity-block(air, dirt, etc)
++        Container blockContainer = state.hasBlockEntity() || state.getBlock() instanceof WorldlyContainerHolder ? getBlockContainer(level, pos, state) : null; // Canvas - optimize hoppers - if there is no block entity, don't bother with this - helps when the hopper is pulling from a non-block-entity-block(air, dirt, etc)
          if (blockContainer == null && (!optimizeEntities || !level.paperConfig().hopper.ignoreOccludingBlocks || !state.getBukkitMaterial().isOccluding())) { // Paper - Perf: Optimize Hoppers
              blockContainer = getEntityContainer(level, x, y, z);
          }

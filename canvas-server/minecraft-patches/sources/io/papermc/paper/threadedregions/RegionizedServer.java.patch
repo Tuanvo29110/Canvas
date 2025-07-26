@@ -17,12 +17,18 @@
      }
  
      public void init() {
-@@ -63,9 +_,17 @@
+@@ -63,9 +_,23 @@
          new RegionizedServerInitEvent().callEvent();
  
          // now we can schedule
 -        this.tickHandle.setInitialStart(System.nanoTime() + TickRegionScheduler.TIME_BETWEEN_TICKS);
 +        // Canvas start - rewrite scheduler
++        // validate respawn dimension config entry first
++        net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> respawnDimension = io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey();
++        ServerLevel level = MinecraftServer.getServer().getLevel(respawnDimension);
++        if (level == null) {
++            throw new IllegalStateException("Respawn dimension invalid, could not fetch dimension from value '" + respawnDimension + "'");
++        }
 +        // this is required because the new scheduler will not act like the old
 +        // one where the most recent task scheduled gets run first if it's able
 +        // to run, so we need to run the global tick synchronously first to ensure

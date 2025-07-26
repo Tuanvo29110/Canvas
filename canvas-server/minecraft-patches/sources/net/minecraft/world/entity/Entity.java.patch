@@ -207,6 +207,24 @@
              if (
                  destination.regioniser.getRegionAtUnsynchronised(
                      ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkX(currPos), ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkZ(currPos)
+@@ -4372,7 +_,7 @@
+     public boolean endPortalLogicAsync(BlockPos portalPos) {
+         ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot portal entity async");
+ 
+-        ServerLevel destination = this.getServer().getLevel(this.level().getTypeKey() == net.minecraft.world.level.dimension.LevelStem.END ? Level.OVERWORLD : Level.END);
++        ServerLevel destination = this.getServer().getLevel(this.level().getTypeKey() == net.minecraft.world.level.dimension.LevelStem.END ? io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey() : Level.END); // Canvas - default respawn dimension config
+         if (destination == null) {
+             // wat
+             return false;
+@@ -4384,7 +_,7 @@
+     public boolean netherPortalLogicAsync(BlockPos portalPos) {
+         ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot portal entity async");
+ 
+-        ServerLevel destination = this.getServer().getLevel(this.level().getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER ? Level.OVERWORLD : Level.NETHER);
++        ServerLevel destination = this.getServer().getLevel(this.level().getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER ? io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey() : Level.NETHER); // Canvas - default respawn dimension config
+         if (destination == null) {
+             // wat
+             return false;
 @@ -4605,6 +_,7 @@
                  }
              }
@@ -215,3 +233,12 @@
  
          return true;
      }
+@@ -4954,7 +_,7 @@
+ 
+     public boolean canTeleport(Level fromLevel, Level toLevel) {
+         if (!this.isAlive() || !this.valid) return false; // Paper - Fix item duplication and teleport issues
+-        if (fromLevel.dimension() == Level.END && toLevel.dimension() == Level.OVERWORLD) {
++        if (fromLevel.dimension() == Level.END && toLevel.dimension() == io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey()) { // Canvas - default respawn dimension config
+             for (Entity entity : this.getPassengers()) {
+                 if (entity instanceof ServerPlayer serverPlayer && !serverPlayer.seenCredits) {
+                     return false;

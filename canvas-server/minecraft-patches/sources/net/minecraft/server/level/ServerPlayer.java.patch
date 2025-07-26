@@ -66,7 +66,7 @@
      }
  
      private void saveParentVehicle(ValueOutput output) {
-@@ -1524,14 +_,26 @@
+@@ -1524,16 +_,28 @@
       * internally for {@link #respawn(java.util.function.Consumer, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason)}
       */
      public static final long TELEPORT_FLAGS_PLAYER_RESPAWN    = Long.MIN_VALUE >>> 0;
@@ -92,8 +92,11 @@
 +        }
 +        // Canvas end - fix end credits
          this.respawn((player) -> {
-             CriteriaTriggers.CHANGED_DIMENSION.trigger(player, Level.END, Level.OVERWORLD);
+-            CriteriaTriggers.CHANGED_DIMENSION.trigger(player, Level.END, Level.OVERWORLD);
++            CriteriaTriggers.CHANGED_DIMENSION.trigger(player, Level.END, io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey()); // Canvas - default respawn dimension config
          }, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason.END_PORTAL, true);
+     }
+ 
 @@ -1573,19 +_,38 @@
              ServerPlayer.this.reset();
          }
@@ -147,7 +150,7 @@
                  TELEPORT_FLAG_LOAD_CHUNK | TELEPORT_FLAGS_PLAYER_RESPAWN,
                  passengerTree, // note: we expect this to just be the player, no passengers
                  (entity) -> {
-@@ -1615,8 +_,25 @@
+@@ -1615,12 +_,29 @@
                      }
                  }
              );
@@ -173,6 +176,11 @@
          // find and modify respawn block state
          if (respawnWorld == null || respawnConfig == null) {
              // default to regular spawn
+-            fudgeSpawnLocation(this.server.getLevel(Level.OVERWORLD), this, spawnPosComplete);
++            fudgeSpawnLocation(this.server.getLevel(io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey()), this, spawnPosComplete); // Canvas - default respawn dimension config
+         } else {
+             // load chunk for block
+             // give at least 1 radius of loaded chunks so that we do not sync load anything
 @@ -1632,6 +_,7 @@
                          respawnWorld, respawnConfig, !alive
                      ).orElse(null);
@@ -181,7 +189,15 @@
                          // no spawn
                          ServerPlayer.this.connection.send(
                              new ClientboundGameEventPacket(ClientboundGameEventPacket.NO_RESPAWN_BLOCK_AVAILABLE, 0.0F)
-@@ -1647,6 +_,7 @@
+@@ -1640,13 +_,14 @@
+                             null, false, com.destroystokyo.paper.event.player.PlayerSetSpawnEvent.Cause.PLAYER_RESPAWN
+                         );
+                         // default to regular spawn
+-                        fudgeSpawnLocation(this.server.getLevel(Level.OVERWORLD), this, spawnPosComplete);
++                        fudgeSpawnLocation(this.server.getLevel(io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey()), this, spawnPosComplete); // Canvas - default respawn dimension config
+                         return;
+                     }
+ 
                      boolean isRespawnAnchor = respawnWorld.getBlockState(respawnConfig.pos()).is(net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR);
                      boolean isBed = respawnWorld.getBlockState(respawnConfig.pos()).is(net.minecraft.tags.BlockTags.BEDS);
                      usedRespawnAnchor[0] = !alive && isRespawnAnchor;
@@ -314,3 +330,12 @@
  
      public Set<ThrownEnderpearl> getEnderPearls() {
          return this.enderPearls;
+@@ -3320,7 +_,7 @@
+         );
+ 
+         static ResourceKey<Level> getDimensionOrDefault(@Nullable ServerPlayer.RespawnConfig respawnConfig) {
+-            return respawnConfig != null ? respawnConfig.dimension() : Level.OVERWORLD;
++            return respawnConfig != null ? respawnConfig.dimension() : io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey(); // Canvas - default respawn dimension config
+         }
+ 
+         public boolean isSamePosition(@Nullable ServerPlayer.RespawnConfig respawnConfig) {

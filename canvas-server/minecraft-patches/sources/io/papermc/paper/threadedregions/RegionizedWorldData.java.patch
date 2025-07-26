@@ -23,17 +23,6 @@
                  if (tileEntity != null) {
                      tileEntity.updateTicks(fromTickOffset, fromRedstoneTimeOffset);
                  }
-@@ -159,6 +_,10 @@
-             for (final ChunkHolder chunkHolder : from.chunkHoldersToBroadcast) {
-                 into.chunkHoldersToBroadcast.add(chunkHolder);
-             }
-+            // Canvas start - optimize entity/block ticking chunk lookups
-+            into.blockTickingChunkHolders.addAll(from.blockTickingChunkHolders);
-+            into.entityTickingChunkHolders.addAll(from.entityTickingChunkHolders);
-+            // Canvas end - optimize entity/block ticking chunk lookups
-         }
- 
-         @Override
 @@ -171,8 +_,12 @@
                  final ChunkPos pos = player.chunkPosition();
                  // Note: It is impossible for an entity in the world to _not_ be in an entity chunk, which means
@@ -68,29 +57,6 @@
 +                // Canvas end - block entity sleeping
                  final int chunkX = pos.getX() >> 4;
                  final int chunkZ = pos.getZ() >> 4;
- 
-@@ -326,6 +_,22 @@
-                     into.chunkHoldersToBroadcast.add(chunkHolder);
-                 }
-             }
-+            // Canvas start - optimize entity/block ticking chunk lookups
-+            // we can just use 'regionToData' to find the chunk, since
-+            // the long in this case *is* the chunk key
-+            for (final long chunkKey : from.blockTickingChunkHolders) {
-+                RegionizedWorldData worldData = regionToData.get(chunkKey);
-+                if (worldData != null) {
-+                    worldData.blockTickingChunkHolders.add(chunkKey);
-+                }
-+            }
-+            for (final long chunkKey : from.entityTickingChunkHolders) {
-+                RegionizedWorldData worldData = regionToData.get(chunkKey);
-+                if (worldData != null) {
-+                    worldData.entityTickingChunkHolders.add(chunkKey);
-+                }
-+            }
-+            // Canvas end - optimize entity/block ticking chunk lookups
-         }
-     };
  
 @@ -334,7 +_,7 @@
      private RegionizedServer.WorldLevelData tickData;
@@ -159,7 +125,7 @@
  
      // Mob spawning
      public final ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<ServerPlayer> spawnChunkTracker = new ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<>();
-@@ -447,7 +_,35 @@
+@@ -447,7 +_,12 @@
      public final alternate.current.wire.WireHandler wireHandler;
      public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
  
@@ -169,29 +135,6 @@
 +    public final ApiHandle apiHandle = new ApiHandle(this); // Canvas - expand region api
 +    public final net.minecraft.server.waypoints.ServerWaypointManager waypointManager = new net.minecraft.server.waypoints.ServerWaypointManager(); // Canvas - region threading - restore waypoints
 +
-+    // Canvas start - optimize entity/block ticking chunk lookups
-+    // if there's lots of chunks loaded, we don't want to search through that map to find block
-+    // ticking holders or entity ticking holders, so we cache the ones that are valid to limit the search.
-+    // the DynamicChunkPosLongSet is the fastest option for 'contains' operations(via tests conducted in V2)
-+    public final io.canvasmc.canvas.chunk.DynamicChunkPosLongSet blockTickingChunkHolders = new io.canvasmc.canvas.chunk.DynamicChunkPosLongSet();
-+    public final io.canvasmc.canvas.chunk.DynamicChunkPosLongSet entityTickingChunkHolders = new io.canvasmc.canvas.chunk.DynamicChunkPosLongSet();
-+
-+    public void markBlockTicking(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
-+        this.blockTickingChunkHolders.add(newChunkHolder.getCachedLongPos());
-+    }
-+
-+    public void markNonBlockTickingIfPossible(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
-+        this.blockTickingChunkHolders.remove(newChunkHolder.getCachedLongPos());
-+    }
-+
-+    public void markEntityTicking(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
-+        this.entityTickingChunkHolders.add(newChunkHolder.getCachedLongPos());
-+    }
-+
-+    public void markNonEntityTickingIfPossible(ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder newChunkHolder) {
-+        this.entityTickingChunkHolders.remove(newChunkHolder.getCachedLongPos());
-+    }
-+    // Canvas end - optimize entity/block ticking chunk lookups
 +    public RegionizedWorldData(final ServerLevel world, final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData) { // Canvas - rewrite scheduler
          this.world = world;
          this.blockLevelTicks = new LevelTicks<>(world::isPositionTickingWithEntitiesLoaded, world, true);
@@ -220,9 +163,9 @@
 +        // Canvas start - region threading
 +        ChunkPos disconnectPos = player.connection.disconnectPos;
 +        if (disconnectPos == null) {
++            // position wasn't set for some dumbass reason.
 +            disconnectPos = player.chunkPosition();
 +        }
-+        if (disconnectPos == null) return; // the player chunk position was *still* null, skip or we crash
 +        // Canvas end - region threading
          // now that the connection is removed, we can allow this region to die
          player.level().moonrise$getChunkTaskScheduler().chunkHolderManager.removeTicketAtLevel(
