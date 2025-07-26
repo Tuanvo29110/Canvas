@@ -1,5 +1,14 @@
 --- a/io/papermc/paper/threadedregions/RegionizedServer.java
 +++ b/io/papermc/paper/threadedregions/RegionizedServer.java
+@@ -30,7 +_,7 @@
+ 
+ public final class RegionizedServer {
+ 
+-    private static final Logger LOGGER = LogUtils.getLogger();
++    private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger("RegionizedServer"); // Canvas - rewrite scheduler
+     private static final RegionizedServer INSTANCE = new RegionizedServer();
+ 
+     public final RegionizedTaskQueue taskQueue = new RegionizedTaskQueue();
 @@ -56,6 +_,7 @@
  
      public void addWorld(final ServerLevel world) {
@@ -8,9 +17,20 @@
      }
  
      public void init() {
-@@ -65,7 +_,7 @@
+@@ -63,9 +_,17 @@
+         new RegionizedServerInitEvent().callEvent();
+ 
          // now we can schedule
-         this.tickHandle.setInitialStart(System.nanoTime() + TickRegionScheduler.TIME_BETWEEN_TICKS);
+-        this.tickHandle.setInitialStart(System.nanoTime() + TickRegionScheduler.TIME_BETWEEN_TICKS);
++        // Canvas start - rewrite scheduler
++        // this is required because the new scheduler will not act like the old
++        // one where the most recent task scheduled gets run first if it's able
++        // to run, so we need to run the global tick synchronously first to ensure
++        // we don't royally screw over the entire server
++        LOGGER.info("Running first global tick before starting tick scheduler");
++        this.globalTick((int) this.tickHandle.getCurrentTick());
++        this.tickHandle.setInitialStart(System.nanoTime());
++        // Canvas end - rewrite scheduler
          TickRegions.getScheduler().scheduleRegion(this.tickHandle);
 -        TickRegions.getScheduler().init();
 +        TickRegions.start(); // Canvas - rewrite scheduler

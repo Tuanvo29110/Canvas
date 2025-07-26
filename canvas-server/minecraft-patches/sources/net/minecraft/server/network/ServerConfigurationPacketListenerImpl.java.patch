@@ -1,0 +1,11 @@
+--- a/net/minecraft/server/network/ServerConfigurationPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerConfigurationPacketListenerImpl.java
+@@ -284,7 +_,7 @@
+         }
+ 
+         this.connection.setReadOnly();
+-        this.server.scheduleOnMain(() -> {
++        this.server.regionizedServer.addTask(() -> { // Canvas - region threading
+             this.disconnect(disconnectionInfo); // Currently you cannot cancel disconnect during the config stage
+         });
+     }
