@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
-@@ -361,7 +_,7 @@
+@@ -362,7 +_,7 @@
              this.lastItemInMainHand = mainHandItem.copy();
          }
  
@@ -9,7 +9,7 @@
              this.turtleHelmetTick();
          }
  
-@@ -390,7 +_,7 @@
+@@ -391,7 +_,7 @@
      }
  
      protected boolean updateIsUnderwater() {
@@ -18,7 +18,7 @@
          return this.wasUnderwater;
      }
  
-@@ -790,7 +_,7 @@
+@@ -791,7 +_,7 @@
          }
  
          destroySpeed *= (float)this.getAttributeValue(Attributes.BLOCK_BREAK_SPEED);

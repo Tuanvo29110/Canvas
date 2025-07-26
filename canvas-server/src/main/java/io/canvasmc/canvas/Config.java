@@ -26,6 +26,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Range;
 
 @Configuration("canvas-server")
 public class Config {
@@ -371,6 +372,26 @@ public class Config {
 
     public ResourceKey<Level> fetchRespawnDimensionKey() {
         return ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(this.defaultRespawnDimensionKey));
+    }
+
+    public Containers containers = new Containers();
+    public static class Containers {
+        @Comment("The amount of rows for the barrel block")
+        @Range(from = 1L, to = 6L)
+        public int barrelRows = 3;
+        @Comment("Whether to use 6 rows for the player ender chest, rather than the normal 3")
+        public boolean enderChestSixRows = false;
+        @Comment({
+            "Whether to use a permission based system for defining the size of ender chests per player",
+            "Valid permissions:",
+            " - purpur.enderchest.rows.six",
+            " - purpur.enderchest.rows.five",
+            " - purpur.enderchest.rows.four",
+            " - purpur.enderchest.rows.three",
+            " - purpur.enderchest.rows.two",
+            " - purpur.enderchest.rows.one"
+        })
+        public boolean enderChestPermissionRows = false;
     }
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {

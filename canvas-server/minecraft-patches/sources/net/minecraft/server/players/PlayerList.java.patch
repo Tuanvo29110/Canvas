@@ -48,7 +48,7 @@
              } else {
                  thrownEnderpearl.setOwner(null);
              }
-@@ -1385,6 +_,7 @@
+@@ -1406,6 +_,7 @@
      }
  
      public boolean verifyChatTrusted(PlayerChatMessage message) {
@@ -56,7 +56,7 @@
          return message.hasSignature() && !message.hasExpiredServer(Instant.now());
      }
  
-@@ -1435,7 +_,12 @@
+@@ -1456,7 +_,12 @@
  
          for (ServerLevel serverLevel : this.server.getAllLevels()) {
              if (serverLevel != null) {
@@ -70,7 +70,7 @@
              }
          }
      }
-@@ -1446,7 +_,12 @@
+@@ -1467,7 +_,12 @@
  
          for (ServerLevel serverLevel : this.server.getAllLevels()) {
              if (serverLevel != null) {
