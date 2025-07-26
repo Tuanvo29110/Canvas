@@ -46,12 +46,14 @@ public class WorldDistanceCommand {
                                     state.viewDistanceOrDefault() :
                                     state.simulationDistanceOrDefault()) - 1
                                 , MoonriseConstants.MAX_VIEW_DISTANCE - 3);
-                            for (ServerPlayer serverPlayer : world.players()) {
-                                serverPlayer.connection.send(serverPlayer.moonrise$getChunkLoader().updateClientChunkRadius(updated));
-                            }
 
                             switch (type) {
-                                case VIEW -> world.getChunkSource().setViewDistance(updated);
+                                case VIEW -> {
+                                    for (ServerPlayer serverPlayer : world.players()) {
+                                        serverPlayer.connection.send(serverPlayer.moonrise$getChunkLoader().updateClientChunkRadius(updated));
+                                    }
+                                    world.getChunkSource().setViewDistance(updated);
+                                }
                                 case SIMULATION -> world.getChunkSource().setSimulationDistance(updated);
                             }
                             context.getSource().sendSuccess(() -> Component.literal("Set " + type.name.toLowerCase() + " distance of world '" + world.getWorld().getName() + "' to " + distance), false);
