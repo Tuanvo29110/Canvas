@@ -23,17 +23,20 @@
      private final double[] pistonDeltas = new double[]{0.0, 0.0, 0.0};
      private long pistonDeltasGameTime = Long.MIN_VALUE; // Folia - region threading
      protected EntityDimensions dimensions;
-@@ -901,7 +_,13 @@
+@@ -901,7 +_,16 @@
  
          this.checkBelowWorld();
          if (!this.level().isClientSide) {
-+            // Canvas start - hide flames on entities with fire resistance
++            // Canvas start - hide flames on entities with fire resistance or invis
 +            if (this instanceof net.minecraft.world.entity.LivingEntity livingEntity) {
-+                this.setSharedFlagOnFire(this.remainingFireTicks > 0 && (!io.canvasmc.canvas.Config.INSTANCE.entities.hideFlamesOnEntitiesWithFireResistance || !livingEntity.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE)));
++                this.setSharedFlagOnFire(this.remainingFireTicks > 0 &&
++                    (!io.canvasmc.canvas.Config.INSTANCE.entities.hideFlamesOnEntitiesWithFireResistance || !livingEntity.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE)) &&
++                    (!io.canvasmc.canvas.Config.INSTANCE.entities.hideFlamesOnEntitiesWithInvisibility || !livingEntity.isInvisible())
++                );
 +            } else {
-+            // Canvas end - hide flames on entities with fire resistance
++            // Canvas end - hide flames on entities with fire resistance or invis
              this.setSharedFlagOnFire(this.remainingFireTicks > 0);
-+            } // Canvas - hide flames on entities with fire resistance
++            } // Canvas - hide flames on entities with fire resistance or invis
          }
  
          this.firstTick = false;
