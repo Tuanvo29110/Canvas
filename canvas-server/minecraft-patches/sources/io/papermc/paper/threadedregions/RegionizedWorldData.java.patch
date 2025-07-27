@@ -1,8 +1,10 @@
 --- a/io/papermc/paper/threadedregions/RegionizedWorldData.java
 +++ b/io/papermc/paper/threadedregions/RegionizedWorldData.java
-@@ -83,6 +_,7 @@
+@@ -82,7 +_,9 @@
+             // entities
              for (final ServerPlayer player : from.localPlayers) {
                  into.localPlayers.add(player);
++                player.getBukkitEntity().setRegionData(into); // Canvas - rewrite scheduler
                  into.nearbyPlayers.addPlayer(player);
 +                into.waypointManager.addPlayer(player); // Canvas - region threading - restore waypoints
              }
@@ -38,6 +40,14 @@
              }
              // entities
              for (final ServerPlayer player : from.localPlayers) {
+@@ -181,6 +_,7 @@
+                 // the chunk holder must _exist_, and so the region section exists.
+                 final RegionizedWorldData into = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
+                 into.localPlayers.add(player);
++                player.getBukkitEntity().setRegionData(into); // Canvas - rewrite scheduler
+                 into.nearbyPlayers.addPlayer(player);
+             }
+             for (final Entity entity : from.allEntities) {
 @@ -252,7 +_,18 @@
                    //       marked as removed. So if there is no section, it's probably removed!
              }
@@ -200,6 +210,22 @@
                  cleanUpConnection(conn);
                  continue;
              }
+@@ -612,6 +_,7 @@
+         if (this.allEntities.add(entity)) {
+             if (entity instanceof ServerPlayer player) {
+                 this.localPlayers.add(player);
++                player.getBukkitEntity().setRegionData(this); // Canvas - rewrite scheduler
+             }
+             TickRegions.RegionStats.updateCurrentRegion();
+         }
+@@ -628,6 +_,7 @@
+         if (this.allEntities.remove(entity)) {
+             if (entity instanceof ServerPlayer player) {
+                 this.localPlayers.remove(player);
++                player.getBukkitEntity().setRegionData(null); // Canvas - rewrite scheduler
+             }
+             TickRegions.RegionStats.updateCurrentRegion();
+         }
 @@ -768,4 +_,72 @@
      public int getChunkCount() {
          return this.chunks.size();

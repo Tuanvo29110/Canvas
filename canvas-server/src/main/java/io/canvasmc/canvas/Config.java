@@ -11,6 +11,7 @@ import io.canvasmc.canvas.config.ConfigurationUtils;
 import io.canvasmc.canvas.config.RuntimeModifier;
 import io.canvasmc.canvas.config.SerializationBuilder;
 import io.canvasmc.canvas.config.annotation.Comment;
+import io.canvasmc.canvas.config.annotation.Experimental;
 import io.canvasmc.canvas.config.annotation.NamespacedKey;
 import io.canvasmc.canvas.config.internal.ConfigurationManager;
 import io.canvasmc.canvas.entity.EntityCollisionMode;
@@ -112,6 +113,9 @@ public class Config {
             "up to 60% of your network usage. Disabling this has minimal side effects, such as squids and glow squids swimming upright until attacked."
         })
         public boolean disableClientboundSetEntityMotionPacket = false;
+
+        @Comment("Processes packets in-between ticks, which can drastically improve performance")
+        public boolean processPacketsInBetweenTicks = true;
     }
 
     @Comment("Configurations for enabling virtual threads for different thread pool executors")

@@ -1,5 +1,14 @@
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+@@ -327,7 +_,7 @@
+         this.player = player;
+         player.connection = this;
+         player.getTextFilter().join();
+-        this.signedMessageDecoder = SignedMessageChain.Decoder.unsigned(player.getUUID(), server::enforceSecureProfile);
++        this.signedMessageDecoder = SignedMessageChain.Decoder.unsigned(player.getUUID(), server::ncrEnforceSecureProfile); // Canvas - no chat reports
+         this.chatMessageChain = new FutureChain(server.chatExecutor); // CraftBukkit - async chat
+         this.tickEndEvent = new io.papermc.paper.event.packet.ClientTickEndEvent(player.getBukkitEntity()); // Paper - add client tick end event
+         this.playerGameConnection =  new io.papermc.paper.connection.PaperPlayerGameConnection(this); // Paper
 @@ -846,7 +_,7 @@
      }
  
@@ -9,6 +18,15 @@
          new com.google.common.util.concurrent.ThreadFactoryBuilder().setDaemon(true).setNameFormat("Async Tab Complete Thread - #%d").setUncaughtExceptionHandler(new net.minecraft.DefaultUncaughtExceptionHandlerWithName(MinecraftServer.LOGGER)).build());
      // Paper end - AsyncTabCompleteEvent
  
+@@ -2348,7 +_,7 @@
+         command = event.getMessage().substring(1);
+         // CraftBukkit end
+         ParseResults<CommandSourceStack> parseResults = this.parseCommand(command);
+-        if (this.server.enforceSecureProfile() && SignableCommand.hasSignableArguments(parseResults)) {
++        if (this.server.ncrEnforceSecureProfile() && SignableCommand.hasSignableArguments(parseResults)) { // Canvas - no chat reports
+             LOGGER.error(
+                 "Received unsigned command packet from {}, but the command requires signable arguments: {}", this.player.getGameProfile().getName(), command
+             );
 @@ -2787,7 +_,7 @@
          this.removePlayerFromWorld();
          } finally { // Folia start - rewrite login process - move connection ownership to global region

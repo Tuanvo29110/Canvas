@@ -20,11 +20,3 @@
          // Paper end - initialize global and world-defaults configuration
          this.server.spark.enableEarlyIfRequested(); // Paper - spark
          // Paper start - fix converting txt to json file; convert old users earlier after PlayerList creation but before file load/save
-@@ -564,6 +_,7 @@
- 
-     @Override
-     public boolean enforceSecureProfile() {
-+        if (io.canvasmc.canvas.Config.INSTANCE.enableNoChatReports) return false; // Canvas - no chat reports
-         DedicatedServerProperties properties = this.getProperties();
-         // Paper start - Add setting for proxy online mode status
-         return properties.enforceSecureProfile
