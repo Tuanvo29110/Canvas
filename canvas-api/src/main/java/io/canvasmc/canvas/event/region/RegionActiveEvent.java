@@ -18,13 +18,13 @@ public class RegionActiveEvent extends ServerEvent {
     }
 
     @NotNull
-    @Override
-    public HandlerList getHandlers() {
+    public static HandlerList getHandlerList() {
         return HANDLER_LIST;
     }
 
     @NotNull
-    public static HandlerList getHandlerList() {
+    @Override
+    public HandlerList getHandlers() {
         return HANDLER_LIST;
     }
 

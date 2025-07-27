@@ -29,6 +29,14 @@
              // Paper end - Send empty chunk
          }
      }
+@@ -585,6 +_,7 @@
+         if (playerAdvancements != null) {
+             playerAdvancements.save();
+         }
++        new io.canvasmc.canvas.event.PlayerSaveEvent(player.getBukkitEntity(), false).callEvent(); // Canvas - player save event
+     }
+ 
+     public @Nullable net.kyori.adventure.text.Component remove(ServerPlayer player) { // CraftBukkit - return string // Paper - return Component
 @@ -650,7 +_,17 @@
          for (ThrownEnderpearl thrownEnderpearl : new java.util.ArrayList<>(player.getEnderPearls())) { // Paper - copy, setOwner will remove from list;
              // Paper start - Allow using old ender pearl behavior
@@ -48,6 +56,14 @@
              } else {
                  thrownEnderpearl.setOwner(null);
              }
+@@ -687,6 +_,7 @@
+         // This removes the scoreboard (and player reference) for the specific player in the manager
+         this.cserver.getScoreboardManager().removePlayer(player.getBukkitEntity());
+         // CraftBukkit end
++        new io.canvasmc.canvas.event.PlayerSaveEvent(player.getBukkitEntity(), true).callEvent(); // Canvas - player save event
+         return playerQuitEvent.quitMessage(); // Paper - Adventure
+     }
+ 
 @@ -1406,6 +_,7 @@
      }
  

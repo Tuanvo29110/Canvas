@@ -15,17 +15,17 @@ public class WorldPreLoadEvent extends WorldEvent {
     }
 
     @NotNull
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
+    }
+
+    @NotNull
     public Stage getStage() {
         return stage;
     }
 
     @Override
     public @NotNull HandlerList getHandlers() {
-        return HANDLERS;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
         return HANDLERS;
     }
 
@@ -39,6 +39,6 @@ public class WorldPreLoadEvent extends WorldEvent {
          * Called when the world object internally is finished constructing, the TAIL
          * of the init method
          */
-        CONSTRUCTED;
+        CONSTRUCTED
     }
 }
