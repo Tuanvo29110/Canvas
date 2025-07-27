@@ -114,9 +114,8 @@ public class Config {
         })
         public boolean disableClientboundSetEntityMotionPacket = false;
 
-        @Experimental
         @Comment("Processes packets in-between ticks, which can drastically improve performance")
-        public boolean processPacketsInBetweenTicks = false;
+        public boolean processPacketsInBetweenTicks = true;
     }
 
     @Comment("Configurations for enabling virtual threads for different thread pool executors")
