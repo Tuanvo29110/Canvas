@@ -139,6 +139,20 @@
      }
      // CraftBukkit end
  
+@@ -2198,6 +_,13 @@
+         return 256;
+     }
+ 
++    // Canvas start - no chat reports
++    public boolean ncrEnforceSecureProfile() {
++        if (io.canvasmc.canvas.Config.INSTANCE.enableNoChatReports) return false; // NCR deosn't require secure profile
++        return this.enforceSecureProfile();
++    }
++
++    // Canvas end - no chat reports
+     public boolean enforceSecureProfile() {
+         return false;
+     }
 @@ -2703,7 +_,7 @@
          }
      }
