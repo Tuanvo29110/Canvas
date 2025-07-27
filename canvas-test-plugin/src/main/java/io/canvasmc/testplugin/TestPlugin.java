@@ -3,6 +3,7 @@ package io.canvasmc.testplugin;
 import com.destroystokyo.paper.event.player.PlayerTeleportEndGatewayEvent;
 import java.util.List;
 import java.util.Objects;
+import io.canvasmc.canvas.event.WorldPreLoadEvent;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.util.RandomSource;
 import org.bukkit.Bukkit;
@@ -122,5 +123,10 @@ public class TestPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onTeleportEndGateway(PlayerTeleportEndGatewayEvent playerTeleportEndGatewayEvent) {
         getLogger().info("PlayerTeleportEndGatewayEvent called!");
+    }
+
+    @EventHandler
+    public void onWorldPreLoad(@NotNull WorldPreLoadEvent worldPreLoadEvent) {
+        getLogger().info("WorldPreLoadEvent called with stage " + worldPreLoadEvent.getStage() + "!");
     }
 }

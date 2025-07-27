@@ -17,6 +17,14 @@
  
      private void haltServerRegionThreading() {
          if (this.hasStartedShutdownThread.getAndSet(true)) {
+@@ -1591,6 +_,7 @@
+                     LOGGER.info("Initialising world '" + region.world.getWorld().getName() + "' before it can be ticked...");
+                     this.initWorld(region.world, region.world.serverLevelData, worldData, region.world.serverLevelData.worldGenOptions()); // Folia - delayed until first tick of world
+                     region.world.checkInitialised.set(ServerLevel.WORLD_INIT_CHECKED);
++                    new io.canvasmc.canvas.event.WorldPreLoadEvent(region.world.getWorld(), io.canvasmc.canvas.event.WorldPreLoadEvent.Stage.INIT_WORLD).callEvent(); // Canvas - world pre load event
+                     LOGGER.info("Initialised world '" + region.world.getWorld().getName() + "'");
+                 } // else: must be checked
+             }
 @@ -1607,6 +_,7 @@
              region.getTaskQueueData().drainTasks();
              ((io.papermc.paper.threadedregions.scheduler.FoliaRegionScheduler)org.bukkit.Bukkit.getRegionScheduler()).tick();

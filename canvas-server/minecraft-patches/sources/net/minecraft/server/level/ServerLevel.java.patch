@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -632,6 +_,13 @@
+@@ -632,6 +_,14 @@
          // Paper end - rewrite chunk system
          this.getCraftServer().addWorld(this.getWorld()); // CraftBukkit
          this.updateTickData(); // Folia - region threading - make sure it is initialised before ticked
@@ -11,6 +11,7 @@
 +        int simulationDistance = this.serverLevelData.distanceConfig.simulationDistanceOrDefault();
 +        this.chunkSource.setSimulationDistance(simulationDistance - 1);
 +        // Canvas end - per world distance
++        new io.canvasmc.canvas.event.WorldPreLoadEvent(getWorld(), io.canvasmc.canvas.event.WorldPreLoadEvent.Stage.CONSTRUCTED).callEvent(); // Canvas - world pre load event
      }
  
      // Folia start - region threading
