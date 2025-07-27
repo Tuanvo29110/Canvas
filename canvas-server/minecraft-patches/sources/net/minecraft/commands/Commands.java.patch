@@ -76,3 +76,12 @@
              SaveOffCommand.register(this.dispatcher);
              SaveOnCommand.register(this.dispatcher);
              SetPlayerIdleTimeoutCommand.register(this.dispatcher);
+@@ -468,7 +_,7 @@
+     }
+ 
+     // Fixed pool, but with discard policy
+-    public static final java.util.concurrent.ExecutorService COMMAND_SENDING_POOL = new java.util.concurrent.ThreadPoolExecutor(
++    public static final java.util.concurrent.ExecutorService COMMAND_SENDING_POOL = io.canvasmc.canvas.Config.INSTANCE.virtualThreads.commandSendingPool ? java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor() : new java.util.concurrent.ThreadPoolExecutor( // Canvas - virtual threads
+         2, 2, 0, java.util.concurrent.TimeUnit.MILLISECONDS,
+         new java.util.concurrent.LinkedBlockingQueue<>(),
+         new com.google.common.util.concurrent.ThreadFactoryBuilder()

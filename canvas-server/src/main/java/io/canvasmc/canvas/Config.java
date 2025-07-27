@@ -134,6 +134,9 @@ public class Config {
 
         @Comment("Enables virtual thread usage for the profile lookup executor")
         public boolean profileLookupExecutor = false;
+
+        @Comment("Enables virtual thread usage for the command sending pool")
+        public boolean commandSendingPool = false;
     }
 
     public Entities entities = new Entities();
