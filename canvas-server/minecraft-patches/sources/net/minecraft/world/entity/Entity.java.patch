@@ -155,6 +155,15 @@
                  if (this.repositionEntityAfterLoad()) {
                      this.reapplyPosition();
                  }
+@@ -3878,7 +_,7 @@
+             );
+     }
+ 
+-    public final boolean isInvulnerableToBase(DamageSource damageSource) {
++    public boolean isInvulnerableToBase(DamageSource damageSource) { // Canvas - mutable - TODO - wideners in weaver?
+         return this.isRemoved()
+             || this.invulnerable && !damageSource.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && !damageSource.isCreativePlayer()
+             || damageSource.is(DamageTypeTags.IS_FIRE) && this.fireImmune()
 @@ -4291,12 +_,50 @@
                  return false;
              }

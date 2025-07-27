@@ -1,5 +1,21 @@
 --- a/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/net/minecraft/world/entity/item/ItemEntity.java
+@@ -340,6 +_,15 @@
+         return !this.isInvulnerableToBase(damageSource) && this.getItem().canBeHurtBy(damageSource);
+     }
+ 
++    // Canvas start - invulnerable to lightning and explosions config
++    @Override
++    public boolean isInvulnerableToBase(final DamageSource damageSource) {
++        if (io.canvasmc.canvas.Config.INSTANCE.itemEntitiesImmuneToExplosions && damageSource.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION)) return true;
++        if (io.canvasmc.canvas.Config.INSTANCE.itemEntitiesImmuneToLightning && damageSource.is(net.minecraft.tags.DamageTypeTags.IS_LIGHTNING)) return true;
++        return super.isInvulnerableToBase(damageSource);
++    }
++
++    // Canvas end - invulnerable to lightning and explosions config
+     @Override
+     public final boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
+         if (this.isInvulnerableToBase(damageSource)) {
 @@ -606,4 +_,13 @@
      public SlotAccess getSlot(int slot) {
          return slot == 0 ? SlotAccess.of(this::getItem, this::setItem) : super.getSlot(slot);

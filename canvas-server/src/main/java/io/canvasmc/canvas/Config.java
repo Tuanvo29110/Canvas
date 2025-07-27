@@ -394,6 +394,29 @@ public class Config {
         public boolean enderChestPermissionRows = false;
     }
 
+    @Comment("Disables leaf decaying")
+    public boolean disableLeafDecay = false;
+
+    public Mace mace = new Mace();
+    public static class Mace {
+        @Comment("Removes the fall distance amplifier with maces")
+        public boolean ignoreFallDistance = false;
+        @Comment("The limit before fall distance scaling stops working for mace damage bonuses")
+        public double fallDistanceLimit = -1.0D;
+    }
+
+    @Comment("Makes item entities immune to explosion damage sources")
+    public boolean itemEntitiesImmuneToExplosions = false;
+
+    @Comment("Makes item entities immune to lightning damage sources")
+    public boolean itemEntitiesImmuneToLightning = false;
+
+    @Comment({
+        "Defines a percentage of which the server will apply to the velocity applied to",
+        "item entities dropped on death. 0 means it has no velocity, 1 is default."
+    })
+    public double itemEntitySpreadFactor = 1.0D;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
