@@ -5,7 +5,7 @@ import io.papermc.paperweight.tasks.RebuildBaseGitPatches
 
 plugins {
     java
-    id("io.canvasmc.weaver.patcher") version "2.1.5-SNAPSHOT"
+    id("io.canvasmc.weaver.patcher") version "2.2.0-SNAPSHOT"
 }
 
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
@@ -28,12 +28,14 @@ paperweight {
         patchRepo("paperApi") {
             upstreamPath = "paper-api"
             patchesDir = file("canvas-api/paper-patches")
+            additionalAts?.set(file("build-data/canvas.at"))
             outputDir = file("paper-api")
         }
         patchDir("foliaApi") {
             upstreamPath = "folia-api"
             excludes = listOf("build.gradle.kts", "build.gradle.kts.patch", "paper-patches")
             patchesDir = file("canvas-api/folia-patches")
+            additionalAts?.set(file("build-data/canvas.at"))
             outputDir = file("folia-api")
         }
     }
