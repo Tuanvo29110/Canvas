@@ -71,7 +71,7 @@
  
          // queue data
          private final RegionizedTaskQueue.RegionTaskQueueData taskQueueData;
-@@ -166,14 +_,57 @@
+@@ -166,14 +_,58 @@
  
          // async-safe read-only region data
          private final RegionStats regionStats;
@@ -123,6 +123,7 @@
 +        }
 +
 +        public void drainAllPackets() {
++            if (!io.canvasmc.canvas.Config.INSTANCE.networking.processPacketsInBetweenTicks) return;
 +            while (this.drainSinglePacket());
 +            this.hasPackets.set(false); // we can fs say we drained all packets
 +        }
