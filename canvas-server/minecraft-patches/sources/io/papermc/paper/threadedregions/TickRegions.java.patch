@@ -71,7 +71,7 @@
  
          // queue data
          private final RegionizedTaskQueue.RegionTaskQueueData taskQueueData;
-@@ -166,14 +_,21 @@
+@@ -166,14 +_,57 @@
  
          // async-safe read-only region data
          private final RegionStats regionStats;
@@ -90,6 +90,42 @@
 +            TickRegions.getScheduler().setHasTasks(this.tickHandle);
 +        }
 +
++        public void setHasPackets() {
++            if (!this.hasPackets.get() && !this.hasPackets.compareAndExchange(false, true)) {
++                this.setHasTasks();
++            }
++        }
++
++        public boolean drainSinglePacket() {
++            // from spottedleaf beta scheduler branch, fixed a few bugs
++            final RegionizedWorldData worldData = this.world.getCurrentWorldData();
++
++            boolean hasPackets = false;
++            for (final net.minecraft.server.level.ServerPlayer player : worldData.getLocalPlayers()) {
++                if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(player)) {
++                    continue;
++                }
++                if (player.getBukkitEntity().executeOnePacketTask()) {
++                    hasPackets |= player.getBukkitEntity().hasPackets();
++                }
++            }
++
++            if (!hasPackets) {
++                // handle race condition: packet added during packet processing
++                for (final net.minecraft.server.level.ServerPlayer player : worldData.getLocalPlayers()) {
++                    if (player.getBukkitEntity().hasPackets()) {
++                        hasPackets = true;
++                        break;
++                    }
++                }
++            }
++            return hasPackets;
++        }
++
++        public void drainAllPackets() {
++            while (this.drainSinglePacket());
++            this.hasPackets.set(false); // we can fs say we drained all packets
++        }
 +        // Canvas end - rewrite scheduler
          public RegionStats getRegionStats() {
              return this.regionStats;
@@ -185,7 +221,7 @@
                  this.updateScheduledStart(System.nanoTime() + TickRegionScheduler.TIME_BETWEEN_TICKS);
              }
          }
-@@ -378,32 +_,32 @@
+@@ -378,32 +_,34 @@
          }
  
          @Override
@@ -200,6 +236,7 @@
 +            // Canvas start - rewrite scheduler
 +            boolean executeChunkTask;
 +            boolean executeTickTask;
++            boolean executePacketTask;
              do {
 -                if (executeTickTask) {
 -                    executeTickTask = queue.executeTickTask();
@@ -207,11 +244,13 @@
 -                if (executeChunkTask) {
 -                    processedChunkTask |= (executeChunkTask = queue.executeChunkTask());
 -                }
+-            } while ((executeChunkTask | executeTickTask) && canContinue.getAsBoolean());
 +                executeTickTask = queue.executeTickTask();
 +                executeChunkTask = queue.executeChunkTask();
++                executePacketTask = this.region.drainSinglePacket();
 +
 +                processedChunkTask |= executeChunkTask;
-             } while ((executeChunkTask | executeTickTask) && canContinue.getAsBoolean());
++            } while ((executeChunkTask | executeTickTask | executePacketTask) && canContinue.getAsBoolean());
 +            // Canvas end - rewrite scheduler
  
              if (processedChunkTask) {
