@@ -3,8 +3,10 @@ import java.util.Locale
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-        maven("https://central.sonatype.com/repository/maven-snapshots/")
+        maven {
+            name = "canvasmc"
+            url = uri("https://maven.canvasmc.io/snapshots")
+        }
     }
 }
 

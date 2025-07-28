@@ -81,11 +81,11 @@ subprojects {
     }
     extensions.configure<PublishingExtension> {
         repositories {
-            maven("https://central.sonatype.com/repository/maven-snapshots/") {
-                name = "central"
-	            credentials {
-                    username = System.getenv("PUBLISH_USER")
-                    password = System.getenv("PUBLISH_TOKEN")
+            maven("https://maven.canvasmc.io/snapshots") {
+                name = "canvasmc"
+                credentials {
+                    username=System.getenv("PUBLISH_USER")
+                    password=System.getenv("PUBLISH_TOKEN")
                 }
             }
         }
