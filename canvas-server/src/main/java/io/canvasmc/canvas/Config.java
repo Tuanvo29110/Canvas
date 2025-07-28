@@ -427,6 +427,9 @@ public class Config {
     })
     public double itemEntitySpreadFactor = 1.0D;
 
+    @Comment("Disables Canvas' fix to waypoints. Recommended if you do not need this fix or it's causing a plugin incompatibility")
+    public boolean disableWaypointsFix = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

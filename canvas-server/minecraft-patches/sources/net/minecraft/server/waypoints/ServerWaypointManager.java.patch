@@ -1,10 +1,11 @@
 --- a/net/minecraft/server/waypoints/ServerWaypointManager.java
 +++ b/net/minecraft/server/waypoints/ServerWaypointManager.java
-@@ -22,7 +_,11 @@
+@@ -22,11 +_,17 @@
  
      @Override
      public void trackWaypoint(WaypointTransmitter waypoint) {
 -        // Folia - region threading
++        if (io.canvasmc.canvas.Config.INSTANCE.disableWaypointsFix) return; // Canvas - region threading - restore waypoints
 +        this.waypoints.add(waypoint);
 +
 +        for (ServerPlayer serverPlayer : this.players) {
@@ -13,11 +14,24 @@
      }
  
      @Override
-@@ -49,15 +_,37 @@
+     public void updateWaypoint(WaypointTransmitter waypoint) {
++        if (io.canvasmc.canvas.Config.INSTANCE.disableWaypointsFix) return; // Canvas - region threading - restore waypoints
+         if (this.waypoints.contains(waypoint)) {
+             Map<ServerPlayer, WaypointTransmitter.Connection> map = Tables.transpose(this.connections).row(waypoint);
+             SetView<ServerPlayer> set = Sets.difference(this.players, map.keySet());
+@@ -43,29 +_,57 @@
+ 
+     @Override
+     public void untrackWaypoint(WaypointTransmitter waypoint) {
++        if (io.canvasmc.canvas.Config.INSTANCE.disableWaypointsFix) return; // Canvas - region threading - restore waypoints
+         this.connections.column(waypoint).forEach((serverPlayer, connection) -> connection.disconnect());
+         Tables.transpose(this.connections).row(waypoint).clear();
+         this.waypoints.remove(waypoint);
      }
  
      public void addPlayer(ServerPlayer player) {
 -        // Folia - region threading
++        if (io.canvasmc.canvas.Config.INSTANCE.disableWaypointsFix) return; // Canvas - region threading - restore waypoints
 +        this.players.add(player);
 +
 +        for (WaypointTransmitter waypointTransmitter : this.waypoints) {
@@ -31,6 +45,7 @@
  
      public void updatePlayer(ServerPlayer player) {
 -        // Folia - region threading
++        if (io.canvasmc.canvas.Config.INSTANCE.disableWaypointsFix) return; // Canvas - region threading - restore waypoints
 +        Map<WaypointTransmitter, WaypointTransmitter.Connection> map = this.connections.row(player);
 +        SetView<WaypointTransmitter> set = Sets.difference(this.waypoints, map.keySet());
 +
@@ -45,6 +60,7 @@
  
      public void removePlayer(ServerPlayer player) {
 -        // Folia - region threading
++        if (io.canvasmc.canvas.Config.INSTANCE.disableWaypointsFix) return; // Canvas - region threading - restore waypoints
 +        this.connections.row(player).values().removeIf(connection -> {
 +            connection.disconnect();
 +            return true;
@@ -54,3 +70,13 @@
      }
  
      public void breakAllConnections() {
++        if (io.canvasmc.canvas.Config.INSTANCE.disableWaypointsFix) return; // Canvas - region threading - restore waypoints
+         this.connections.values().forEach(WaypointTransmitter.Connection::disconnect);
+         this.connections.clear();
+     }
+ 
+     public void remakeConnections(WaypointTransmitter waypoint) {
++        if (io.canvasmc.canvas.Config.INSTANCE.disableWaypointsFix) return; // Canvas - region threading - restore waypoints
+         for (ServerPlayer serverPlayer : this.players) {
+             this.createConnection(serverPlayer, waypoint);
+         }

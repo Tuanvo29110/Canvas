@@ -24,11 +24,12 @@
  
      public static final record PendingTeleport(Entity.EntityTreeNode rootVehicle, Vec3 to) {}
      private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<PendingTeleport> pendingTeleports = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
-@@ -1103,7 +_,7 @@
+@@ -1103,7 +_,8 @@
      }
  
      public ServerWaypointManager getWaypointManager() {
 -        return this.waypointManager;
++        if (io.canvasmc.canvas.Config.INSTANCE.disableWaypointsFix) return this.waypointManager; // Canvas - region threading - restore waypoints
 +        return this.getCurrentWorldData().waypointManager; // Canvas - region threading - restore waypoints
      }
  
