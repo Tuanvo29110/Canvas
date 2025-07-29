@@ -430,6 +430,22 @@ public class Config {
     @Comment("Disables Canvas' fix to waypoints. Recommended if you do not need this fix or it's causing a plugin incompatibility")
     public boolean disableWaypointsFix = false;
 
+    public Projectiles projectiles = new Projectiles();
+    public static class Projectiles {
+        @Comment("Controls how many chunks are allowed to be sync loaded by projectiles in a tick.")
+        public int maxProjectileLoadsPerTick = 10;
+
+        @Comment("Controls how many chunks a projectile can load in its lifetime before it gets automatically removed.")
+        public int maxProjectileLoadsPerProjectile = 10;
+    }
+
+    @Comment({
+        "Optimizes the suffocation check by selectively skipping the check in a way",
+        "that still appears vanilla. This should be left enabled on most servers, but",
+        "is provided as a configuration option if the vanilla deviation is undesirable"
+    })
+    public boolean enableSuffocationOptimization = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
