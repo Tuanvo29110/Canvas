@@ -59,3 +59,12 @@
              return this.state == STATE_TICKING;
          }
  
+@@ -998,6 +_,8 @@
+             final StringBuilder ret = new StringBuilder(128);
+ 
+             ret.append("ThreadedRegion{");
++            ret.append("world=").append(this.regioniser.world).append(','); // Canvas - rewrite scheduler
++            ret.append("center=").append(this.getCenterChunk()).append(','); // Canvas - rewrite scheduler
+             ret.append("state=").append(this.state).append(',');
+             // To avoid recursion in toString, maybe fix later?
+             //ret.append("mergeIntoLater=").append(this.mergeIntoLater).append(',');

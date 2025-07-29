@@ -102,7 +102,7 @@
              if (thread.isAlive()) {
                  TraceUtil.dumpTraceForThread(thread, reason);
              }
-@@ -175,16 +_,14 @@
+@@ -175,16 +_,24 @@
          this.scheduler.notifyTasks(region);
      }
  
@@ -117,16 +117,39 @@
          // prevent further ticks from occurring
          // we CANNOT sync, because WE ARE ON A SCHEDULER THREAD
 -        this.scheduler.halt(false, 0L);
-+        this.scheduler.halt(); // Canvas - rewrite scheduler
++        // Canvas start - rewrite scheduler
++        net.minecraft.CrashReport crashReport = net.minecraft.CrashReport.forThrowable(thr, "Region Crash");
++        net.minecraft.server.MinecraftServer.getServer().fillSystemReport(crashReport.getSystemReport());
++        java.nio.file.Path path = net.minecraft.server.MinecraftServer.getServer().getServerDirectory().resolve("crash-reports").resolve("crash-" + net.minecraft.Util.getFilenameFormattedDateTime() + "-server.txt");
++        if (crashReport.saveToFile(path, net.minecraft.ReportType.CRASH)) {
++            LOGGER.error("This crash report has been saved to: {}", path.toAbsolutePath());
++        } else {
++            LOGGER.error("We were unable to save this crash report to disk.");
++        }
++        this.scheduler.halt();
++        // Canvas end - rewrite scheduler
  
          MinecraftServer.getServer().stopServer();
      }
-@@ -194,7 +_,7 @@
+@@ -194,7 +_,20 @@
  
          // prevent further ticks from occurring
          // we CANNOT sync, because WE ARE ON A SCHEDULER THREAD
 -        this.scheduler.halt(false, 0L);
-+        this.scheduler.halt(); // Canvas - rewrite scheduler
++        // Canvas start - rewrite scheduler
++        net.minecraft.CrashReport crashReport = net.minecraft.CrashReport.forThrowable(thr, "Region Crash");
++        net.minecraft.server.MinecraftServer.getServer().fillSystemReport(crashReport.getSystemReport());
++        net.minecraft.CrashReportCategory crashReportCategory = crashReport.addCategory("Region Context");
++        crashReportCategory.setDetail("Executing Tasks", () -> String.valueOf(executingTasks));
++        crashReportCategory.setDetail("RegionScheduleHandle", handle.region == null ? "Not available" : handle.region.region);
++        java.nio.file.Path path = net.minecraft.server.MinecraftServer.getServer().getServerDirectory().resolve("crash-reports").resolve("crash-" + net.minecraft.Util.getFilenameFormattedDateTime() + "-server.txt");
++        if (crashReport.saveToFile(path, net.minecraft.ReportType.CRASH)) {
++            LOGGER.error("This crash report has been saved to: {}", path.toAbsolutePath());
++        } else {
++            LOGGER.error("We were unable to save this crash report to disk.");
++        }
++        this.scheduler.halt();
++        // Canvas end - rewrite scheduler
  
          final ChunkPos center = handle.region == null ? null : handle.region.region.getCenterChunk();
          final ServerLevel world = handle.region == null ? null : handle.region.world;
