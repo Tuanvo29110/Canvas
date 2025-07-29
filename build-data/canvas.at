@@ -54,3 +54,5 @@ public-f net.minecraft.world.level.levelgen.Xoroshiro128PlusPlus seedLo
 public-f net.minecraft.world.level.levelgen.XoroshiroRandomSource randomNumberGenerator
 public-f net.minecraft.world.level.levelgen.XoroshiroRandomSource$XoroshiroPositionalRandomFactory seedHi
 public-f net.minecraft.world.level.levelgen.XoroshiroRandomSource$XoroshiroPositionalRandomFactory seedLo
+public org.bukkit.map.MapPalette colors
+public org.bukkit.map.MapPalette matchColor(Ljava/awt/Color;)B

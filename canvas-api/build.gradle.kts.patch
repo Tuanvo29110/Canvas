@@ -55,3 +55,15 @@
      }
  }
  
+@@ -168,6 +_,11 @@
+             "Automatic-Module-Name" to "org.bukkit"
+         )
+     }
++}
++
++tasks.withType<JavaCompile> {
++    val compilerArgs = options.compilerArgs
++    compilerArgs.add("--add-modules=jdk.incubator.vector")
+ }
+ 
+ abstract class Services {

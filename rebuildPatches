@@ -3,11 +3,20 @@
 set -e
 
 force_run=false
+gradle_run=false
 
-if [[ "$1" == "--force" ]]; then
-  force_run=true
-  echo "Force mode enabled. All Gradle tasks will run."
-fi
+for arg in "$@"; do
+  case "$arg" in
+    --force)
+      force_run=true
+      echo "Force mode enabled. All Gradle tasks will run."
+      ;;
+    --gradle)
+      gradle_run=true
+      echo "--gradle flag detected. Will run rebuildFoliaSingleFilePatches."
+      ;;
+  esac
+done
 
 echo "Processing file patches..."
 
@@ -64,7 +73,7 @@ if $force_run || ! git diff --quiet "./canvas-api/build.gradle.kts" || ! git dif
   gradle_rebuild_task=true
 fi
 
-if $gradle_rebuild_task; then
+if $gradle_rebuild_task || $gradle_run; then
   gradle_tasks["rebuildFoliaSingleFilePatches"]="true"
 fi
 
