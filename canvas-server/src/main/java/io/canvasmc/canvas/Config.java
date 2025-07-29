@@ -446,6 +446,14 @@ public class Config {
     })
     public boolean enableSuffocationOptimization = false;
 
+    @Comment({
+        "Defines the inaccuracy of skeleton bow shots. 14 being vanilla,",
+        "100+ being absurdly stupidly and somewhat hilariously inaccurate",
+        "",
+        "The server difficulty is already taken into account upon calculation at runtime"
+    })
+    public double skeletonAimInaccuracy = 0.0D;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
