@@ -157,7 +157,7 @@
          if (task == null) {
              // might be on the shutdown thread, try retrieving the current region
              if (io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion() != null) {
-@@ -3295,6 +_,27 @@
+@@ -3295,6 +_,52 @@
  
          return getTPSFromRegion(((CraftWorld)world).getHandle(), chunkX, chunkZ);
      }
@@ -180,6 +180,31 @@
 +            if (regionizedWorldData == null) return null;
 +            return regionizedWorldData.apiHandle;
 +        }
++    }
++
++    /**
++     * Safely blocks the current thread until the given stop condition returns true.
++     * <p>
++     * A <i>safe block</i> pauses the current thread while still allowing region tasks
++     * to run. This is significantly safer than using typical blocking techniques like
++     * {@link java.util.concurrent.CompletableFuture#join()} because it allows the region
++     * to process tasks that might be required to satisfy the condition you're waiting on.
++     * <p>
++     * For example, if the result you're waiting on depends on the current region's thread,
++     * normal blocking could lead to a deadlock. This safe block approach prevents that.
++     * <p>
++     * <b>Note:</b> This method <b>must</b> be called from a region thread.
++     * Calling it from any other thread will result in an exception.
++     *
++     * @param stopCondition the condition to evaluate repeatedly until it returns true
++     */
++    public void safeBlock(java.util.function.BooleanSupplier stopCondition) {
++        io.papermc.paper.threadedregions.ThreadedRegionizer.ThreadedRegion<io.papermc.paper.threadedregions.TickRegions.TickRegionData, io.papermc.paper.threadedregions.TickRegions.TickRegionSectionData>
++            region = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion();
++        if (region == null) {
++            throw new UnsupportedOperationException("Must be run during a region tick");
++        }
++        region.getData().world.chunkSource.mainThreadProcessor.managedBlock(stopCondition);
 +    }
 +    // Canvas end - expand region api
  
