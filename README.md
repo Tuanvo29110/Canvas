@@ -58,8 +58,8 @@ You can use the Canvas API in your own plugins via the following Gradle configur
 ```kotlin
 repositories {
     maven {
-        name = "central portal" // contains Canvas artifacts
-        url = uri("https://central.sonatype.com/repository/maven-snapshots/")
+        name = "Canvas" // contains Canvas artifacts
+        url = uri("https://maven.canvasmc.io/snapshots")
     }
     mavenCentral() // for other dependencies
     maven("https://repo.papermc.io/repository/maven-public/")
