@@ -15,7 +15,7 @@
 -
 -    private static int getFullState(final HopperBlockEntity hopper) {
 +    // Canvas start - optimize hoppers
-+    private int fullState = 0;
++    private int fullState = -1;
 +
 +    @Override
 +    public void setChanged() {
@@ -52,11 +52,12 @@
      }
      // Paper end - Perf: Optimize Hoppers
  
-@@ -196,7 +_,7 @@
+@@ -196,7 +_,8 @@
          } else {
              if (!blockEntity.isOnCooldown() && state.getValue(HopperBlock.ENABLED)) {
                  boolean flag = false;
 -                final int fullState = getFullState(blockEntity); // Paper - Perf: Optimize Hoppers
++                if (blockEntity.fullState == -1) recomputeFullState(blockEntity); // Canvas - optimize hoppers
 +                final int fullState = blockEntity.fullState; // Paper - Perf: Optimize Hoppers // Canvas - optimize hoppers
                  if (fullState != HOPPER_EMPTY) { // Paper - Perf: Optimize Hoppers
                      flag = ejectItems(level, pos, blockEntity);
