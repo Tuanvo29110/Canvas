@@ -452,7 +452,7 @@ public class Config {
         "",
         "The server difficulty is already taken into account upon calculation at runtime"
     })
-    public double skeletonAimInaccuracy = 0.0D;
+    public double skeletonAimInaccuracy = 14.0D;
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
