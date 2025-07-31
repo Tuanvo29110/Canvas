@@ -1,9 +1,273 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Dueris <jedimastertoothless@hotmail.com>
-Date: Thu, 3 Jul 2025 15:24:31 -0700
-Subject: [PATCH] Update Logo
+Date: Mon, 28 Jul 2025 02:15:29 +0200
+Subject: [PATCH] Rebrand
 
 
+diff --git a/src/main/java/com/destroystokyo/paper/Metrics.java b/src/main/java/com/destroystokyo/paper/Metrics.java
+index 90a5178b5025378197b69514d782de5d6090cb6b..296bed080238fa5df455eb0b43e62b71c7d1dfce 100644
+--- a/src/main/java/com/destroystokyo/paper/Metrics.java
++++ b/src/main/java/com/destroystokyo/paper/Metrics.java
+@@ -593,7 +593,7 @@ public class Metrics {
+             boolean logFailedRequests = config.getBoolean("logFailedRequests", false);
+             // Only start Metrics, if it's enabled in the config
+             if (config.getBoolean("enabled", true)) {
+-                Metrics metrics = new Metrics("Folia", serverUUID, logFailedRequests, Bukkit.getLogger()); // Folia - we have our own bstats page
++                Metrics metrics = new Metrics("Canvas", serverUUID, logFailedRequests, Bukkit.getLogger()); // Folia - we have our own bstats page // Canvas - Rebrand
+ 
+                 metrics.addCustomChart(new Metrics.SimplePie("minecraft_version", () -> {
+                     String minecraftVersion = Bukkit.getVersion();
+@@ -607,11 +607,16 @@ public class Metrics {
+                 final String implVersion = org.bukkit.craftbukkit.Main.class.getPackage().getImplementationVersion();
+                 if (implVersion != null) {
+                     final String buildOrHash = implVersion.substring(implVersion.lastIndexOf('-') + 1);
+-                    paperVersion = "git-Folia-%s-%s".formatted(Bukkit.getServer().getMinecraftVersion(), buildOrHash); // Folia - we have our own bstats page
++                    // Canvas start - new versioning schem for bstats
++                    io.papermc.paper.ServerBuildInfo buildInfo = io.papermc.paper.ServerBuildInfo.buildInfo();
++                    paperVersion = "Canvas-V3-" +
++                        buildInfo.minecraftVersionName() + "-" +
++                        (buildInfo.buildNumber().isPresent() ? buildInfo.buildNumber().getAsInt() : "DEV");
++                    // Canvas end - new versioning schem for bstats
+                 } else {
+                     paperVersion = "unknown";
+                 }
+-                metrics.addCustomChart(new Metrics.SimplePie("folia_version", () -> paperVersion)); // Folia - we have our own bstats page
++                metrics.addCustomChart(new Metrics.SimplePie("canvas_version", () -> paperVersion)); // Folia - we have our own bstats page // Canvas - Rebrand
+ 
+                 metrics.addCustomChart(new Metrics.DrilldownPie("java_version", () -> {
+                     Map<String, Map<String, Integer>> map = new HashMap<>();
+@@ -676,6 +681,117 @@ public class Metrics {
+ 
+                     return map;
+                 }));
++            // Canvas start - Rebrand - expand metrics
++            metrics.addCustomChart(new Metrics.DrilldownPie("proxy", () -> {
++                String type;
++                boolean onlineMode;
++                var proxiesConfig = io.papermc.paper.configuration.GlobalConfiguration.get().proxies;
++                if (proxiesConfig.velocity.enabled) {
++                    type = "Velocity";
++                    onlineMode = proxiesConfig.velocity.onlineMode;
++                } else if (org.spigotmc.SpigotConfig.bungee) {
++                    type = "BungeeCord";
++                    onlineMode = proxiesConfig.bungeeCord.onlineMode;
++                } else {
++                    type = "none";
++                    onlineMode = Bukkit.getOnlineMode();
++                }
++                Map<String, Map<String, Integer>> map = new HashMap<>(2);
++                // insert type and online mode as lower dimension
++                Map<String, Integer> entry = new HashMap<>(2);
++                entry.put(type + " (" + (onlineMode ? "online" : "offline") + ")", 1);
++                // create type as higher dimension
++                map.put(type, entry);
++                return map;
++            }));
++            Map<String, Map<String, Integer>> javaVirtualMachineMap = new HashMap<>(2);
++            {
++                Map<String, Integer> entry = new HashMap<>(2);
++                String vmVendor = null;
++                try {
++                    vmVendor = System.getProperty("java.vm.vendor");
++                } catch (Exception ignored) {}
++                entry.put(vmVendor == null ? "Unknown" : vmVendor, 1);
++                String vmName = null;
++                try {
++                    vmName = System.getProperty("java.vm.name");
++                } catch (Exception ignored) {}
++                javaVirtualMachineMap.put(vmName == null ? "Unknown" : vmName, entry);
++            }
++            metrics.addCustomChart(new Metrics.DrilldownPie("java_virtual_machine", () -> javaVirtualMachineMap));
++            metrics.addCustomChart(new Metrics.DrilldownPie("player_count", () -> {
++                Map<String, Map<String, Integer>> map = new HashMap<>(2);
++                // count players
++                int playerCount = Bukkit.getOnlinePlayers().size();
++                // insert real value as lower dimension
++                Map<String, Integer> entry = new HashMap<>(2);
++                entry.put(String.valueOf(playerCount), 1);
++                // create buckets as higher dimension
++                if (playerCount <= 5) {
++                    map.put(String.valueOf(playerCount), entry);
++                } else if (playerCount > 1000) {
++                    map.put("> 1000", entry);
++                } else {
++                    int divisor;
++                    if (playerCount <= 50) {
++                        divisor = 5;
++                    } else if (playerCount <= 100) {
++                        divisor = 10;
++                    } else if (playerCount <= 250) {
++                        divisor = 25;
++                    } else if (playerCount <= 500) {
++                        divisor = 50;
++                    } else {
++                        divisor = 100;
++                    }
++                    int start = (playerCount - 1) / divisor * divisor + 1;
++                    int end = start + divisor - 1;
++                    map.put(start + "-" + end, entry);
++                }
++                return map;
++            }));
++            metrics.addCustomChart(new Metrics.DrilldownPie("plugin_count", () -> {
++                Map<String, Map<String, Integer>> map = new HashMap<>(2);
++                // count plugins
++                int pluginCount = Bukkit.getPluginManager().getPlugins().length;
++                // insert real value as lower dimension
++                Map<String, Integer> entry = new HashMap<>(2);
++                entry.put(String.valueOf(pluginCount), 1);
++                // create buckets as higher dimension
++                if (pluginCount <= 5) {
++                    map.put(String.valueOf(pluginCount), entry);
++                } else if (pluginCount > 1000) {
++                    map.put("> 1000", entry);
++                } else {
++                    int divisor;
++                    if (pluginCount <= 50) {
++                        divisor = 5;
++                    } else if (pluginCount <= 100) {
++                        divisor = 10;
++                    } else if (pluginCount <= 250) {
++                        divisor = 25;
++                    } else if (pluginCount <= 500) {
++                        divisor = 50;
++                    } else {
++                        divisor = 100;
++                    }
++                    int start = (pluginCount - 1) / divisor * divisor + 1;
++                    int end = start + divisor - 1;
++                    map.put(start + "-" + end, entry);
++                }
++                return map;
++            }));
++            metrics.addCustomChart(new Metrics.SimplePie("netty_thread_count", () -> {
++                // Try to get the number of Netty threads from the system property
++                try {
++                    return System.getProperty("io.netty.eventLoopThreads");
++                } catch (Exception ignored) {}
++                // Otherwise, we fall back to nothing currently (reading from the Spigot configuration causes a re-read which is undesirable)
++                return null;
++            }));
++            metrics.addCustomChart(new Metrics.SimplePie("ls_chunk_system_io_count", () -> String.valueOf(ca.spottedleaf.moonrise.common.util.MoonriseCommon.ioWorkerCount)));
++            metrics.addCustomChart(new Metrics.SimplePie("ls_chunk_system_worker_count", () -> String.valueOf(ca.spottedleaf.moonrise.common.util.MoonriseCommon.chunkWorkerCount)));
++            // Canvas end - Rebrand - expand metrics
+             }
+ 
+         }
+diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
+index 1783f9ea48154dcc8971fc5ef088f5a8c0f0b2ff..769fa237c73ae1690cbe0fb8adf6f6c3d8994262 100644
+--- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
++++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
+@@ -35,7 +35,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+     private static final Logger LOGGER = LogUtils.getClassLogger();
+     private static final int DISTANCE_ERROR = -1;
+     private static final int DISTANCE_UNKNOWN = -2;
+-    private static final String DOWNLOAD_PAGE = "https://papermc.io/downloads/paper";
++    private static final String DOWNLOAD_PAGE = "https://canvasmc.io/downloads"; // Canvas - Rebrand
+ 
+     @Override
+     public long getCacheTime() {
+@@ -49,7 +49,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+         if (build.buildNumber().isEmpty() && build.gitCommit().isEmpty()) {
+             updateMessage = text("You are running a development version without access to version information", color(0xFF5300));
+         } else {
+-            updateMessage = getUpdateStatusMessage("PaperMC/Folia", build); // Folia
++            updateMessage = getUpdateStatusMessage("CraftCanvasMC/Canvas", build); // Folia // Canvas - Rebrand
+         }
+         final @Nullable Component history = this.getHistory();
+ 
+@@ -63,14 +63,11 @@ public class PaperVersionFetcher implements VersionFetcher {
+         if (buildNumber.isPresent()) {
+             distance = fetchDistanceFromSiteApi(build, buildNumber.getAsInt());
+         } else {
+-            final Optional<String> gitBranch = build.gitBranch();
+-            final Optional<String> gitCommit = build.gitCommit();
+-            if (gitBranch.isPresent() && gitCommit.isPresent()) {
+-                distance = fetchDistanceFromGitHub(repo, gitBranch.get(), gitCommit.get());
+-            }
++            distance = -10; // Canvas - Rebrand
+         }
+ 
+         return switch (distance) {
++            case -10 -> text("* You are running a development/local version", NamedTextColor.RED); // Canvas - Rebrand
+             case DISTANCE_ERROR -> text("Error obtaining version information", NamedTextColor.YELLOW);
+             case 0 -> text("You are running the latest version", NamedTextColor.GREEN);
+             case DISTANCE_UNKNOWN -> text("Unknown version", NamedTextColor.YELLOW);
+@@ -85,19 +82,15 @@ public class PaperVersionFetcher implements VersionFetcher {
+ 
+     private static int fetchDistanceFromSiteApi(final ServerBuildInfo build, final int jenkinsBuild) {
+         try {
+-            try (final BufferedReader reader = Resources.asCharSource(
+-                URI.create("https://api.papermc.io/v2/projects/folia/versions/" + build.minecraftVersionId()).toURL(), // Folia
+-                StandardCharsets.UTF_8
+-            ).openBufferedStream()) {
+-                final JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+-                final JsonArray builds = json.getAsJsonArray("builds");
+-                final int latest = StreamSupport.stream(builds.spliterator(), false)
+-                    .mapToInt(JsonElement::getAsInt)
+-                    .max()
+-                    .orElseThrow();
+-                return latest - jenkinsBuild;
+-            } catch (final JsonSyntaxException ex) {
+-                LOGGER.error("Error parsing json from Paper's downloads API", ex);
++            // Canvas start - Rebrand
++            final String jenkinsApiUrl = "https://jenkins.canvasmc.io/job/Canvas/lastSuccessfulBuild/api/json";
++            try (final BufferedReader reader = Resources.asCharSource(URI.create(jenkinsApiUrl).toURL(), StandardCharsets.UTF_8).openBufferedStream()) {
++                final JsonObject jsonObject = new Gson().fromJson(reader, JsonObject.class);
++                final int latestBuild = jsonObject.getAsJsonPrimitive("number").getAsInt();
++                return latestBuild - jenkinsBuild;
++            } catch (JsonSyntaxException throwable) {
++                LOGGER.error("Error parsing version information from CanvasMC's Jenkins API", throwable);
++                // Canvas end - Rebrand
+                 return DISTANCE_ERROR;
+             }
+         } catch (final IOException e) {
+diff --git a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
+index 10a0be7a4db1a51579d113d279af7a9effe7f438..55ebf9c9036468418128501fb192eeb3658194d0 100644
+--- a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
++++ b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
+@@ -31,6 +31,7 @@ public record ServerBuildInfoImpl(
+     private static final String ATTRIBUTE_GIT_COMMIT = "Git-Commit";
+ 
+     private static final String BRAND_PAPER_NAME = "Paper";
++    private static final String BRAND_CANVAS_NAME = "Canvas"; // Canvas - Rebrand
+ 
+     private static final String BUILD_DEV = "DEV";
+ 
+@@ -42,9 +43,9 @@ public record ServerBuildInfoImpl(
+         this(
+             getManifestAttribute(manifest, ATTRIBUTE_BRAND_ID)
+                 .map(Key::key)
+-                .orElse(Key.key("papermc", "folia")), // Folia
++                .orElse(BRAND_CANVAS_ID), // Folia // Canvas - Rebrand
+             getManifestAttribute(manifest, ATTRIBUTE_BRAND_NAME)
+-                .orElse("Folia"), // Folia
++                .orElse(BRAND_CANVAS_NAME), // Folia // Canvas - Rebrand
+             SharedConstants.getCurrentVersion().id(),
+             SharedConstants.getCurrentVersion().name(),
+             getManifestAttribute(manifest, ATTRIBUTE_BUILD_NUMBER)
+@@ -61,7 +62,7 @@ public record ServerBuildInfoImpl(
+ 
+     @Override
+     public boolean isBrandCompatible(final @NotNull Key brandId) {
+-        return brandId.equals(this.brandId);
++        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID) || brandId.equals(BRAND_FOLIA_ID); // Canvas - Rebrand
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
+index e9b6ca3aa25e140467ae866d572483050ea3fa0e..c8a974fcd67f55fe6b60e86e9b2e8a2bb0696b0c 100644
+--- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
++++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
+@@ -11,7 +11,7 @@ public final class Versioning {
+     public static String getBukkitVersion() {
+         String result = "Unknown-Version";
+ 
+-        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/dev.folia/folia-api/pom.properties"); // Folia
++        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/io.canvasmc.canvas/canvas-api/pom.properties"); // Folia // Canvas - Rebrand
+         Properties properties = new Properties();
+ 
+         if (stream != null) {
 diff --git a/src/main/resources/logo.png b/src/main/resources/logo.png
 index c06126b92e36566c93b901637926703bbfcc42ff..276ddc4bb08ccfc5a5b6b1c3e651d5f82211f1f9 100644
 GIT binary patch
