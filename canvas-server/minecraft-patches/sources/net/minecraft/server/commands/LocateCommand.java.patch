@@ -8,7 +8,7 @@
 +        if (true) {
 +            BlockPos originPos = BlockPos.containing(source.getPosition());
 +            io.canvasmc.canvas.chunk.structure.AsyncLocator.locate(source.getLevel(), holderSet, originPos, 100, false)
-+                .thenOnRegion(representable -> {
++                .thenOnRegionOrNull(representable -> {
 +                    Pair<BlockPos, Holder<Structure>> pair = representable.get();
 +                    stopwatch.stop();
 +                    if (pair != null) {
@@ -21,13 +21,13 @@
 +                            false,
 +                            stopwatch.elapsed()
 +                        );
-+                    } else {
-+                        source.sendFailure(
-+                            Component.literal(
-+                                ERROR_STRUCTURE_NOT_FOUND.create(structure.asPrintable()).getMessage()
-+                            )
-+                        );
 +                    }
++                }, () -> {
++                    source.sendFailure(
++                        Component.literal(
++                            ERROR_STRUCTURE_NOT_FOUND.create(structure.asPrintable()).getMessage()
++                        )
++                    );
 +                });
 +
 +            return 0;

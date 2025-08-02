@@ -97,26 +97,26 @@ public class AsyncLocator {
         BlockPos foundPos = null;
         try {
             foundPos = level.findNearestMapStructure(structureTag, pos, searchRadius, skipExistingChunks);
+            final BlockPos finalFoundPos = foundPos;
+            completableFuture.complete(new LocationRepresentable<>() {
+                @Override
+                public BlockPos get() {
+                    return finalFoundPos;
+                }
+
+                @Override
+                public BlockPos position() {
+                    return get();
+                }
+
+                @Override
+                public ServerLevel world() {
+                    return level;
+                }
+            });
         } catch (Exception e) {
             MinecraftServer.LOGGER.error("Unable to locate structure async", e);
         }
-        final BlockPos finalFoundPos = foundPos;
-        completableFuture.complete(new LocationRepresentable<>() {
-            @Override
-            public BlockPos get() {
-                return finalFoundPos;
-            }
-
-            @Override
-            public BlockPos position() {
-                return get();
-            }
-
-            @Override
-            public ServerLevel world() {
-                return level;
-            }
-        });
     }
 
     private static void doLocateChunkGenerator(
@@ -131,26 +131,26 @@ public class AsyncLocator {
         try {
             foundPair = level.getChunkSource().getGenerator()
                 .findNearestMapStructure(level, structureSet, pos, searchRadius, skipExistingChunks);
+            final Pair<BlockPos, Holder<Structure>> finalFoundPair = foundPair;
+            completableFuture.complete(new LocationRepresentable<>() {
+                @Override
+                public Pair<BlockPos, Holder<Structure>> get() {
+                    return finalFoundPair;
+                }
+
+                @Override
+                public BlockPos position() {
+                    return get().getFirst();
+                }
+
+                @Override
+                public ServerLevel world() {
+                    return level;
+                }
+            });
         } catch (Exception e) {
             MinecraftServer.LOGGER.error("Unable to locate structure async", e);
         }
-        final Pair<BlockPos, Holder<Structure>> finalFoundPair = foundPair;
-        completableFuture.complete(new LocationRepresentable<>() {
-            @Override
-            public Pair<BlockPos, Holder<Structure>> get() {
-                return finalFoundPair;
-            }
-
-            @Override
-            public BlockPos position() {
-                return get().getFirst();
-            }
-
-            @Override
-            public ServerLevel world() {
-                return level;
-            }
-        });
     }
 
     public static class AsyncLocatorThread extends TickThread {
@@ -173,11 +173,22 @@ public class AsyncLocator {
             return this;
         }
 
-        public LocateTask<T> thenOnRegion(Consumer<LocationRepresentable<T>> action) {
-            completableFuture.thenAccept(pos -> server.regionizedServer.taskQueue.queueTickTaskQueue(
-                pos.world(), pos.position().getX(), pos.position().getZ(),
-                () -> action.accept(pos)
-            ));
+        // Note: nullability handler must be thread-safe. this is run on the executor service, not on region
+        public LocateTask<T> thenOnRegionOrNull(Consumer<LocationRepresentable<T>> action, Runnable nullabilityHandler) {
+            completableFuture.thenAccept(pos -> {
+                try {
+                    if (pos == null || pos.get() == null) {
+                        nullabilityHandler.run();
+                        return;
+                    }
+                    server.regionizedServer.taskQueue.queueTickTaskQueue(
+                        pos.world(), pos.position().getX(), pos.position().getZ(),
+                        () -> action.accept(pos)
+                    );
+                } catch (Throwable thrown) {
+                    MinecraftServer.LOGGER.error("Unable to run callback", thrown);
+                }
+            });
             return this;
         }
 

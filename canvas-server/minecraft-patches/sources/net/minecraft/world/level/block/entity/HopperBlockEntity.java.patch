@@ -57,7 +57,7 @@
              if (!blockEntity.isOnCooldown() && state.getValue(HopperBlock.ENABLED)) {
                  boolean flag = false;
 -                final int fullState = getFullState(blockEntity); // Paper - Perf: Optimize Hoppers
-+                if (blockEntity.fullState == -1) recomputeFullState(blockEntity); // Canvas - optimize hoppers
++                if (blockEntity.fullState == -1 || blockEntity.tickedGameTime % 20 == 0) recomputeFullState(blockEntity); // Canvas - optimize hoppers
 +                final int fullState = blockEntity.fullState; // Paper - Perf: Optimize Hoppers // Canvas - optimize hoppers
                  if (fullState != HOPPER_EMPTY) { // Paper - Perf: Optimize Hoppers
                      flag = ejectItems(level, pos, blockEntity);

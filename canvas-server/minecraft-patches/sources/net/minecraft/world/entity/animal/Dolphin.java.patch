@@ -30,15 +30,15 @@
 +                // Canvas start - async locator
 +                if (true) {
 +                    asyncLocator$locateTask = io.canvasmc.canvas.chunk.structure.AsyncLocator.locate(serverLevel, StructureTags.DOLPHIN_LOCATED, blockPos, 50, false)
-+                        .thenOnRegion(representable -> {
++                        .thenOnRegionOrNull(representable -> {
 +                            BlockPos pos = representable.get();
 +                            asyncLocator$locateTask = null;
 +                            if (pos != null) {
 +                                this.dolphin.treasurePos = pos;
 +                                serverLevel.broadcastEntityEvent(this.dolphin, (byte) 38);
-+                            } else {
-+                                this.stuck = true;
 +                            }
++                        }, () -> {
++                            this.stuck = true;
 +                        });
 +
 +                    return;
