@@ -1,5 +1,22 @@
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
+@@ -220,6 +_,7 @@
+     public boolean affectsSpawning = true; // Paper - Affects Spawning API
+     public net.kyori.adventure.util.TriState flyingFallDamage = net.kyori.adventure.util.TriState.NOT_SET; // Paper - flying fall damage
+ 	 public int sixRowEnderchestSlotCount = -1; // Purpur - Barrels and enderchests 6 rows
++    public boolean isTemporarilyBlocking = false; // Canvas - implement sword blocking
+ 
+     // CraftBukkit start
+     public boolean fauxSleeping;
+@@ -352,7 +_,7 @@
+             this.setPos(d, this.getY(), d1);
+         }
+ 
+-        this.attackStrengthTicker++;
++        if (!io.canvasmc.canvas.Config.INSTANCE.combat.disableAttackHitDelay) this.attackStrengthTicker++; // Canvas - combat configs
+         ItemStack mainHandItem = this.getMainHandItem();
+         if (!ItemStack.matches(this.lastItemInMainHand, mainHandItem)) {
+             if (!ItemStack.isSameItem(this.lastItemInMainHand, mainHandItem)) {
 @@ -362,7 +_,7 @@
              this.lastItemInMainHand = mainHandItem.copy();
          }
@@ -26,4 +43,38 @@
 +        if (this.isEyeInWater()) { // Canvas - optimize fluidOnEyes
              destroySpeed *= (float)this.getAttribute(Attributes.SUBMERGED_MINING_SPEED).getValue();
          }
+ 
+@@ -1225,9 +_,10 @@
+                             && target instanceof LivingEntity
+                             && !this.isSprinting();
+                         flag2 = flag2 && !this.level().paperConfig().entities.behavior.disablePlayerCrits; // Paper - Toggleable player crits
++                        flag2 = flag2 && (!io.canvasmc.canvas.Config.INSTANCE.combat.disableCritsWhileSprinting || !this.isSprinting()); // Canvas - combat configs
+                         if (flag2) {
+                             damageSource = damageSource.critical(); // Paper - critical damage API
+-                            f *= 1.5F;
++                            f *= io.canvasmc.canvas.Config.INSTANCE.combat.criticalHitMultiplier; // Canvas - combat configs
+                         }
+ 
+                         float f2 = f + f1;
+@@ -1272,7 +_,7 @@
+                                 // Paper end - Configurable sprint interruption on attack
+                             }
+ 
+-                            if (flag3) {
++                            if (flag3 && !io.canvasmc.canvas.Config.INSTANCE.combat.disableSweepingEdge) { // Canvas - combat configs
+                                 float f5 = 1.0F + (float)this.getAttributeValue(Attributes.SWEEPING_DAMAGE_RATIO) * f;
+ 
+                                 for (LivingEntity livingEntity2 : this.level()
+@@ -2088,10 +_,12 @@
+     }
+ 
+     public float getCurrentItemAttackStrengthDelay() {
++        if (io.canvasmc.canvas.Config.INSTANCE.combat.disableAttackHitDelay) return 0.0F; // Canvas - combat configs
+         return (float)(1.0 / this.getAttributeValue(Attributes.ATTACK_SPEED) * 20.0);
+     }
+ 
+     public float getAttackStrengthScale(float adjustTicks) {
++        if (io.canvasmc.canvas.Config.INSTANCE.combat.disableAttackHitDelay) return 1.0F; // Canvas - combat configs
+         return Mth.clamp((this.attackStrengthTicker + adjustTicks) / this.getCurrentItemAttackStrengthDelay(), 0.0F, 1.0F);
+     }
  

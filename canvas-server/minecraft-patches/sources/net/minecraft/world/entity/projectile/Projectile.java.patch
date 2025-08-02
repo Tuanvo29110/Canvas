@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/projectile/Projectile.java
 +++ b/net/minecraft/world/entity/projectile/Projectile.java
-@@ -49,6 +_,36 @@
+@@ -49,6 +_,42 @@
      Projectile(EntityType<? extends Projectile> entityType, Level level) {
          super(entityType, level);
      }
@@ -12,6 +12,12 @@
 +
 +    @Override
 +    public void setPos(double x, double y, double z) {
++        // Canvas start - region threading
++        if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this)) {
++            super.setPos(x, y, z);
++            return;
++        }
++        // Canvas end - region threading
 +        long currentTick = this.level().getCurrentWorldData().regionData.getCurrentTick(); // Canvas - region threading
 +        if (loadedTick != currentTick) {
 +            loadedTick = currentTick;

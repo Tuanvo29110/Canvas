@@ -31,8 +31,8 @@ import org.jetbrains.annotations.Range;
 
 @Configuration("canvas-server")
 public class Config {
+    public static final ComponentLogger LOGGER = ComponentLogger.logger("Canvas");
     public static boolean RUNNING_IN_IDE = Boolean.getBoolean("minecraft.running-in-ide");
-    public static ComponentLogger LOGGER = ComponentLogger.logger("Canvas");
     public static Config INSTANCE;
 
     public Chunks chunks = new Chunks();
@@ -407,14 +407,6 @@ public class Config {
     @Comment("Disables leaf decaying")
     public boolean disableLeafDecay = false;
 
-    public Mace mace = new Mace();
-    public static class Mace {
-        @Comment("Removes the fall distance amplifier with maces")
-        public boolean ignoreFallDistance = false;
-        @Comment("The limit before fall distance scaling stops working for mace damage bonuses")
-        public double fallDistanceLimit = -1.0D;
-    }
-
     @Comment("Makes item entities immune to explosion damage sources")
     public boolean itemEntitiesImmuneToExplosions = false;
 
@@ -453,6 +445,55 @@ public class Config {
         "The server difficulty is already taken into account upon calculation at runtime"
     })
     public double skeletonAimInaccuracy = 14.0D;
+
+    public Combat combat = new Combat();
+    public static class Combat {
+        @Comment("Restores 1.8 pvp mechanics for attack delays")
+        public boolean disableAttackHitDelay = false;
+
+        @Comment({
+            "Restores 1.8 pvp mechanics for sword blocking",
+            "WARNING: may not work for clients older than 1.21.4"
+        })
+        public boolean imitateSwordBlocking = false;
+
+        public Mace mace = new Mace();
+        public static class Mace {
+            @Comment("Removes the fall distance amplifier with maces")
+            public boolean ignoreFallDistance = false;
+            @Comment("The limit before fall distance scaling stops working for mace damage bonuses")
+            public double fallDistanceLimit = -1.0D;
+        }
+
+        @Comment("Enables the old crafting recipe for god apples, using 8 gold blocks and an apple")
+        public boolean enableOldEnchantedGoldenAppleCrafting = false;
+
+        @Comment("Disables sweeping effects with swords")
+        public boolean disableSweepingEdge = false;
+
+        @Comment("Disables netherite armor knockback resistance")
+        public boolean ignoreNetheriteKnockbackResistance = false;
+
+        @Comment("Disables critical hits while sprinting")
+        public boolean disableCritsWhileSprinting = false;
+
+        @Comment({
+            "When an entity is damaged, it has a certain amount of invulnerability",
+            "ticks applied to the entity until it can be damaged next. In Vanilla, this",
+            "is 10. This configuration allows you to change the amount of ticks of",
+            "invulnerability that is applied to the entity. 0 means invulnerability is not applied"
+        })
+        public int invulnerabilityTicks = 10;
+
+        @Comment("Allows toggling if a fishing rod can pull entities")
+        public boolean fishingRodPulls = false;
+
+        @Comment("Configures the damage modifier per critical hit")
+        public float criticalHitMultiplier = 1.5F;
+
+        @Comment("Enables legacy blast protection")
+        public boolean legacyBlastProtection = false;
+    }
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);

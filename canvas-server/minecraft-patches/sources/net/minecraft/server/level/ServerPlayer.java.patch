@@ -303,9 +303,11 @@
                  int rounded = Math.round((float)Math.sqrt(dx * dx + dy * dy + dz * dz) * 100.0F);
                  if (rounded > 0) {
                      this.awardStat(Stats.WALK_UNDER_WATER_ONE_CM, rounded);
-@@ -2448,6 +_,7 @@
+@@ -2447,7 +_,9 @@
+ 
      public void disconnect() {
          this.disconnected = true;
++        if (this.isTemporarilyBlocking) this.releaseUsingItem(); // Canvas - implement sword blocking
          this.ejectPassengers();
 +        this.tpsBar.removeViewer(this.getBukkitEntity()); // Canvas - tpsbar
  
@@ -343,6 +345,15 @@
  
      public Set<ThrownEnderpearl> getEnderPearls() {
          return this.enderPearls;
+@@ -3311,7 +_,7 @@
+     public record RespawnConfig(ResourceKey<Level> dimension, BlockPos pos, float angle, boolean forced) {
+         public static final Codec<ServerPlayer.RespawnConfig> CODEC = RecordCodecBuilder.create(
+             instance -> instance.group(
+-                    Level.RESOURCE_KEY_CODEC.optionalFieldOf("dimension", Level.OVERWORLD).forGetter(ServerPlayer.RespawnConfig::dimension),
++                    Level.RESOURCE_KEY_CODEC.optionalFieldOf("dimension", io.canvasmc.canvas.Config.INSTANCE.fetchRespawnDimensionKey()).forGetter(ServerPlayer.RespawnConfig::dimension), // Canvas - default respawn dimension config
+                     BlockPos.CODEC.fieldOf("pos").forGetter(ServerPlayer.RespawnConfig::pos),
+                     Codec.FLOAT.optionalFieldOf("angle", 0.0F).forGetter(ServerPlayer.RespawnConfig::angle),
+                     Codec.BOOL.optionalFieldOf("forced", false).forGetter(ServerPlayer.RespawnConfig::forced)
 @@ -3320,7 +_,7 @@
          );
  
