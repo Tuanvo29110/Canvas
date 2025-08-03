@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/chunk/ChunkAccess.java
 +++ b/net/minecraft/world/level/chunk/ChunkAccess.java
-@@ -77,10 +_,148 @@
+@@ -77,10 +_,156 @@
      protected BlendingData blendingData;
      public final Map<Heightmap.Types, Heightmap> heightmaps = Maps.newEnumMap(Heightmap.Types.class);
      // Paper - rewrite chunk system
@@ -148,6 +148,14 @@
 +                consumer.accept(blockEntity);
 +            }
 +        }
++    }
++
++    public Map<BlockPos, BlockEntity> buildBlockEntityMap() {
++        Map<BlockPos, BlockEntity> blockEntities = new Object2ObjectOpenHashMap<>();
++        this.iterateOverBlockEntities((blockEntity) -> {
++            blockEntities.put(blockEntity.getBlockPos(), blockEntity);
++        });
++        return blockEntities;
 +    }
 +    // Canvas end - optimize block entity fetching
      protected final LevelHeightAccessor levelHeightAccessor;

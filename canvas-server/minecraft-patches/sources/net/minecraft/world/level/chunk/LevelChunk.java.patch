@@ -91,7 +91,7 @@
  
      public Map<BlockPos, BlockEntity> getBlockEntities() {
 -        return this.blockEntities;
-+        throw new UnsupportedOperationException("This method is not compatible with Canvas"); // Canvas - optimize block entity fetching
++        return this.buildBlockEntityMap(); // Canvas - optimize block entity fetching
      }
  
      public void postProcessGeneration(ServerLevel level) {
