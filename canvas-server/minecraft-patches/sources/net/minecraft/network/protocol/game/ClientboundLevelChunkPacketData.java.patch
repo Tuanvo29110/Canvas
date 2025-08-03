@@ -1,9 +1,36 @@
 --- a/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java
 +++ b/net/minecraft/network/protocol/game/ClientboundLevelChunkPacketData.java
-@@ -75,6 +_,52 @@
-         }
-     }
+@@ -61,19 +_,65 @@
+         this.blockEntitiesData = Lists.newArrayList();
+         int totalTileEntities = 0; // Paper - Handle oversized block entities in chunks
  
+-        for (Entry<BlockPos, BlockEntity> entry : levelChunk.getBlockEntities().entrySet()) {
+-            // Paper start - Handle oversized block entities in chunks
+-            if (++totalTileEntities > BLOCK_ENTITY_LIMIT) {
+-                net.minecraft.network.protocol.Packet<ClientGamePacketListener> packet = entry.getValue().getUpdatePacket();
+-                if (packet != null) {
+-                    this.extraPackets.add(packet);
+-                    continue;
+-                }
+-            }
+-            // Paper end - Handle oversized block entities in chunks
+-            this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(entry.getValue()));
+-        }
+-    }
++        for (final BlockEntity blockEntity : levelChunk.getAllBlockEntities()) { // Canvas - optimize block entity fetching
++            // Paper start - Handle oversized block entities in chunks
++            if (++totalTileEntities > BLOCK_ENTITY_LIMIT) {
++                net.minecraft.network.protocol.Packet<ClientGamePacketListener> packet = blockEntity.getUpdatePacket(); // Canvas - optimize block entity fetching
++                if (packet != null) {
++                    this.extraPackets.add(packet);
++                    continue;
++                }
++            }
++            // Paper end - Handle oversized block entities in chunks
++            this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(blockEntity)); // Canvas - optimize block entity fetching
++        }
++    }
++
 +    // Leaf start - async chunk sending
 +    public ClientboundLevelChunkPacketData(LevelChunk levelChunk, io.papermc.paper.antixray.ChunkPacketInfo<net.minecraft.world.level.block.state.BlockState> chunkPacketInfo, BlockEntity[] blockEntities, Map<Heightmap.Types, long[]> heightmaps) {
 +        this.heightmaps = heightmaps;
@@ -49,10 +76,9 @@
 +        }
 +    }
 +    // Leaf end - async chunk sending
-+
+ 
      public ClientboundLevelChunkPacketData(RegistryFriendlyByteBuf buffer, int x, int z) {
          this.heightmaps = HEIGHTMAPS_STREAM_CODEC.decode(buffer);
-         int varInt = buffer.readVarInt();
 @@ -123,6 +_,7 @@
              // Paper end  - Anti-Xray - Add chunk packet info
          }

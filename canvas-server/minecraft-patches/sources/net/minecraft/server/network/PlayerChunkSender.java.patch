@@ -39,7 +39,7 @@
 -        packetListener.send(new ClientboundLevelChunkWithLightPacket(chunk, level.getLightEngine(), null, null, shouldModify));
 +        // Leaf start - async chunk sending
 +        if (io.canvasmc.canvas.Config.INSTANCE.chunks.asyncChunkSend) {
-+            var blockEntities = chunk.blockEntities.values().toArray(new net.minecraft.world.level.block.entity.BlockEntity[0]);
++            var blockEntities = chunk.getAllBlockEntities(); // Canvas - optimize block entities
 +            java.util.Map<net.minecraft.world.level.levelgen.Heightmap.Types, long[]> heightmaps = new java.util.concurrent.ConcurrentHashMap<>();
 +
 +            for (var entry : chunk.getHeightmaps()) {

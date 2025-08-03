@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/chunk/ChunkAccess.java
 +++ b/net/minecraft/world/level/chunk/ChunkAccess.java
-@@ -77,10 +_,10 @@
+@@ -77,10 +_,148 @@
      protected BlendingData blendingData;
      public final Map<Heightmap.Types, Heightmap> heightmaps = Maps.newEnumMap(Heightmap.Types.class);
      // Paper - rewrite chunk system
@@ -11,10 +11,181 @@
 +    private final Map<Structure, StructureStart> structureStarts = new it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap<>(); // Canvas - optimized collection
 +    private final Map<Structure, LongSet> structuresRefences = new it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap<>(); // Canvas - optimized collection
 +    protected final Map<BlockPos, CompoundTag> pendingBlockEntities = new Object2ObjectOpenHashMap<>(); // Canvas - optimized collection
-+    public final Map<BlockPos, BlockEntity> blockEntities = new it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap<>(new io.canvasmc.canvas.chunk.block.BlockPosStrategy()); // Canvas - optimized collection
++    // Canvas start - optimize block entity fetching
++    /*
++      When the chunk has a lot of block entities, this is much faster
++      to use than the previous 'Map<BlockPos, BlockEntity> blockEntities'
++     */
++    // public final Map<BlockPos, BlockEntity> blockEntities = new Object2ObjectOpenHashMap<>();
++    private static final BlockEntity[] EMPTY_ARRAY = new BlockEntity[0];
++    private static final int SECTION_SIZE = 16 * 16;
++    private final BlockEntity[][] blockEntitySections;
++    private final int minY;
++    private final int maxY;
++    private final int height;
++
++    /**
++     * This fetches block entity buckets from the global block coordinates
++     * <br></br>
++     * If there is no bucket at the y location we quick return null,
++     * since there shouldn't be a block entity there if there is no bucket
++     * <br></br>
++     * @param globalX global x
++     * @param y global y or local y
++     * @param globalZ global z
++     * @return nullable block entity at the local position
++     */
++    @Nullable
++    public BlockEntity getFromBuckets(int globalX, int y, int globalZ) {
++        BlockEntity[] bucket = blockEntitySections[toSectionIndex(y)];
++        if (bucket == null) return null;
++        return bucket[sectionIndex(globalX, globalZ)];
++    }
++
++    @Nullable
++    // Note: if removing a block entity, don't use this, use remove method. The block entity is expected non-null
++    public BlockEntity setBlockEntityInBuckets(int globalX, int y, int globalZ, @org.jspecify.annotations.NonNull BlockEntity blockEntity) {
++        int sectionIndex = toSectionIndex(y);
++        BlockEntity[] bucket = blockEntitySections[sectionIndex];
++        if (bucket == null) {
++            bucket = new BlockEntity[SECTION_SIZE];
++            blockEntitySections[sectionIndex] = bucket;
++        }
++        int i = sectionIndex(globalX, globalZ);
++        BlockEntity old = bucket[i];
++        bucket[i] = blockEntity;
++        return old;
++    }
++
++    public void removeAll(int y) {
++        blockEntitySections[toSectionIndex(y)] = null;
++    }
++
++    public void removeAll() {
++        java.util.Arrays.fill(blockEntitySections, null);
++    }
++
++    @Nullable
++    public BlockEntity removeFromBuckets(int globalX, int y, int globalZ) {
++        int sectionIndex = toSectionIndex(y);
++        BlockEntity[] bucket = blockEntitySections[sectionIndex];
++        if (bucket != null) {
++            int i = sectionIndex(globalX, globalZ);
++            BlockEntity removed = bucket[i];
++            bucket[i] = null;
++
++            for (final BlockEntity entry : bucket) {
++                if (entry != null) return removed;
++            }
++
++            // doesn't have anymore entries, remove from buckets
++            blockEntitySections[sectionIndex] = null;
++            return removed;
++        } // else | no need to remove anything, there is no bucket
++        return null;
++    }
++
++    private int sectionIndex(int globalX, int globalZ) {
++        return (globalX & 15) | ((globalZ & 15) << 4);
++    }
++
++    private int toSectionIndex(int y) {
++        int idx = y - minY;
++        if (idx < 0 || idx >= height) {
++            throw new IndexOutOfBoundsException("Y=" + y + " out of range (" + minY + " to " + maxY + ")");
++        }
++        return idx;
++    }
++
++    public BlockEntity[] getAllBlockEntities() {
++        BlockEntity[][] sections = this.blockEntitySections;
++        int total = 0;
++
++        for (int i = 0, len = sections.length; i < len; i++) {
++            BlockEntity[] bucket = sections[i];
++            if (bucket == null) continue;
++
++            for (int j = 0; j < bucket.length; j++) {
++                if (bucket[j] != null) total++;
++            }
++        }
++
++        if (total == 0) return EMPTY_ARRAY;
++
++        BlockEntity[] result = new BlockEntity[total];
++        int idx = 0;
++
++        for (int i = 0, len = sections.length; i < len; i++) {
++            BlockEntity[] bucket = sections[i];
++            if (bucket == null) continue;
++
++            for (int j = 0; j < bucket.length; j++) {
++                BlockEntity be = bucket[j];
++                if (be != null) {
++                    result[idx++] = be;
++                }
++            }
++        }
++
++        return result;
++    }
++
++    public boolean containsPos(int globalX, int y, int globalZ) {
++        BlockEntity[] bucket = blockEntitySections[toSectionIndex(y)];
++        if (bucket == null) return false;
++        return bucket[sectionIndex(globalX, globalZ)] != null;
++    }
++
++    public boolean containsPos(BlockPos pos) {
++        return containsPos(pos.getX(), pos.getY(), pos.getZ());
++    }
++
++    public void iterateOverBlockEntities(java.util.function.Consumer<BlockEntity> consumer) {
++        for (BlockEntity[] bucket : blockEntitySections) {
++            if (bucket == null) continue;
++            for (final BlockEntity blockEntity : bucket) {
++                if (blockEntity == null) continue;
++                consumer.accept(blockEntity);
++            }
++        }
++    }
++    // Canvas end - optimize block entity fetching
      protected final LevelHeightAccessor levelHeightAccessor;
      protected final LevelChunkSection[] sections;
      // CraftBukkit start - SPIGOT-6814: move to IChunkAccess to account for 1.17 to 1.18 chunk upgrading.
+@@ -178,6 +_,12 @@
+         this.minSection = ca.spottedleaf.moonrise.common.util.WorldUtil.getMinSection(levelHeightAccessor);
+         this.maxSection = ca.spottedleaf.moonrise.common.util.WorldUtil.getMaxSection(levelHeightAccessor);
+         // Paper end - get block chunk optimisation
++        // Canvas start - optimize block entity fetching
++        this.minY = this.getMinY();
++        this.maxY = this.getMaxY();
++        this.height = maxY - minY + 1;
++        this.blockEntitySections = new BlockEntity[this.height][];
++        // Canvas end - optimize block entity fetching
+     }
+ 
+     private void replaceMissingSections(Registry<Biome> biomeRegistry, LevelChunkSection[] sections) { // Paper - Anti-Xray - make it a non-static method
+@@ -229,7 +_,18 @@
+ 
+     public Set<BlockPos> getBlockEntitiesPos() {
+         Set<BlockPos> set = Sets.newHashSet(this.pendingBlockEntities.keySet());
+-        set.addAll(this.blockEntities.keySet());
++        // Canvas start - optimize block entities
++        for (int y = 0; y < blockEntitySections.length; y++) {
++            BlockEntity[] bucket = blockEntitySections[y];
++            if (bucket == null) continue;
++
++            for (int i = 0; i < bucket.length; i++) {
++                BlockEntity be = bucket[i];
++                if (be == null) continue;
++                set.add(be.getBlockPos());
++            }
++        }
++        // Canvas end - optimize block entities
+         return set;
+     }
+ 
 @@ -288,7 +_,7 @@
      }
  
@@ -40,3 +211,12 @@
      }
  
      @Override
+@@ -385,7 +_,7 @@
+ 
+     public void setBlockEntityNbt(CompoundTag tag) {
+         BlockPos posFromTag = BlockEntity.getPosFromTag(this.chunkPos, tag);
+-        if (!this.blockEntities.containsKey(posFromTag)) {
++        if (!this.containsPos(posFromTag)) { // Canvas - optimize block entities
+             this.pendingBlockEntities.put(posFromTag, tag);
+         }
+     }

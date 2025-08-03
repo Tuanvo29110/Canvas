@@ -36,7 +36,64 @@
      }
  
      public LevelChunk(ServerLevel level, ProtoChunk chunk, @Nullable LevelChunk.PostLoadProcessor postLoad) {
-@@ -760,14 +_,46 @@
+@@ -185,11 +_,9 @@
+             postLoad,
+             chunk.getBlendingData()
+         );
+-        if (!Collections.disjoint(chunk.pendingBlockEntities.keySet(), chunk.blockEntities.keySet())) {
+-            LOGGER.error("Chunk at {} contains duplicated block entities", chunk.getPos());
+-        }
++        // Canvas - optimize block entities
+ 
+-        for (BlockEntity blockEntity : chunk.getBlockEntities().values()) {
++        for (BlockEntity blockEntity : chunk.getAllBlockEntities()) { // Canvas - optimize block entity fetching
+             this.setBlockEntity(blockEntity);
+         }
+ 
+@@ -469,7 +_,7 @@
+         // CraftBukkit start
+         BlockEntity blockEntity = this.level.getCurrentWorldData().capturedTileEntities.get(pos); // Folia - region threading
+         if (blockEntity == null) {
+-            blockEntity = this.blockEntities.get(pos);
++            blockEntity = this.getFromBuckets(pos.getX(), pos.getY(), pos.getZ()); // Canvas - optimize block entities
+         }
+         // CraftBukkit end
+         if (blockEntity == null) {
+@@ -490,7 +_,7 @@
+                 }
+             }
+         } else if (blockEntity.isRemoved()) {
+-            this.blockEntities.remove(pos);
++            this.removeFromBuckets(pos.getX(), pos.getY(), pos.getZ()); // Canvas - optimize block entities
+             return null;
+         }
+ 
+@@ -550,7 +_,7 @@
+ 
+             blockEntity.setLevel(this.level);
+             blockEntity.clearRemoved();
+-            BlockEntity blockEntity1 = this.blockEntities.put(blockPos.immutable(), blockEntity);
++            BlockEntity blockEntity1 = this.setBlockEntityInBuckets(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockEntity); // Canvas - optimize block entities
+             if (blockEntity1 != null && blockEntity1 != blockEntity) {
+                 blockEntity1.setRemoved();
+             }
+@@ -579,7 +_,7 @@
+     @Override
+     public void removeBlockEntity(BlockPos pos) {
+         if (this.isInLevel()) {
+-            BlockEntity blockEntity = this.blockEntities.remove(pos);
++            BlockEntity blockEntity = this.removeFromBuckets(pos.getX(), pos.getY(), pos.getZ());
+             // CraftBukkit start - SPIGOT-5561: Also remove from pending map
+             if (!this.pendingBlockEntities.isEmpty()) {
+                 this.pendingBlockEntities.remove(pos);
+@@ -754,20 +_,52 @@
+     }
+ 
+     public Map<BlockPos, BlockEntity> getBlockEntities() {
+-        return this.blockEntities;
++        throw new UnsupportedOperationException("This method is not compatible with Canvas"); // Canvas - optimize block entity fetching
+     }
+ 
      public void postProcessGeneration(ServerLevel level) {
          ChunkPos pos = this.getPos();
  
@@ -85,6 +142,24 @@
                      }
  
                      if (!(blockState.getBlock() instanceof LiquidBlock)) {
+@@ -845,14 +_,14 @@
+     }
+ 
+     public void clearAllBlockEntities() {
+-        this.blockEntities.values().forEach(BlockEntity::setRemoved);
+-        this.blockEntities.clear();
++        this.iterateOverBlockEntities(BlockEntity::setRemoved); // Canvas - optimize block entity fetching
++        this.removeAll(); // Canvas - optimize block entity fetching
+         this.tickersInLevel.values().forEach(ticker -> ticker.rebind(NULL_TICKER));
+         this.tickersInLevel.clear();
+     }
+ 
+     public void registerAllBlockEntitiesAfterLevelLoad() {
+-        this.blockEntities.values().forEach(blockEntity -> {
++        this.iterateOverBlockEntities(blockEntity -> { // Canvas - optimize block entity fetching
+             if (this.level instanceof ServerLevel serverLevel) {
+                 this.addGameEventListener(blockEntity, serverLevel);
+             }
 @@ -885,12 +_,22 @@
                          TickingBlockEntity tickingBlockEntity = this.createTicker(blockEntity, ticker);
                          if (ticker1 != null) {

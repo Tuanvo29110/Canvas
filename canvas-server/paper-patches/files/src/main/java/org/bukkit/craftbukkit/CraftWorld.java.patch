@@ -1,5 +1,14 @@
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
+@@ -230,7 +_,7 @@
+             if (chunk == null) {
+                 continue;
+             }
+-            size += chunk.blockEntities.size();
++            size += chunk.getAllBlockEntities().length; // Canvas - optimize block entity fetching
+         }
+         return size;
+     }
 @@ -2534,4 +_,11 @@
          return POINTERS_SUPPLIER.view(this);
      }
