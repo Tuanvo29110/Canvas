@@ -85,8 +85,8 @@
 +    implementation("io.netty:netty-codec-haproxy:4.1.123.Final") // Add support for proxy protocol // bump depend
      implementation("org.apache.logging.log4j:log4j-iostreams:2.24.1")
      implementation("org.ow2.asm:asm-commons:9.8")
-     implementation("org.spongepowered:configurate-yaml:4.2.0-20250225.064233-199")
-@@ -225,14 +_,14 @@
+     implementation("org.spongepowered:configurate-yaml:4.2.0")
+@@ -224,14 +_,14 @@
          val gitBranch = git.exec(providers, "rev-parse", "--abbrev-ref", "HEAD").get().trim()
          attributes(
              "Main-Class" to "org.bukkit.craftbukkit.Main",
@@ -106,7 +106,7 @@
              "Build-Number" to (build ?: ""),
              "Build-Time" to buildTime.toString(),
              "Git-Branch" to gitBranch,
-@@ -329,25 +_,24 @@
+@@ -328,25 +_,24 @@
          .asFile
      javaLauncher.set(project.javaToolchains.launcherFor {
          languageVersion.set(JavaLanguageVersion.of(21))

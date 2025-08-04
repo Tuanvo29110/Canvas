@@ -1389,7 +1389,7 @@ index 7280ca2250ade4166a1a883b205bbc89f4e00d1a..4a7de2ed6eabe919f0c33de49ed7fab7
                          if (var4 instanceof ReportedException reportedException && reportedException.getCause() instanceof OutOfMemoryError) {
                              throw makeReportedException(var4, packet, processor);
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 15696729bcdde7526098328348ba6d566706149b..dd705c0d33412e4d77eb01d7b8502dd00de61334 100644
+index 0238bce5c050808798f092dc07a0206502704bc9..5a8cbe318e9a6ad528f881cbfac213b1e9d67fda 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1580,7 +1580,6 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -1791,10 +1791,10 @@ index 5e3be75b27ed609be005e8169dc84c125518253e..cd6f937fa4eaba6033bfc230e3483b6b
      }
  
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 8e1bc4500a792b0a932657db0a8cd42ad75aaf08..9fd4092d6814b4a6f4874872bf29216f048c9975 100644
+index e96623722331d9f215e5ee31587f8c5fb0e8913c..49eabc065830bf42a847c2e5c435893cd22606b2 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -1151,7 +1151,6 @@ public abstract class PlayerList {
+@@ -1149,7 +1149,6 @@ public abstract class PlayerList {
  
      public void saveAll(final int interval) {
          io.papermc.paper.util.MCUtil.ensureMain("Save Players" , () -> { // Paper - Ensure main
@@ -1802,7 +1802,7 @@ index 8e1bc4500a792b0a932657db0a8cd42ad75aaf08..9fd4092d6814b4a6f4874872bf29216f
          int numSaved = 0;
          final long now = System.nanoTime(); // Folia - region threading
          long timeInterval = (long)interval * io.papermc.paper.threadedregions.TickRegionScheduler.TIME_BETWEEN_TICKS; // Folia - region threading
-@@ -1162,9 +1161,7 @@ public abstract class PlayerList {
+@@ -1160,9 +1159,7 @@ public abstract class PlayerList {
              }
              // Folia end - region threading
              if (interval == -1 || now - player.lastSave >= timeInterval) { // Folia - region threading
@@ -1857,7 +1857,7 @@ index 5e6c339357c54a69415d2d858b18dc0d67b4c448..96e1f8f40a0af4350155f192ac2126b5
          }
      }
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index 5fe048ce442957a534d44454e0bb908afe8ad3a6..1976a443e7c59e1e18d8a411513df39c83ad1095 100644
+index 2049990edf0280d2b74b7284b32e78678a5ca6db..2acf7bb76bd61c6c100ba48543d96ae0f08f9064 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
 @@ -188,9 +188,6 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
@@ -1928,7 +1928,7 @@ index 7b8631abf8adcdb889d412b30eca10faf044032a..386e6a48701b4c9256e33174123381a9
          this.validBlocks = validBlocks;
      }
 diff --git a/net/minecraft/world/level/chunk/LevelChunk.java b/net/minecraft/world/level/chunk/LevelChunk.java
-index e74ea44096e071878372c5b8889f45cd2bd4ae23..e8914d8c3c0e69d9e5ce97345eb9f24b05b4845f 100644
+index 178b3c6b2613a8de60e7e2fffb848214155f6ab4..91ad68db750a2af96f71f6d389dc162de29de6c6 100644
 --- a/net/minecraft/world/level/chunk/LevelChunk.java
 +++ b/net/minecraft/world/level/chunk/LevelChunk.java
 @@ -932,12 +932,9 @@ public class LevelChunk extends ChunkAccess implements ca.spottedleaf.moonrise.p
@@ -1953,7 +1953,7 @@ index e74ea44096e071878372c5b8889f45cd2bd4ae23..e8914d8c3c0e69d9e5ce97345eb9f24b
                          profilerFiller.pop();
                      } catch (Throwable var5) {
 diff --git a/net/minecraft/world/ticks/LevelTicks.java b/net/minecraft/world/ticks/LevelTicks.java
-index 07e0258e8c2c0c0788e76822e2477fb6f5bc4447..2caedf1c12e5a388f7b14989310a2137bc1117c3 100644
+index 19c45f60f4b13bc317f7d1639fb7873862c7947b..58ec3956dcd04c26aad7863e34b3d6871f1821d6 100644
 --- a/net/minecraft/world/ticks/LevelTicks.java
 +++ b/net/minecraft/world/ticks/LevelTicks.java
 @@ -247,12 +247,6 @@ public class LevelTicks<T> implements LevelTickAccess<T> {

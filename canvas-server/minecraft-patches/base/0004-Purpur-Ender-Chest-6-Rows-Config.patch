@@ -5,10 +5,10 @@ Subject: [PATCH] Purpur Ender Chest 6 Rows Config
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 05cd74e4331d04a2674292af2f42041626627060..d093e2546fd947014a426e57b75a56caebc1640d 100644
+index 49eabc065830bf42a847c2e5c435893cd22606b2..a30f0a760efd4f72c2e94316387bfd57b0c73db8 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -1073,6 +1073,27 @@ public abstract class PlayerList {
+@@ -1071,6 +1071,27 @@ public abstract class PlayerList {
          player.getBukkitEntity().recalculatePermissions(); // CraftBukkit
          this.server.getCommands().sendCommands(player);
          } // Paper - Add sendOpLevel API

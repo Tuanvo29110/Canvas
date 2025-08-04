@@ -1,18 +1,18 @@
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -217,7 +_,7 @@
-     private static final WeakHashMap<Plugin, WeakReference<Plugin>> pluginWeakReferences = new WeakHashMap<>();
-     private static final net.kyori.adventure.text.Component DEFAULT_KICK_COMPONENT = net.kyori.adventure.text.Component.translatable("multiplayer.disconnect.kicked");
+@@ -220,7 +_,7 @@
+     private long lastPlayed = 0;
+     private boolean hasPlayedBefore = false;
      private final ConversationTracker conversationTracker = new ConversationTracker();
 -    private final Map<UUID, Set<WeakReference<Plugin>>> invertedVisibilityEntities = new HashMap<>();
 +    private final Map<UUID, Set<WeakReference<Plugin>>> invertedVisibilityEntities = new it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap<>(); // Canvas - optimized collection
      private final Set<UUID> unlistedEntities = new HashSet<>(); // Paper - Add Listing API for Player
-     public org.bukkit.event.player.PlayerResourcePackStatusEvent.Status resourcePackStatus; // Paper - more resource pack API
-     private long firstPlayed = 0;
-@@ -225,6 +_,56 @@
-     private boolean hasPlayedBefore = false;
+     private static final WeakHashMap<Plugin, WeakReference<Plugin>> pluginWeakReferences = new WeakHashMap<>();
      private int hash = 0;
-     private double health = 20;
+@@ -230,6 +_,56 @@
+     private CraftWorldBorder clientWorldBorder = null;
+     private BorderChangeListener clientWorldBorderListener = this.createWorldBorderListener();
+     private long lastSaveTime; // Paper - getLastPlayed replacement API
 +    // Canvas start - rewrite scheduler
 +    private final ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue<Runnable> packetTaskQueue = new ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue<>();
 +    private io.papermc.paper.threadedregions.RegionizedWorldData worldDataRef = null;
@@ -63,10 +63,10 @@
 +        this.worldDataRef = worldDataRef;
 +    }
 +    // Canvas end
-     // Paper end
-     // Spigot start
-     private final Player.Spigot spigot = new Player.Spigot() {
-@@ -2341,8 +_,14 @@
+ 
+     public CraftPlayer(CraftServer server, ServerPlayer entity) {
+         super(server, entity);
+@@ -2219,8 +_,14 @@
  
      @Override
      public boolean canSee(org.bukkit.entity.Entity entity) {

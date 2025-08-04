@@ -38,7 +38,7 @@
  
      public @Nullable net.kyori.adventure.text.Component remove(ServerPlayer player) { // CraftBukkit - return string // Paper - return Component
 @@ -650,7 +_,17 @@
-         for (ThrownEnderpearl thrownEnderpearl : new java.util.ArrayList<>(player.getEnderPearls())) { // Paper - copy, setOwner will remove from list;
+         for (ThrownEnderpearl thrownEnderpearl : player.getEnderPearls()) {
              // Paper start - Allow using old ender pearl behavior
              if (!thrownEnderpearl.level().paperConfig().misc.legacyEnderPearlBehavior) {
 -                thrownEnderpearl.setRemoved(Entity.RemovalReason.UNLOADED_WITH_PLAYER, org.bukkit.event.entity.EntityRemoveEvent.Cause.PLAYER_QUIT); // CraftBukkit - add Bukkit remove cause
@@ -53,10 +53,10 @@
 +                    thrownEnderpearl.setRemoved(Entity.RemovalReason.UNLOADED_WITH_PLAYER, org.bukkit.event.entity.EntityRemoveEvent.Cause.PLAYER_QUIT); // CraftBukkit - add Bukkit remove cause
 +                }
 +                // Canvas end - restore vanilla ender pearl behavior
-             } else {
-                 thrownEnderpearl.setOwner(null);
              }
-@@ -687,6 +_,7 @@
+             // Paper end - Allow using old ender pearl behavior
+         }
+@@ -685,6 +_,7 @@
          // This removes the scoreboard (and player reference) for the specific player in the manager
          this.cserver.getScoreboardManager().removePlayer(player.getBukkitEntity());
          // CraftBukkit end
@@ -64,7 +64,7 @@
          return playerQuitEvent.quitMessage(); // Paper - Adventure
      }
  
-@@ -1406,6 +_,7 @@
+@@ -1404,6 +_,7 @@
      }
  
      public boolean verifyChatTrusted(PlayerChatMessage message) {
@@ -72,7 +72,7 @@
          return message.hasSignature() && !message.hasExpiredServer(Instant.now());
      }
  
-@@ -1456,7 +_,12 @@
+@@ -1454,7 +_,12 @@
  
          for (ServerLevel serverLevel : this.server.getAllLevels()) {
              if (serverLevel != null) {
@@ -86,7 +86,7 @@
              }
          }
      }
-@@ -1467,7 +_,12 @@
+@@ -1465,7 +_,12 @@
  
          for (ServerLevel serverLevel : this.server.getAllLevels()) {
              if (serverLevel != null) {

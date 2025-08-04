@@ -1,6 +1,6 @@
 --- a/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
 +++ b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
-@@ -337,9 +_,10 @@
+@@ -338,9 +_,10 @@
                      _chatExecutorMaxSize = _chatExecutorCoreSize;
                  }
  

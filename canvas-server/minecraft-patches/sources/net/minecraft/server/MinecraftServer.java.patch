@@ -164,7 +164,7 @@
      }
      // CraftBukkit end
  
-@@ -2198,6 +_,13 @@
+@@ -2201,6 +_,13 @@
          return 256;
      }
  
@@ -178,7 +178,7 @@
      public boolean enforceSecureProfile() {
          return false;
      }
-@@ -2703,7 +_,7 @@
+@@ -2706,7 +_,7 @@
          }
      }
  
