@@ -26,3 +26,16 @@
      }
  
      @Nullable
+@@ -274,6 +_,12 @@
+             && serverPlayer.level().getGameRules().getBoolean(GameRules.RULE_ENDER_PEARLS_VANISH_ON_DEATH)) {
+             this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
+         } else {
++            // Canvas start - config for launching ender pearls outside world border
++            //noinspection SuspiciousIndentAfterControlStatement
++            if (io.canvasmc.canvas.Config.INSTANCE.discardEnderPearlsOutsideBorder && !this.level().getWorldBorder().isWithinBounds(this.position())) {
++                this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.OUT_OF_WORLD);
++            } else
++            // Canvas end - config for launching ender pearls outside world border
+             super.tick();
+         }
+ 

@@ -117,6 +117,15 @@ public class Config {
 
         @Comment("Processes packets in-between ticks, which can drastically improve performance")
         public boolean processPacketsInBetweenTicks = true;
+
+        @Comment("Filters entity movement packets to reduce the amount of useless move packets sent")
+        public boolean reduceUselessMovePackets = false;
+
+        @Comment("When enabled, hides flames on entities with fire resistance")
+        public boolean hideFlamesOnEntitiesWithFireResistance = false;
+
+        @Comment("When enabled, hides flames on entities with invisibility")
+        public boolean hideFlamesOnEntitiesWithInvisibility = false;
     }
 
     @Comment("Configurations for enabling virtual threads for different thread pool executors")
@@ -142,18 +151,6 @@ public class Config {
 
         @Comment("Enables virtual thread usage for the command sending pool")
         public boolean commandSendingPool = false;
-    }
-
-    public Entities entities = new Entities();
-    public static class Entities {
-        @Comment("When enabled, hides flames on entities with fire resistance")
-        public boolean hideFlamesOnEntitiesWithFireResistance = false;
-
-        @Comment("When enabled, hides flames on entities with invisibility")
-        public boolean hideFlamesOnEntitiesWithInvisibility = false;
-
-        @Comment("Filters entity movement packets to reduce the amount of useless move packets sent")
-        public boolean reduceUselessMovePackets = false;
     }
 
     @Comment("Check if a cactus can survive before growing. Heavily optimizes cacti farms")
@@ -495,6 +492,9 @@ public class Config {
         @Comment("Enables legacy blast protection")
         public boolean legacyBlastProtection = false;
     }
+
+    @Comment("Removes ender pearls that are thrown outside the world border")
+    public boolean discardEnderPearlsOutsideBorder = false;
 
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
