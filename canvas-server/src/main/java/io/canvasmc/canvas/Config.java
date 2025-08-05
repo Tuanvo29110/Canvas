@@ -19,6 +19,7 @@ import io.canvasmc.canvas.util.YamlTextFormatter;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import io.canvasmc.canvas.util.virtual.VirtualThreadUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minecraft.Util;
@@ -522,6 +523,7 @@ public class Config {
                 INSTANCE = context.configuration();
                 // build and print config tree.
                 YamlTextFormatter formatter = new YamlTextFormatter(4);
+                VirtualThreadUtils.init();
                 LOGGER.info(Component.text("Printing configuration tree:").appendNewline().append(formatter.apply(context.contents())));
                 if (RUNNING_IN_IDE) {
                     LOGGER.info("Running Minecraft development server in IDE.");

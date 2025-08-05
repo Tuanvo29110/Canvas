@@ -5,7 +5,7 @@
  
      protected static ExecutorService createWorkerPool(int size) {
 -        return Executors.newFixedThreadPool(size, THREAD_FACTORY);
-+        return io.canvasmc.canvas.Config.INSTANCE.virtualThreads.serverTextFilter ? Executors.newVirtualThreadPerTaskExecutor() : Executors.newFixedThreadPool(size, THREAD_FACTORY); // Canvas - virtual threads
++        return io.canvasmc.canvas.util.virtual.VirtualThreadUtils.createFixedExecutor(size, io.canvasmc.canvas.Config.INSTANCE.virtualThreads.serverTextFilter, THREAD_FACTORY, io.canvasmc.canvas.util.virtual.VirtualThreadUtils.buildFactory((virtual) -> virtual.name("Chat-Filter-Worker-" + WORKER_COUNT.getAndIncrement()))); // Canvas - virtual threads
      }
  
      protected ServerTextFilter(

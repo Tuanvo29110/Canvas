@@ -5,7 +5,7 @@
      private static final TracingExecutor DOWNLOAD_POOL = makeIoExecutor("Download-", true);
      // Paper start - don't submit BLOCKING PROFILE LOOKUPS to the world gen thread
 -    public static final ExecutorService PROFILE_EXECUTOR = Executors.newFixedThreadPool(2, new java.util.concurrent.ThreadFactory() {
-+    public static final ExecutorService PROFILE_EXECUTOR = io.canvasmc.canvas.Config.INSTANCE.virtualThreads.profileLookupExecutor ? Executors.newVirtualThreadPerTaskExecutor() : Executors.newFixedThreadPool(2, new java.util.concurrent.ThreadFactory() { // Canvas - virtual threads
++    public static final ExecutorService PROFILE_EXECUTOR = io.canvasmc.canvas.util.virtual.VirtualThreadUtils.createFixedExecutor(2, io.canvasmc.canvas.Config.INSTANCE.virtualThreads.profileLookupExecutor, new java.util.concurrent.ThreadFactory() { // Canvas - virtual threads
  
          private final AtomicInteger count = new AtomicInteger();
  
