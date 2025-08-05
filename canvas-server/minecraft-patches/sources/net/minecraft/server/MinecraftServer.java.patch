@@ -8,15 +8,6 @@
              // Folia end - region threading
  
              // Paper - Put world into worldlist before initing the world; move up
-@@ -1002,7 +_,7 @@
-     // CraftBukkit end
- 
-     // Folia start - region threading
--    private final java.util.concurrent.atomic.AtomicBoolean hasStartedShutdownThread = new java.util.concurrent.atomic.AtomicBoolean();
-+    public final java.util.concurrent.atomic.AtomicBoolean hasStartedShutdownThread = new java.util.concurrent.atomic.AtomicBoolean(); // Canvas - private -> public
- 
-     private void haltServerRegionThreading() {
-         if (this.hasStartedShutdownThread.getAndSet(true)) {
 @@ -1591,6 +_,7 @@
                      LOGGER.info("Initialising world '" + region.world.getWorld().getName() + "' before it can be ticked...");
                      this.initWorld(region.world, region.world.serverLevelData, worldData, region.world.serverLevelData.worldGenOptions()); // Folia - delayed until first tick of world

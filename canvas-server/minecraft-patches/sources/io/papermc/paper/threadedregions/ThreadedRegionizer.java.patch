@@ -31,34 +31,6 @@
          }
  
          public LongArrayList getOwnedSections() {
-@@ -815,11 +_,11 @@
-             this.regioniser.onRegionDestroy(this);
-         }
- 
--        private final boolean hasNoAliveSections() {
-+        public final boolean hasNoAliveSections() { // Canvas - private -> public
-             return this.deadSections.size() == this.sectionByKey.size();
-         }
- 
--        private final double getDeadSectionPercent() {
-+        public final double getDeadSectionPercent() { // Canvas - private -> public
-             return (double)this.deadSections.size() / (double)this.sectionByKey.size();
-         }
- 
-@@ -926,11 +_,11 @@
-             }
-         }
- 
--        private boolean isDead() {
-+        public boolean isDead() { // Canvas - private -> public
-             return this.state == STATE_DEAD;
-         }
- 
--        private boolean isTicking() {
-+        public boolean isTicking() { // Canvas - private -> public
-             return this.state == STATE_TICKING;
-         }
- 
 @@ -998,6 +_,8 @@
              final StringBuilder ret = new StringBuilder(128);
  

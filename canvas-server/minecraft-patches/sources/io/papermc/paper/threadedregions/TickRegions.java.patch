@@ -136,7 +136,7 @@
          }
  
 -        <T> T getRegionizedData(final RegionizedData<T> regionizedData) {
-+        public <T> T getRegionizedData(final RegionizedData<T> regionizedData) { // Canvas - package-private -> public
++        public <T> T getRegionizedData(final RegionizedData<T> regionizedData) { // Canvas - expand region api - cannot be access transformed
              return (T)this.regionizedData.get(regionizedData);
          }
  
