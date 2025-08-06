@@ -140,7 +140,7 @@
      public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
  
 -    public RegionizedWorldData(final ServerLevel world) {
-+    public final net.minecraft.world.level.levelgen.BitRandomSource simpleUnsafeLocalRandom = new io.canvasmc.canvas.util.FasterRandomSource(net.minecraft.world.level.levelgen.RandomSupport.generateUniqueSeed()); // Canvas - faster unsafe random
++    public final net.minecraft.world.level.levelgen.BitRandomSource simpleUnsafeLocalRandom = io.canvasmc.canvas.Config.ENABLE_FASTER_RANDOM ? new io.canvasmc.canvas.util.FasterRandomSource(net.minecraft.world.level.levelgen.RandomSupport.generateUniqueSeed()) : new ca.spottedleaf.moonrise.common.util.SimpleThreadUnsafeRandom(net.minecraft.world.level.levelgen.RandomSupport.generateUniqueSeed()); // Canvas - faster unsafe random
 +    public final io.canvasmc.canvas.RegionizedTpsBar tpsbar; // Canvas - tpsbar
 +    public final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData; // Canvas - rewrite scheduler
 +    public final ApiHandle apiHandle = new ApiHandle(this); // Canvas - expand region api

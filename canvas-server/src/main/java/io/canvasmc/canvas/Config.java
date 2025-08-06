@@ -19,6 +19,7 @@ import io.canvasmc.canvas.util.YamlTextFormatter;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.random.RandomGeneratorFactory;
 import io.canvasmc.canvas.util.virtual.VirtualThreadUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Range;
 
 @Configuration("canvas-server")
 public class Config {
+    public static boolean ENABLE_FASTER_RANDOM = true;
     public static final ComponentLogger LOGGER = ComponentLogger.logger("Canvas");
     public static boolean RUNNING_IN_IDE = Boolean.getBoolean("minecraft.running-in-ide");
     public static Config INSTANCE;
@@ -588,6 +590,13 @@ public class Config {
                     LOGGER.warn("To enable additional optimizations, add \"--add-modules=jdk.incubator.vector\" to your startup flags, BEFORE the \"-jar\".");
                     LOGGER.warn("If you have already added this flag, then SIMD operations are not supported on your JVM or CPU.");
                     LOGGER.warn("Debug: Java: " + System.getProperty("java.version") + ", test run: " + SIMDDetection.testRun);
+                }
+
+                try {
+                    RandomGeneratorFactory.of("Xoroshiro128PlusPlus");
+                } catch (Throwable throwable) {
+                    LOGGER.error("Canvas' faster random impl is not supported by your VM, falling back to legacy random");
+                    Config.ENABLE_FASTER_RANDOM = false;
                 }
             })
             .build(config, configClass), changes::add
