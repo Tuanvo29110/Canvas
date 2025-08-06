@@ -514,6 +514,30 @@ public class Config {
     })
     public boolean useDirectRandomImpl = false;
 
+    public Spawner spawner = new Spawner();
+    public static class Spawner {
+        @Comment("The spawner minimum spawn delay")
+        public int minSpawnDelay = 200;
+
+        @Comment("The spawner maximum spawn delay")
+        public int maxSpawnDelay = 800;
+
+        @Comment("The amount of spawner spawn count")
+        public int spawnCount = 4;
+
+        @Comment("The maximum amount of nearby entities before cancelling spawners ticking")
+        public int maxNearbyEntities = 6;
+
+        @Comment("The required player range for spawners to work")
+        public int requiredPlayerRange = 16;
+
+        @Comment("The maximum position range for spawned entities")
+        public int spawnRange = 4;
+
+        @Comment("Disables the spawner max nearby entities check")
+        public boolean disableMaxNearbyEntitiesCheck = false;
+    }
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
