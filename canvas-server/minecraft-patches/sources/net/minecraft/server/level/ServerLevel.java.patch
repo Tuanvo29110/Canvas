@@ -24,7 +24,7 @@
  
      public static final record PendingTeleport(Entity.EntityTreeNode rootVehicle, Vec3 to) {}
      private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<PendingTeleport> pendingTeleports = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
-@@ -883,15 +_,16 @@
+@@ -883,10 +_,10 @@
      // Paper start - optimise random ticking
      private final io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource simpleRandom = io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource.INSTANCE; // Folia - region threading
  
@@ -37,12 +37,6 @@
          final boolean doubleTickFluids = !ca.spottedleaf.moonrise.common.PlatformHooks.get().configFixMC224294();
  
          final ChunkPos cpos = chunk.getPos();
-         final int offsetX = cpos.x << 4;
-         final int offsetZ = cpos.z << 4;
-+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(); // Canvas - optimize random tick
- 
-         for (int sectionIndex = 0, sectionsLen = sections.length; sectionIndex < sectionsLen; sectionIndex++) {
-             final int offsetY = (sectionIndex + minSection) << 4;
 @@ -905,7 +_,7 @@
  
              for (int i = 0; i < tickSpeed; ++i) {
@@ -52,20 +46,17 @@
  
                  if (index >= tickingBlocks) {
                      // most of the time we fall here
-@@ -916,13 +_,13 @@
-                 final BlockState state = states.get(location);
- 
+@@ -918,11 +_,11 @@
                  // do not use a mutable pos, as some random tick implementations store the input without calling immutable()!
--                final BlockPos pos = new BlockPos((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ);
-+                mutablePos.set((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ); // Canvas - optimize random tick
+                 final BlockPos pos = new BlockPos((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ);
  
 -                state.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
-+                state.randomTick(this, mutablePos, worldData.simpleUnsafeLocalRandom); // Canvas - optimize random tick
++                state.randomTick(this, pos, worldData.simpleUnsafeLocalRandom); // Canvas - optimize random tick
                  if (doubleTickFluids) {
                      final FluidState fluidState = state.getFluidState();
                      if (fluidState.isRandomlyTicking()) {
 -                        fluidState.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
-+                        fluidState.randomTick(this, mutablePos, worldData.simpleUnsafeLocalRandom); // Canvas - optimize random tick
++                        fluidState.randomTick(this, pos, worldData.simpleUnsafeLocalRandom); // Canvas - optimize random tick
                      }
                  }
              }
