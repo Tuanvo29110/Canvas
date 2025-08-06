@@ -181,7 +181,7 @@ public class AsyncLocator {
                         nullabilityHandler.run();
                         return;
                     }
-                    server.regionizedServer.taskQueue.queueTickTaskQueue(
+                    io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueTickTaskQueue(
                         pos.world(), pos.position().getX(), pos.position().getZ(),
                         () -> action.accept(pos)
                     );

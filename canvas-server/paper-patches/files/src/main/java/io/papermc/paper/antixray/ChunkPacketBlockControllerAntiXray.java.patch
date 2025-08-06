@@ -12,7 +12,7 @@
          if (!Bukkit.isPrimaryThread()) {
              // Plugins?
 -            MinecraftServer.getServer().scheduleOnMain(() -> modifyBlocks(chunkPacket, chunkPacketInfo));
-+            MinecraftServer.getServer().regionizedServer.taskQueue.queueChunkTask(
++            io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueChunkTask(
 +                chunk.level, x, z, () -> {
 +                    modifyBlocks(chunkPacket, chunkPacketInfo);
 +                }

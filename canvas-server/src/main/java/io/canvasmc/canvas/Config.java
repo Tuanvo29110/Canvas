@@ -126,6 +126,15 @@ public class Config {
 
         @Comment("When enabled, hides flames on entities with invisibility")
         public boolean hideFlamesOnEntitiesWithInvisibility = false;
+
+        @Comment({
+            "Optimizes player information packet sending by splitting players",
+            "into buckets to be sent to spread out the list tick"
+        })
+        public boolean optimizePlayerListTicking = false;
+
+        @Comment("The interval in ticks for how often the server will tick the playerlist buckets")
+        public int playerInfoSendInterval = 600;
     }
 
     @Comment("Configurations for enabling virtual threads for different thread pool executors")

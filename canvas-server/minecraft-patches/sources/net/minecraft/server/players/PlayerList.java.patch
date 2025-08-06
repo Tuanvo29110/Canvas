@@ -1,9 +1,15 @@
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -112,6 +_,7 @@
+@@ -108,10 +_,12 @@
+     public static final Component CHAT_FILTERED_FULL = Component.translatable("chat.filtered_full");
+     public static final Component DUPLICATE_LOGIN_DISCONNECT_MESSAGE = Component.translatable("multiplayer.disconnect.duplicate_login");
+     private static final Logger LOGGER = LogUtils.getLogger();
+-    public static final int SEND_PLAYER_INFO_INTERVAL = 600;
++    public static final int SEND_PLAYER_INFO_INTERVAL = io.canvasmc.canvas.Config.INSTANCE.networking.playerInfoSendInterval; // Canvas - optimize playerlist tick
      private static final ThreadLocal<SimpleDateFormat> BAN_DATE_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z")); // Folia - region threading - SDF is not thread-safe
      private final MinecraftServer server;
      public final List<ServerPlayer> players = new java.util.concurrent.CopyOnWriteArrayList(); // CraftBukkit - ArrayList -> CopyOnWriteArrayList: Iterator safety
++    private final io.canvasmc.canvas.util.PlayerListBucket[] infoBuckets = new io.canvasmc.canvas.util.PlayerListBucket[SEND_PLAYER_INFO_INTERVAL]; // Canvas - optimize playerlist tick
 +    public final List<ServerPlayer> seeingEndCredits = new java.util.concurrent.CopyOnWriteArrayList<>(); // Canvas - fix end credits
      private final Map<UUID, ServerPlayer> playersByUUID = new java.util.concurrent.ConcurrentHashMap<>(); // Folia - region threading - change to CHM - Note: we do NOT expect concurrency PER KEY!
      private final UserBanList bans = new UserBanList(USERBANLIST_FILE);
@@ -17,6 +23,14 @@
              // Folia end - rewrite login process
              connection.setupInboundProtocol(
                  GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(this.server.registryAccess()), serverGamePacketListenerImpl),
+@@ -396,6 +_,7 @@
+ 
+             // player.connection.send(ClientboundPlayerInfoUpdatePacket.createPlayerInitializing(this.players)); // CraftBukkit - replaced with loop below
+             this.players.add(player);
++            this.pushToBuckets(player); // Canvas - optimize playerlist tick
+             this.playersByName.put(player.getScoreboardName().toLowerCase(java.util.Locale.ROOT), player); // Spigot
+             this.playersByUUID.put(player.getUUID(), player);
+             // this.broadcastAll(ClientboundPlayerInfoUpdatePacket.createPlayerInitializing(List.of(player))); // CraftBukkit - replaced with loop below
 @@ -496,6 +_,11 @@
                      serverLevel.getLightEngine(), (java.util.BitSet)null, (java.util.BitSet) null, true) // Paper - Anti-Xray
                  );
@@ -56,6 +70,14 @@
              }
              // Paper end - Allow using old ender pearl behavior
          }
+@@ -659,6 +_,7 @@
+         player.retireScheduler(); // Paper - Folia schedulers
+         player.getAdvancements().stopListening();
+         this.players.remove(player);
++        this.removeFromBuckets(player); // Canvas - optimize playerlist tick
+         this.playersByName.remove(player.getScoreboardName().toLowerCase(java.util.Locale.ROOT)); // Spigot
+         this.server.getCustomBossEvents().onPlayerDisconnect(player);
+         UUID uuid = player.getUUID();
 @@ -685,6 +_,7 @@
          // This removes the scoreboard (and player reference) for the specific player in the manager
          this.cserver.getScoreboardManager().removePlayer(player.getBukkitEntity());
@@ -64,6 +86,89 @@
          return playerQuitEvent.quitMessage(); // Paper - Adventure
      }
  
+@@ -758,6 +_,7 @@
+         // Folia end - region threading
+         player.stopRiding(); // CraftBukkit
+         this.players.remove(player);
++        this.removeFromBuckets(player); // Canvas - optimize playerlist tick
+         this.playersByName.remove(player.getScoreboardName().toLowerCase(java.util.Locale.ROOT)); // Spigot
+         player.level().removePlayerImmediately(player, reason);
+         // TeleportTransition teleportTransition = player.findRespawnPositionAndUseSpawnBlock(!keepInventory, TeleportTransition.DO_NOTHING);
+@@ -835,6 +_,7 @@
+         if (!serverPlayer.connection.isDisconnected()) {
+             level.addRespawnedPlayer(serverPlayer);
+             this.players.add(serverPlayer);
++            this.pushToBuckets(serverPlayer); // Canvas - optimize playerlist tick
+             this.playersByName.put(serverPlayer.getScoreboardName().toLowerCase(java.util.Locale.ROOT), serverPlayer); // Spigot
+             this.playersByUUID.put(serverPlayer.getUUID(), serverPlayer);
+         }
+@@ -939,6 +_,20 @@
+     }
+ 
+     public void tick() {
++        // Canvas start - optimize playerlist tick
++        if (io.canvasmc.canvas.Config.INSTANCE.networking.optimizePlayerListTicking) {
++            io.canvasmc.canvas.util.PlayerListBucket bucket = this.infoBuckets[this.sendAllPlayerInfoIn];
++
++            if (bucket != null) {
++                bucket.tick(this.players.toArray(new ServerPlayer[0]));
++            }
++
++            if (++this.sendAllPlayerInfoIn >= SEND_PLAYER_INFO_INTERVAL) {
++                this.sendAllPlayerInfoIn = 0;
++            }
++            return;
++        }
++        // Canvas end - optimize playerlist tick
+         if (++this.sendAllPlayerInfoIn > 600) {
+             // CraftBukkit start
+             ServerPlayer[] players = this.players.toArray(new ServerPlayer[0]); // Folia - region threading
+@@ -950,6 +_,45 @@
+             this.sendAllPlayerInfoIn = 0;
+         }
+     }
++    // Canvas start - optimize playerlist tick
++
++    public void pushToBuckets(ServerPlayer player) {
++        if (!io.papermc.paper.threadedregions.RegionizedServer.isGlobalTickThread()) {
++            io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(() -> pushToBuckets(player));
++            return;
++        }
++        io.canvasmc.canvas.util.PlayerListBucket bucket = this.infoBuckets[player.infoBucketIndex];
++        if (bucket == null) {
++            this.infoBuckets[player.infoBucketIndex] = new io.canvasmc.canvas.util.PlayerListBucket(new ServerPlayer[]{player});
++            return;
++        }
++        this.infoBuckets[player.infoBucketIndex] = bucket = new io.canvasmc.canvas.util.PlayerListBucket(java.util.Arrays.copyOf(bucket.bucket(), bucket.bucket().length + 1));
++        bucket.bucket()[bucket.bucket().length - 1] = player;
++    }
++
++    public void removeFromBuckets(ServerPlayer player) {
++        if (!io.papermc.paper.threadedregions.RegionizedServer.isGlobalTickThread()) {
++            io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(() -> removeFromBuckets(player));
++            return;
++        }
++        io.canvasmc.canvas.util.PlayerListBucket bucket = this.infoBuckets[player.infoBucketIndex];
++        if (bucket != null) {
++            if (bucket.bucket().length == 1) {
++                if (bucket.bucket()[0] == player) {
++                    this.infoBuckets[player.infoBucketIndex] = null;
++                }
++                return;
++            }
++
++            for (int i = 0; i < bucket.bucket().length; i++) {
++                if (bucket.bucket()[i] == player) {
++                    bucket.bucket()[i] = bucket.bucket()[bucket.bucket().length - 1];
++                    this.infoBuckets[player.infoBucketIndex] = new io.canvasmc.canvas.util.PlayerListBucket(java.util.Arrays.copyOf(bucket.bucket(), bucket.bucket().length - 1));
++                }
++            }
++        }
++    }
++    // Canvas end - optimize playerlist tick
+ 
+     // CraftBukkit start - add a world/entity limited version
+     public void broadcastAll(Packet packet, net.minecraft.world.entity.player.Player entityhuman) {
 @@ -1404,6 +_,7 @@
      }
  

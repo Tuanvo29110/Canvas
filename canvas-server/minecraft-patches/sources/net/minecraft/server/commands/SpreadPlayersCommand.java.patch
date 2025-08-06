@@ -76,7 +76,7 @@
 +                }, null, 0L);
 +            }
 +        } else {
-+            level.getServer().regionizedServer.addTask(() -> {
++            io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(() -> {
 +                source.sendFailure(Component.literal(message));
 +            });
 +        }
@@ -93,7 +93,7 @@
 +                }, null, 0L);
 +            }
 +        } else {
-+            level.getServer().regionizedServer.addTask(() -> {
++            io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(() -> {
 +                source.sendSystemMessage(message);
 +            });
 +        }
@@ -163,7 +163,7 @@
 +                for (SpreadPlayersCommand.Position pile2 : piles) {
 +                    net.minecraft.world.level.ChunkPos pos = new net.minecraft.world.level.ChunkPos(BlockPos.containing((pile2).x, 0.0, (pile2).z));
 +                    final java.util.concurrent.CompletableFuture<Void> future = new java.util.concurrent.CompletableFuture<>();
-+                    world.getServer().regionizedServer.taskQueue.queueChunkTask(
++                    io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueChunkTask(
 +                        world, pos.x, pos.z, () -> {
 +                            if (!pile2.isSafe(world, maxY)) {
 +                                pile2.randomize(random, minX, minZ, maxX, maxZ);
@@ -213,7 +213,7 @@
 +            }
 +
 +            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos((int) Math.round(Math.floor((pile).x)), 0, (int) Math.round(Math.floor((pile).z)));
-+            world.getServer().regionizedServer.taskQueue.queueTickTaskQueue(
++            io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueTickTaskQueue(
 +                world, pos.getX() >> 4, pos.getZ() >> 4, () -> {
 +                    pos.setY(pile.getSpawnY(world, maxY));
 +                    entity.getBukkitEntity().taskScheduler.schedule((entity1) -> {

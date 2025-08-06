@@ -8,7 +8,7 @@
 +                            } else if (io.canvasmc.canvas.Config.INSTANCE.chainEndCrystalExplosions && entity instanceof net.minecraft.world.entity.boss.enderdragon.EndCrystal endCrystal) {
 +                                int chunkX = endCrystal.chunkPosition().x;
 +                                int chunkZ = endCrystal.chunkPosition().z;
-+                                net.minecraft.server.MinecraftServer.getServer().regionizedServer.taskQueue.queueTickTaskQueue(
++                                io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueTickTaskQueue(
 +                                    (ServerLevel) endCrystal.level(),
 +                                    chunkX, chunkZ, () -> {
 +                                        // copied from EndCrystal#hurtServer

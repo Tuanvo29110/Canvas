@@ -9,7 +9,7 @@
      public final ContainerSynchronizer containerSynchronizer = new ContainerSynchronizer() {
          private final LoadingCache<TypedDataComponent<?>, Integer> cache = CacheBuilder.newBuilder()
              .maximumSize(256L)
-@@ -423,6 +_,40 @@
+@@ -423,6 +_,41 @@
      public boolean joining = true;
      public boolean sentListPacket = false;
      public boolean supressTrackerForLogin = false; // Paper - Fire PlayerJoinEvent when Player is actually ready
@@ -47,9 +47,18 @@
 +        }
 +    }
 +    // Canvas end - tpsbar
++    public final int infoBucketIndex; // Canvas - optimize playerlist tick
      // CraftBukkit end
      public boolean isRealPlayer; // Paper
      public @Nullable com.destroystokyo.paper.event.entity.PlayerNaturallySpawnCreaturesEvent playerNaturallySpawnedEvent; // Paper - PlayerNaturallySpawnCreaturesEvent
+@@ -474,6 +_,7 @@
+         this.bukkitPickUpLoot = true;
+         this.maxHealthCache = this.getMaxHealth();
+         // CraftBukkit end
++        this.infoBucketIndex = Math.floorMod(this.uuid.hashCode(), net.minecraft.server.players.PlayerList.SEND_PLAYER_INFO_INTERVAL); // Canvas - optimize playerlist tick
+     }
+ 
+     // Folia start - region threading
 @@ -612,6 +_,12 @@
      }
  

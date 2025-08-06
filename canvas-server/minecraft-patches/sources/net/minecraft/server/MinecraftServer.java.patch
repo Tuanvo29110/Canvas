@@ -1,5 +1,14 @@
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
+@@ -286,7 +_,7 @@
+     public static final long SERVER_INIT = System.nanoTime(); // Paper - Lag compensation
+ 
+     // Folia start - regionised ticking
+-    public final io.papermc.paper.threadedregions.RegionizedServer regionizedServer = new io.papermc.paper.threadedregions.RegionizedServer();
++    // public final io.papermc.paper.threadedregions.RegionizedServer regionizedServer = new io.papermc.paper.threadedregions.RegionizedServer(); // Canvas - remove this, causes issues
+ 
+     @Override
+     public <V> CompletableFuture<V> submit(java.util.function.Supplier<V> task) {
 @@ -733,6 +_,7 @@
                      );
                  }

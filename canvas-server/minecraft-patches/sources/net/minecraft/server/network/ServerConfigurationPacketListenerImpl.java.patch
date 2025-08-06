@@ -5,7 +5,7 @@
  
          this.connection.setReadOnly();
 -        this.server.scheduleOnMain(() -> {
-+        this.server.regionizedServer.addTask(() -> { // Canvas - region threading
++        io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(() -> { // Canvas - region threading
              this.disconnect(disconnectionInfo); // Currently you cannot cancel disconnect during the config stage
          });
      }
