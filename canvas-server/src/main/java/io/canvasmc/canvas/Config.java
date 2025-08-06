@@ -105,6 +105,9 @@ public class Config {
             "render distances higher than 32"
         })
         public int maxViewDistance = 32;
+
+        @Comment("Whether to use a rewritten random tick system to optimize the server")
+        public boolean optimizeRandomTick = false;
     }
 
     public Networking networking = new Networking();

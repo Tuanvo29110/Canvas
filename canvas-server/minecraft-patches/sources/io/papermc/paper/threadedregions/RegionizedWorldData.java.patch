@@ -135,7 +135,7 @@
  
      // Mob spawning
      public final ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<ServerPlayer> spawnChunkTracker = new ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<>();
-@@ -447,7 +_,13 @@
+@@ -447,7 +_,14 @@
      public final alternate.current.wire.WireHandler wireHandler;
      public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
  
@@ -145,6 +145,7 @@
 +    public final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData; // Canvas - rewrite scheduler
 +    public final ApiHandle apiHandle = new ApiHandle(this); // Canvas - expand region api
 +    public final net.minecraft.server.waypoints.ServerWaypointManager waypointManager = new net.minecraft.server.waypoints.ServerWaypointManager(); // Canvas - region threading - restore waypoints
++    public final io.canvasmc.canvas.chunk.RandomTickSystem randomTickSystem = new io.canvasmc.canvas.chunk.RandomTickSystem(); // Leaf - optimize random tick
 +
 +    public RegionizedWorldData(final ServerLevel world, final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData) { // Canvas - rewrite scheduler
          this.world = world;
