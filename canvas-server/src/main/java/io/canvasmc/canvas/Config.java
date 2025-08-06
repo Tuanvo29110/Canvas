@@ -505,6 +505,12 @@ public class Config {
     @Comment("Removes ender pearls that are thrown outside the world border")
     public boolean discardEnderPearlsOutsideBorder = false;
 
+    @Comment({
+        "Use direct random implementation instead of delegating to Java's RandomGenerator.",
+        "This may improve performance but potentially changes RNG behavior."
+    })
+    public boolean useDirectRandomImpl = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();

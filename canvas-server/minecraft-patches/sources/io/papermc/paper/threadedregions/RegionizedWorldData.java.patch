@@ -135,11 +135,12 @@
  
      // Mob spawning
      public final ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<ServerPlayer> spawnChunkTracker = new ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<>();
-@@ -447,7 +_,12 @@
+@@ -447,7 +_,13 @@
      public final alternate.current.wire.WireHandler wireHandler;
      public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
  
 -    public RegionizedWorldData(final ServerLevel world) {
++    public final net.minecraft.world.level.levelgen.BitRandomSource simpleUnsafeLocalRandom = new io.canvasmc.canvas.util.FasterRandomSource(net.minecraft.world.level.levelgen.RandomSupport.generateUniqueSeed()); // Canvas - faster unsafe random
 +    public final io.canvasmc.canvas.RegionizedTpsBar tpsbar; // Canvas - tpsbar
 +    public final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData; // Canvas - rewrite scheduler
 +    public final ApiHandle apiHandle = new ApiHandle(this); // Canvas - expand region api

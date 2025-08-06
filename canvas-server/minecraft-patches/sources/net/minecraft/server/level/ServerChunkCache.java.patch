@@ -1,18 +1,38 @@
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
+@@ -162,7 +_,8 @@
+ 
+         // TODO check on update: impl of forEachBlockTickingChunk will only iterate ENTITY ticking chunks!
+         // TODO check on update: consumer just runs tickChunk
+-        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> entityTickingChunks = world.getCurrentWorldData().getEntityTickingChunks(); // Folia - region threading
++        io.papermc.paper.threadedregions.RegionizedWorldData worldData = world.getCurrentWorldData(); // Canvas - optimize random tick
++        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> entityTickingChunks = worldData.getEntityTickingChunks(); // Folia - region threading // Canvas - optimize random tick
+ 
+         // note: we can use the backing array here because:
+         // 1. we do not care about new additions
+@@ -172,7 +_,7 @@
+ 
+         java.util.Objects.checkFromToIndex(0, size, raw.length);
+         for (int i = 0; i < size; ++i) {
+-            world.tickChunk(raw[i], randomTickSpeed);
++            world.tickChunk(raw[i], randomTickSpeed, worldData); // Canvas - optimize random tick
+ 
+             // call mid-tick tasks for chunk system
+             if ((i & 7) == 0) {
 @@ -568,20 +_,20 @@
              filteredSpawningCategories = List.of();
          }
  
 -        List<LevelChunk> list = regionizedWorldData.temporaryChunkTickList; // Folia - region threading
-+        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> list = this.level.getCurrentWorldData().getEntityTickingChunks(); // Folia - region threading // Canvas - optimize collect spawning chunks
++        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> list = regionizedWorldData.getEntityTickingChunks(); // Folia - region threading // Canvas - optimize collect spawning chunks
  
          try {
 -            this.chunkMap.collectSpawningChunks(list);
 +            // this.chunkMap.collectSpawningChunks(list); // Canvas - optimize collect spawning chunks
              // Paper start - chunk tick iteration optimisation
-             this.shuffleRandom.setSeed(this.level.random.nextLong());
+-            this.shuffleRandom.setSeed(this.level.random.nextLong());
 -            if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled
++            // this.shuffleRandom.setSeed(this.level.random.nextLong()); // Canvas - optimize collect spawning chunks
 +            // if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled // Canvas - optimize collect spawning chunks
              // Paper end - chunk tick iteration optimisation
  

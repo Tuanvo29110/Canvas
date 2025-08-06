@@ -24,6 +24,77 @@
  
      public static final record PendingTeleport(Entity.EntityTreeNode rootVehicle, Vec3 to) {}
      private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<PendingTeleport> pendingTeleports = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
+@@ -883,15 +_,16 @@
+     // Paper start - optimise random ticking
+     private final io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource simpleRandom = io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource.INSTANCE; // Folia - region threading
+ 
+-    private void optimiseRandomTick(final LevelChunk chunk, final int tickSpeed) {
++    private void optimiseRandomTick(final LevelChunk chunk, final int tickSpeed, io.papermc.paper.threadedregions.RegionizedWorldData worldData) { // Canvas - optimize random tick
+         final LevelChunkSection[] sections = chunk.getSections();
+         final int minSection = ca.spottedleaf.moonrise.common.util.WorldUtil.getMinSection((ServerLevel)(Object)this);
+-        final io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource simpleRandom = this.simpleRandom; // Folia - region threading
++        // final io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource simpleRandom = this.simpleRandom; // Folia - region threading // Canvas - optimize random tick
+         final boolean doubleTickFluids = !ca.spottedleaf.moonrise.common.PlatformHooks.get().configFixMC224294();
+ 
+         final ChunkPos cpos = chunk.getPos();
+         final int offsetX = cpos.x << 4;
+         final int offsetZ = cpos.z << 4;
++        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(); // Canvas - optimize random tick
+ 
+         for (int sectionIndex = 0, sectionsLen = sections.length; sectionIndex < sectionsLen; sectionIndex++) {
+             final int offsetY = (sectionIndex + minSection) << 4;
+@@ -905,7 +_,7 @@
+ 
+             for (int i = 0; i < tickSpeed; ++i) {
+                 final int tickingBlocks = tickList.size();
+-                final int index = simpleRandom.nextInt() & ((16 * 16 * 16) - 1);
++                final int index = worldData.simpleUnsafeLocalRandom.nextInt() & ((16 * 16 * 16) - 1); // Canvas - optimize random tick
+ 
+                 if (index >= tickingBlocks) {
+                     // most of the time we fall here
+@@ -916,13 +_,13 @@
+                 final BlockState state = states.get(location);
+ 
+                 // do not use a mutable pos, as some random tick implementations store the input without calling immutable()!
+-                final BlockPos pos = new BlockPos((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ);
++                mutablePos.set((location & 15) | offsetX, ((location >>> (4 + 4)) & 15) | offsetY, ((location >>> 4) & 15) | offsetZ); // Canvas - optimize random tick
+ 
+-                state.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
++                state.randomTick(this, mutablePos, worldData.simpleUnsafeLocalRandom); // Canvas - optimize random tick
+                 if (doubleTickFluids) {
+                     final FluidState fluidState = state.getFluidState();
+                     if (fluidState.isRandomlyTicking()) {
+-                        fluidState.randomTick((ServerLevel)(Object)this, pos, simpleRandom);
++                        fluidState.randomTick(this, mutablePos, worldData.simpleUnsafeLocalRandom); // Canvas - optimize random tick
+                     }
+                 }
+             }
+@@ -932,22 +_,21 @@
+     }
+     // Paper end - optimise random ticking
+ 
+-    public void tickChunk(LevelChunk chunk, int randomTickSpeed) {
+-        final io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource simpleRandom = this.simpleRandom; // Paper - optimise random ticking // Folia - region threading
++    public void tickChunk(LevelChunk chunk, int randomTickSpeed, io.papermc.paper.threadedregions.RegionizedWorldData worldData) { // Canvas - optimize random tick
+         ChunkPos pos = chunk.getPos();
+         int minBlockX = pos.getMinBlockX();
+         int minBlockZ = pos.getMinBlockZ();
+ 
+         if (!this.paperConfig().environment.disableIceAndSnow) { // Paper - Option to disable ice and snow
+         for (int i = 0; i < randomTickSpeed; i++) {
+-            if (simpleRandom.nextInt(48) == 0) {  // Paper - optimise random ticking
++            if (worldData.simpleUnsafeLocalRandom.nextInt(48) == 0) {  // Paper - optimise random ticking // Canvas - optimize random tick
+                 this.tickPrecipitation(this.getBlockRandomPos(minBlockX, 0, minBlockZ, 15));
+             }
+         }
+         } // Paper - Option to disable ice and snow
+ 
+         if (randomTickSpeed > 0) {
+-            this.optimiseRandomTick(chunk, randomTickSpeed); // Paper - optimise random ticking
++            this.optimiseRandomTick(chunk, randomTickSpeed, worldData); // Paper - optimise random ticking // Canvas - optimize random tick
+         }
+     }
+ 
 @@ -956,7 +_,7 @@
          boolean isRaining = this.isRaining();
          int minBlockX = pos.getMinBlockX();
