@@ -10,7 +10,7 @@ public class SIMDChecker {
     @Deprecated
     public static boolean canEnable(ComponentLogger logger) {
         try {
-            if (SIMDDetection.getJavaVersion() < 17 || SIMDDetection.getJavaVersion() > 21) {
+            if (SIMDDetection.getJavaVersion() < 17) {
                 return false;
             } else {
                 SIMDDetection.testRun = true;
