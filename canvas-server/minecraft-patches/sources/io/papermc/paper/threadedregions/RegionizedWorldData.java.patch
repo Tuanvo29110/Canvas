@@ -25,26 +25,15 @@
                  if (tileEntity != null) {
                      tileEntity.updateTicks(fromTickOffset, fromRedstoneTimeOffset);
                  }
-@@ -171,8 +_,12 @@
-                 final ChunkPos pos = player.chunkPosition();
-                 // Note: It is impossible for an entity in the world to _not_ be in an entity chunk, which means
-                 // the chunk holder must _exist_, and so the region section exists.
--                regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift))
--                    .connections.add(conn);
-+                // Canvas start - region threading - restore waypoints
-+                from.waypointManager.removePlayer(player);
-+                RegionizedWorldData into = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
-+                into.connections.add(conn);
-+                into.waypointManager.addPlayer(player);
-+                // Canvas end - region threading - restore waypoints
-             }
-             // entities
-             for (final ServerPlayer player : from.localPlayers) {
-@@ -181,6 +_,7 @@
+@@ -181,6 +_,11 @@
                  // the chunk holder must _exist_, and so the region section exists.
                  final RegionizedWorldData into = regionToData.get(CoordinateUtils.getChunkKey(pos.x >> chunkToRegionShift, pos.z >> chunkToRegionShift));
                  into.localPlayers.add(player);
 +                player.getBukkitEntity().setRegionData(into); // Canvas - rewrite scheduler
++                // Canvas start - region threading - restore waypoints
++                from.waypointManager.removePlayer(player);
++                into.waypointManager.addPlayer(player);
++                // Canvas end - region threading - restore waypoints
                  into.nearbyPlayers.addPlayer(player);
              }
              for (final Entity entity : from.allEntities) {
@@ -169,7 +158,7 @@
      }
  
      public NearbyPlayers getNearbyPlayers() {
-@@ -492,24 +_,53 @@
+@@ -492,24 +_,51 @@
      private static void cleanUpConnection(final Connection conn) {
          // note: ALL connections HERE have a player
          final ServerPlayer player = conn.getPlayer();
@@ -192,12 +181,10 @@
 +    // Canvas start - rewrite tick scheduler
 +    public void addConnection(Connection connection, ServerPlayer serverPlayer) {
 +        this.connections.add(connection);
-+        this.waypointManager.addPlayer(serverPlayer); // Canvas - region threading - restore waypoints
 +    }
 +
 +    public void removeConnection(Connection connection, ServerPlayer serverPlayer) {
 +        this.connections.remove(connection);
-+        this.waypointManager.removePlayer(serverPlayer); // Canvas - region threading - restore waypoints
 +    }
 +
 +    // copied from it.unimi.dsi.fastutil.objects.ObjectLists.shuffle method, modified to use Minecraft RandomSources
@@ -227,19 +214,21 @@
                  cleanUpConnection(conn);
                  continue;
              }
-@@ -612,6 +_,7 @@
+@@ -612,6 +_,8 @@
          if (this.allEntities.add(entity)) {
              if (entity instanceof ServerPlayer player) {
                  this.localPlayers.add(player);
 +                player.getBukkitEntity().setRegionData(this); // Canvas - rewrite scheduler
++                this.waypointManager.addPlayer(player); // Canvas - region threading - restore waypoints
              }
              TickRegions.RegionStats.updateCurrentRegion();
          }
-@@ -628,6 +_,7 @@
+@@ -628,6 +_,8 @@
          if (this.allEntities.remove(entity)) {
              if (entity instanceof ServerPlayer player) {
                  this.localPlayers.remove(player);
 +                player.getBukkitEntity().setRegionData(null); // Canvas - rewrite scheduler
++                this.waypointManager.removePlayer(player); // Canvas - region threading - restore waypoints
              }
              TickRegions.RegionStats.updateCurrentRegion();
          }
