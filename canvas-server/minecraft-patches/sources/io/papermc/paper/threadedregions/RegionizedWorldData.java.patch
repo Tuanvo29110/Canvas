@@ -122,7 +122,7 @@
      public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(64, 0.25f);
      public final PathTypeCache pathTypesByPosCache = new PathTypeCache();
 -    public final List<LevelChunk> temporaryChunkTickList = new java.util.ArrayList<>();
-+    // Canvas - optimize chunk collect - remove 'temporaryChunkTickList'
++    public final List<LevelChunk> temporaryChunkTickList = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(); // Canvas - optimized collection
      public final Set<ChunkHolder> chunkHoldersToBroadcast = new ReferenceLinkedOpenHashSet<>();
  
      // not transient
@@ -135,7 +135,7 @@
  
      // Mob spawning
      public final ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<ServerPlayer> spawnChunkTracker = new ca.spottedleaf.moonrise.common.misc.PositionCountingAreaMap<>();
-@@ -447,7 +_,14 @@
+@@ -447,7 +_,15 @@
      public final alternate.current.wire.WireHandler wireHandler;
      public final io.papermc.paper.redstone.RedstoneWireTurbo turbo;
  
@@ -146,6 +146,7 @@
 +    public final ApiHandle apiHandle = new ApiHandle(this); // Canvas - expand region api
 +    public final net.minecraft.server.waypoints.ServerWaypointManager waypointManager = new net.minecraft.server.waypoints.ServerWaypointManager(); // Canvas - region threading - restore waypoints
 +    public final io.canvasmc.canvas.chunk.RandomTickSystem randomTickSystem = new io.canvasmc.canvas.chunk.RandomTickSystem(); // Leaf - optimize random tick
++    public final io.canvasmc.canvas.chunk.NatureSpawnChunkMap natureSpawnChunkMap = new io.canvasmc.canvas.chunk.NatureSpawnChunkMap(); // Canvas - optimize spawn chunk collection
 +
 +    public RegionizedWorldData(final ServerLevel world, final io.papermc.paper.threadedregions.TickRegions.TickRegionData regionData) { // Canvas - rewrite scheduler
          this.world = world;
@@ -168,7 +169,7 @@
      }
  
      public NearbyPlayers getNearbyPlayers() {
-@@ -492,14 +_,33 @@
+@@ -492,24 +_,53 @@
      private static void cleanUpConnection(final Connection conn) {
          // note: ALL connections HERE have a player
          final ServerPlayer player = conn.getPlayer();
@@ -199,11 +200,25 @@
 +        this.waypointManager.removePlayer(serverPlayer); // Canvas - region threading - restore waypoints
 +    }
 +
++    // copied from it.unimi.dsi.fastutil.objects.ObjectLists.shuffle method, modified to use Minecraft RandomSources
++    public static <K> it.unimi.dsi.fastutil.objects.ObjectList<K> shuffle(final it.unimi.dsi.fastutil.objects.ObjectList<K> l, final net.minecraft.util.RandomSource random) {
++        for (int i = l.size(); i-- != 0;) {
++            final int p = random.nextInt(i + 1);
++            final K t = l.get(i);
++            l.set(i, l.get(p));
++            l.set(p, t);
++        }
++        return l;
++    }
 +    // Canvas end - rewrite tick scheduler
      // connections
      public void tickConnections() {
-         final List<Connection> connections = new ArrayList<>(this.connections);
-@@ -509,7 +_,7 @@
+-        final List<Connection> connections = new ArrayList<>(this.connections);
+-        Collections.shuffle(connections);
++        final it.unimi.dsi.fastutil.objects.ObjectArrayList<Connection> connections = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(this.connections); // Canvas - optimized collection
++        shuffle(connections, this.simpleUnsafeLocalRandom); // Canvas - optimized collection
+         for (final Connection conn : connections) {
+             if (!conn.isConnected()) {
                  conn.handleDisconnection();
                  // global tick thread will not remove connections not owned by it, so we need to
                  RegionizedServer.getInstance().removeConnection(conn);

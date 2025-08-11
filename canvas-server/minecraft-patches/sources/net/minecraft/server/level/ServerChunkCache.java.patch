@@ -19,16 +19,24 @@
  
              // call mid-tick tasks for chunk system
              if ((i & 7) == 0) {
-@@ -568,23 +_,29 @@
-             filteredSpawningCategories = List.of();
-         }
- 
--        List<LevelChunk> list = regionizedWorldData.temporaryChunkTickList; // Folia - region threading
-+        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> list = regionizedWorldData.getEntityTickingChunks(); // Folia - region threading // Canvas - optimize collect spawning chunks
+@@ -560,6 +_,7 @@
+                 chunkRange = Math.min(chunkRange, 8);
+                 entityPlayer.playerNaturallySpawnedEvent = new com.destroystokyo.paper.event.entity.PlayerNaturallySpawnCreaturesEvent(entityPlayer.getBukkitEntity(), (byte) chunkRange);
+                 entityPlayer.playerNaturallySpawnedEvent.callEvent();
++                regionizedWorldData.natureSpawnChunkMap.addPlayer(entityPlayer); // Canvas - optimize collect spawning chunks
+             }
+             // Paper end - PlayerNaturallySpawnCreaturesEvent
+             boolean flag = this.level.ticksPerSpawnCategory.getLong(org.bukkit.entity.SpawnCategory.ANIMAL) != 0L && this.level.getRedstoneGameTime() % this.level.ticksPerSpawnCategory.getLong(org.bukkit.entity.SpawnCategory.ANIMAL) == 0L; // CraftBukkit // Folia - region threading
+@@ -571,20 +_,30 @@
+         List<LevelChunk> list = regionizedWorldData.temporaryChunkTickList; // Folia - region threading
  
          try {
 -            this.chunkMap.collectSpawningChunks(list);
-+            // this.chunkMap.collectSpawningChunks(list); // Canvas - optimize collect spawning chunks
++            // Canvas start - optimize collect spawning chunks
++            regionizedWorldData.natureSpawnChunkMap.build();
++            regionizedWorldData.natureSpawnChunkMap.collectSpawningChunks(regionizedWorldData.getEntityTickingChunks(), list);
++            // this.chunkMap.collectSpawningChunks(list);
++            // Canvas end - optimize collect spawning chunks
              // Paper start - chunk tick iteration optimisation
 -            this.shuffleRandom.setSeed(this.level.random.nextLong());
 -            if (!this.level.paperConfig().entities.spawning.perPlayerMobSpawns) Util.shuffle(list, this.shuffleRandom); // Paper - Optional per player mob spawns; do not need this when per-player is enabled
@@ -41,7 +49,7 @@
              }
          } finally {
 -            list.clear();
-+            // list.clear(); // Canvas - optimize collect spawning chunks
++            regionizedWorldData.natureSpawnChunkMap.clear(); // Canvas - optimize collect spawning chunks
          }
  
 -        this.iterateTickingChunksFaster(); // Paper - chunk tick iteration optimisations

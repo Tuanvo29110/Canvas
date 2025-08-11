@@ -42,6 +42,17 @@ public interface SleepingBlockEntity {
         this.lithium$setSleepingTicker(null);
     }
 
+    default void sleepFor(int ticks) {
+        TickingBlockEntity sleepingTicker = this.lithium$getSleepingTicker();
+        LevelChunk.RebindableTickingBlockEntityWrapper tickWrapper = this.lithium$getTickWrapper();
+        if (sleepingTicker == null) {
+            sleepingTicker = tickWrapper.ticker;
+        }
+        Level world = ((BlockEntity) this).getLevel();
+        tickWrapper.rebind(new SleepUntilTimeBlockEntityTickInvoker((BlockEntity) this, world.getGameTime() + ticks, sleepingTicker));
+        this.lithium$setSleepingTicker(null);
+    }
+
     default void wakeUpNow() {
         TickingBlockEntity sleepingTicker = this.lithium$getSleepingTicker();
         if (sleepingTicker == null) {
