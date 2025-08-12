@@ -16,8 +16,11 @@ import io.canvasmc.canvas.config.internal.ConfigurationManager;
 import io.canvasmc.canvas.entity.EntityCollisionMode;
 import io.canvasmc.canvas.simd.SIMDDetection;
 import io.canvasmc.canvas.util.YamlTextFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.random.RandomGeneratorFactory;
 import io.canvasmc.canvas.util.virtual.VirtualThreadUtils;
@@ -36,6 +39,7 @@ public class Config {
     public static boolean ENABLE_FASTER_RANDOM = true;
     public static final ComponentLogger LOGGER = ComponentLogger.logger("Canvas");
     public static boolean RUNNING_IN_IDE = Boolean.getBoolean("minecraft.running-in-ide");
+    public static final List<EntityNonTickableConf> NON_TICKABLES = new CopyOnWriteArrayList<>();
     public static Config INSTANCE;
 
     public Chunks chunks = new Chunks();
@@ -544,6 +548,11 @@ public class Config {
     @Comment("Disables all criterion triggers. Advancements will not work!")
     public boolean disableCriterionTrigger = false;
 
+    @NamespacedKey
+    @Comment("Defines non-tickable entities. This is defined by a leniently-parsed resource location associated with the entity type")
+    public List<String> nonTickableEntities = new ArrayList<>();
+    public record EntityNonTickableConf(String raw, ResourceLocation parsed) {}
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
@@ -602,6 +611,18 @@ public class Config {
                     LOGGER.error("Canvas' faster random impl is not supported by your VM, falling back to legacy random");
                     Config.ENABLE_FASTER_RANDOM = false;
                 }
+
+                LOGGER.info("Compiling entity non-tickable mappings...");
+                int i = 0;
+                for (final String nonTickableEntity : INSTANCE.nonTickableEntities) {
+                    ResourceLocation resourceLocation = ResourceLocation.parse(nonTickableEntity);
+                    LOGGER.info("Marking entity type {} as non-tickable", resourceLocation);
+                    NON_TICKABLES.add(new EntityNonTickableConf(
+                        nonTickableEntity, resourceLocation
+                    ));
+                    i++;
+                }
+                LOGGER.info("Successfully compiled {} entity non-tickable mappings", i);
             })
             .build(config, configClass), changes::add
         );

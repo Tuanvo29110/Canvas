@@ -9,6 +9,14 @@
      private final Map<EquipmentSlot, ItemStack> lastEquipmentItems = Util.makeEnumMap(EquipmentSlot.class, slot -> ItemStack.EMPTY);
      public boolean swinging;
      private boolean discardFriction = false;
+@@ -284,6 +_,7 @@
+     public boolean silentDeath = false; // Paper - mark entity as dying silently for cancellable death event
+     public net.kyori.adventure.util.TriState frictionState = net.kyori.adventure.util.TriState.NOT_SET; // Paper - Friction API
+     public int shieldBlockingDelay = this.level().paperConfig().misc.shieldBlockingDelay; // Paper - Make shield blocking delay configurable
++    private boolean hasntResetDisabledEntityTypeMovementOnDeath = false; // Canvas - non tickable entities config
+     // CraftBukkit end
+     // Folia start - region threading
+     @Override
 @@ -392,7 +_,7 @@
          if (this.level() instanceof ServerLevel serverLevel && onGround && this.fallDistance > 0.0) {
              this.onChangedBlock(serverLevel, pos);
@@ -36,6 +44,19 @@
                  && !serverLevel1.getBlockState(BlockPos.containing(this.getX(), this.getEyeY(), this.getZ())).is(Blocks.BUBBLE_COLUMN)) {
                  boolean flag1 = !this.canBreatheUnderwater()
                      && !MobEffectUtil.hasWaterBreathing(this)
+@@ -504,6 +_,12 @@
+         }
+ 
+         if (this.isDeadOrDying() && this.level().shouldTickDeath(this)) {
++            // Canvas start - non tickable entities config
++            if (!this.hasntResetDisabledEntityTypeMovementOnDeath && this.getType().isDisabled()) {
++                this.setDeltaMovement(0, 0, 0);
++                this.hasntResetDisabledEntityTypeMovementOnDeath = true;
++            }
++            // Canvas end - non tickable entities config
+             this.tickDeath();
+         } else { this.broadcastedDeath = false; } // Folia - region threading
+ 
 @@ -532,6 +_,19 @@
          this.yRotO = this.getYRot();
          this.xRotO = this.getXRot();
@@ -132,6 +153,15 @@
  
      public boolean onClimbable() {
          if (this.isSpectator()) {
+@@ -2168,7 +_,7 @@
+ 
+     @Override
+     public boolean isAlive() {
+-        return !this.isRemoved() && this.getHealth() > 0.0F && !this.dead; // Paper - Check this.dead
++        return !this.dead && !this.isRemoved() && this.getHealth() > 0.0F; // Paper - Check this.dead // Canvas - cheapest check first
+     }
+ 
+     public boolean isLookingAtMe(LivingEntity entity, double tolerance, boolean scaleByDistance, boolean visual, double... yValues) {
 @@ -2601,7 +_,7 @@
      @Override
      public void handleDamageEvent(DamageSource damageSource) {

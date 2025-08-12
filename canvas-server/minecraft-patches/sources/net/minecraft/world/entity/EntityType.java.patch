@@ -1,0 +1,31 @@
+--- a/net/minecraft/world/entity/EntityType.java
++++ b/net/minecraft/world/entity/EntityType.java
+@@ -1092,9 +_,27 @@
+     public EntityDimensions dimensions;
+     private final float spawnDimensionsScale;
+     private final FeatureFlagSet requiredFeatures;
++    // Canvas start - non tickable entities config
++    private boolean disabled = false;
++
++    public boolean isDisabled() {
++        return disabled;
++    }
++    // Canvas end - non tickable entities config
+ 
+     private static <T extends Entity> EntityType<T> register(ResourceKey<EntityType<?>> key, EntityType.Builder<T> builder) {
+-        return Registry.register(BuiltInRegistries.ENTITY_TYPE, key, builder.build(key));
++        // Canvas start - non tickable entities config
++        EntityType<T> entityType = builder.build(key);
++        if (io.canvasmc.canvas.Config.NON_TICKABLES.stream()
++            .map(io.canvasmc.canvas.Config.EntityNonTickableConf::parsed)
++            .anyMatch(rl -> rl.equals(key.location()))
++        ) {
++            // mark disabled
++            entityType.disabled = true;
++            LOGGER.info("Marked entity type '{}' as disabled", entityType);
++        }
++        return Registry.register(BuiltInRegistries.ENTITY_TYPE, key, entityType);
++        // Canvas end - non tickable entities config
+     }
+ 
+     private static ResourceKey<EntityType<?>> vanillaEntityId(String name) {
