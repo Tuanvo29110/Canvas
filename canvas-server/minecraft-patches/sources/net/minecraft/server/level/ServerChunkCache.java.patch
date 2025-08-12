@@ -27,7 +27,7 @@
              }
              // Paper end - PlayerNaturallySpawnCreaturesEvent
              boolean flag = this.level.ticksPerSpawnCategory.getLong(org.bukkit.entity.SpawnCategory.ANIMAL) != 0L && this.level.getRedstoneGameTime() % this.level.ticksPerSpawnCategory.getLong(org.bukkit.entity.SpawnCategory.ANIMAL) == 0L; // CraftBukkit // Folia - region threading
-@@ -571,20 +_,30 @@
+@@ -571,20 +_,31 @@
          List<LevelChunk> list = regionizedWorldData.temporaryChunkTickList; // Folia - region threading
  
          try {
@@ -48,8 +48,8 @@
                  this.tickSpawningChunk(levelChunk, timeInhabited, filteredSpawningCategories, spawnState);
              }
          } finally {
--            list.clear();
 +            regionizedWorldData.natureSpawnChunkMap.clear(); // Canvas - optimize collect spawning chunks
+             list.clear();
          }
  
 -        this.iterateTickingChunksFaster(); // Paper - chunk tick iteration optimisations
