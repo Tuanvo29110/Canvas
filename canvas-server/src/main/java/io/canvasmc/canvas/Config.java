@@ -509,10 +509,10 @@ public class Config {
 
         @Comment("Enables legacy blast protection")
         public boolean legacyBlastProtection = false;
-    }
 
-    @Comment("Removes ender pearls that are thrown outside the world border")
-    public boolean discardEnderPearlsOutsideBorder = false;
+        @Comment("Removes the red death animation seen on entities when killed.")
+        public boolean removeRedDeathAnimation = false;
+    }
 
     @Comment({
         "Use direct random implementation instead of delegating to Java's RandomGenerator.",

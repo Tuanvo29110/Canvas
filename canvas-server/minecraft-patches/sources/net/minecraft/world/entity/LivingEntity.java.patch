@@ -89,6 +89,14 @@
                  AttributeInstance attribute = this.getAttribute(Attributes.MOVEMENT_SPEED);
                  if (attribute == null) {
                      return;
+@@ -594,6 +_,7 @@
+     public boolean broadcastedDeath = false; // Folia - region threading
+     protected void tickDeath() {
+         this.deathTime++;
++        if (io.canvasmc.canvas.Config.INSTANCE.combat.removeRedDeathAnimation) this.deathTime = 20; // Canvas - remove red death animation
+         if (this.deathTime >= 20 && !this.level().isClientSide() && !this.isRemoved()) {
+             this.level().broadcastEntityEvent(this, (byte)60);
+             this.broadcastedDeath = true; // Folia - region threading - death has been broadcasted
 @@ -1022,14 +_,18 @@
      }
  
