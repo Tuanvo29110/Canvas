@@ -540,6 +540,10 @@ public class Config {
         public boolean disableMaxNearbyEntitiesCheck = false;
     }
 
+    // Implementation done in 0005-Disable-Criterion-Trigger-Config base patch
+    @Comment("Disables all criterion triggers. Advancements will not work!")
+    public boolean disableCriterionTrigger = false;
+
     private static <T extends Config> @NotNull ConfigSerializer<T> buildSerializer(Configuration config, Class<T> configClass) {
         ConfigurationUtils.extractKeys(configClass);
         Set<String> changes = new LinkedHashSet<>();
