@@ -206,3 +206,69 @@
                              return rebindableTickingBlockEntityWrapper;
                          } else {
                              return null;
+@@ -904,7 +_,7 @@
+         return new LevelChunk.BoundTickingBlockEntity<>(blockEntity, ticker);
+     }
+ 
+-    class BoundTickingBlockEntity<T extends BlockEntity> implements TickingBlockEntity {
++    class BoundTickingBlockEntity<T extends BlockEntity> implements TickingBlockEntity, io.canvasmc.canvas.chunk.border.WorldBorderListenerOnce { // Canvas - optimize block entities
+         private final T blockEntity;
+         private final BlockEntityTicker<T> ticker;
+         private boolean loggedInvalidBlockState;
+@@ -920,12 +_,55 @@
+             return this.blockEntity;
+         }
+         // Folia end - region threading
++        // Canvas start - optimize block entities
++        private byte worldBorderState = 0;
++
++        boolean isTicking(BlockPos pos) {
++            if (this.isInsideWorldBorder()) {
++                return LevelChunk.this.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING) && LevelChunk.this.level.areEntitiesLoaded(ChunkPos.asLong(pos));
++            }
++            return false;
++        }
++
++        private boolean isInsideWorldBorder() {
++            if (this.worldBorderState == (byte) 0) {
++                this.startWorldBorderCaching();
++            }
++
++            int worldBorderState = this.worldBorderState;
++            if ((worldBorderState & 3) == 3) {
++                return (worldBorderState & 4) != 0;
++            }
++            return LevelChunk.this.level.getWorldBorder().isWithinBounds(this.getPos());
++        }
++
++        private void startWorldBorderCaching() {
++            this.worldBorderState = (byte) 1;
++            net.minecraft.world.level.border.WorldBorder worldBorder = LevelChunk.this.level.getWorldBorder();
++            worldBorder.addListener(this);
++            boolean isStationary = worldBorder.getStatus() == net.minecraft.world.level.border.BorderStatus.STATIONARY;
++            if (worldBorder.isWithinBounds(this.getPos())) {
++                if (isStationary || worldBorder.getStatus() == net.minecraft.world.level.border.BorderStatus.GROWING) {
++                    this.worldBorderState |= (byte) 6;
++                }
++            } else {
++                if (isStationary || worldBorder.getStatus() == net.minecraft.world.level.border.BorderStatus.SHRINKING) {
++                    this.worldBorderState |= (byte) 2;
++                }
++            }
++        }
++
++        @Override
++        public void onWorldBorderShapeChange(net.minecraft.world.level.border.WorldBorder worldBorder) {
++            this.worldBorderState = (byte) 0;
++        }
++        // Canvas end - optimize block entities
+ 
+         @Override
+         public void tick() {
+             if (!this.blockEntity.isRemoved() && this.blockEntity.hasLevel()) {
+                 BlockPos blockPos = this.blockEntity.getBlockPos();
+-                if (LevelChunk.this.isTicking(blockPos)) {
++                if (isTicking(blockPos)) { // Canvas - optimize block entities
+                     try {
+                         BlockState blockState = LevelChunk.this.getBlockState(blockPos);
+                         if (this.blockEntity.getType().isValid(blockState)) {

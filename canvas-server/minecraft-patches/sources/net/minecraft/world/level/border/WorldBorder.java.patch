@@ -1,0 +1,43 @@
+--- a/net/minecraft/world/level/border/WorldBorder.java
++++ b/net/minecraft/world/level/border/WorldBorder.java
+@@ -32,6 +_,13 @@
+     private WorldBorder.BorderExtent extent = new WorldBorder.StaticBorderExtent(5.999997E7F);
+     public static final WorldBorder.Settings DEFAULT_SETTINGS = new WorldBorder.Settings(0.0, 0.0, 0.2, 5.0, 5, 15, 5.999997E7F, 0L, 0.0);
+     public net.minecraft.server.level.ServerLevel world; // CraftBukkit
++    // Canvas start - optimize block entities
++    private final io.canvasmc.canvas.chunk.border.WorldBorderPositionListenerMulti multiPositionListener = new io.canvasmc.canvas.chunk.border.WorldBorderPositionListenerMulti();
++
++    public WorldBorder() {
++        this.addListener(this.multiPositionListener);
++    }
++    // Canvas end - optimize block entities
+ 
+     // Folia - region threading - TODO make this shit thread-safe
+ 
+@@ -235,6 +_,12 @@
+ 
+     public void addListener(BorderChangeListener listener) {
+         if (this.listeners.contains(listener)) return; // CraftBukkit
++        // Canvas start - optimize block entities
++        if (listener instanceof io.canvasmc.canvas.chunk.border.WorldBorderListenerOnce simple) {
++            this.multiPositionListener.add(simple);
++            return;
++        }
++        // Canvas end - optimize block entities
+         this.listeners.add(listener);
+     }
+ 
+@@ -304,7 +_,13 @@
+     }
+ 
+     public void tick() {
++        // Canvas start - optimize block entities
++        BorderExtent prev = this.extent;
+         this.extent = this.extent.update();
++        if (this.extent != prev) {
++            this.multiPositionListener.onAreaReplaced(this);
++        }
++        // Canvas end - optimize block entities
+     }
+ 
+     public WorldBorder.Settings createSettings() {

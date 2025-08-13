@@ -151,6 +151,16 @@
      }
  
      public boolean isInLava() {
+@@ -2199,8 +_,8 @@
+     }
+ 
+     public void push(Entity entity) {
++        if (!entity.noPhysics && !this.noPhysics) { // Leaf - collision physics check before vehicle check
+         if (!this.isPassengerOfSameVehicle(entity)) {
+-            if (!entity.noPhysics && !this.noPhysics) {
+                 if (this.level.paperConfig().collisions.onlyPlayersCollide && !(entity instanceof ServerPlayer || this instanceof ServerPlayer)) return; // Paper - Collision option for requiring a player participant
+                 double d = entity.getX() - this.getX();
+                 double d1 = entity.getZ() - this.getZ();
 @@ -2520,6 +_,7 @@
              }
  
