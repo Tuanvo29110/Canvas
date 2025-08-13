@@ -32,7 +32,7 @@
              if (tickingBlockEntity.isRemoved()) {
                  toRemove.add(tickingBlockEntity); // Paper - Fix MC-117075; use removeAll
 -            } else if (runsNormally && this.shouldTickBlocksAt(tickingBlockEntity.getPos())) {
-+            } else if (runsNormally && tickingBlockEntity.getPos() != null && shouldTickBlocksAt(tickingBlockEntity.getPos())) { // Canvas - block entity sleeping
++            } else if (runsNormally && tickingBlockEntity.getPos() != null) { // Canvas - block entity sleeping
                  tickingBlockEntity.tick();
                  // Paper start - rewrite chunk system
                  if ((++tickedEntities & 7) == 0) {
