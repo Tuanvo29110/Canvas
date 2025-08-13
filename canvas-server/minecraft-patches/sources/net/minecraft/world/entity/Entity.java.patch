@@ -1,8 +1,11 @@
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -285,7 +_,12 @@
+@@ -283,9 +_,14 @@
+     public int tickCount;
+     private int remainingFireTicks;
      public boolean wasTouchingWater;
-     protected Object2DoubleMap<TagKey<Fluid>> fluidHeight = new Object2DoubleArrayMap<>(2);
+-    protected Object2DoubleMap<TagKey<Fluid>> fluidHeight = new Object2DoubleArrayMap<>(2);
++    public double[] fluidHeightArray = new double[2]; // Canvas - optimize fluid height - protected -> public
      protected boolean wasEyeInWater;
 -    private final Set<TagKey<Fluid>> fluidOnEyes = new HashSet<>();
 +    // Canvas start - optimize fluidOnEyes
@@ -93,6 +96,15 @@
          AABB aabb = fluid.getAABB(this.level(), pos);
          return aabb != null && this.collidedWithShapeMovingFrom(from, to, List.of(aabb));
      }
+@@ -1934,7 +_,7 @@
+     }
+ 
+     protected boolean updateInWaterStateAndDoFluidPushing() {
+-        this.fluidHeight.clear();
++        this.fluidHeightArray = new double[2]; // Canvas - optimize fluid height
+         this.updateInWaterStateAndDoWaterCurrentPushing();
+         double d = this.level().dimensionType().ultraWarm() ? 0.007 : 0.0023333333333333335;
+         boolean flag = this.updateFluidHeightAndDoFluidPushing(FluidTags.LAVA, d);
 @@ -1957,8 +_,8 @@
      }
  
@@ -135,11 +147,12 @@
  
      protected void doWaterSplashEffect() {
          Entity entity = Objects.requireNonNullElse(this.getControllingPassenger(), this);
-@@ -2051,7 +_,14 @@
+@@ -2051,11 +_,32 @@
      }
  
      public boolean isEyeInFluid(TagKey<Fluid> fluidTag) {
 -        return this.fluidOnEyes.contains(fluidTag);
+-    }
 +        // Canvas start - optimize fluidOnEyes
 +        if (fluidTag == FluidTags.WATER) {
 +            return (this.fluidOnEyesMask & EYE_IN_WATER) != 0;
@@ -148,9 +161,28 @@
 +        }
 +        return false;
 +        // Canvas end
-     }
++    }
++    // Canvas start - optimize fluid height
++
++    // Note: realistically would want to avoid using this, just use the index
++    //    - WATER: 0
++    //    - LAVA: 1
++    private int getFluidHeightIndex(TagKey<Fluid> fluidTag) {
++        if (fluidTag == FluidTags.WATER) {
++            return 0;
++        } else if (fluidTag == FluidTags.LAVA) {
++            return 1;
++        }
++        throw new UnsupportedOperationException("Unknown fluid tag");
++    }
++    // Canvas end - optimize fluid height
  
      public boolean isInLava() {
+-        return !this.firstTick && this.fluidHeight.getDouble(FluidTags.LAVA) > 0.0;
++        return !this.firstTick && this.fluidHeightArray[1] > 0.0; // Canvas - optimize fluid height
+     }
+ 
+     public void moveRelative(float amount, Vec3 relative) {
 @@ -2199,8 +_,8 @@
      }
  
@@ -273,3 +305,51 @@
              for (Entity entity : this.getPassengers()) {
                  if (entity instanceof ServerPlayer serverPlayer && !serverPlayer.seenCredits) {
                      return false;
+@@ -5462,9 +_,7 @@
+ 
+     // Paper start - optimise collisions
+     public boolean updateFluidHeightAndDoFluidPushing(final TagKey<Fluid> fluid, final double flowScale) {
+-        if (this.touchingUnloadedChunk()) {
+-            return false;
+-        }
++        // Canvas - optimize fluid pushing
+ 
+         final AABB boundingBox = this.getBoundingBox().deflate(1.0E-3);
+ 
+@@ -5499,9 +_,17 @@
+ 
+         final net.minecraft.world.level.chunk.ChunkSource chunkSource = world.getChunkSource();
+ 
++        int heightIndex = getFluidHeightIndex(fluid); // Canvas - optimize fluid height
+         for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
+             for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
+-                final net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunkSource.getChunk(currChunkX, currChunkZ, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, false).getSections();
++                // Canvas start - optimize fluid pushing
++                net.minecraft.world.level.chunk.LevelChunk chunk = (net.minecraft.world.level.chunk.LevelChunk) chunkSource.getChunk(currChunkX, currChunkZ, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, false);
++                // we remove the touching unloaded chunk check, so we need to check nullable because this is now nullable
++                if (chunk == null) {
++                    continue;
++                }
++                final net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
++                // Canvas end - optimize fluid pushing
+ 
+                 // bound y
+                 for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
+@@ -5565,7 +_,7 @@
+             }
+         }
+ 
+-        this.fluidHeight.put(fluid, maxHeightDiff);
++        this.fluidHeightArray[heightIndex] = maxHeightDiff; // Canvas - optimize fluid height
+ 
+         if (pushVector.lengthSqr() == 0.0) {
+             return inFluid;
+@@ -5601,7 +_,7 @@
+     }
+ 
+     public double getFluidHeight(TagKey<Fluid> fluidTag) {
+-        return this.fluidHeight.getDouble(fluidTag);
++        return this.fluidHeightArray[getFluidHeightIndex(fluidTag)]; // Canvas - optimize fluid height
+     }
+ 
+     public double getFluidJumpThreshold() {

@@ -1,5 +1,14 @@
 --- a/net/minecraft/world/entity/monster/Strider.java
 +++ b/net/minecraft/world/entity/monster/Strider.java
+@@ -293,7 +_,7 @@
+             BlockState blockStateOnLegacy = this.getBlockStateOnLegacy();
+             boolean flag = blockState.is(BlockTags.STRIDER_WARM_BLOCKS)
+                 || blockStateOnLegacy.is(BlockTags.STRIDER_WARM_BLOCKS)
+-                || this.getFluidHeight(FluidTags.LAVA) > 0.0;
++                || this.fluidHeightArray[1] > 0.0; // Canvas - optimize fluid height
+             boolean flag1 = this.getVehicle() instanceof Strider strider && strider.isSuffocating();
+             // CraftBukkit start
+             boolean suffocating = !flag || flag1;
 @@ -351,7 +_,7 @@
  
      @Override
