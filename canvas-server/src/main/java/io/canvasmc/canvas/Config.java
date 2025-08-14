@@ -144,6 +144,15 @@ public class Config {
 
         @Comment("The interval in ticks for how often the server will tick the playerlist buckets")
         public int playerInfoSendInterval = 600;
+
+        // Note: uses lenient parsing in enum class, ok to be lowercase
+        @Comment({
+            "Selects the networking I/O model introduced in Netty 4.2.3",
+            "Available types: 'io_uring', 'epoll', 'nio', 'kqueue'",
+            "Can severely optimize netty efficiency. Must have 'use-native-transport' enabled in 'server.properties'",
+            "https://github.com/netty/netty/wiki/Netty-4.2-Migration-Guide for reference"
+        })
+        public NetworkModel nativeTransportType = NetworkModel.EPOLL;
     }
 
     @Comment("Configurations for enabling virtual threads for different thread pool executors")
@@ -623,6 +632,11 @@ public class Config {
                     i++;
                 }
                 LOGGER.info("Successfully compiled {} entity non-tickable mappings", i);
+                // Fallback to original pooled allocator if no explicitly define adaptive allocator
+                // To follow https://github.com/netty/netty/wiki/Netty-4.2-Migration-Guide
+                if (System.getProperty("io.netty.allocator.type") == null) {
+                    System.setProperty("io.netty.allocator.type", "pooled");
+                }
             })
             .build(config, configClass), changes::add
         );
