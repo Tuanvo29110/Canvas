@@ -213,15 +213,17 @@
                  return;
              }
  
-@@ -357,7 +_,7 @@
+@@ -357,8 +_,8 @@
          }
  
          private void checkInitialSchedule() {
 -            if (this.getScheduledStart() == SchedulerThreadPool.DEADLINE_NOT_SET) {
+-                this.updateScheduledStart(System.nanoTime() + TickRegionScheduler.TIME_BETWEEN_TICKS);
 +            if (this.getScheduledStart() == io.canvasmc.canvas.tick.ScheduledTaskThreadPool.DEADLINE_NOT_SET) { // Canvas - rewrite scheduler
-                 this.updateScheduledStart(System.nanoTime() + TickRegionScheduler.TIME_BETWEEN_TICKS);
++                this.updateScheduledStart(System.nanoTime() + TickRegionScheduler.getTimeBetweenTicks()); // Canvas - rewrite scheduler
              }
          }
+ 
 @@ -378,32 +_,34 @@
          }
  

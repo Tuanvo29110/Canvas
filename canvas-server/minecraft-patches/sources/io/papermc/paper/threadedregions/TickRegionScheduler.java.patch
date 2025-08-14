@@ -14,13 +14,29 @@
              private final AtomicInteger idGenerator = new AtomicInteger();
  
              @Override
-@@ -53,11 +_,17 @@
+@@ -53,11 +_,33 @@
                  ret.setUncaughtExceptionHandler(TickRegionScheduler.this::uncaughtException);
                  return ret;
              }
 -        });
 +    // Canvas start - rewrite scheduler
 +        }, TimeUnit.MILLISECONDS.toNanos(3L), TimeUnit.MILLISECONDS.toNanos(2L));
++    }
++
++    private static float currTickRate = RegionizedServer.DEFAULT_TICK_RATE;
++    private static long currTimeBetweenTicks = RegionizedServer.DEFAULT_TICK_TIME_NANOS;
++
++    public static void modifyTickRate(final float newRate) {
++        currTickRate = newRate;
++        currTimeBetweenTicks = RegionizedServer.tickTimeNanosFromRate(newRate);
++    }
++
++    public static float getTickRate() {
++        return currTickRate;
++    }
++
++    public static long getTimeBetweenTicks() {
++        return currTimeBetweenTicks;
 +    }
 +
 +    public void setThreads(final int threads) {
@@ -170,7 +186,13 @@
  
          protected long currentTick;
          protected long lastTickStart;
-@@ -239,7 +_,7 @@
+@@ -236,10 +_,13 @@
+         protected final Schedule tickSchedule;
+ 
+         private TickRegionScheduler scheduler;
++        public long ticksToSprint = 0; // Canvas - rewrite scheduler
++        public boolean wasSprinting = false; // Canvas - rewrite scheduler
++        public long startSprintNanos = System.nanoTime(); // Canvas - rewrite scheduler
  
          public RegionScheduleHandle(final TickRegions.TickRegionData region, final long firstStart) {
              this.currentTick = 0L;
@@ -184,7 +206,7 @@
  
              this.setScheduledStart(firstStart);
 -            this.tickSchedule = new Schedule(firstStart == SchedulerThreadPool.DEADLINE_NOT_SET ? firstStart : firstStart - TIME_BETWEEN_TICKS);
-+            this.tickSchedule = new Schedule(firstStart == io.canvasmc.canvas.tick.ScheduledTaskThreadPool.DEADLINE_NOT_SET ? firstStart : firstStart - TIME_BETWEEN_TICKS); // Canvas - rewrite scheduler
++            this.tickSchedule = new Schedule(firstStart == io.canvasmc.canvas.tick.ScheduledTaskThreadPool.DEADLINE_NOT_SET ? firstStart : firstStart - getTimeBetweenTicks()); // Canvas - rewrite scheduler
          }
  
          /**
@@ -195,7 +217,7 @@
          protected final void updateScheduledStart(final long to) {
              this.setScheduledStart(to);
 -            this.tickSchedule.setLastPeriod(to == SchedulerThreadPool.DEADLINE_NOT_SET ? to : to - TIME_BETWEEN_TICKS);
-+            this.tickSchedule.setLastPeriod(to == io.canvasmc.canvas.tick.ScheduledTaskThreadPool.DEADLINE_NOT_SET ? to : to - TIME_BETWEEN_TICKS); // Canvas - rewrite scheduler
++            this.tickSchedule.setLastPeriod(to == io.canvasmc.canvas.tick.ScheduledTaskThreadPool.DEADLINE_NOT_SET ? to : to - getTimeBetweenTicks()); // Canvas - rewrite scheduler
          }
  
          public final void markNonSchedulable() {
@@ -273,7 +295,40 @@
          }
  
          @Override
-@@ -386,7 +_,7 @@
+@@ -355,9 +_,25 @@
+ 
+             final long cpuStart = MEASURE_CPU_TIME ? THREAD_MX_BEAN.getCurrentThreadCpuTime() : 0L;
+             final long tickStart = System.nanoTime();
++            // Canvas start - rewrite scheduler
++            boolean isSprinting = ticksToSprint > 0;
++            if (isSprinting) {
++                ticksToSprint--;
++                if (!wasSprinting) {
++                    startSprintNanos = System.nanoTime();
++                    wasSprinting = true;
++                }
++            } else if (wasSprinting) {
++                String name = this instanceof io.papermc.paper.threadedregions.RegionizedServer.GlobalTickTickHandle ?
++                    "Global Tick" : this.region.region.toString();
++                LOGGER.info("Scheduling Handle for {} finished tick sprint in {}ms", name, (System.nanoTime() - startSprintNanos) / 1e+6);
++                wasSprinting = false;
++            }
++            long deadlineFuture = isSprinting ? 1 : getTimeBetweenTicks(); // if sprinting, future is 0ns
++            // Canvas end - rewrite scheduler
+ 
+             // use max(), don't assume that tickStart >= scheduledStart
+-            final int tickCount = Math.max(1, this.tickSchedule.getPeriodsAhead(TIME_BETWEEN_TICKS, tickStart));
++            final int tickCount = Math.max(1, this.tickSchedule.getPeriodsAhead(deadlineFuture, tickStart)); // Canvas - rewrite scheduler
+ 
+             if (!this.tryMarkTicking()) {
+                 if (!this.cancelled.get()) {
+@@ -381,12 +_,12 @@
+             this.lastTickStart = tickStart;
+ 
+             final long scheduledStart = this.getScheduledStart();
+-            final long scheduledEnd = scheduledStart + TIME_BETWEEN_TICKS;
++            final long scheduledEnd = scheduledStart + deadlineFuture; // Canvas - rewrite scheduler
+ 
              synchronized (this) {
                  this.currentTickData = new TickTime(
                      lastTickStart, scheduledStart, tickStart, cpuStart,
@@ -282,6 +337,36 @@
                      true
                  );
                  this.currentTickingThread = Thread.currentThread();
+@@ -409,8 +_,10 @@
+                 // in order to ensure all regions get their chance at scheduling, we have to ensure that regions
+                 // that exceed the max tick time are not always prioritised over everything else. Thus, we use the greatest
+                 // of the current time and "ideal" next tick start.
+-                this.tickSchedule.advanceBy(tickCount, TIME_BETWEEN_TICKS);
+-                this.setScheduledStart(TimeUtil.getGreatestTime(tickEnd, this.tickSchedule.getDeadline(TIME_BETWEEN_TICKS)));
++                // Canvas start - rewrite scheduler
++                this.tickSchedule.advanceBy(tickCount, deadlineFuture);
++                this.setScheduledStart(TimeUtil.getGreatestTime(tickEnd, this.tickSchedule.getDeadline(deadlineFuture)));
++                // Canvas end - rewrite scheduler
+ 
+                 final TickTime time = new TickTime(
+                     lastTickStart, scheduledStart, tickStart, cpuStart, tickEnd, cpuEnd, MEASURE_CPU_TIME, true
+@@ -548,14 +_,14 @@
+ 
+         /**
+          * The difference in time from the start of the last tick to the start of the current tick. If there is no
+-         * last tick, then this value is max(TIME_BETWEEN_TICKS, tickLength).
++         * last tick, then this value is max(getTimeBetweenTicks(), tickLength).
+          * Only valid when {@link #isTickExecution()} is {@code true}.
+          */
+         public final long differenceFromLastTick() {
+             if (this.hasLastTick()) {
+                 return this.tickStart - this.previousTickStart;
+             }
+-            return Math.max(TIME_BETWEEN_TICKS, this.tickLength());
++            return Math.max(getTimeBetweenTicks(), this.tickLength()); // Canvas - rewrite scheduler
+         }
+ 
+         /**
 @@ -563,7 +_,7 @@
           * Only valid when {@link #isTickExecution()} is {@code true}.
           */

@@ -5,11 +5,13 @@ protected net.minecraft.world.entity.ai.goal.RemoveBlockGoal blockToRemove
 protected net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal getTargetConditions()Lnet/minecraft/world/entity/ai/targeting/TargetingConditions;
 protected-f ca.spottedleaf.concurrentutil.executor.thread.PrioritisedThreadPool threadModifier
 protected-f net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase$Cache largeCollisionShape
+public io.papermc.paper.threadedregions.RegionizedServer$GlobalTickTickHandle
 public io.papermc.paper.threadedregions.ThreadedRegionizer$ThreadedRegion getDeadSectionPercent()D
 public io.papermc.paper.threadedregions.ThreadedRegionizer$ThreadedRegion hasNoAliveSections()Z
 public io.papermc.paper.threadedregions.ThreadedRegionizer$ThreadedRegion isDead()Z
 public io.papermc.paper.threadedregions.ThreadedRegionizer$ThreadedRegion isTicking()Z
 public net.minecraft.core.Direction VALUES
+public net.minecraft.server.ServerTickRateManager finishTickSprint()V
 public net.minecraft.server.level.ServerChunkCache fullChunks
 public net.minecraft.server.level.ServerEntity sendDirtyEntityData()V
 public net.minecraft.server.network.ServerCommonPacketListenerImpl keepConnectionAlive()V

@@ -1,14 +1,25 @@
 --- a/io/papermc/paper/threadedregions/RegionizedServer.java
 +++ b/io/papermc/paper/threadedregions/RegionizedServer.java
-@@ -30,7 +_,7 @@
+@@ -30,8 +_,18 @@
  
  public final class RegionizedServer {
  
 -    private static final Logger LOGGER = LogUtils.getLogger();
 +    private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger("RegionizedServer"); // Canvas - rewrite scheduler
      private static final RegionizedServer INSTANCE = new RegionizedServer();
++    // Canvas start - rewrite scheduler - allow runtime tick rate change
++    public static final int DEFAULT_TICK_RATE = 20;
++    public static final long DEFAULT_TICK_TIME_NANOS = 50_000_000; // 1_000_000_000 / 20 (20 being default tick rate)
++
++    // Note: used for setting new tick time nanos, not really for anything else, utility method
++    //    this is fine for decimal rates, as we round it so if anything, we are like 1 nanosecond off... which isn't bad
++    public static long tickTimeNanosFromRate(float rate) {
++        return Math.round(1_000_000_000 / rate);
++    }
++    // Canvas end - rewrite scheduler - allow runtime tick rate change
  
      public final RegionizedTaskQueue taskQueue = new RegionizedTaskQueue();
+ 
 @@ -56,6 +_,7 @@
  
      public void addWorld(final ServerLevel world) {
@@ -17,7 +28,7 @@
      }
  
      public void init() {
-@@ -63,9 +_,23 @@
+@@ -63,9 +_,24 @@
          new RegionizedServerInitEvent().callEvent();
  
          // now we can schedule
@@ -34,6 +45,7 @@
 +        // to run, so we need to run the global tick synchronously first to ensure
 +        // we don't royally screw over the entire server
 +        LOGGER.info("Running first global tick before starting tick scheduler");
++        // TODO - can we just... not do this? would want to run global tick on the scheduler first, not sync on startup thread
 +        this.globalTick((int) this.tickHandle.getCurrentTick());
 +        this.tickHandle.setInitialStart(System.nanoTime());
 +        // Canvas end - rewrite scheduler
@@ -105,6 +117,14 @@
          }
      }
  
+@@ -323,6 +_,7 @@
+ 
+         // tick player ping sample
+         this.tickPlayerSample();
++        MinecraftServer.getServer().tickRateManager().tick(); // Canvas - rewrite scheduler
+ 
+         // tick worlds
+         for (final ServerLevel world : this.worlds) {
 @@ -414,6 +_,42 @@
      // A global tick only updates things like weather / worldborder, basically anything in the world that is
      // NOT tied to a specific region, but rather shared amongst all of them.

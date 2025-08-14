@@ -32,6 +32,7 @@ public class RegionizedTpsBar {
     });
     private final RegionizedWorldData worldData;
     private final boolean canTick;
+    private long nextTick = System.nanoTime();
 
     public RegionizedTpsBar(RegionizedWorldData worldData) {
         this.worldData = worldData;
@@ -57,8 +58,9 @@ public class RegionizedTpsBar {
     }
 
     public void tick() {
-        if (this.canTick && this.worldData.regionData.getCurrentTick() % 20 == 0) {
+        if (this.canTick && this.nextTick <= System.nanoTime()) { // use system nano time, more reliable with runtime tick rate changes
             // update tps maps
+            long startTime = System.nanoTime();
             TickData.TickReportData tickReportData = this.worldData.regionData.getRegionSchedulingHandle().getTickReport5s(System.nanoTime());
             TickData.SegmentedAverage tpsAverage = tickReportData.tpsData();
             TickData.SegmentedAverage msptAverage = tickReportData.timePerTickData();
@@ -72,15 +74,15 @@ public class RegionizedTpsBar {
             final Component textComponent =
                 gradient("TPS", (builder) -> builder.decorate(TextDecoration.BOLD), NamedTextColor.BLUE, NamedTextColor.AQUA)
                     .append(Component.text(": ", NamedTextColor.WHITE))
-                    .append(Component.text(tpsTruncated, CommandUtil.getColourForTPS(tps)))
+                    .append(Component.text(tpsTruncated, this.worldData.regionData.getRegionSchedulingHandle().ticksToSprint > 0 ? CommandUtil.SPRINTING_COLOR : CommandUtil.getColourForTPS(tps)))
                     .append(Component.text("  -  ", NamedTextColor.WHITE))
                     .append(gradient("MSPT", (builder) -> builder.decorate(TextDecoration.BOLD), NamedTextColor.BLUE, NamedTextColor.AQUA))
                     .append(Component.text(": ", NamedTextColor.WHITE))
-                    .append(Component.text(msptTruncated, CommandUtil.getColourForMSPT(mspt)))
+                    .append(Component.text(msptTruncated, this.worldData.regionData.getRegionSchedulingHandle().ticksToSprint > 0 ? CommandUtil.SPRINTING_COLOR : CommandUtil.getColourForMSPT(mspt)))
                     .append(Component.text("  -  ", NamedTextColor.WHITE))
                     .append(gradient("Util", (builder) -> builder.decorate(TextDecoration.BOLD), NamedTextColor.BLUE, NamedTextColor.AQUA))
                     .append(Component.text(": ", NamedTextColor.WHITE))
-                    .append(Component.text(utilizationTruncated, CommandUtil.getUtilisationColourRegion(util / 100)));
+                    .append(Component.text(utilizationTruncated, this.worldData.regionData.getRegionSchedulingHandle().ticksToSprint > 0 ? CommandUtil.SPRINTING_COLOR : CommandUtil.getUtilisationColourRegion(util / 100)));
             // update players
             for (final ServerPlayer localPlayer : this.worldData.getLocalPlayers()) {
                 final Entry entry = localPlayer.localEntry;
@@ -96,6 +98,7 @@ public class RegionizedTpsBar {
                     }
                 }
             }
+            this.nextTick = startTime + 1_000_000_000;
         }
     }
 

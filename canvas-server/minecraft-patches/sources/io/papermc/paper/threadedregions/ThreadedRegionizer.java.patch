@@ -31,7 +31,7 @@
          }
  
          public LongArrayList getOwnedSections() {
-@@ -998,6 +_,8 @@
+@@ -998,22 +_,15 @@
              final StringBuilder ret = new StringBuilder(128);
  
              ret.append("ThreadedRegion{");
@@ -40,3 +40,20 @@
              ret.append("state=").append(this.state).append(',');
              // To avoid recursion in toString, maybe fix later?
              //ret.append("mergeIntoLater=").append(this.mergeIntoLater).append(',');
+             //ret.append("expectingMergeFrom=").append(this.expectingMergeFrom).append(',');
+ 
+             ret.append("sectionCount=").append(this.sectionByKey.size()).append(',');
+-            ret.append("sections=[");
+-            for (final Iterator<ThreadedRegionSection<R, S>> iterator = this.sectionByKey.values().iterator(); iterator.hasNext();) {
+-                final ThreadedRegionSection<R, S> section = iterator.next();
+-
+-                ret.append(section.toString());
+-                if (iterator.hasNext()) {
+-                    ret.append(',');
+-                }
+-            }
+-            ret.append(']');
++            // Canvas - rewrite scheduler - remove this bullshit
+ 
+             ret.append('}');
+             return ret.toString();

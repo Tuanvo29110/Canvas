@@ -22,3 +22,12 @@
                      final TickRegionScheduler.TickTime time = toCollapse.get(k);
                      totalTickTime += time.tickLength();
                      totalCpuTime += time.supportCPUTime() ? time.tickCpuTime() : 0L;
+@@ -205,7 +_,7 @@
+                         // Otherwise use the interval length.
+                         // This is how differenceFromLastTick() works on TickTime when there is no previous interval.
+                         differenceBetweenTicks = Math.max(
+-                            TickRegionScheduler.TIME_BETWEEN_TICKS, totalTickTime
++                            TickRegionScheduler.getTimeBetweenTicks(), totalTickTime // Canvas - rewrite scheduler
+                         );
+                     }
+ 
