@@ -45,7 +45,9 @@ public class Config {
     public static class Chunks {
         @Comment("Use euclidean distance squared for chunk task ordering. Makes the world load in what appears a circle rather than a diamond")
         public boolean useEuclideanDistanceSquared = true;
-
+        @Comment("Once you enable secure seed, all ores and structures are generated with 1024-bit seed" +
+            "instead of using 64-bit seed in vanilla, made seed cracker become impossible.")
+        public boolean secureSeed = false;
         @Comment("The thread priority for Canvas' rewritten chunk system executor")
         public int threadPoolPriority = Thread.NORM_PRIORITY;
 
