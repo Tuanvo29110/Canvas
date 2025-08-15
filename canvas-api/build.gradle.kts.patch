@@ -33,7 +33,7 @@
 +            url.set("https://github.com/CraftCanvasMC/Canvas")
 +            licenses {
 +                license {
-+                    name.set("GNU Affero General Public License v3.0")
++                    name.set("GPL-3.0")
 +                    url.set("https://github.com/CraftCanvasMC/Canvas/blob/HEAD/LICENSE")
 +                    distribution.set("repo")
 +                }

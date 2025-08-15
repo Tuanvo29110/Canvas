@@ -96,6 +96,6 @@ Your support helps keep the project active and evolving!
 
 ## License
 
-Canvas is licensed under the [GPL-3.0](https://github.com/CraftCanvasMC/Canvas/blob/ver/1.21.8/LICENSE).
+Canvas is licensed under the [GPL-3.0](https://github.com/CraftCanvasMC/Canvas/blob/HEAD/LICENSE).
 
 ---
