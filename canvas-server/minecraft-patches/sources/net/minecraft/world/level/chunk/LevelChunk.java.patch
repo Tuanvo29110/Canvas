@@ -206,60 +206,65 @@
                              return rebindableTickingBlockEntityWrapper;
                          } else {
                              return null;
-@@ -904,7 +_,7 @@
-         return new LevelChunk.BoundTickingBlockEntity<>(blockEntity, ticker);
-     }
- 
--    class BoundTickingBlockEntity<T extends BlockEntity> implements TickingBlockEntity {
-+    class BoundTickingBlockEntity<T extends BlockEntity> implements TickingBlockEntity, io.canvasmc.canvas.chunk.border.WorldBorderListenerOnce { // Canvas - optimize block entities
-         private final T blockEntity;
-         private final BlockEntityTicker<T> ticker;
-         private boolean loggedInvalidBlockState;
-@@ -920,12 +_,55 @@
+@@ -920,12 +_,69 @@
              return this.blockEntity;
          }
          // Folia end - region threading
 +        // Canvas start - optimize block entities
++        /*
++            Optimizes block entity can tick checks by avoiding all math and shape checks within
++            isWithinBounds by precomputing and storing a 'byte' flag per ticking block entity.
++
++            This means most ticks(specifically when the border isn't moving), it's just doing an
++            integer mask check instead of recalculating bounds.
++
++            When the border is moving, we fallback to vanilla's 'isWithinBounds()' logic, which
++            accounts for moving world borders
++         */
++        private static final byte STATE_INITIALIZED = 1;
++        private static final byte STATE_OUTSIDE = 2;
++        private static final byte STATE_INSIDE = 4;
 +        private byte worldBorderState = 0;
++        private long lastBorderIdentifier = Long.MIN_VALUE; // last seen identifier for stationary borders
 +
 +        boolean isTicking(BlockPos pos) {
 +            if (this.isInsideWorldBorder()) {
-+                return LevelChunk.this.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING) && LevelChunk.this.level.areEntitiesLoaded(ChunkPos.asLong(pos));
++                return LevelChunk.this.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING)
++                    && LevelChunk.this.level.areEntitiesLoaded(ChunkPos.asLong(pos));
 +            }
 +            return false;
 +        }
 +
 +        private boolean isInsideWorldBorder() {
-+            if (this.worldBorderState == (byte) 0) {
-+                this.startWorldBorderCaching();
++            net.minecraft.world.level.border.WorldBorder worldBorder = LevelChunk.this.level.getWorldBorder();
++
++            // if the border is moving, always check in real-time, use vanilla logic fallback
++            if (worldBorder.extent.isMoving()) {
++                return worldBorder.isWithinBounds(this.getPos());
++            }
++
++            // stationary, check if identifier changed
++            long currentId = worldBorder.extent.getIdentifier();
++            if (currentId != this.lastBorderIdentifier) {
++                this.lastBorderIdentifier = currentId;
++                this.recomputeWorldBorderCache(worldBorder);
 +            }
 +
 +            int worldBorderState = this.worldBorderState;
-+            if ((worldBorderState & 3) == 3) {
-+                return (worldBorderState & 4) != 0;
++            if ((worldBorderState & (STATE_INITIALIZED | STATE_OUTSIDE)) == (STATE_INITIALIZED | STATE_OUTSIDE)
++                || (worldBorderState & (STATE_INITIALIZED | STATE_INSIDE)) == (STATE_INITIALIZED | STATE_INSIDE)) {
++                return (worldBorderState & STATE_INSIDE) != 0;
 +            }
-+            return LevelChunk.this.level.getWorldBorder().isWithinBounds(this.getPos());
++            return worldBorder.isWithinBounds(this.getPos());
 +        }
 +
-+        private void startWorldBorderCaching() {
-+            this.worldBorderState = (byte) 1;
-+            net.minecraft.world.level.border.WorldBorder worldBorder = LevelChunk.this.level.getWorldBorder();
-+            worldBorder.addListener(this);
-+            boolean isStationary = worldBorder.getStatus() == net.minecraft.world.level.border.BorderStatus.STATIONARY;
++        private void recomputeWorldBorderCache(net.minecraft.world.level.border.WorldBorder worldBorder) {
++            this.worldBorderState = STATE_INITIALIZED;
 +            if (worldBorder.isWithinBounds(this.getPos())) {
-+                if (isStationary || worldBorder.getStatus() == net.minecraft.world.level.border.BorderStatus.GROWING) {
-+                    this.worldBorderState |= (byte) 6;
-+                }
++                this.worldBorderState |= STATE_INSIDE;
 +            } else {
-+                if (isStationary || worldBorder.getStatus() == net.minecraft.world.level.border.BorderStatus.SHRINKING) {
-+                    this.worldBorderState |= (byte) 2;
-+                }
++                this.worldBorderState |= STATE_OUTSIDE;
 +            }
-+        }
-+
-+        @Override
-+        public void onWorldBorderShapeChange(net.minecraft.world.level.border.WorldBorder worldBorder) {
-+            this.worldBorderState = (byte) 0;
 +        }
 +        // Canvas end - optimize block entities
  
