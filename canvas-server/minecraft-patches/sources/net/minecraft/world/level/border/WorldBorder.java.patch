@@ -1,14 +1,5 @@
 --- a/net/minecraft/world/level/border/WorldBorder.java
 +++ b/net/minecraft/world/level/border/WorldBorder.java
-@@ -29,7 +_,7 @@
-     private double centerX;
-     private double centerZ;
-     int absoluteMaxSize = 29999984;
--    private WorldBorder.BorderExtent extent = new WorldBorder.StaticBorderExtent(5.999997E7F);
-+    public WorldBorder.BorderExtent extent = new WorldBorder.StaticBorderExtent(5.999997E7F); // Canvas - TODO - at
-     public static final WorldBorder.Settings DEFAULT_SETTINGS = new WorldBorder.Settings(0.0, 0.0, 0.2, 5.0, 5, 15, 5.999997E7F, 0L, 0.0);
-     public net.minecraft.server.level.ServerLevel world; // CraftBukkit
- 
 @@ -350,6 +_,8 @@
          WorldBorder.BorderExtent update();
  
