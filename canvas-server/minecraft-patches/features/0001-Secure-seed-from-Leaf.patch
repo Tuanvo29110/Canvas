@@ -1,0 +1,516 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Om Rotat <lolelol42069@gmail.com>
+Date: Fri, 15 Aug 2025 18:48:58 +0700
+Subject: [PATCH] Secure seed from Leaf
+
+
+diff --git a/net/minecraft/server/commands/SeedCommand.java b/net/minecraft/server/commands/SeedCommand.java
+index 7c1e18d8362be5ae885c32b05e98b9ef45942d93..f6e26479c78f010cee77d484a0d9e9f90fba2751 100644
+--- a/net/minecraft/server/commands/SeedCommand.java
++++ b/net/minecraft/server/commands/SeedCommand.java
+@@ -1,6 +1,7 @@
+ package net.minecraft.server.commands;
+ 
+ import com.mojang.brigadier.CommandDispatcher;
++import io.canvasmc.canvas.Config;
+ import net.minecraft.commands.CommandSourceStack;
+ import net.minecraft.commands.Commands;
+ import net.minecraft.network.chat.Component;
+@@ -12,6 +13,15 @@ public class SeedCommand {
+             long seed = commandContext.getSource().getLevel().getSeed();
+             Component component = ComponentUtils.copyOnClickText(String.valueOf(seed));
+             commandContext.getSource().sendSuccess(() -> Component.translatable("commands.seed.success", component), false);
++            // Canvas start - Matter - Secure Seed command
++            if (((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)) {
++                io.canvasmc.canvas.Globals.setupGlobals(commandContext.getSource().getLevel());
++                String seedStr = io.canvasmc.canvas.Globals.seedToString(io.canvasmc.canvas.Globals.worldSeed);
++                Component featureSeedComponent = ComponentUtils.copyOnClickText(seedStr);
++
++                commandContext.getSource().sendSuccess(() -> Component.translatable(("Feature seed: %s"), featureSeedComponent), false);
++            }
++            // Canvas end - Matter - Secure Seed command
+             return (int)seed;
+         }));
+     }
+diff --git a/net/minecraft/server/dedicated/DedicatedServerProperties.java b/net/minecraft/server/dedicated/DedicatedServerProperties.java
+index e56dc38b8558b82aecb6139b5a35c0f263750783..1306182830c9fe9962313dee95b40a7d40e871bb 100644
+--- a/net/minecraft/server/dedicated/DedicatedServerProperties.java
++++ b/net/minecraft/server/dedicated/DedicatedServerProperties.java
+@@ -42,7 +42,8 @@ import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
+ import net.minecraft.world.level.levelgen.presets.WorldPreset;
+ import net.minecraft.world.level.levelgen.presets.WorldPresets;
+ import org.slf4j.Logger;
+-
++import io.canvasmc.canvas.Config;
++import io.canvasmc.canvas.Globals;
+ public class DedicatedServerProperties extends Settings<DedicatedServerProperties> {
+     static final Logger LOGGER = LogUtils.getLogger();
+     private static final Pattern SHA1 = Pattern.compile("^[a-fA-F0-9]{40}$");
+@@ -115,7 +116,17 @@ public class DedicatedServerProperties extends Settings<DedicatedServerPropertie
+         String string = this.get("level-seed", "");
+         boolean flag = this.get("generate-structures", true);
+         long l = WorldOptions.parseSeed(string).orElse(WorldOptions.randomSeed());
+-        this.worldOptions = new WorldOptions(l, flag, false);
++        // Canvas start - Matter - Secure Seed
++        if ((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed) {
++            String featureSeedStr = this.get("feature-level-seed", "");
++            long[] featureSeed = Globals.parseSeed(featureSeedStr)
++                .orElse(Globals.createRandomWorldSeed());
++
++            this.worldOptions = new WorldOptions(l, featureSeed, flag, false);
++        } else {
++            this.worldOptions = new WorldOptions(l, flag, false);
++        }
++        // Canvas end - Matter - Secure Seed
+         this.worldDimensionData = new DedicatedServerProperties.WorldDimensionData(
+             this.get("generator-settings", property -> GsonHelper.parse(!property.isEmpty() ? property : "{}"), new JsonObject()),
+             this.get("level-type", property -> property.toLowerCase(Locale.ROOT), WorldPresets.NORMAL.location().toString())
+diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
+index 6372bdfed776e96a83e39aeeb8dde2a00a728476..d8ad61587fba362be3c82c8c063b408039c83aba 100644
+--- a/net/minecraft/server/level/ServerChunkCache.java
++++ b/net/minecraft/server/level/ServerChunkCache.java
+@@ -638,9 +638,9 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+     }
+ 
+     public ChunkGenerator getGenerator() {
++        io.canvasmc.canvas.Globals.setupGlobals(level); // Canvas - Matter - Secure Seed
+         return this.chunkMap.generator();
+     }
+-
+     public ChunkGeneratorStructureState getGeneratorState() {
+         return this.chunkMap.generatorState();
+     }
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 765401f01a3b785c902f80e888375236d78adde4..e02f7ff13a018b4be4f284bcb98ada7c77fe7092 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -565,6 +565,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+             chunkGenerator = new org.bukkit.craftbukkit.generator.CustomChunkGenerator(this, chunkGenerator, gen);
+         }
+         // CraftBukkit end
++        io.canvasmc.canvas.Globals.setupGlobals(this); // Canvas - Matter - Secure Seed;
+         boolean flag = server.forceSynchronousWrites();
+         DataFixer fixerUpper = server.getFixerUpper();
+         // Paper - rewrite chunk system
+diff --git a/net/minecraft/world/entity/monster/Slime.java b/net/minecraft/world/entity/monster/Slime.java
+index 7b9105cc38380d60892647e52608787dbde28f0d..f4cae9131f2c160df84e92a159d3bec03672aab5 100644
+--- a/net/minecraft/world/entity/monster/Slime.java
++++ b/net/minecraft/world/entity/monster/Slime.java
+@@ -3,6 +3,7 @@ package net.minecraft.world.entity.monster;
+ import com.google.common.annotations.VisibleForTesting;
+ import java.util.EnumSet;
+ import javax.annotation.Nullable;
++import io.canvasmc.canvas.Config;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.particles.ParticleOptions;
+ import net.minecraft.core.particles.ParticleTypes;
+@@ -329,7 +330,11 @@ public class Slime extends Mob implements Enemy {
+             }
+ 
+             ChunkPos chunkPos = new ChunkPos(pos);
+-            boolean flag = level.getMinecraftWorld().paperConfig().entities.spawning.allChunksAreSlimeChunks || WorldgenRandom.seedSlimeChunk(chunkPos.x, chunkPos.z, ((WorldGenLevel) level).getSeed(), level.getMinecraftWorld().spigotConfig.slimeSeed).nextInt(10) == 0; // Paper
++            // Leaf start - Matter - Secure Seed
++            boolean flag = level.getMinecraftWorld().paperConfig().entities.spawning.allChunksAreSlimeChunks || ((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)
++                ? level.getChunk(chunkPos.x, chunkPos.z).isSlimeChunk()
++                : WorldgenRandom.seedSlimeChunk(chunkPos.x, chunkPos.z, ((WorldGenLevel) level).getSeed(), level.getMinecraftWorld().spigotConfig.slimeSeed).nextInt(10) == 0; // Paper
++            // Leaf end - Matter - Secure Seed
+                 // Paper start - Replace rules for Height in Slime Chunks
+                 final double maxHeightSlimeChunk = level.getMinecraftWorld().paperConfig().entities.spawning.slimeSpawnHeight.slimeChunk.maximum;
+                 if (random.nextInt(10) == 0 && flag && pos.getY() < maxHeightSlimeChunk) {
+diff --git a/net/minecraft/world/level/chunk/ChunkAccess.java b/net/minecraft/world/level/chunk/ChunkAccess.java
+index cef94d96b4b61433735c9f9a39ce77a39905c013..5b988b187ac442a0f3dc1ec39568280e7e3dae38 100644
+--- a/net/minecraft/world/level/chunk/ChunkAccess.java
++++ b/net/minecraft/world/level/chunk/ChunkAccess.java
+@@ -234,7 +234,10 @@ public abstract class ChunkAccess implements BiomeManager.NoiseBiomeSource, Ligh
+     public org.bukkit.craftbukkit.persistence.DirtyCraftPersistentDataContainer persistentDataContainer = new org.bukkit.craftbukkit.persistence.DirtyCraftPersistentDataContainer(ChunkAccess.DATA_TYPE_REGISTRY);
+     // CraftBukkit end
+     public final Registry<Biome> biomeRegistry; // CraftBukkit
+-
++    // Canvas start - Matter - Secure Seed
++    private boolean slimeChunk;
++    private boolean hasComputedSlimeChunk;
++    // Canvas  end - Matter - Secure Seed
+     // Paper start - rewrite chunk system
+     private volatile ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray[] blockNibbles;
+     private volatile ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray[] skyNibbles;
+@@ -343,7 +346,16 @@ public abstract class ChunkAccess implements BiomeManager.NoiseBiomeSource, Ligh
+     public GameEventListenerRegistry getListenerRegistry(int sectionY) {
+         return GameEventListenerRegistry.NOOP;
+     }
++    // Canvas start - Matter - Secure Seed
++    public boolean isSlimeChunk() {
++        if (!hasComputedSlimeChunk) {
++            hasComputedSlimeChunk = true;
++            slimeChunk = io.canvasmc.canvas.WorldgenCryptoRandom.seedSlimeChunk(chunkPos.x, chunkPos.z).nextInt(10) == 0;
++        }
+ 
++        return slimeChunk;
++    }
++    // Canvas end - Matter - Secure Seed
+     public abstract BlockState getBlockState(final int x, final int y, final int z); // Paper
+ 
+     @Nullable
+diff --git a/net/minecraft/world/level/chunk/ChunkGenerator.java b/net/minecraft/world/level/chunk/ChunkGenerator.java
+index 92d13f9b886114553b471271391255ba08c8108f..a1caae11ba0e99bf94a05da9ca398e58cd76057e 100644
+--- a/net/minecraft/world/level/chunk/ChunkGenerator.java
++++ b/net/minecraft/world/level/chunk/ChunkGenerator.java
+@@ -4,6 +4,7 @@ import com.google.common.base.Suppliers;
+ import com.mojang.datafixers.util.Pair;
+ import com.mojang.serialization.Codec;
+ import com.mojang.serialization.MapCodec;
++import io.canvasmc.canvas.Config;
+ import it.unimi.dsi.fastutil.ints.IntArraySet;
+ import it.unimi.dsi.fastutil.ints.IntSet;
+ import it.unimi.dsi.fastutil.longs.LongSet;
+@@ -342,7 +343,11 @@ public abstract class ChunkGenerator {
+             Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
+             Map<Integer, List<Structure>> map = registry.stream().collect(Collectors.groupingBy(structure1 -> structure1.step().ordinal()));
+             List<FeatureSorter.StepFeatureData> list = this.featuresPerStep.get();
+-            WorldgenRandom worldgenRandom = new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.generateUniqueSeed()));
++            // Canvas start - Matter - Secure Seed
++            WorldgenRandom worldgenRandom = ((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)
++                ? new io.canvasmc.canvas.WorldgenCryptoRandom(blockPos.getX(), blockPos.getZ(), io.canvasmc.canvas.Globals.Salt.UNDEFINED, 0)
++                : new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.generateUniqueSeed()));
++            // Canvas end - Matter - Secure Seed
+             long l = worldgenRandom.setDecorationSeed(level.getSeed(), blockPos.getX(), blockPos.getZ());
+             Set<Holder<Biome>> set = new ObjectArraySet<>();
+             ChunkPos.rangeClosed(sectionPos.chunk(), 1).forEach(chunkPos -> {
+@@ -551,8 +556,15 @@ public abstract class ChunkGenerator {
+                         } else {
+                             ArrayList<StructureSet.StructureSelectionEntry> list1 = new ArrayList<>(list.size());
+                             list1.addAll(list);
+-                            WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
+-                            worldgenRandom.setLargeFeatureSeed(structureState.getLevelSeed(), pos.x, pos.z);
++                            // Canvas start - Matter - Secure Seed
++                            WorldgenRandom worldgenRandom;
++                            if (((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)) {
++                                worldgenRandom = new io.canvasmc.canvas.WorldgenCryptoRandom(pos.x, pos.z, io.canvasmc.canvas.Globals.Salt.GENERATE_FEATURE, 0);
++                            } else {
++                                worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
++                                worldgenRandom.setLargeFeatureSeed(structureState.getLevelSeed(), pos.x, pos.z);
++                            }
++                            // Canvas end - Matter - Secure Seed
+                             int i = 0;
+ 
+                             for (StructureSet.StructureSelectionEntry structureSelectionEntry1 : list1) {
+diff --git a/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java b/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
+index eae135d7c050520341d8974d7e335dbf226797e5..720b60ab1ffc55980f1db5d4cebcdb78cbfe1c39 100644
+--- a/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
++++ b/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
+@@ -3,6 +3,7 @@ package net.minecraft.world.level.chunk;
+ import com.google.common.base.Stopwatch;
+ import com.mojang.datafixers.util.Pair;
+ import com.mojang.logging.LogUtils;
++import io.canvasmc.canvas.Config;
+ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+ import java.util.ArrayList;
+@@ -205,14 +206,20 @@ public class ChunkGeneratorStructureState {
+             List<CompletableFuture<ChunkPos>> list = new ArrayList<>(count);
+             int spread = placement.spread();
+             HolderSet<Biome> holderSet = placement.preferredBiomes();
+-            RandomSource randomSource = RandomSource.create();
++            // Canvas start - Matter - Secure Seed
++            RandomSource randomSource = ((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)
++                ? new io.canvasmc.canvas.WorldgenCryptoRandom(0, 0, io.canvasmc.canvas.Globals.Salt.STRONGHOLDS, 0)
++                : RandomSource.create();
++            // Canvas end - Matter - Secure Seed
+             // Paper start - Add missing structure set seed configs
+-            if (this.conf.strongholdSeed != null && structureSet.is(net.minecraft.world.level.levelgen.structure.BuiltinStructureSets.STRONGHOLDS)) {
+-                randomSource.setSeed(this.conf.strongholdSeed);
+-            } else {
+-            // Paper end - Add missing structure set seed configs
+-            randomSource.setSeed(this.concentricRingsSeed);
+-            } // Paper - Add missing structure set seed configs
++            if(!((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)) {
++                if (this.conf.strongholdSeed != null && structureSet.is(net.minecraft.world.level.levelgen.structure.BuiltinStructureSets.STRONGHOLDS)) {
++                    randomSource.setSeed(this.conf.strongholdSeed);
++                } else {
++                    // Paper end - Add missing structure set seed configs
++                    randomSource.setSeed(this.concentricRingsSeed);
++                } // Paper - Add missing structure set seed configs
++            }  // Canvas - Matter - Secure Seed
+             double d = randomSource.nextDouble() * Math.PI * 2.0;
+             int i = 0;
+             int i1 = 0;
+diff --git a/net/minecraft/world/level/chunk/status/ChunkStep.java b/net/minecraft/world/level/chunk/status/ChunkStep.java
+index b8348976e80578d9eff64eea68c04c603fed49ad..e4456d281ec553772dd56ee430695fbd9d7418d7 100644
+--- a/net/minecraft/world/level/chunk/status/ChunkStep.java
++++ b/net/minecraft/world/level/chunk/status/ChunkStep.java
+@@ -60,6 +60,7 @@ public final class ChunkStep implements ca.spottedleaf.moonrise.patches.chunk_sy
+     }
+ 
+     public CompletableFuture<ChunkAccess> apply(WorldGenContext worldGenContext, StaticCache2D<GenerationChunkHolder> cache, ChunkAccess chunk) {
++        io.canvasmc.canvas.Globals.setupGlobals(worldGenContext.level()); // Canvas - Matter - Secure Seed
+         if (chunk.getPersistedStatus().isBefore(this.targetStatus)) {
+             ProfiledDuration profiledDuration = JvmProfiler.INSTANCE
+                 .onChunkGenerate(chunk.getPos(), worldGenContext.level().dimension(), this.targetStatus.getName());
+diff --git a/net/minecraft/world/level/levelgen/WorldOptions.java b/net/minecraft/world/level/levelgen/WorldOptions.java
+index c92508741439a8d0d833ea02d0104416adb83c92..e1f247cb3a50050d8e748cb1108791644c5b6338 100644
+--- a/net/minecraft/world/level/levelgen/WorldOptions.java
++++ b/net/minecraft/world/level/levelgen/WorldOptions.java
+@@ -3,14 +3,28 @@ package net.minecraft.world.level.levelgen;
+ import com.mojang.serialization.Codec;
+ import com.mojang.serialization.MapCodec;
+ import com.mojang.serialization.codecs.RecordCodecBuilder;
++import io.canvasmc.canvas.Config;
++import io.canvasmc.canvas.Globals;
+ import java.util.Optional;
+ import java.util.OptionalLong;
+ import net.minecraft.util.RandomSource;
+ import org.apache.commons.lang3.StringUtils;
+ 
+ public class WorldOptions {
++    // Canvas start - Matter - Secure Seed
++    private static final com.google.gson.Gson gson = new com.google.gson.Gson();
++    private static final boolean isSecureSeedEnabled = (Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed;
+     public static final MapCodec<WorldOptions> CODEC = RecordCodecBuilder.mapCodec(
+-        instance -> instance.group(
++        instance -> isSecureSeedEnabled
++            ? instance.group(
++                Codec.LONG.fieldOf("seed").stable().forGetter(WorldOptions::seed),
++                Codec.STRING.fieldOf("feature_seed").orElse(gson.toJson(Globals.createRandomWorldSeed())).stable().forGetter(WorldOptions::featureSeedSerialize),
++                Codec.BOOL.fieldOf("generate_features").orElse(true).stable().forGetter(WorldOptions::generateStructures),
++                Codec.BOOL.fieldOf("bonus_chest").orElse(false).stable().forGetter(WorldOptions::generateBonusChest),
++                Codec.STRING.lenientOptionalFieldOf("legacy_custom_options").stable().forGetter(worldOptions -> worldOptions.legacyCustomOptions)
++            )
++            .apply(instance, instance.stable(WorldOptions::new))
++            : instance.group(
+                 Codec.LONG.fieldOf("seed").stable().forGetter(WorldOptions::seed),
+                 Codec.BOOL.fieldOf("generate_features").orElse(true).stable().forGetter(WorldOptions::generateStructures),
+                 Codec.BOOL.fieldOf("bonus_chest").orElse(false).stable().forGetter(WorldOptions::generateBonusChest),
+@@ -18,8 +32,14 @@ public class WorldOptions {
+             )
+             .apply(instance, instance.stable(WorldOptions::new))
+     );
+-    public static final WorldOptions DEMO_OPTIONS = new WorldOptions("North Carolina".hashCode(), true, true);
++    // Canvas end - Matter - Secure Seed
++    // Canvas start - Matter - Secure Seed
++    public static final WorldOptions DEMO_OPTIONS = isSecureSeedEnabled
++        ? new WorldOptions((long) "North Carolina".hashCode(), Globals.createRandomWorldSeed(), true, true)
++        : new WorldOptions("North Carolina".hashCode(), true, true);
++    // Canvas end - Matter - Secure Seed
+     private final long seed;
++    private long[] featureSeed = Globals.createRandomWorldSeed(); // Canvas - Matter - Secure Seed
+     private final boolean generateStructures;
+     private final boolean generateBonusChest;
+     private final Optional<String> legacyCustomOptions;
+@@ -28,14 +48,35 @@ public class WorldOptions {
+         this(seed, generateStructures, generateBonusChest, Optional.empty());
+     }
+ 
++    // Canvas start - Matter - Secure Seed
++    public WorldOptions(long seed, long[] featureSeed, boolean generateStructures, boolean bonusChest) {
++        this(seed, featureSeed, generateStructures, bonusChest, Optional.empty());
++    }
++
++    private WorldOptions(long seed, String featureSeedJson, boolean generateStructures, boolean bonusChest, Optional<String> legacyCustomOptions) {
++        this(seed, gson.fromJson(featureSeedJson, long[].class), generateStructures, bonusChest, legacyCustomOptions);
++    }
++    // Canvas end - Matter - Secure Seed
++
+     public static WorldOptions defaultWithRandomSeed() {
+-        return new WorldOptions(randomSeed(), true, false);
++        // Canvas start - Matter - Secure Seed
++        return isSecureSeedEnabled
++            ? new WorldOptions(randomSeed(), Globals.createRandomWorldSeed(), true, false)
++            : new WorldOptions(randomSeed(), true, false);
++        // Canvas end - Matter - Secure Seed
+     }
+ 
+     public static WorldOptions testWorldWithRandomSeed() {
+         return new WorldOptions(randomSeed(), false, false);
+     }
+ 
++    // Canvas start - Matter - Secure Seed
++    private WorldOptions(long seed, long[] featureSeed, boolean generateStructures, boolean bonusChest, Optional<String> legacyCustomOptions) {
++        this(seed, generateStructures, bonusChest, legacyCustomOptions);
++        this.featureSeed = featureSeed;
++    }
++    // Canvas end - Matter - Secure Seed
++
+     private WorldOptions(long seed, boolean generateStructures, boolean generateBonusChest, Optional<String> legacyCustomOptions) {
+         this.seed = seed;
+         this.generateStructures = generateStructures;
+@@ -47,6 +88,16 @@ public class WorldOptions {
+         return this.seed;
+     }
+ 
++    // Canvas start - Matter - Secure Seed
++    public long[] featureSeed() {
++        return this.featureSeed;
++    }
++
++    private String featureSeedSerialize() {
++        return gson.toJson(this.featureSeed);
++    }
++    // Canvas end - Matter - Secure Seed
++
+     public boolean generateStructures() {
+         return this.generateStructures;
+     }
+@@ -59,17 +110,25 @@ public class WorldOptions {
+         return this.legacyCustomOptions.isPresent();
+     }
+ 
++    // Canvas start - Matter -  Secure Seed
+     public WorldOptions withBonusChest(boolean generateBonusChest) {
+-        return new WorldOptions(this.seed, this.generateStructures, generateBonusChest, this.legacyCustomOptions);
++        return isSecureSeedEnabled
++            ? new WorldOptions(this.seed, this.featureSeed, this.generateStructures, generateBonusChest, this.legacyCustomOptions)
++            : new WorldOptions(this.seed, this.generateStructures, generateBonusChest, this.legacyCustomOptions);
+     }
+ 
+     public WorldOptions withStructures(boolean generateStructures) {
+-        return new WorldOptions(this.seed, generateStructures, this.generateBonusChest, this.legacyCustomOptions);
++        return isSecureSeedEnabled
++            ? new WorldOptions(this.seed, this.featureSeed, generateStructures, this.generateBonusChest, this.legacyCustomOptions)
++            : new WorldOptions(this.seed, generateStructures, this.generateBonusChest, this.legacyCustomOptions);
+     }
+ 
+     public WorldOptions withSeed(OptionalLong seed) {
+-        return new WorldOptions(seed.orElse(randomSeed()), this.generateStructures, this.generateBonusChest, this.legacyCustomOptions);
++        return isSecureSeedEnabled
++            ? new WorldOptions(seed.orElse(randomSeed()), Globals.createRandomWorldSeed(), this.generateStructures, this.generateBonusChest, this.legacyCustomOptions)
++            : new WorldOptions(seed.orElse(randomSeed()), this.generateStructures, this.generateBonusChest, this.legacyCustomOptions);
+     }
++    // Canvas end - Matter - Secure Seed
+ 
+     public static OptionalLong parseSeed(String seed) {
+         seed = seed.trim();
+diff --git a/net/minecraft/world/level/levelgen/feature/GeodeFeature.java b/net/minecraft/world/level/levelgen/feature/GeodeFeature.java
+index 4e72eb49dbf4c70ae7556ba6eb210fcd5ef36aaa..44ab4fd704b9c0a1aef132c4bee36ae47de194e2 100644
+--- a/net/minecraft/world/level/levelgen/feature/GeodeFeature.java
++++ b/net/minecraft/world/level/levelgen/feature/GeodeFeature.java
+@@ -5,6 +5,7 @@ import com.mojang.datafixers.util.Pair;
+ import com.mojang.serialization.Codec;
+ import java.util.List;
+ import java.util.function.Predicate;
++import io.canvasmc.canvas.Config;
+ import net.minecraft.Util;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Direction;
+@@ -41,7 +42,12 @@ public class GeodeFeature extends Feature<GeodeConfiguration> {
+         int i1 = geodeConfiguration.maxGenOffset;
+         List<Pair<BlockPos, Integer>> list = Lists.newLinkedList();
+         int i2 = geodeConfiguration.distributionPoints.sample(randomSource);
+-        WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(worldGenLevel.getSeed()));
++        // WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(worldGenLevel.getSeed()));
++        // Canvas start - Matter - Secure Seed
++        WorldgenRandom worldgenRandom = ((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)
++            ? new io.canvasmc.canvas.WorldgenCryptoRandom(0, 0, io.canvasmc.canvas.Globals.Salt.GEODE_FEATURE, 0)
++            : new WorldgenRandom(new LegacyRandomSource(worldGenLevel.getSeed()));
++        // Canvas end - Matter - Secure Seed
+         NormalNoise normalNoise = NormalNoise.create(worldgenRandom, -4, 1.0);
+         List<BlockPos> list1 = Lists.newLinkedList();
+         double d = (double)i2 / geodeConfiguration.outerWallDistance.getMaxValue();
+diff --git a/net/minecraft/world/level/levelgen/structure/Structure.java b/net/minecraft/world/level/levelgen/structure/Structure.java
+index 8328e864c72b7a358d6bb1f33459b8c4df2ecb1a..7f262d1561b46fc21a3ab53b55b64745ae16d409 100644
+--- a/net/minecraft/world/level/levelgen/structure/Structure.java
++++ b/net/minecraft/world/level/levelgen/structure/Structure.java
+@@ -10,6 +10,7 @@ import java.util.Optional;
+ import java.util.function.Consumer;
+ import java.util.function.Function;
+ import java.util.function.Predicate;
++import io.canvasmc.canvas.Config;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Holder;
+ import net.minecraft.core.HolderSet;
+@@ -249,6 +250,11 @@ public abstract class Structure {
+         }
+ 
+         private static WorldgenRandom makeRandom(long seed, ChunkPos chunkPos) {
++            // Canvas start - Matter - Secure Seed
++            if (((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)) {
++                return new io.canvasmc.canvas.WorldgenCryptoRandom(chunkPos.x, chunkPos.z, io.canvasmc.canvas.Globals.Salt.GENERATE_FEATURE, seed);
++            }
++            // Canvas end - Matter - Secure Seed
+             WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
+             worldgenRandom.setLargeFeatureSeed(seed, chunkPos.x, chunkPos.z);
+             return worldgenRandom;
+diff --git a/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java b/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java
+index ee0d9dddb36b6879fa113299e24f1aa3b2b151cc..29600b72455b837e1e48adacb58461ddf96fa10a 100644
+--- a/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java
++++ b/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java
+@@ -5,6 +5,7 @@ import com.mojang.serialization.DataResult;
+ import com.mojang.serialization.MapCodec;
+ import com.mojang.serialization.codecs.RecordCodecBuilder;
+ import java.util.Optional;
++import io.canvasmc.canvas.Config;
+ import net.minecraft.core.Vec3i;
+ import net.minecraft.world.level.ChunkPos;
+ import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
+@@ -67,8 +68,15 @@ public class RandomSpreadStructurePlacement extends StructurePlacement {
+     public ChunkPos getPotentialStructureChunk(long seed, int regionX, int regionZ) {
+         int i = Math.floorDiv(regionX, this.spacing);
+         int i1 = Math.floorDiv(regionZ, this.spacing);
+-        WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
+-        worldgenRandom.setLargeFeatureWithSalt(seed, i, i1, this.salt());
++        // Canvas start - Matter - Secure Seed
++        WorldgenRandom worldgenRandom;
++        if (((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)) {
++            worldgenRandom = new io.canvasmc.canvas.WorldgenCryptoRandom(i, i1, io.canvasmc.canvas.Globals.Salt.POTENTIONAL_FEATURE, this.salt);
++        } else {
++            worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
++            worldgenRandom.setLargeFeatureWithSalt(seed, i, i1, this.salt());
++        }
++        // Canvas end - Matter - Secure Seed
+         int i2 = this.spacing - this.separation;
+         int i3 = this.spreadType.evaluate(worldgenRandom, i2);
+         int i4 = this.spreadType.evaluate(worldgenRandom, i2);
+diff --git a/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java b/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java
+index f2eb0572b9d97d97bc847082461515a852310dfc..667df6167dad60c8b1aae16725ac914f66092bda 100644
+--- a/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java
++++ b/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java
+@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
+ import com.mojang.serialization.codecs.RecordCodecBuilder.Instance;
+ import com.mojang.serialization.codecs.RecordCodecBuilder.Mu;
+ import java.util.Optional;
++import io.canvasmc.canvas.Config;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Holder;
+ import net.minecraft.core.Vec3i;
+@@ -119,8 +120,16 @@ public abstract class StructurePlacement {
+     public abstract StructurePlacementType<?> type();
+ 
+     private static boolean probabilityReducer(long levelSeed, int regionX, int regionZ, int salt, float probability, @org.jetbrains.annotations.Nullable Integer saltOverride) { // Paper - Add missing structure set seed configs; ignore here
+-        WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
+-        worldgenRandom.setLargeFeatureWithSalt(levelSeed, regionX, regionZ, salt);
++        // WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
++        // Canvas start - Matter - Secure Seed
++        WorldgenRandom worldgenRandom;
++        if (((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)) {
++            worldgenRandom = new io.canvasmc.canvas.WorldgenCryptoRandom(regionX, regionZ, io.canvasmc.canvas.Globals.Salt.UNDEFINED, salt);
++        } else {
++            worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
++            worldgenRandom.setLargeFeatureWithSalt(levelSeed, salt, regionX, regionZ);
++        }
++        // Canvas end - Matter - Secure Seed
+         return worldgenRandom.nextFloat() < probability;
+     }
+ 
+diff --git a/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java b/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java
+index 1cfa0fcd28685736fcdce4aef817e4d4cc4061cb..a7ffd6ed74ac4e342535a4b331db6a990f9fc7eb 100644
+--- a/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java
++++ b/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java
+@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
+ import com.mojang.logging.LogUtils;
+ import java.util.List;
+ import java.util.Optional;
++import io.canvasmc.canvas.Config;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Direction;
+ import net.minecraft.core.Holder;
+@@ -64,7 +65,11 @@ public class JigsawPlacement {
+         ChunkGenerator chunkGenerator = context.chunkGenerator();
+         StructureTemplateManager structureTemplateManager = context.structureTemplateManager();
+         LevelHeightAccessor levelHeightAccessor = context.heightAccessor();
+-        WorldgenRandom worldgenRandom = context.random();
++        // Canvas start - Matter - Secure Seed
++        WorldgenRandom worldgenRandom = ((Config.INSTANCE != null) && Config.INSTANCE.chunks.secureSeed)
++            ? new io.canvasmc.canvas.WorldgenCryptoRandom(context.chunkPos().x, context.chunkPos().z, io.canvasmc.canvas.Globals.Salt.JIGSAW_PLACEMENT, 0)
++            : context.random();
++        // Canvas end - Matter - Secure Seed
+         Registry<StructureTemplatePool> registry = registryAccess.lookupOrThrow(Registries.TEMPLATE_POOL);
+         Rotation random = Rotation.getRandom(worldgenRandom);
+         StructureTemplatePool structureTemplatePool = startPool.unwrapKey()
