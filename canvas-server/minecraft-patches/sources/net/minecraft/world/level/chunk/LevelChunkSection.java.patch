@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/chunk/LevelChunkSection.java
 +++ b/net/minecraft/world/level/chunk/LevelChunkSection.java
-@@ -18,11 +_,12 @@
+@@ -18,11 +_,14 @@
      public static final int SECTION_HEIGHT = 16;
      public static final int SECTION_SIZE = 4096;
      public static final int BIOME_CONTAINER_BITS = 2;
@@ -11,9 +11,20 @@
      public final PalettedContainer<BlockState> states;
      private PalettedContainer<Holder<Biome>> biomes; // CraftBukkit - read/write
 +    private boolean modified = false; // Leaf - optimize chunk unload
++    public short waterCount; // Canvas - optimize fluid pushing
++    public short lavaCount; // Canvas - optimize fluid pushing
  
      // Paper start - block counting
      private static final it.unimi.dsi.fastutil.shorts.ShortArrayList FULL_LIST = new it.unimi.dsi.fastutil.shorts.ShortArrayList(16*16*16);
+@@ -52,6 +_,8 @@
+         this.nonEmptyBlockCount = section.nonEmptyBlockCount;
+         this.tickingBlockCount = section.tickingBlockCount;
+         this.tickingFluidCount = section.tickingFluidCount;
++        this.waterCount = section.waterCount; // Canvas - optimize fluid pushing
++        this.lavaCount = section.lavaCount; // Canvas - optimize fluid pushing
+         this.states = section.states.copy();
+         this.biomes = section.biomes.copy();
+     }
 @@ -133,6 +_,7 @@
      // Paper end - block counting
  
@@ -22,16 +33,63 @@
          BlockState blockState;
          if (useLocks) {
              blockState = this.states.getAndSet(x, y, z, state);
-@@ -323,7 +_,31 @@
+@@ -159,6 +_,20 @@
+                 this.tickingBlockCount++;
+             }
+         }
++        // Canvas start - optimize fluid pushing
++        if (blockState.isWater) {
++            this.waterCount--;
++        }
++        if (blockState.isLava) {
++            this.lavaCount--;
++        }
++        if (state.isWater) {
++            this.waterCount++;
++        }
++        if (state.isLava) {
++            this.lavaCount++;
++        }
++        // Canvas end - optimize fluid pushing
+ 
+         if (!!fluidState1.isRandomlyTicking()) { // Paper - block counting
+             this.tickingFluidCount++;
+@@ -189,6 +_,8 @@
+         // Paper start - block counting
+         // reset, then recalculate
+         this.nonEmptyBlockCount = (short)0;
++        this.waterCount = (short)0; // Canvas - optimize fluid pushing
++        this.lavaCount = (short)0; // Canvas - optimize fluid pushing
+         this.tickingBlockCount = (short)0;
+         this.tickingFluidCount = (short)0;
+         this.specialCollidingBlocks = (short)0;
+@@ -246,6 +_,14 @@
+                     if (fluid.isRandomlyTicking()) {
+                         this.tickingFluidCount += (short)paletteCount;
+                     }
++                    // Canvas start - optimize fluid pushing
++                    if (state.isWater) {
++                        this.waterCount += (short)paletteCount;
++                    }
++                    if (state.isLava) {
++                        this.lavaCount += (short)paletteCount;
++                    }
++                    // Canvas end - optimize fluid pushing
+                 }
+             }
+         }
+@@ -323,7 +_,35 @@
          this.biomes = palettedContainer;
      }
  
 +    // Leaf start - optimize chunk unload
-+    private LevelChunkSection(short nonEmptyBlockCount, short tickingBlockCount, short tickingFluidCount,
++    private LevelChunkSection(short nonEmptyBlockCount, short tickingBlockCount, short tickingFluidCount, short waterCount, short lavaCount, // Canvas - optimize fluid pushing
 +                              PalettedContainer<BlockState> states, PalettedContainer<Holder<Biome>> biomes) {
 +        this.nonEmptyBlockCount = nonEmptyBlockCount;
 +        this.tickingBlockCount = tickingBlockCount;
 +        this.tickingFluidCount = tickingFluidCount;
++        this.waterCount = waterCount; // Canvas - optimize fluid pushing
++        this.lavaCount = lavaCount; // Canvas - optimize fluid pushing
 +        this.states = states;
 +        this.biomes = biomes;
 +    }
@@ -46,6 +104,8 @@
 +                this.nonEmptyBlockCount,
 +                this.tickingBlockCount,
 +                this.tickingFluidCount,
++                this.waterCount, // Canvas - optimize fluid pushing
++                this.lavaCount, // Canvas - optimize fluid pushing
 +                this.states, // Share reference instead of copying
 +                this.biomes  // Share reference instead of copying
 +            );

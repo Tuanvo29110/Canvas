@@ -335,6 +335,15 @@
  
                  // bound y
                  for (int currChunkY = minChunkY; currChunkY <= maxChunkY; ++currChunkY) {
+@@ -5510,7 +_,7 @@
+                         continue;
+                     }
+                     final net.minecraft.world.level.chunk.LevelChunkSection section = sections[sectionIdx];
+-                    if (section.hasOnlyAir()) {
++                    if (section.hasOnlyAir() || (fluid == FluidTags.WATER && section.waterCount == 0) || (fluid == FluidTags.LAVA && section.lavaCount == 0)) { // Canvas - optimize fluid pushing
+                         // empty
+                         continue;
+                     }
 @@ -5565,7 +_,7 @@
              }
          }

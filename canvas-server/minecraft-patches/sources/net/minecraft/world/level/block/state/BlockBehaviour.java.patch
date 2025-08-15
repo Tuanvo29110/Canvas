@@ -1,0 +1,20 @@
+--- a/net/minecraft/world/level/block/state/BlockBehaviour.java
++++ b/net/minecraft/world/level/block/state/BlockBehaviour.java
+@@ -425,6 +_,8 @@
+         private final boolean ignitedByLava;
+         @Deprecated
+         private final boolean liquid;
++        public boolean isWater = false; // Canvas - optimize fluid pushing
++        public boolean isLava = false; // Canvas - optimize fluid pushing
+         @Deprecated
+         private boolean legacySolid;
+         private final PushReaction pushReaction;
+@@ -577,6 +_,8 @@
+         protected boolean shapeExceedsCube = true; // Paper - moved from actual method to here
+         public void initCache() {
+             this.fluidState = this.owner.getFluidState(this.asState());
++            this.isWater = this.is(Blocks.WATER); // Canvas - optimize fluid pushing
++            this.isLava = this.is(Blocks.LAVA); // Canvas - optimize fluid pushing
+             this.isRandomlyTicking = this.owner.isRandomlyTicking(this.asState());
+             if (!this.getBlock().hasDynamicShape()) {
+                 this.cache = new BlockBehaviour.BlockStateBase.Cache(this.asState());
