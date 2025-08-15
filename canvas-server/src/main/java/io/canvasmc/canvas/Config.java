@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Range;
 public class Config {
     public static boolean ENABLE_FASTER_RANDOM = true;
     public static final ComponentLogger LOGGER = ComponentLogger.logger("Canvas");
-    public static boolean RUNNING_IN_IDE = Boolean.getBoolean("minecraft.running-in-ide");
     public static final List<EntityNonTickableConf> NON_TICKABLES = new CopyOnWriteArrayList<>();
     public static Config INSTANCE;
 
@@ -584,16 +583,12 @@ public class Config {
             .validator(ConfigHandlers.NonPositiveProcessor::new)
             .validator(ConfigHandlers.PatternProcessor::new)
             .validator(ConfigHandlers.NamespacedKeyProcessor::new)
-            .runtimeModifier("debug.*", new RuntimeModifier<>(boolean.class, (original) -> RUNNING_IN_IDE || original))
             .post(context -> {
                 INSTANCE = context.configuration();
                 // build and print config tree.
                 YamlTextFormatter formatter = new YamlTextFormatter(4);
                 VirtualThreadUtils.init();
                 LOGGER.info(Component.text("Printing configuration tree:").appendNewline().append(formatter.apply(context.contents())));
-                if (RUNNING_IN_IDE) {
-                    LOGGER.info("Running Minecraft development server in IDE.");
-                }
                 for (final String change : changes) {
                     LOGGER.info(change);
                 }
