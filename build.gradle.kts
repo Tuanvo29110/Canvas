@@ -39,7 +39,7 @@ paperweight {
         patchGeneration {
             patchDirOutput = true
             inputFrom.set(listOf("paper-api", "paper-server", "folia-server/src/minecraft/java"))
-            outputDir.set(file("generated-patches"))
+            // outputDir.set(file("generated-patches")) - uncomment when disabling patchDirOutput
 
             repoConfig.register("minecraft") {
                 additionalAts.set(file("build-data/folia.at"))
