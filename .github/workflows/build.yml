@@ -1,0 +1,52 @@
+name: Patch and Build
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+
+permissions: write-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: default
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configure Git User Details
+        run: git config --global user.email "actions@github.com" && git config --global user.name "Github Actions"
+
+      - name: Apply All Patches
+        run: ./gradlew --refresh-dependencies applyAllPatches
+
+      - name: CreateMojmapPaperclipJar
+        run: ./gradlew --refresh-dependencies buildMojmapPublisherJar
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Canvas 1.21.8
+          path: canvas-server/build/libs/canvas-build.*.jar
+           
+      - name: Make release
+        uses: marvinpinto/action-automatic-releases@master
+        with:
+          title: "Canvas 1.21.8 release"
+          automatic_release_tag: "latest_1.21.8"
+          files: canvas-server/build/libs/canvas-build.*.jar
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
