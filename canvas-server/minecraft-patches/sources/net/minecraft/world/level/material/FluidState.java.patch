@@ -1,5 +1,23 @@
 --- a/net/minecraft/world/level/material/FluidState.java
 +++ b/net/minecraft/world/level/material/FluidState.java
+@@ -131,7 +_,16 @@
+     }
+ 
+     public boolean is(TagKey<Fluid> tag) {
+-        return this.getType().builtInRegistryHolder().is(tag);
++        // Leaf start - optimize FluidState#is(TagKey)
++        Fluid fluid = this.getType();
++        if (fluid == Fluids.WATER || fluid == Fluids.FLOWING_WATER) {
++            return tag == net.minecraft.tags.FluidTags.WATER;
++        } else if (fluid == Fluids.LAVA || fluid == Fluids.FLOWING_LAVA) {
++            return tag == net.minecraft.tags.FluidTags.LAVA;
++        } else {
++            return false;
++        }
++        // Leaf end - optimize FluidState#is(TagKey)
+     }
+ 
+     public boolean is(HolderSet<Fluid> fluids) {
 @@ -166,6 +_,12 @@
      public Stream<TagKey<Fluid>> getTags() {
          return this.owner.builtInRegistryHolder().tags();
