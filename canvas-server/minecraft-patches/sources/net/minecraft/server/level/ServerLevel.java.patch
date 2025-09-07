@@ -24,6 +24,38 @@
  
      public static final record PendingTeleport(Entity.EntityTreeNode rootVehicle, Vec3 to) {}
      private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<PendingTeleport> pendingTeleports = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
+@@ -774,7 +_,8 @@
+                     );
+                 } // Folia end - region threading
+             }
+-
++            
++            if (dev.kaiijumc.kaiiju.KaiijuEntityLimits.enabled) regionizedWorldData.entityThrottler.tickLimiterStart(); // Kaiiju
+             io.papermc.paper.entity.activation.ActivationRange.activateEntities(this); // Paper - EAR
+             regionizedWorldData // Folia - regionised ticking
+                 .forEachTickingEntity( // Folia - regionised ticking
+@@ -792,6 +_,13 @@
+ 
+                                         entity.stopRiding();
+                                     }
++                                    // Kaiiju start
++                                    if (dev.kaiijumc.kaiiju.KaiijuEntityLimits.enabled) {
++                                        dev.kaiijumc.kaiiju.KaiijuEntityThrottler.EntityThrottlerReturn throttle = regionizedWorldData.entityThrottler.tickLimiterShouldSkip(entity);
++                                        if (throttle.remove && !entity.hasCustomName()) entity.remove(Entity.RemovalReason.DISCARDED);
++                                        if (throttle.skip) return;
++                                    }
++                                    // Kaiiju end
+ 
+                                     this.guardEntityTick(this::tickNonPassenger, entity);
+                                 }
+@@ -799,6 +_,7 @@
+                         }
+                     }
+                 );
++                if (dev.kaiijumc.kaiiju.KaiijuEntityLimits.enabled) regionizedWorldData.entityThrottler.tickLimiterFinish(regionizedWorldData); // Kaiiju
+             this.tickBlockEntities();
+         }
+         // Paper - rewrite chunk system
 @@ -883,10 +_,10 @@
      // Paper start - optimise random ticking
      private final io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource simpleRandom = io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource.INSTANCE; // Folia - region threading
