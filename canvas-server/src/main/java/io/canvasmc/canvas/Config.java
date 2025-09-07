@@ -171,6 +171,9 @@ public class Config {
 
         @Comment("This option makes protocol switching asynchronous, reducing global region blocking and improving login and configuration performance.")
         public boolean asyncProtocolSwitch = false;
+        
+        @Comment("Use alternative keepalive handling, improves latency tracking and timeout handling")
+        public boolean useAlternateKeepAlive = false;
     }
 
     @Comment("Configurations for enabling virtual threads for different thread pool executors")
