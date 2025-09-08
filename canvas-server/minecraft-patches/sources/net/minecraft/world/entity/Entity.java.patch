@@ -82,8 +82,14 @@
          }
  
          this.firstTick = false;
-@@ -1092,6 +_,11 @@
+@@ -1090,10 +_,43 @@
+     public boolean onGround() {
+         return this.onGround;
      }
++    
++    //Luminol start - Fix large pos moving
++    private volatile boolean preventMoving = false;
++    //Luminol end
  
      public void move(MoverType type, Vec3 movement) {
 +        // Gale start - VMP - skip entity move if movement is zero
@@ -93,7 +99,33 @@
 +        // Gale end - VMP - skip entity move if movement is zero
          final Vec3 originalMovement = movement; // Paper - Expose pre-collision velocity
          ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread("Cannot move an entity off-main"); // Folia - region threading
++        //Luminol start - Fix high position moving
++        if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThread()){ //Except the threads because it may be called by the chunk system worker thread
++            var finalPosition = movement.add(this.position);
++            if (this.preventMoving || Double.isNaN(finalPosition.x) || Double.isNaN(finalPosition.y) || Double.isNaN(finalPosition.z)){
++                return;
++            }
++
++            if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(((ServerLevel) this.level),finalPosition)){
++                this.preventMoving = true;
++                this.teleportAsync(
++                        (ServerLevel) this.level(),
++                        finalPosition,
++                        this.getYRot(), this.getXRot(),
++                        null, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.UNKNOWN,
++                        Entity.TELEPORT_FLAG_LOAD_CHUNK | Entity.TELEPORT_FLAG_TELEPORT_PASSENGERS,
++                        result -> {
++                            this.preventMoving = false;
++                        }
++                );
++                MinecraftServer.LOGGER.warn("Entity {} with entityId {} has tried moving to another region!",this.type.getCategory().getName(),this.getId());
++                return;
++            }
++        }
++        //Luminol end
          if (this.noPhysics) {
+             this.setPos(this.getX() + movement.x, this.getY() + movement.y, this.getZ() + movement.z);
+         } else {
 @@ -1641,6 +_,11 @@
  
      private void checkInsideBlocks(Vec3 vec3, Vec3 vec31, InsideBlockEffectApplier.StepBasedCollector stepBasedCollector, LongSet set) {
