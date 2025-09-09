@@ -350,6 +350,18 @@
          return this.isAlive() && !this.isSpectator() && (ignoreClimbing || !this.onClimbable()) && this.collides; // CraftBukkit
          // Paper end - Climbing should not bypass cramming gamerule
      }
+@@ -3932,11 +_,6 @@
+             return null;
+         } else {
+             double d = this.getEyeY() - 0.3F;
+-            // Paper start
+-            final ItemStack tmp = stack.copy();
+-            stack.setCount(0);
+-            stack = tmp;
+-            // Paper end
+             ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), d, this.getZ(), stack);
+             itemEntity.setPickUpDelay(40);
+             if (includeThrower) {
 @@ -3962,6 +_,18 @@
                  );
              }

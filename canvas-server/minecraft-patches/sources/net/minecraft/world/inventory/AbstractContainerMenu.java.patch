@@ -1,5 +1,18 @@
 --- a/net/minecraft/world/inventory/AbstractContainerMenu.java
 +++ b/net/minecraft/world/inventory/AbstractContainerMenu.java
+@@ -644,7 +_,11 @@
+                     }
+ 
+                     carried = slot2.safeTake(i1, Integer.MAX_VALUE, player);
+-                    player.drop(carried, true);
++                    // CraftBukkit start - SPIGOT-8010: break loop
++                    if (player.drop(carried, true) == null) {
++                        break;
++                    }
++                    // CraftBukkit end - SPIGOT-8010: break loop
+                     player.handleCreativeModeItemDrop(carried);
+                 }
+             }
 @@ -712,7 +_,7 @@
      }
  

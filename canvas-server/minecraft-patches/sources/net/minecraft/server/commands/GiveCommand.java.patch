@@ -1,0 +1,16 @@
+--- a/net/minecraft/server/commands/GiveCommand.java
++++ b/net/minecraft/server/commands/GiveCommand.java
+@@ -101,11 +_,11 @@
+ 
+             if (targets.size() == 1) {
+                 source.sendSuccess(
+-                    () -> Component.translatable("commands.give.success.single", count, displayName, targets.iterator().next().getDisplayName()), // Paper - use cached display name
++                    () -> Component.translatable("commands.give.success.single", count, itemStack.getDisplayName(), targets.iterator().next().getDisplayName()), // Paper - use cached display name
+                     true
+                 );
+             } else {
+-                source.sendSuccess(() -> Component.translatable("commands.give.success.single", count, displayName, targets.size()), true); // Paper - use cached display name
++                source.sendSuccess(() -> Component.translatable("commands.give.success.single", count, itemStack.getDisplayName(), targets.size()), true); // Paper - use cached display name
+             }
+ 
+             return targets.size();
