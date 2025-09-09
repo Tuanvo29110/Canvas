@@ -1,5 +1,21 @@
 --- a/net/minecraft/network/Connection.java
 +++ b/net/minecraft/network/Connection.java
+@@ -149,6 +_,7 @@
+     public @Nullable org.bukkit.event.player.PlayerResourcePackStatusEvent.Status resourcePackStatus; // Paper
+     // Paper start - Optimize network
+     public boolean isPending = true;
++    private io.netty.channel.SingleThreadEventLoop eventLoop; // Paper - optimise packets that are not flushed
+     public boolean queueImmunity;
+     // Paper end - Optimize network
+ 
+@@ -195,6 +_,7 @@
+     public void channelActive(ChannelHandlerContext context) throws Exception {
+         super.channelActive(context);
+         this.channel = context.channel();
++        this.eventLoop = (io.netty.channel.SingleThreadEventLoop) this.channel.eventLoop(); // Paper - optimise packets that are not flushed
+         this.address = this.channel.remoteAddress();
+         this.preparing = false; // Spigot
+         if (this.delayedDisconnect != null) {
 @@ -373,6 +_,136 @@
          }
      }
@@ -137,3 +153,15 @@
      public <T extends PacketListener> void setupInboundProtocol(ProtocolInfo<T> protocolInfo, T packetInfo) {
          this.validateListener(protocolInfo, packetInfo);
          if (protocolInfo.flow() != this.getReceiving()) {
+@@ -511,6 +_,11 @@
+         if (this.channel.eventLoop().inEventLoop()) {
+             this.doSendPacket(packet, channelFutureListener, flag);
+         } else {
++            // Paper start - optimise packets that are not flushed
++            if (!flag && io.canvasmc.canvas.Config.INSTANCE.networking.optimizeNonFlushPacketSending) {
++                this.eventLoop.lazyExecute(() -> this.doSendPacket(packet, channelFutureListener, flag));
++            } else
++                // Paper end - optimise packets that are not flushed
+             this.channel.eventLoop().execute(() -> this.doSendPacket(packet, channelFutureListener, flag));
+         }
+     }

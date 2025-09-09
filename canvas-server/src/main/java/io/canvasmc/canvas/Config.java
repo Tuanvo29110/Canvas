@@ -174,6 +174,9 @@ public class Config {
         
         @Comment("Use alternative keepalive handling, improves latency tracking and timeout handling")
         public boolean useAlternateKeepAlive = false;
+        
+        @Comment("Optimize packet sending (may break ProtocolLib)")
+        public boolean optimizeNonFlushPacketSending = false;
     }
 
     @Comment("Configurations for enabling virtual threads for different thread pool executors")
