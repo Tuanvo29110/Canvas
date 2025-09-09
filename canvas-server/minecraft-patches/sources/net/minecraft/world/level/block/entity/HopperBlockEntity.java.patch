@@ -91,6 +91,18 @@
                  if (fullState != HOPPER_EMPTY) { // Paper - Perf: Optimize Hoppers
                      flag = ejectItems(level, pos, blockEntity);
                  }
+@@ -435,6 +_,11 @@
+         } else {
+             Direction opposite = blockEntity.facing.getOpposite();
+             if (isFullContainer(attachedContainer, opposite)) {
++                // Leaf start - SparklyPaper - Throttle hopper when full
++                if (io.canvasmc.canvas.Config.INSTANCE.hopper.throttleHopperWhenFull && io.canvasmc.canvas.Config.INSTANCE.hopper.throttleHopperSkipTicks > 0) {
++                    blockEntity.setCooldown(io.canvasmc.canvas.Config.INSTANCE.hopper.throttleHopperSkipTicks);
++                }
++                // Leaf end - SparklyPaper - Throttle hopper when full
+                 return false;
+             } else {
+                 // Paper start - Perf: Optimize Hoppers
 @@ -798,7 +_,7 @@
      @Nullable
      private static Container getContainerAt(Level level, BlockPos pos, BlockState state, double x, double y, double z, final boolean optimizeEntities) {

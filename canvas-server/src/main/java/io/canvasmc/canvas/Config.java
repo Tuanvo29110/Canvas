@@ -226,6 +226,16 @@ public class Config {
         @Comment("The keepalive time in seconds for the async locator")
         public int keepalive = 60;
     }
+    
+    public Hopper hopper = new Hopper();
+    public static class Hopper {
+        @Comment("Throttle hopper checks when the target container is full")
+        public boolean throttleHopperWhenFull = false;
+
+        @PositiveNumericValueValidator.PositiveNumericValue
+        @Comment("Ticks to wait before retrying when full")
+        public int throttleHopperSkipTicks = 8;
+    }
 
     @Comment("Disables Minecraft Chat Signing to prevent player reporting")
     public boolean enableNoChatReports = false;
