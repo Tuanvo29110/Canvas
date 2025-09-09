@@ -1,0 +1,28 @@
+--- a/net/minecraft/world/item/MapItem.java
++++ b/net/minecraft/world/item/MapItem.java
+@@ -279,12 +_,24 @@
+                 savedData.tickCarriedBy(player, stack);
+             }
+ 
+-            if (!savedData.locked && slot != null && slot.getType() == EquipmentSlot.Type.HAND) {
++            if (!savedData.locked && shouldUpdateMap(savedData) && slot != null && slot.getType() == EquipmentSlot.Type.HAND) {
+                 this.update(level, entity, savedData);
+             }
+             } // Folia - region threading
+         }
+     }
++    
++    // SparklyPaper start - don't update maps if they don't have the CraftMapRenderer in the render list
++    private static boolean shouldUpdateMap(MapItemSavedData savedData) {
++        for (org.bukkit.map.MapRenderer mapRenderer : savedData.mapView.getRenderers()) {
++            if (mapRenderer.getClass() == org.bukkit.craftbukkit.map.CraftMapRenderer.class) {
++                return true;
++            }
++        }
++
++        return false;
++    }
++    // SparklyPaper end - don't update maps if they don't have the CraftMapRenderer in the render list
+ 
+     @Override
+     public void onCraftedPostProcess(ItemStack stack, Level level) {
