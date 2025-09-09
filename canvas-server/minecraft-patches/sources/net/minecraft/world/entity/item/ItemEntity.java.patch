@@ -28,6 +28,15 @@
      @Override
      public final boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
          if (this.isInvulnerableToBase(damageSource)) {
+@@ -417,7 +_,7 @@
+             Item item1 = item.getItem();
+             int count = item.getCount();
+             // CraftBukkit start - fire PlayerPickupItemEvent
+-            int canHold = entity.getInventory().canHold(item);
++            int canHold = entity.hasInfiniteMaterials() ? count : entity.getInventory().canHold(item); // Luminol - Fix creative item picking
+             int remaining = count - canHold;
+             boolean flyAtPlayer = false; // Paper
+ 
 @@ -606,4 +_,13 @@
      public SlotAccess getSlot(int slot) {
          return slot == 0 ? SlotAccess.of(this::getItem, this::setItem) : super.getSlot(slot);
