@@ -1,5 +1,18 @@
 --- a/net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator.java
 +++ b/net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator.java
+@@ -68,8 +_,10 @@
+         Aquifer.FluidStatus fluidStatus = new Aquifer.FluidStatus(-54, Blocks.LAVA.defaultBlockState());
+         int seaLevel = settings.seaLevel();
+         Aquifer.FluidStatus fluidStatus1 = new Aquifer.FluidStatus(seaLevel, settings.defaultFluid());
+-        Aquifer.FluidStatus fluidStatus2 = new Aquifer.FluidStatus(DimensionType.MIN_Y * 2, Blocks.AIR.defaultBlockState());
+-        return (x, y, z) -> y < Math.min(-54, seaLevel) ? fluidStatus : fluidStatus1;
++        // Leaf start - C2ME - Optimize world gen math
++        final int min = Math.min(-54, seaLevel);
++        return (x, y, z) -> y < min ? fluidStatus : fluidStatus1;
++        // Leaf end - C2ME - Optimize world gen math
+     }
+ 
+     @Override
 @@ -297,6 +_,15 @@
          int i = Mth.floorDiv(minY, noiseSettings.getCellHeight());
          int i1 = Mth.floorDiv(noiseSettings.height(), noiseSettings.getCellHeight());

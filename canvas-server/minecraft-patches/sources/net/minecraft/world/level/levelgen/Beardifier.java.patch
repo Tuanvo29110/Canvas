@@ -62,3 +62,21 @@
          int i = context.blockX();
          int i1 = context.blockY();
          int i2 = context.blockZ();
+@@ -131,8 +_,15 @@
+     }
+ 
+     private static double getBuryContribution(double x, double y, double z) {
+-        double len = Mth.length(x, y, z);
+-        return Mth.clampedMap(len, 0.0, 6.0, 1.0, 0.0);
++        // Leaf start - C2ME - Optimize world gen math
++        // Optimize method for beardifier
++        double len = Math.sqrt(x * x + y * y + z * z);
++        if (len > 6.0) {
++            return 0.0;
++        } else {
++            return 1.0 - len / 6.0;
++        }
++        // Leaf end - C2ME - Optimize world gen math
+     }
+ 
+     private static double getBeardContribution(int x, int y, int z, int height) {
