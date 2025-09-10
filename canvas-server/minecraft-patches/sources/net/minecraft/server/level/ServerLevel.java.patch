@@ -92,12 +92,16 @@
                      }
                  }
              }
-@@ -932,22 +_,21 @@
+@@ -931,23 +_,24 @@
+         return;
      }
      // Paper end - optimise random ticking
- 
+-
 -    public void tickChunk(LevelChunk chunk, int randomTickSpeed) {
 -        final io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource simpleRandom = this.simpleRandom; // Paper - optimise random ticking // Folia - region threading
++    
++    public final io.canvasmc.canvas.util.FastBitRadixSort fastBitRadixSort = new io.canvasmc.canvas.util.FastBitRadixSort(); // Leaf - fast bit radix sort
++    
 +    public void tickChunk(LevelChunk chunk, int randomTickSpeed, io.papermc.paper.threadedregions.RegionizedWorldData worldData) { // Canvas - optimize random tick
          ChunkPos pos = chunk.getPos();
          int minBlockX = pos.getMinBlockX();

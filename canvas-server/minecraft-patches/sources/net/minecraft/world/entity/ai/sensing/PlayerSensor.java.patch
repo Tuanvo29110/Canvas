@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/ai/sensing/PlayerSensor.java
 +++ b/net/minecraft/world/entity/ai/sensing/PlayerSensor.java
-@@ -26,17 +_,39 @@
+@@ -26,17 +_,47 @@
  
      @Override
      protected void doTick(ServerLevel level, LivingEntity entity) {
@@ -11,18 +11,26 @@
 -            .sorted(Comparator.comparingDouble(entity::distanceToSqr))
 -            .collect(Collectors.toList());
 +        // Canvas start - remove streams
++        // Leaf start - fast bit radix sort
 +        it.unimi.dsi.fastutil.objects.ObjectArrayList<Player> list = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>();
++        double distance = this.getFollowDistance(entity);
++        double distSq = distance * distance;
++        net.minecraft.world.phys.Vec3 vec3 = entity.position();
++        double tx = vec3.x();
++        double ty = vec3.y();
++        double tz = vec3.z();
 +        for (Player serverPlayer : level.getLocalPlayers()) { // Folia - region threading
 +            if (!EntitySelector.NO_SPECTATORS.test(serverPlayer)) {
 +                continue;
 +            }
-+            if (!entity.closerThan(serverPlayer, this.getFollowDistance(entity))) {
++            if (serverPlayer.distanceToSqr(tx, ty, tz) >= distSq) {
 +                continue;
 +            }
 +
 +            list.add(serverPlayer);
 +        }
-+        list.unstableSort(Comparator.comparingDouble(entity::distanceToSqr));
++        level.fastBitRadixSort.sort(list.elements(), list.size(), vec3);
++        // Leaf end - fast bit radix sort
 +        // Canvas end - remove streams
          Brain<?> brain = entity.getBrain();
          brain.setMemory(MemoryModuleType.NEAREST_PLAYERS, list);
