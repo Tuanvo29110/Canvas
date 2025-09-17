@@ -80,6 +80,14 @@
              }
          }
      }
+@@ -625,6 +_,7 @@
+     }
+ 
+     public ChunkGenerator getGenerator() {
++        su.plo.matter.Globals.setupGlobals(level); // Leaf - Matter - Secure Seed
+         return this.chunkMap.generator();
+     }
+ 
 @@ -858,6 +_,7 @@
  
          @Override

@@ -1,5 +1,27 @@
 --- a/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
 +++ b/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
+@@ -205,7 +_,12 @@
+             List<CompletableFuture<ChunkPos>> list = new ArrayList<>(count);
+             int spread = placement.spread();
+             HolderSet<Biome> holderSet = placement.preferredBiomes();
+-            RandomSource randomSource = RandomSource.create();
++            // Leaf start - Matter - Secure Seed
++            RandomSource randomSource = io.canvasmc.canvas.Config.INSTANCE.secureSeed
++                ? new su.plo.matter.WorldgenCryptoRandom(0, 0, su.plo.matter.Globals.Salt.STRONGHOLDS, 0)
++                : RandomSource.create();
++            // Leaf end - Matter - Secure Seed
++            if (!io.canvasmc.canvas.Config.INSTANCE.secureSeed) {
+             // Paper start - Add missing structure set seed configs
+             if (this.conf.strongholdSeed != null && structureSet.is(net.minecraft.world.level.levelgen.structure.BuiltinStructureSets.STRONGHOLDS)) {
+                 randomSource.setSeed(this.conf.strongholdSeed);
+@@ -213,6 +_,7 @@
+             // Paper end - Add missing structure set seed configs
+             randomSource.setSeed(this.concentricRingsSeed);
+             } // Paper - Add missing structure set seed configs
++            } // Leaf - Matter - Secure Seed
+             double d = randomSource.nextDouble() * Math.PI * 2.0;
+             int i = 0;
+             int i1 = 0;
 @@ -255,7 +_,7 @@
                  }
              }

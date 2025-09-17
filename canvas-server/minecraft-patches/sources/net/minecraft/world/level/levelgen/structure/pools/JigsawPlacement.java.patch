@@ -1,5 +1,18 @@
 --- a/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java
 +++ b/net/minecraft/world/level/levelgen/structure/pools/JigsawPlacement.java
+@@ -64,7 +_,11 @@
+         ChunkGenerator chunkGenerator = context.chunkGenerator();
+         StructureTemplateManager structureTemplateManager = context.structureTemplateManager();
+         LevelHeightAccessor levelHeightAccessor = context.heightAccessor();
+-        WorldgenRandom worldgenRandom = context.random();
++        // Leaf start - Matter - Secure Seed
++        WorldgenRandom worldgenRandom = io.canvasmc.canvas.Config.INSTANCE.secureSeed
++            ? new su.plo.matter.WorldgenCryptoRandom(context.chunkPos().x, context.chunkPos().z, su.plo.matter.Globals.Salt.JIGSAW_PLACEMENT, 0)
++            : context.random();
++        // Leaf end - Matter - Secure Seed
+         Registry<StructureTemplatePool> registry = registryAccess.lookupOrThrow(Registries.TEMPLATE_POOL);
+         Rotation random = Rotation.getRandom(worldgenRandom);
+         StructureTemplatePool structureTemplatePool = startPool.unwrapKey()
 @@ -287,6 +_,108 @@
              this.pieces = pieces;
              this.random = random;

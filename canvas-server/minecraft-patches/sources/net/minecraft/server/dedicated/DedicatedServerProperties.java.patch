@@ -1,0 +1,21 @@
+--- a/net/minecraft/server/dedicated/DedicatedServerProperties.java
++++ b/net/minecraft/server/dedicated/DedicatedServerProperties.java
+@@ -115,7 +_,17 @@
+         String string = this.get("level-seed", "");
+         boolean flag = this.get("generate-structures", true);
+         long l = WorldOptions.parseSeed(string).orElse(WorldOptions.randomSeed());
+-        this.worldOptions = new WorldOptions(l, flag, false);
++        // Leaf start - Matter - Secure Seed
++        if (io.canvasmc.canvas.Config.INSTANCE.secureSeed) {
++            String featureSeedStr = this.get("feature-level-seed", "");
++            long[] featureSeed = su.plo.matter.Globals.parseSeed(featureSeedStr)
++                .orElse(su.plo.matter.Globals.createRandomWorldSeed());
++
++            this.worldOptions = new WorldOptions(l, featureSeed, flag, false);
++        } else {
++            this.worldOptions = new WorldOptions(l, flag, false);
++        }
++        // Leaf end - Matter - Secure Seed
+         this.worldDimensionData = new DedicatedServerProperties.WorldDimensionData(
+             this.get("generator-settings", property -> GsonHelper.parse(!property.isEmpty() ? property : "{}"), new JsonObject()),
+             this.get("level-type", property -> property.toLowerCase(Locale.ROOT), WorldPresets.NORMAL.location().toString())

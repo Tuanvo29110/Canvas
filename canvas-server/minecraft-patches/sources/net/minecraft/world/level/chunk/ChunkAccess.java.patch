@@ -161,6 +161,17 @@
      protected final LevelHeightAccessor levelHeightAccessor;
      protected final LevelChunkSection[] sections;
      // CraftBukkit start - SPIGOT-6814: move to IChunkAccess to account for 1.17 to 1.18 chunk upgrading.
+@@ -88,6 +_,10 @@
+     public org.bukkit.craftbukkit.persistence.DirtyCraftPersistentDataContainer persistentDataContainer = new org.bukkit.craftbukkit.persistence.DirtyCraftPersistentDataContainer(ChunkAccess.DATA_TYPE_REGISTRY);
+     // CraftBukkit end
+     public final Registry<Biome> biomeRegistry; // CraftBukkit
++    // Leaf start - Matter - Secure Seed
++    private boolean slimeChunk;
++    private boolean hasComputedSlimeChunk;
++    // Leaf end - Matter - Secure Seed
+ 
+     // Paper start - rewrite chunk system
+     private volatile ca.spottedleaf.moonrise.patches.starlight.light.SWMRNibbleArray[] blockNibbles;
 @@ -178,6 +_,12 @@
          this.minSection = ca.spottedleaf.moonrise.common.util.WorldUtil.getMinSection(levelHeightAccessor);
          this.maxSection = ca.spottedleaf.moonrise.common.util.WorldUtil.getMaxSection(levelHeightAccessor);
@@ -174,6 +185,24 @@
      }
  
      private void replaceMissingSections(Registry<Biome> biomeRegistry, LevelChunkSection[] sections) { // Paper - Anti-Xray - make it a non-static method
+@@ -191,6 +_,17 @@
+     public GameEventListenerRegistry getListenerRegistry(int sectionY) {
+         return GameEventListenerRegistry.NOOP;
+     }
++    
++    // Leaf start - Matter - Secure Seed
++    public boolean isSlimeChunk() {
++        if (!hasComputedSlimeChunk) {
++            hasComputedSlimeChunk = true;
++            slimeChunk = su.plo.matter.WorldgenCryptoRandom.seedSlimeChunk(chunkPos.x, chunkPos.z).nextInt(10) == 0;
++        }
++
++        return slimeChunk;
++    }
++    // Leaf end - Matter - Secure Seed
+ 
+     public abstract BlockState getBlockState(final int x, final int y, final int z); // Paper
+ 
 @@ -229,7 +_,18 @@
  
      public Set<BlockPos> getBlockEntitiesPos() {

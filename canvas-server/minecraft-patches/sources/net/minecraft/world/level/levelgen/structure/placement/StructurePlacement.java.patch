@@ -1,0 +1,20 @@
+--- a/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java
++++ b/net/minecraft/world/level/levelgen/structure/placement/StructurePlacement.java
+@@ -119,8 +_,15 @@
+     public abstract StructurePlacementType<?> type();
+ 
+     private static boolean probabilityReducer(long levelSeed, int regionX, int regionZ, int salt, float probability, @org.jetbrains.annotations.Nullable Integer saltOverride) { // Paper - Add missing structure set seed configs; ignore here
+-        WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
+-        worldgenRandom.setLargeFeatureWithSalt(levelSeed, regionX, regionZ, salt);
++        // Leaf start - Matter - Secure Seed
++        WorldgenRandom worldgenRandom;
++        if (io.canvasmc.canvas.Config.INSTANCE.secureSeed) {
++            worldgenRandom = new su.plo.matter.WorldgenCryptoRandom(regionX, regionZ, su.plo.matter.Globals.Salt.UNDEFINED, salt);
++        } else {
++            worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
++            worldgenRandom.setLargeFeatureWithSalt(levelSeed, salt, regionX, regionZ);
++        }
++        // Leaf end - Matter - Secure Seed
+         return worldgenRandom.nextFloat() < probability;
+     }
+ 

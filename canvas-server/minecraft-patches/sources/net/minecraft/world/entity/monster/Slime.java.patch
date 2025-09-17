@@ -1,0 +1,16 @@
+--- a/net/minecraft/world/entity/monster/Slime.java
++++ b/net/minecraft/world/entity/monster/Slime.java
+@@ -329,7 +_,12 @@
+             }
+ 
+             ChunkPos chunkPos = new ChunkPos(pos);
+-            boolean flag = level.getMinecraftWorld().paperConfig().entities.spawning.allChunksAreSlimeChunks || WorldgenRandom.seedSlimeChunk(chunkPos.x, chunkPos.z, ((WorldGenLevel) level).getSeed(), level.getMinecraftWorld().spigotConfig.slimeSeed).nextInt(10) == 0; // Paper
++            // Leaf start - Matter - Secure Seed
++            boolean isSlimeChunk = io.canvasmc.canvas.Config.INSTANCE.secureSeed
++                ? level.getChunk(chunkPos.x, chunkPos.z).isSlimeChunk()
++                : WorldgenRandom.seedSlimeChunk(chunkPos.x, chunkPos.z, ((WorldGenLevel) level).getSeed(), level.getMinecraftWorld().spigotConfig.slimeSeed).nextInt(10) == 0; // Spigot // Paper
++            boolean flag = level.getMinecraftWorld().paperConfig().entities.spawning.allChunksAreSlimeChunks || isSlimeChunk;
++            // Leaf end - Matter - Secure Seed
+                 // Paper start - Replace rules for Height in Slime Chunks
+                 final double maxHeightSlimeChunk = level.getMinecraftWorld().paperConfig().entities.spawning.slimeSpawnHeight.slimeChunk.maximum;
+                 if (random.nextInt(10) == 0 && flag && pos.getY() < maxHeightSlimeChunk) {

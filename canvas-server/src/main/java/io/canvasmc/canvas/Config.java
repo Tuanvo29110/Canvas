@@ -200,6 +200,9 @@ public class Config {
         @Comment("Enables virtual thread usage for the profile lookup executor")
         public boolean profileLookupExecutor = false;
     }
+    
+    @Comment("Enabling secure seed makes all ores and structures use a 1024-bit seed, preventing seed cracking")
+    public boolean secureSeed = false;
 
     @Comment("Check if a cactus can survive before growing. Heavily optimizes cacti farms")
     public boolean cactusCheckSurvivalBeforeGrowth = false;

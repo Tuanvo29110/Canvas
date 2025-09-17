@@ -1,0 +1,20 @@
+--- a/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java
++++ b/net/minecraft/world/level/levelgen/structure/placement/RandomSpreadStructurePlacement.java
+@@ -67,8 +_,15 @@
+     public ChunkPos getPotentialStructureChunk(long seed, int regionX, int regionZ) {
+         int i = Math.floorDiv(regionX, this.spacing);
+         int i1 = Math.floorDiv(regionZ, this.spacing);
+-        WorldgenRandom worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
+-        worldgenRandom.setLargeFeatureWithSalt(seed, i, i1, this.salt());
++        // Leaf start - Matter - Secure Seed
++        WorldgenRandom worldgenRandom;
++        if (io.canvasmc.canvas.Config.INSTANCE.secureSeed) {
++            worldgenRandom = new su.plo.matter.WorldgenCryptoRandom(i, i1, su.plo.matter.Globals.Salt.POTENTIONAL_FEATURE, this.salt);
++        } else {
++            worldgenRandom = new WorldgenRandom(new LegacyRandomSource(0L));
++            worldgenRandom.setLargeFeatureWithSalt(seed, i, i1, this.salt());
++        }
++        // Leaf end - Matter - Secure Seed
+         int i2 = this.spacing - this.separation;
+         int i3 = this.spreadType.evaluate(worldgenRandom, i2);
+         int i4 = this.spreadType.evaluate(worldgenRandom, i2);
