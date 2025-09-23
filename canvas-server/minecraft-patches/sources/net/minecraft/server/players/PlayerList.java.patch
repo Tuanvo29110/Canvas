@@ -215,6 +215,24 @@
          return message.hasSignature() && !message.hasExpiredServer(Instant.now());
      }
  
+@@ -1420,6 +_,8 @@
+         if (serverStatsCounter == null) {
+             File file = this.server.getWorldPath(LevelResource.PLAYER_STATS_DIR).toFile();
+             File file1 = new File(file, uuid + ".json");
++            // Leaf start - Remove useless creating stats json bases on player name logic
++            /*
+             if (!file1.exists()) {
+                 File file2 = new File(file, displayName + ".json"); // CraftBukkit
+                 Path path = file2.toPath();
+@@ -1427,6 +_,8 @@
+                     file2.renameTo(file1);
+                 }
+             }
++            */
++            // Leaf end - Remove useless creating stats json bases on player name logic
+ 
+             serverStatsCounter = new ServerStatsCounter(this.server, file1);
+             // this.stats.put(uuid, serverStatsCounter); // CraftBukkit
 @@ -1454,7 +_,12 @@
  
          for (ServerLevel serverLevel : this.server.getAllLevels()) {
