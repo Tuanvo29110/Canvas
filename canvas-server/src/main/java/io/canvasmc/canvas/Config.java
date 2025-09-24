@@ -254,6 +254,9 @@ public class Config {
 
     @Comment("Enables eggs being able to knockback players")
     public boolean eggCanKnockback = false;
+    
+    @Comment("Instantly syncs player location on knockback for smoother PvP feedback")
+    public boolean flushLocationWhileKnockbackPlayer = false;
 
     @Comment({
         "The entity collision mode for the server",

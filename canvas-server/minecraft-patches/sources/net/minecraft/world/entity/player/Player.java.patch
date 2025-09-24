@@ -65,6 +65,20 @@
                                  float f5 = 1.0F + (float)this.getAttributeValue(Attributes.SWEEPING_DAMAGE_RATIO) * f;
  
                                  for (LivingEntity livingEntity2 : this.level()
+@@ -1316,6 +_,13 @@
+                                 }
+ 
+                                 if (!cancelled) {
++                                    // Leaf start - Flush location while knockback
++                                    if (io.canvasmc.canvas.Config.INSTANCE.flushLocationWhileKnockbackPlayer && target instanceof ServerPlayer targetPlayer && this instanceof ServerPlayer player1) {
++                                        targetPlayer.connection.send(net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket.of(this));
++                                        player1.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(targetPlayer));
++                                        player1.connection.send(net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket.of(targetPlayer));
++                                    }
++                                    // Leaf end - Flush location while knockback
+                                 ((ServerPlayer)target).connection.send(new ClientboundSetEntityMotionPacket(target));
+                                 target.hurtMarked = false;
+                                 target.setDeltaMovement(deltaMovement);
 @@ -1376,7 +_,7 @@
                              if (target instanceof LivingEntity) {
                                  float f7 = f3 - ((LivingEntity)target).getHealth();
@@ -74,6 +88,19 @@
                                      int i = (int)(f7 * 0.5);
                                      ((ServerLevel)this.level())
                                          .sendParticles(ParticleTypes.DAMAGE_INDICATOR, target.getX(), target.getY(0.5), target.getZ(), i, 0.1, 0.0, 0.1, 0.2);
+@@ -1384,6 +_,12 @@
+                             }
+ 
+                             this.causeFoodExhaustion(this.level().spigotConfig.combatExhaustion, org.bukkit.event.entity.EntityExhaustionEvent.ExhaustionReason.ATTACK); // CraftBukkit - EntityExhaustionEvent // Spigot - Change to use configurable value
++                            // Leaf start - Flush location while knockback
++                            if (io.canvasmc.canvas.Config.INSTANCE.flushLocationWhileKnockbackPlayer && this instanceof ServerPlayer player1 && target instanceof ServerPlayer target1) {
++                                target1.connection.connection.flushChannel();
++                                player1.connection.connection.flushChannel();
++                            }
++                            // Leaf end - Flush location while knockback
+                         } else {
+                             sendSoundEffect(this, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE, this.getSoundSource(), 1.0F, 1.0F); // Paper - send while respecting visibility
+                             // CraftBukkit end
 @@ -2088,10 +_,12 @@
      }
  
