@@ -407,6 +407,12 @@ public class Config {
             "Steep surface rule condition only works on the north and east faces of slopes"
         })
         public boolean mc258859 = false;
+        
+        @Comment({
+            "Fixes MC-297196 - https://bugs.mojang.com/browse/MC/issues/MC-297196",
+            "Knockback/position updates are delayed by entity update interval (1–3 ticks), causing desync"
+        })
+        public boolean mc297196 = false;
     }
 
     @Comment({

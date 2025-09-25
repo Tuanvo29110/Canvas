@@ -56,7 +56,7 @@
  
                                      this.guardEntityTick(this::tickNonPassenger, entity);
                                  }
-@@ -799,6 +_,7 @@
+@@ -799,9 +_,15 @@
                          }
                      }
                  );
@@ -64,6 +64,14 @@
              this.tickBlockEntities();
          }
          // Paper - rewrite chunk system
++        // Canvas start - MC-297196
++        if (io.canvasmc.canvas.Config.INSTANCE.fixes.mc297196) {
++            this.getChunkSource().chunkMap.newTrackerTick();
++        }
++        // Canvas end - MC-297196
+     }
+ 
+     // Folia start - region threading
 @@ -883,10 +_,10 @@
      // Paper start - optimise random ticking
      private final io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource simpleRandom = io.papermc.paper.threadedregions.util.SimpleThreadLocalRandomSource.INSTANCE; // Folia - region threading
