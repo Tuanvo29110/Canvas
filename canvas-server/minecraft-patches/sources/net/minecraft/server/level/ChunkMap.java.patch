@@ -9,6 +9,24 @@
                  this.ticketStorage.getTicketDebugString(longKey, true),
                  this.distanceManager.getChunkLevel(longKey, true),
                  optional1.<Integer>map(chunk -> chunk.getBlockTicks().count()).orElse(0),
+@@ -991,7 +_,7 @@
+     }
+ 
+     // Paper start - optimise entity tracker
+-    private void newTrackerTick() {
++    protected void newTrackerTick() { // Canvas - MC-297196
+         final io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.level.getCurrentWorldData(); // Folia - region threading
+         final ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup entityLookup = (ca.spottedleaf.moonrise.patches.chunk_system.level.entity.server.ServerEntityLookup)((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getEntityLookup();;
+         final ca.spottedleaf.moonrise.common.misc.NearbyPlayers nearbyPlayers = this.level.moonrise$getNearbyPlayers(); // Folia - region threading
+@@ -1015,7 +_,7 @@
+ 
+     protected void tick() {
+         // Paper start - optimise entity tracker
+-        if (true) {
++        if (!io.canvasmc.canvas.Config.INSTANCE.fixes.mc297196) {
+             this.newTrackerTick();
+             return;
+         }
 @@ -1275,7 +_,7 @@
                  }
                  // Folia end - region threading
