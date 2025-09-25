@@ -9,3 +9,16 @@
                  double d3;
                  if (d2 <= 3.0) {
                      d3 = 4.0 * d2;
+@@ -117,9 +_,10 @@
+                     d3 = 22.0 + d2 - 8.0;
+                 }
+ 
+-                return livingEntity.level() instanceof ServerLevel serverLevel
++                return ((livingEntity.level() instanceof ServerLevel serverLevel
+                     ? (float)(d3 + EnchantmentHelper.modifyFallBasedDamage(serverLevel, livingEntity.getWeaponItem(), target, damageSource, 0.0F) * d2)
+-                    : (float)d3;
++                    : (float)d3)
++                    * (float) io.canvasmc.canvas.Config.INSTANCE.combat.mace.damageMultiplier);
+             }
+         } else {
+             return 0.0F;

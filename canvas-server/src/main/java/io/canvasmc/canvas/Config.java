@@ -528,6 +528,8 @@ public class Config {
             public boolean ignoreFallDistance = false;
             @Comment("The limit before fall distance scaling stops working for mace damage bonuses")
             public double fallDistanceLimit = -1.0D;
+            @Comment("Mace damage multiplier (0.8 = 80% damage, 1.0 = normal damage)")
+            public double damageMultiplier = 1.0D;
         }
 
         @Comment("Enables the old crafting recipe for god apples, using 8 gold blocks and an apple")
